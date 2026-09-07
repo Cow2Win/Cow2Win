@@ -1,0 +1,137 @@
+[
+  {
+    "id": "ignis",
+    "element": "FIRE",
+    "image": "Ignis.png"
+  },
+  {
+    "id": "vulcan",
+    "element": "FIRE",
+    "image": "Vulcan.png"
+  },
+  {
+    "id": "aherona-and-pyro",
+    "element": "FIRE",
+    "image": "Asherona.png"
+  },
+  {
+    "id": "araji",
+    "element": "FIRE",
+    "image": "Araji.png"
+  },
+  {
+    "id": "moloch",
+    "element": "FIRE",
+    "image": "Moloch.png"
+  },
+  {
+    "id": "nova",
+    "element": "WATER",
+    "image": "Nova.png"
+  },
+  {
+    "id": "sigurd",
+    "element": "WATER",
+    "image": "Sigurd.png"
+  },
+  {
+    "id": "mairi",
+    "element": "WATER",
+    "image": "Mairi.png"
+  },
+  {
+    "id": "hyperion",
+    "element": "WATER",
+    "image": "Hyperion.png"
+  },
+  {
+    "id": "Tidus-and-gelo",
+    "element": "WATER",
+    "image": "Tidus.png"
+  },
+  {
+    "id": "alecto",
+    "element": "DISTORTION",
+    "image": "Alecto.png"
+  },
+  {
+    "id": "valdur-and-echo",
+    "element": "DISTORTION",
+    "image": "Valdur.png"
+  },
+  {
+    "id": "tenebris",
+    "element": "DARK",
+    "image": "Tenebris.png"
+  },
+  {
+    "id": "mort",
+    "element": "DARK",
+    "image": "Mort.png"
+  },
+  {
+    "id": "keros",
+    "element": "DARK",
+    "image": "Keros.png"
+  },
+  {
+    "id": "brustar",
+    "element": "DARK",
+    "image": "Brustar.png"
+  },
+  {
+    "id": "umbra-and-caliga",
+    "element": "DARK",
+    "image": "Umbra.png"
+  },
+  {
+    "id": "eden",
+    "element": "EARTH",
+    "image": "Eden.png"
+  },
+  {
+    "id": "angus",
+    "element": "EARTH",
+    "image": "Angus.png"
+  },
+  {
+    "id": "silva",
+    "element": "EARTH",
+    "image": "Silva.png"
+  },
+  {
+    "id": "avalon",
+    "element": "EARTH",
+    "image": "Avalon.png"
+  },
+  {
+    "id": "verdoc-and-phyto",
+    "element": "EARTH",
+    "image": "Verdoc.png"
+  },
+  {
+    "id": "solaris",
+    "element": "LIGHT",
+    "image": "Solaris.png"
+  },
+  {
+    "id": "amon",
+    "element": "LIGHT",
+    "image": "Amon.png"
+  },
+  {
+    "id": "iyari",
+    "element": "LIGHT",
+    "image": "Iyari.png"
+  },
+  {
+    "id": "lumira",
+    "element": "LIGHT",
+    "image": "Lumira.png"
+  },
+  {
+    "id": "rigel",
+    "element": "LIGHT",
+    "image": "Rigel.png"
+  }
+]

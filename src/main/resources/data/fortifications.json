@@ -1,0 +1,383 @@
+[
+  {
+    "id": "alchemy-tower",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 1,
+    "column": 4,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Armor Increase per Mage Hero",
+      "effect": "ARMOR_INCREASE",
+      "bonusPercent": 4,
+      "buffProfits": [],
+      "role": "MAGE"
+    },
+    "prerequisites": [
+      "heros-bridge"
+    ],
+    "strategicImportance": 1
+  },
+  {
+    "id": "altar-of-life",
+    "type": "TITAN",
+    "capacity": 5,
+    "captureBonus": 175,
+    "row": 3,
+    "column": 0,
+    "buff": null,
+    "prerequisites": [
+      "bastion-of-fire",
+      "gates-of-nature",
+      "bastion-of-ice"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "barracks",
+    "type": "HERO",
+    "capacity": 3,
+    "captureBonus": 105,
+    "row": 7,
+    "column": 0,
+    "buff": null,
+    "prerequisites": [],
+    "strategicImportance": 4
+  },
+  {
+    "id": "bastion",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 3,
+    "column": 1,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Magic Defense Increase per Warrior Hero ",
+      "effect": "MAGIC_DEFENSE_INCREASE",
+      "bonusPercent": 3,
+      "buffProfits": [
+        "rufus",
+        "aurora",
+        "astaroth",
+        "alvanor",
+        "ziri",
+        "dorian",
+        "nebula",
+        "cleaver",
+        "corvus",
+        "jorgen"
+      ],
+      "role": "WARRIOR"
+    },
+    "prerequisites": [
+      "bastion-of-fire",
+      "gates-of-nature",
+      "bastion-of-ice"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "bastion-of-fire",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 200,
+    "row": 4,
+    "column": 1,
+    "buff": {
+      "kind": "ELEMENT",
+      "display": "Health Increase per Fire Titan",
+      "effect": "HEALTH_INCREASE",
+      "bonusPercent": 8,
+      "buffProfits": [],
+      "element": "FIRE"
+    },
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 7
+  },
+  {
+    "id": "bastion-of-ice",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 200,
+    "row": 4,
+    "column": 3,
+    "buff": {
+      "kind": "ELEMENT",
+      "display": "Energy Gain per Water Titan",
+      "effect": "ENERGY_GAIN",
+      "bonusPercent": 3,
+      "buffProfits": [],
+      "element": "WATER"
+    },
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 7
+  },
+  {
+    "id": "bridge",
+    "type": "TITAN",
+    "capacity": 6,
+    "captureBonus": 210,
+    "row": 6,
+    "column": 2,
+    "buff": null,
+    "prerequisites": [],
+    "strategicImportance": 10
+  },
+  {
+    "id": "citadel",
+    "type": "HERO",
+    "capacity": 8,
+    "captureBonus": 410,
+    "row": 0,
+    "column": 2,
+    "buff": null,
+    "prerequisites": [
+      "sun-temple",
+      "moon-temple"
+    ],
+    "strategicImportance": 1
+  },
+  {
+    "id": "city-hall",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 1,
+    "column": 0,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Healing Increase per Healer Hero",
+      "effect": "HEALING_INCREASE",
+      "bonusPercent": 7,
+      "buffProfits": [
+        "aurora",
+        "rufus",
+        "ziri",
+        "chabba",
+        "fafnir",
+        "nebula"
+      ],
+      "role": "HEALER"
+    },
+    "prerequisites": [
+      "heros-bridge"
+    ],
+    "strategicImportance": 1
+  },
+  {
+    "id": "engineerium",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 5,
+    "column": 4,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Energy Gain per Control Hero",
+      "effect": "ENERGY_GAIN",
+      "bonusPercent": 5,
+      "buffProfits": [
+        "yasmine",
+        "dante",
+        "keira",
+        "astaroth",
+        "aurora",
+        "corvus",
+        "krista",
+        "helios",
+        "faceless",
+        "amira",
+        "karkh",
+        "nebula",
+        "sebastian",
+        "martha",
+        "jorgen"
+      ],
+      "role": "CONTROL"
+    },
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "ether-prism",
+    "type": "TITAN",
+    "capacity": 5,
+    "captureBonus": 175,
+    "row": 3,
+    "column": 4,
+    "buff": null,
+    "prerequisites": [
+      "bastion-of-fire",
+      "gates-of-nature",
+      "bastion-of-ice"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "foundry",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 5,
+    "column": 0,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Health Increase per Tank Hero",
+      "effect": "HEALTH_INCREASE",
+      "bonusPercent": 10,
+      "buffProfits": [
+        "dorian",
+        "jorgen",
+        "nebula",
+        "chabba",
+        "ziri",
+        "alvanor"
+      ],
+      "role": "TANK"
+    },
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "gates-of-nature",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 200,
+    "row": 4,
+    "column": 2,
+    "buff": {
+      "kind": "ELEMENT",
+      "display": "Damage Resist per Earth Titan",
+      "effect": "DAMAGE_RESIST",
+      "bonusPercent": 2,
+      "buffProfits": [],
+      "element": "EARTH"
+    },
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 7
+  },
+  {
+    "id": "heros-bridge",
+    "type": "HERO",
+    "capacity": 6,
+    "captureBonus": 210,
+    "row": 2,
+    "column": 2,
+    "buff": null,
+    "prerequisites": [
+      "bastion-of-fire",
+      "gates-of-nature",
+      "bastion-of-ice"
+    ],
+    "strategicImportance": 8
+  },
+  {
+    "id": "lighthouse",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 7,
+    "column": 2,
+    "buff": null,
+    "prerequisites": [],
+    "strategicImportance": 4
+  },
+  {
+    "id": "mage-academy",
+    "type": "HERO",
+    "capacity": 3,
+    "captureBonus": 105,
+    "row": 7,
+    "column": 4,
+    "buff": null,
+    "prerequisites": [],
+    "strategicImportance": 4
+  },
+  {
+    "id": "moon-temple",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 200,
+    "row": 1,
+    "column": 3,
+    "buff": {
+      "kind": "ELEMENT",
+      "display": "Health Increase per Dark Titan",
+      "effect": "HEALTH_INCREASE",
+      "bonusPercent": 7,
+      "buffProfits": [],
+      "element": "DARK"
+    },
+    "prerequisites": [
+      "heros-bridge"
+    ],
+    "strategicImportance": 4
+  },
+  {
+    "id": "shooting-range",
+    "type": "HERO",
+    "capacity": 5,
+    "captureBonus": 235,
+    "row": 3,
+    "column": 3,
+    "buff": {
+      "kind": "ROLE",
+      "display": "Damage Resist per Marksman Hero",
+      "effect": "DAMAGE_RESIST",
+      "bonusPercent": 3,
+      "buffProfits": [],
+      "role": "MARKSMAN"
+    },
+    "prerequisites": [
+      "bastion-of-fire",
+      "gates-of-nature",
+      "bastion-of-ice"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "spring-of-elements",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 140,
+    "row": 5,
+    "column": 2,
+    "buff": null,
+    "prerequisites": [
+      "bridge"
+    ],
+    "strategicImportance": 2
+  },
+  {
+    "id": "sun-temple",
+    "type": "TITAN",
+    "capacity": 4,
+    "captureBonus": 200,
+    "row": 1,
+    "column": 1,
+    "buff": {
+      "kind": "ELEMENT",
+      "display": "Damage Resist per Light Titan",
+      "effect": "DAMAGE_RESIST",
+      "bonusPercent": 2,
+      "buffProfits": [],
+      "element": "LIGHT"
+    },
+    "prerequisites": [
+      "heros-bridge"
+    ],
+    "strategicImportance": 4
+  }
+]

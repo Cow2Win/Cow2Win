@@ -1,0 +1,544 @@
+[
+  {
+    "id": "astaroth",
+    "image": "Astaroth.png",
+    "roles": [
+      "TANK",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "galahad",
+    "image": "Galahad.png",
+    "roles": [
+      "WARRIOR",
+      "TANK"
+    ]
+  },
+  {
+    "id": "cleaver",
+    "image": "Cleaver.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "corvus",
+    "image": "Corvus.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "luther",
+    "image": "Luther.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "electra",
+    "image": "Electra.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "rufus",
+    "image": "Rufus.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "aurora",
+    "image": "Aurora.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "chabba",
+    "image": "Chabba.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "andvari",
+    "image": "Andvari.png",
+    "roles": [
+      "SUPPORT",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "polaris",
+    "image": "Polaris.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "kayla",
+    "image": "Kayla.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "qing-mao",
+    "image": "QingMao.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "ninja-turtles",
+    "image": "NinjaTurtles.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "isaac",
+    "image": "Isaac.png",
+    "roles": [
+      "SUPPORT",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "yasmine",
+    "image": "Yasmine.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "keira",
+    "image": "Keira.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "augustus",
+    "image": "Augustus.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "julius",
+    "image": "Julius.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "lars",
+    "image": "Lars.png",
+    "roles": [
+      "MAGE",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "krista",
+    "image": "Krista.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "orion",
+    "image": "Orion.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "helios",
+    "image": "Helios.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "lilith",
+    "image": "Lilith.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "mojo",
+    "image": "Mojo.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "cascade",
+    "image": "Cascade.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "fluffy",
+    "image": "Fluffy.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "peppy",
+    "image": "Peppy.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "amira",
+    "image": "Amira.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "faceless",
+    "image": "Faceless.png",
+    "roles": [
+      "MAGE",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "morrigan",
+    "image": "Morrigan.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "folio",
+    "image": "Folio.png",
+    "roles": [
+      "MAGE",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "cornelius",
+    "image": "Cornelius.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "daredevil",
+    "image": "Daredevil.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "artemis",
+    "image": "Artemis.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "dark-star",
+    "image": "DarkStar.png",
+    "roles": [
+      "MARKSMAN",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "ginger",
+    "image": "Ginger.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "jet",
+    "image": "Jet.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "Byrna",
+    "image": "Byrna.png",
+    "roles": [
+      "HEALER",
+      "MAGE"
+    ]
+  },
+  {
+    "id": "fox",
+    "image": "Fox.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "markus",
+    "image": "Markus.png",
+    "roles": [
+      "SUPPORT",
+      "HEALER"
+    ]
+  },
+  {
+    "id": "thea",
+    "image": "Thea.png",
+    "roles": [
+      "HEALER"
+    ]
+  },
+  {
+    "id": "maya",
+    "image": "Maya.png",
+    "roles": [
+      "HEALER",
+      "MAGE"
+    ]
+  },
+  {
+    "id": "celeste",
+    "image": "Celeste.png",
+    "roles": [
+      "HEALER",
+      "MAGE"
+    ]
+  },
+  {
+    "id": "dorian",
+    "image": "Dorian.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "nebula",
+    "image": "Nebula.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "jorgen",
+    "image": "Jorgen.png",
+    "roles": [
+      "SUPPORT",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "adam",
+    "image": "Adam.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "sebastian",
+    "image": "Sebastian.png",
+    "roles": [
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "mushy-and-shroom",
+    "image": "Mushy.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "alvanor",
+    "image": "Alvanor.png",
+    "roles": [
+      "SUPPORT",
+      "MAGE"
+    ]
+  },
+  {
+    "id": "phobos",
+    "image": "Phobos.png",
+    "roles": [
+      "CONTROL",
+      "MAGE"
+    ]
+  },
+  {
+    "id": "satori",
+    "image": "Satori.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "arachne",
+    "image": "Arachne.png",
+    "roles": [
+      "CONTROL",
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "kai",
+    "image": "Kai.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "judge",
+    "image": "Judge.png",
+    "roles": [
+      "MAGE",
+      "SUPPORT",
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "fafnir",
+    "image": "Fafnir.png",
+    "roles": [
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "iris",
+    "image": "Iris.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "lian",
+    "image": "Lian.png",
+    "roles": [
+      "CONTROL"
+    ]
+  },
+  {
+    "id": "jhu",
+    "image": "Jhu.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "heidi",
+    "image": "Heidi.png",
+    "roles": [
+      "MAGE"
+    ]
+  },
+  {
+    "id": "ziri",
+    "image": "Ziri.png",
+    "roles": [
+      "TANK"
+    ]
+  },
+  {
+    "id": "elmir",
+    "image": "Elmir.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "dante",
+    "image": "Dante.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "lara",
+    "image": "Lara.png",
+    "roles": [
+      "MARKSMAN"
+    ]
+  },
+  {
+    "id": "karkh",
+    "image": "Karkh.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "aidan",
+    "image": "Aidan.png",
+    "roles": [
+      "SUPPORT",
+      "HEALER"
+    ]
+  },
+  {
+    "id": "astrid-and-lucas",
+    "image": "AstridAndLucas.png",
+    "roles": [
+      "MARKSMAN",
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "guus",
+    "image": "Guus.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "ishmael",
+    "image": "Ishmael.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "tristan",
+    "image": "Tristan.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
+    "id": "martha",
+    "image": "Martha.png",
+    "roles": [
+      "HEALER",
+      "SUPPORT"
+    ]
+  },
+  {
+    "id": "lyria",
+    "image": "Lyria.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  }
+]

@@ -1,0 +1,174 @@
+citadel=Citadelle
+moon-temple=Temple de la Lune
+sun-temple=Temple du Soleil
+alchemy-tower=Tour d'Alchimie
+city-hall=Hôtel de Ville
+heros-bridge=Pont des Héros
+ether-prism=Prisme d'Éther
+shooting-range=Champ de Tir
+bastion=Bastion
+altar-of-life=Autel de la Vie
+bastion-of-fire=Bastion de Feu
+gates-of-nature=Portes de la Nature
+bastion-of-ice=Bastion de Glace
+spring-of-elements=Source des Éléments
+engineerium=Ingénierie
+foundry=Fonderie
+bridge=Pont
+lighthouse=Phare
+mage-academy=Académie de Magie
+barracks=Caserne
+
+#Héros
+astaroth=Astaroth
+galahad=Galahad
+cleaver=Cleaver
+corvus=Corvus
+luther=Luther
+electra=Electra von Grave
+rufus=Rufus
+aurora=Aurora
+chabba=Chabba
+andvari=Andvari
+polaris=Polaris
+kayla=Kayla
+qing-mao=Qing Mao
+ninja-turtles=Ninja Turtles
+isaac=Isaac
+yasmine=Yasmine
+keira=Keira
+augustus=Ausgustus
+julius=Julius
+lars=Lars
+krista=Krista
+orion=Orion
+helios=Helios
+lilith=Lilith
+mojo=Mojo
+cascade=Cascade
+fluffy=Fluffy
+peppy=Peppy
+amira=Amira
+faceless=Faceless
+morrigan=Morrigan
+folio=Folio
+cornelius=Cornelius
+daredevil=Daredevil
+artemis=Artemis
+dark-star=Dark Star
+ginger=Ginger
+jet=Jet
+Byrna=Byrna
+fox=Fox
+markus=Markus
+thea=Thea
+maya=Maya
+celeste=Celeste
+dorian=Dorian
+nebula=Nebula
+jorgen=Jorgen
+adam=Adam
+sebastian=Sebastian
+mushy-and-shroom=Mushy and Shroom
+alvanor=Alvanor
+phobos=Phobos
+satori=Satori
+arachne=Arachne
+kai=Kai
+judge=Judge
+fafnir=Fafnir
+iris=Iris
+lian=Lian
+jhu=Jhu
+heidi=Heidi
+ziri=Ziri
+elmir=Elmir
+dante=Dante
+lara=Lara
+karkh=K’arkh
+aidan=Aidan
+astrid-and-lucas=Astrid & Lucas
+guus=Guus
+ishmael=Ishmael
+tristan=Tristan
+martha=Martha
+lyria=Lyria
+#Titans
+ignis=Ignis
+vulcan=Vulcan
+aherona-and-pyro=Asherona et Pyro
+araji=Araji
+moloch=Moloch
+nova=Nova
+sigurd=Sigurd
+mairi=Mairi
+hyperion=Hyperion
+Tidus-and-gelo=Tidus et Gelo
+alecto=Alecto
+valdur-and-echo=Valdur et Echo
+tenebris=Tenebris
+mort=Mort
+keros=Keros
+brustar=Brustar
+umbra-and-caliga=Umbra et Caligo
+eden=Eden
+angus=Angus
+silva=Silva
+avalon=Avalon
+verdoc-and-phyto=Verdoc et Phyto
+solaris=Solaris
+amon=Amon
+iyari=Iyari
+lumira=Lumira
+rigel=Rigel
+
+#Barre d'outils
+toolbar.guild=Guilde :
+toolbar.newGuild=Créer une nouvelle guilde
+toolbar.lineup=Lineup :
+toolbar.saveLineup=Enregistrer le lineup
+toolbar.newLineup=Créer un nouveau lineup
+toolbar.removeLineup=Supprimer le lineup
+toolbar.clearLineup=Vider le lineup
+toolbar.generateReport=Générer le rapport
+toolbar.heroWars=Ouvrir Hero Wars
+toolbar.allTeams=Afficher toutes les équipes
+
+#Résumé du lineup
+lineupSummary.heroPower=Héros
+lineupSummary.heroBuffCount=Héros augmentant un buff
+lineupSummary.titanPower=Titans
+lineupSummary.titanBuffCount=Titans augmentant un buff
+lineupSummary.heroPowerTooltip=Puissance totale de tous les héros placés dans le lineup
+lineupSummary.titanPowerTooltip=Puissance totale de tous les titans placés dans le lineup
+lineupSummary.millionsSuffix=M
+
+#Carte des forteresses
+fortificationMap.showHeroes=Héros
+fortificationMap.showTitans=Titans
+
+#Aperçu des équipes
+teamsOverview.power=Puissance
+teamsOverview.member=Membre
+teamsOverview.heroes=Héros
+teamsOverview.titans=Titans
+teamsOverview.fortification=Forteresse
+teamsOverview.openGuildEditor=Ouvrir la gestion de la guilde
+teamsOverview.saveGuild=Enregistrer la guilde
+teamsOverview.algorithm=Algorithme :
+teamsOverview.runAlgorithm=Exécuter l'attribution
+
+#Éditeur de guilde
+guildEditor.saveGuild=Enregistrer la guilde
+guildEditor.addMember=Ajouter un membre
+guildEditor.removeMember=Supprimer un membre
+
+#Détail de la fortification
+fortificationDetail.saveFortification=Enregistrer la fortification
+fortificationDetail.prerequisites=Prérequis
+
+#Attribution des équipes à la fortification
+fortificationEntry.saveTeams=Enregistrer les équipes
+
+#Général
+common.none=(aucun)
