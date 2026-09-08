@@ -4,15 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="init">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/InitialSetupDialog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/AppContext.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/LanguageService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/Logger.java" afterDir="false" />
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="init2">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/LogPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ReportViewerDialog.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/FlatButton.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/GridPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/LineupSummaryPanel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/config/Config.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,20 +64,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.C2WApp.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.keymap"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.C2WApp.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="C2WApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.c2w.C2WApp" />
@@ -105,11 +114,20 @@
       <option name="project" value="LOCAL" />
       <updated>1788807598679</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="init2">
+      <option name="closed" value="true" />
+      <created>1788812336947</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1788812336948</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
-    <option name="LAST_COMMIT_MESSAGE" value="init" />
+    <MESSAGE value="init2" />
+    <option name="LAST_COMMIT_MESSAGE" value="init2" />
   </component>
 </project>
