@@ -1,0 +1,1204 @@
+{
+  "id": "forFun",
+  "name": "forFun",
+  "season": 16,
+  "seasonStart": "2026-08-10",
+  "members": [
+    {
+      "id": "Team 2213022",
+      "name": "Team 2213022",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "galahad",
+            "keira",
+            "sebastian",
+            "lara",
+            "martha"
+          ],
+          "totalPower": 1096841,
+          "lastModified": null
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "lyria",
+            "morrigan",
+            "celeste",
+            "phobos"
+          ],
+          "totalPower": 1042352,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "maya",
+            "nebula",
+            "artemis",
+            "thea"
+          ],
+          "totalPower": 997639,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "brustar",
+            "mort",
+            "umbra-and-caliga",
+            "araji",
+            "tenebris"
+          ],
+          "totalPower": 923350,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "titanIds": [
+            "angus",
+            "avalon",
+            "eden",
+            "hyperion",
+            "silva"
+          ],
+          "totalPower": 735323,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "WhosaWhatsItNow",
+      "name": "WhosaWhatsItNow",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "corvus",
+            "qing-mao",
+            "morrigan",
+            "phobos",
+            "martha"
+          ],
+          "totalPower": 1036563,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "julius",
+            "ishmael",
+            "yasmine",
+            "judge",
+            "dorian"
+          ],
+          "totalPower": 885893,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "lyria",
+            "keira",
+            "peppy",
+            "thea"
+          ],
+          "totalPower": 1023087,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "brustar",
+            "moloch",
+            "araji",
+            "tenebris",
+            "ignis"
+          ],
+          "totalPower": 995321,
+          "lastModified": "2026-09-05"
+        },
+        {
+          "titanIds": [
+            "rigel",
+            "verdoc-and-phyto",
+            "solaris",
+            "eden",
+            "hyperion"
+          ],
+          "totalPower": 626197,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Ketilar",
+      "name": "Ketilar",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "aurora",
+            "cleaver",
+            "kai",
+            "astrid-and-lucas",
+            "thea"
+          ],
+          "totalPower": 1055376,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "arachne",
+            "dante",
+            "cornelius",
+            "peppy"
+          ],
+          "totalPower": 1110030,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "andvari",
+            "lara",
+            "augustus",
+            "artemis"
+          ],
+          "totalPower": 873341,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "vulcan",
+            "araji",
+            "eden",
+            "ignis"
+          ],
+          "totalPower": 825370,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "rigel",
+            "nova",
+            "iyari",
+            "hyperion"
+          ],
+          "totalPower": 551524,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Miboo 47",
+      "name": "Miboo 47",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "cleaver",
+            "astaroth",
+            "arachne",
+            "nebula",
+            "thea"
+          ],
+          "totalPower": 941898,
+          "lastModified": null
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "corvus",
+            "lyria",
+            "dante",
+            "morrigan"
+          ],
+          "totalPower": 896006,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "yasmine",
+            "celeste",
+            "jhu",
+            "iris"
+          ],
+          "totalPower": 923944,
+          "lastModified": "2026-08-30"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "mort",
+            "vulcan",
+            "araji",
+            "tenebris"
+          ],
+          "totalPower": 969349,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "solaris",
+            "eden",
+            "iyari",
+            "hyperion"
+          ],
+          "totalPower": 647110,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "fluffy",
+      "name": "fluffy",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "corvus",
+            "arachne",
+            "morrigan",
+            "celeste",
+            "aidan"
+          ],
+          "totalPower": 796453,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "dante",
+            "orion",
+            "augustus",
+            "dorian"
+          ],
+          "totalPower": 1035659,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "isaac",
+            "jhu",
+            "nebula",
+            "sebastian",
+            "martha"
+          ],
+          "totalPower": 916171,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "brustar",
+            "moloch",
+            "vulcan",
+            "araji",
+            "tenebris"
+          ],
+          "totalPower": 1075091,
+          "lastModified": "2026-09-05"
+        },
+        {
+          "titanIds": [
+            "angus",
+            "avalon",
+            "eden",
+            "silva",
+            "alecto"
+          ],
+          "totalPower": 520489,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Feelark",
+      "name": "Feelark",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "lyria",
+            "keira",
+            "nebula",
+            "sebastian",
+            "lara"
+          ],
+          "totalPower": 1065612,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "morrigan",
+            "celeste",
+            "cascade",
+            "iris"
+          ],
+          "totalPower": 830889,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "andvari",
+            "dante",
+            "jhu",
+            "martha"
+          ],
+          "totalPower": 865766,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "vulcan",
+            "aherona-and-pyro",
+            "araji",
+            "ignis"
+          ],
+          "totalPower": 895919,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "Tidus-and-gelo",
+            "keros",
+            "hyperion",
+            "tenebris"
+          ],
+          "totalPower": 535847,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Kajar",
+      "name": "Kajar",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "aurora",
+            "electra",
+            "Byrna",
+            "fluffy",
+            "martha"
+          ],
+          "totalPower": 707782,
+          "lastModified": null
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "lyria",
+            "keira",
+            "morrigan",
+            "celeste"
+          ],
+          "totalPower": 1082693,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "krista",
+            "cascade",
+            "orion",
+            "lars"
+          ],
+          "totalPower": 901028,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "rigel",
+            "angus",
+            "avalon",
+            "solaris",
+            "eden"
+          ],
+          "totalPower": 666389,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "araji",
+            "hyperion",
+            "tenebris"
+          ],
+          "totalPower": 682749,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "ConteRostov",
+      "name": "ConteRostov",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "keira",
+            "mojo",
+            "ginger",
+            "dark-star",
+            "artemis"
+          ],
+          "totalPower": 544922,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "tristan",
+            "qing-mao",
+            "astrid-and-lucas",
+            "thea"
+          ],
+          "totalPower": 1105752,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "astaroth",
+            "arachne",
+            "dante",
+            "phobos"
+          ],
+          "totalPower": 885852,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "angus",
+            "avalon",
+            "eden",
+            "hyperion",
+            "silva"
+          ],
+          "totalPower": 614111,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "moloch",
+            "nova",
+            "vulcan",
+            "araji",
+            "ignis"
+          ],
+          "totalPower": 690196,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Big Easy",
+      "name": "Big Easy",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "astaroth",
+            "keira",
+            "nebula",
+            "lars",
+            "martha"
+          ],
+          "totalPower": 965933,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "rufus",
+            "galahad",
+            "yasmine",
+            "arachne",
+            "thea"
+          ],
+          "totalPower": 700278,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "krista",
+            "celeste",
+            "jorgen",
+            "orion"
+          ],
+          "totalPower": 869451,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "angus",
+            "moloch",
+            "araji",
+            "eden",
+            "silva"
+          ],
+          "totalPower": 304756,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "Tidus-and-gelo",
+            "mairi",
+            "hyperion"
+          ],
+          "totalPower": 785241,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "indonesia",
+      "name": "indonesia",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "galahad",
+            "yasmine",
+            "dante",
+            "mojo",
+            "thea"
+          ],
+          "totalPower": 950864,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "karkh",
+            "keira",
+            "morrigan",
+            "phobos"
+          ],
+          "totalPower": 688248,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "kayla",
+            "maya",
+            "aidan",
+            "artemis"
+          ],
+          "totalPower": 619504,
+          "lastModified": "2026-08-30"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "angus",
+            "avalon",
+            "araji",
+            "eden",
+            "hyperion"
+          ],
+          "totalPower": 597206,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "moloch",
+            "vulcan",
+            "ignis",
+            "silva"
+          ],
+          "totalPower": 503319,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "GIDEON",
+      "name": "GIDEON",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "astaroth",
+            "qing-mao",
+            "nebula",
+            "dark-star",
+            "jet"
+          ],
+          "totalPower": 421057,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "yasmine",
+            "keira",
+            "orion",
+            "martha"
+          ],
+          "totalPower": 827665,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "electra",
+            "galahad",
+            "isaac",
+            "jhu",
+            "sebastian"
+          ],
+          "totalPower": 246765,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "mairi",
+            "hyperion",
+            "tenebris"
+          ],
+          "totalPower": 725902,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "rigel",
+            "angus",
+            "amon",
+            "solaris",
+            "eden"
+          ],
+          "totalPower": 270246,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Team 22037083",
+      "name": "Team 22037083",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "luther",
+            "galahad",
+            "qing-mao",
+            "dante",
+            "astrid-and-lucas"
+          ],
+          "totalPower": 576753,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "astaroth",
+            "ginger",
+            "daredevil",
+            "thea"
+          ],
+          "totalPower": 453775,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "yasmine",
+            "mojo",
+            "phobos",
+            "artemis"
+          ],
+          "totalPower": 530807,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "angus",
+            "vulcan",
+            "araji",
+            "silva"
+          ],
+          "totalPower": 525120,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "avalon",
+            "hyperion",
+            "ignis"
+          ],
+          "totalPower": 291018,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Gubin",
+      "name": "Gubin",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "qing-mao",
+            "orion",
+            "daredevil",
+            "cornelius",
+            "phobos"
+          ],
+          "totalPower": 399969,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "yasmine",
+            "arachne",
+            "artemis",
+            "thea"
+          ],
+          "totalPower": 697720,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "astaroth",
+            "maya",
+            "dante",
+            "mojo"
+          ],
+          "totalPower": 642558,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "nova",
+            "vulcan",
+            "ignis",
+            "silva"
+          ],
+          "totalPower": 323803,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "angus",
+            "avalon",
+            "mairi",
+            "eden"
+          ],
+          "totalPower": 273188,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Esteban",
+      "name": "Esteban",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "chabba",
+            "ishmael",
+            "yasmine",
+            "celeste",
+            "phobos"
+          ],
+          "totalPower": 435876,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "qing-mao",
+            "dante",
+            "mojo",
+            "thea"
+          ],
+          "totalPower": 582692,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "luther",
+            "maya",
+            "kai",
+            "faceless",
+            "peppy"
+          ],
+          "totalPower": 420967,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "avalon",
+            "eden",
+            "hyperion"
+          ],
+          "totalPower": 343099,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "moloch",
+            "vulcan",
+            "araji",
+            "ignis"
+          ],
+          "totalPower": 378978,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "barbar",
+      "name": "barbar",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "corvus",
+            "yasmine",
+            "augustus",
+            "iris",
+            "fafnir"
+          ],
+          "totalPower": 739254,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "ishmael",
+            "dante",
+            "jet",
+            "thea"
+          ],
+          "totalPower": 293959,
+          "lastModified": "2026-08-30"
+        },
+        {
+          "heroIds": [
+            "elmir",
+            "sebastian",
+            "cascade",
+            "orion",
+            "cornelius"
+          ],
+          "totalPower": 185811,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "rigel",
+            "angus",
+            "amon",
+            "solaris",
+            "ignis"
+          ],
+          "totalPower": 167922,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "brustar",
+            "moloch",
+            "vulcan",
+            "araji",
+            "tenebris"
+          ],
+          "totalPower": 536820,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "flavio33",
+      "name": "flavio33",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "corvus",
+            "galahad",
+            "dante",
+            "orion",
+            "artemis"
+          ],
+          "totalPower": 520044,
+          "lastModified": null
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "kayla",
+            "qing-mao",
+            "aidan",
+            "faceless"
+          ],
+          "totalPower": 292746,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "kai",
+            "mojo",
+            "ginger",
+            "dark-star",
+            "phobos"
+          ],
+          "totalPower": 373437,
+          "lastModified": "2026-08-30"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "nova",
+            "mairi",
+            "araji",
+            "iyari",
+            "ignis"
+          ],
+          "totalPower": 261631,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "moloch",
+            "angus",
+            "vulcan",
+            "silva"
+          ],
+          "totalPower": 348116,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "Team 22659028",
+      "name": "Team 22659028",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "galahad",
+            "ishmael",
+            "celeste",
+            "orion",
+            "helios"
+          ],
+          "totalPower": 236462,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "mushy-and-shroom",
+            "cascade",
+            "astrid-and-lucas",
+            "iris"
+          ],
+          "totalPower": 378633,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "lyria",
+            "sebastian",
+            "arachne",
+            "cornelius",
+            "fafnir"
+          ],
+          "totalPower": 137853,
+          "lastModified": "2026-09-05"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "amon",
+            "lumira",
+            "iyari",
+            "solaris",
+            "rigel"
+          ],
+          "totalPower": 351358,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "moloch",
+            "aherona-and-pyro",
+            "Tidus-and-gelo",
+            "araji",
+            "hyperion"
+          ],
+          "totalPower": 215448,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "ebetro2",
+      "name": "ebetro2",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "corvus",
+            "karkh",
+            "keira",
+            "morrigan",
+            "phobos"
+          ],
+          "totalPower": 329231,
+          "lastModified": null
+        },
+        {
+          "heroIds": [
+            "astaroth",
+            "dante",
+            "iris",
+            "faceless",
+            "thea"
+          ],
+          "totalPower": 246336,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "arachne",
+            "lars",
+            "lian",
+            "artemis",
+            "dorian"
+          ],
+          "totalPower": 164446,
+          "lastModified": "2026-09-04"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "araji",
+            "mairi",
+            "silva"
+          ],
+          "totalPower": 153486,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "angus",
+            "avalon",
+            "araji",
+            "eden",
+            "hyperion"
+          ],
+          "totalPower": 302496,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    },
+    {
+      "id": "x_x",
+      "name": "x_x",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "astaroth",
+            "galahad",
+            "keira",
+            "artemis",
+            "polaris"
+          ],
+          "totalPower": 334497,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "corvus",
+            "yasmine",
+            "dante",
+            "astrid-and-lucas",
+            "thea"
+          ],
+          "totalPower": 258710,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "heroIds": [
+            "aurora",
+            "elmir",
+            "mojo",
+            "faceless",
+            "peppy"
+          ],
+          "totalPower": 122062,
+          "lastModified": "2026-09-05"
+        }
+      ],
+      "titanTeams": [
+        {
+          "titanIds": [
+            "moloch",
+            "vulcan",
+            "mairi",
+            "araji",
+            "tenebris"
+          ],
+          "totalPower": 103309,
+          "lastModified": "2026-09-04"
+        },
+        {
+          "titanIds": [
+            "sigurd",
+            "nova",
+            "eden",
+            "hyperion",
+            "ignis"
+          ],
+          "totalPower": 229287,
+          "lastModified": "2026-09-04"
+        }
+      ]
+    }
+  ]
+}

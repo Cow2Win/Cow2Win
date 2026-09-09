@@ -1,0 +1,863 @@
+{
+  "guildId": "deutscher-bund",
+  "guildName": "Deutscher Bund",
+  "algorithmName": "",
+  "createdAt": "2026-09-05T16:51:32.098997700",
+  "entries": [
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "Team JE",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1058106,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "Ordensritter",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1092610,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "sIGMo",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 956379,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "Team JE",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1090316,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1102580,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "COCO",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1010229,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Faern",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1126794,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "COCO",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1089357,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "NeoSouls",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1048692,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Ness",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1104493,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Xavier",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1030685,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1390976,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1240112,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Ordensritter",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1083772,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Faern",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1102447,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1178510,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Puschel",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1381269,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Team JE",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1173937,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Xavier",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1038857,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Andy",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1049363,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Hero",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 939559,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Puschel",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1066834,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "ARES",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1072061,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "COCO",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 860162,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Xavier",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1160612,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Puschel",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1108034,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1105423,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1020380,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Hero",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 847068,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Andy",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1027872,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Faern",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 989846,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "NeoSouls",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1199244,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Team JE",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1294167,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Puschel",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1030041,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Ordensritter",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1072976,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1048423,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Jay",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1135684,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Gust0163",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 914767,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "COCO",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1068289,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Vivien",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1089700,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Trofik",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 928741,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "NeoSouls",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1092234,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Andy",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 884664,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "ARES",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 925626,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Vivien",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 611033,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Ness",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 980845,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Arya",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 737831,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "remy",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 676633,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Trofik",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1141618,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Andy",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1117433,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Puschel",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1070181,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Vale",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 909756,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Trofik",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1059840,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Jay",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1055694,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Team JE",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1024863,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Faern",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 925150,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Arya",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 951261,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Vivien",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 888348,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Hero",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 640747,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Paradel",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 927243,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Faern",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 817113,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "COCO",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 746017,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Haselnuss",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1008559,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "NeoSouls",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1180597,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Ordensritter",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1162375,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "NeoSouls",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1164786,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1165701,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Jay",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1181131,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Vivien",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1180176,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "remy",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 826260,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Jay",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 904661,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Hero",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 884284,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 753779,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Serg",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 810499,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "sIGMo",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 731332,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Ness",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 814268,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Ness",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 780598,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Дарий",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 873970,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Gust0163",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 963494,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Andy",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1048843,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Serg",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1091064,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Haselnuss",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1032522,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Jay",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 976617,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "remy",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 653409,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Gust0163",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 470244,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Sargon02",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 513320,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Haselnuss",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1233542,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Vale",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 838467,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Serg",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 840071,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Trofik",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 761378,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Ordensritter",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1100692,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Vale",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1051617,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1071254,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Arya",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1026742,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Paradel",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 976152,
+      "buffFitScore": 0,
+      "weightedScore": 0
+    }
+  ]
+}
