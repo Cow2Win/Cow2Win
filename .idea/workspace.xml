@@ -4,18 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="init3">
-      <change afterPath="$PROJECT_DIR$/src/main/resources/data/default.lineup" afterDir="false" />
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="run setup">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/GuildEditorDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/GuildEditorDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/config.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/myGuild/default.lineup" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/myGuild/guild.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,13 +129,22 @@
       <option name="project" value="LOCAL" />
       <updated>1788929287645</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="run setup">
+      <option name="closed" value="true" />
+      <created>1788978935578</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1788978935578</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
     <MESSAGE value="init2" />
     <MESSAGE value="init3" />
-    <option name="LAST_COMMIT_MESSAGE" value="init3" />
+    <MESSAGE value="run setup" />
+    <option name="LAST_COMMIT_MESSAGE" value="run setup" />
   </component>
 </project>
