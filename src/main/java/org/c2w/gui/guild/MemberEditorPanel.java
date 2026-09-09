@@ -5,17 +5,10 @@ import org.c2w.data.model.Titan;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.LanguageService;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
 

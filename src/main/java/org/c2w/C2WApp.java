@@ -18,19 +18,26 @@ import java.util.List;
 
 public class C2WApp {
 
+    private static final String DEFAULT_GUILD_NAME = "Demo";
     public static final String GUILD_FILE_NAME = "guild.json";
     public static final String LINEUP_FILE_NAME = "default.lineup";
+    private static final Path DEMO_GUILD_PATH = Paths.get("src", "main", "resources", "data", "guild.json");
+    private static final Path DEMO_GUILD_LINEUP = Paths.get("src", "main", "resources", "data", "default.lineup");
 
     public static void main(String[] args) {
-        if (Config.exists()) {
-            Config.load();
-        } else {
+        boolean first = false;
+        if (first = !Config.exists()) {
             runInitialSetup();
         }
 
+        Config.load();
         AppContext context = new AppContext();
         loadGuildContext(context);
         loadLineupContext(context);
+
+        if(first){
+            loadDemo(context);
+        }
 
         SwingUtilities.invokeLater(() -> new Cow2Frame(context));
     }
@@ -41,19 +48,30 @@ public class C2WApp {
      * default.lineup, and writes language/lastGuildPath/lastLineUpPath to a
      * new config.properties.
      */
-    private static void runInitialSetup() {
-        InitialSetupDialog dialog = InitialSetupDialog.show(null);
+    private static void runInitialSetup()  {
 
-        Path guildDir = Paths.get("workspace", dialog.getGuildName());
-        Path guildFilePath = createInitialGuildFile(dialog.getGuildName(), guildDir);
-        Path lineupFilePath = createInitialLineupFile(dialog.getGuildName(), guildDir);
+        Path guildDir = Paths.get("workspace", DEFAULT_GUILD_NAME);
+        Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
+        Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 
-        Config.setLanguage(dialog.getSelectedLanguageFile());
+        Config.setLanguage("english.txt");
         Config.setLastGuildPath(guildFilePath.toString());
         Config.setLastLineUpPath(lineupFilePath.toString());
         Config.save();
     }
 
+    private static void loadDemo(AppContext context){
+
+        try {
+            context.setGuild(GuildRepository.load(DEMO_GUILD_PATH));
+            GuildRepository.save(context.guild(),context.guildFilePath());
+
+            context.setLineup(LineupRepository.load(DEMO_GUILD_LINEUP));
+            LineupRepository.save(context.lineup(),context.lineupFilePath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private static void loadGuildContext(AppContext context) {
         Path guildFilePath = Paths.get(Config.getLastGuildPath());
         Guild guild;

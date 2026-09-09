@@ -1,8 +1,11 @@
 package org.c2w.gui.fort;
 
+import org.c2w.data.model.Fortification;
+import org.c2w.data.model.FortificationType;
+import org.c2w.data.model.Guild;
+import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.gui.common.GridPanel;
-import org.c2w.data.model.*;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
