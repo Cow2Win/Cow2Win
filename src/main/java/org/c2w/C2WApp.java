@@ -4,6 +4,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.gui.Cow2Frame;
 import org.c2w.gui.InitialSetupDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.Config;
@@ -31,7 +32,7 @@ public class C2WApp {
         loadGuildContext(context);
         loadLineupContext(context);
 
-      //  SwingUtilities.invokeLater(() -> new Cow2Frame(guildContext, lineupContext));
+        SwingUtilities.invokeLater(() -> new Cow2Frame(context));
     }
 
     /**

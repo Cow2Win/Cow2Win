@@ -5,23 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="init2">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/LineupAlgorithm.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/LineupAlgorithms.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/AllTeamsOverviewDialog.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/LogPanel.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ReportViewerDialog.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/FlatButton.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/GridPanel.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/LineupSummaryPanel.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,6 +31,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -122,7 +123,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788812336948</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="init2">
+      <option name="closed" value="true" />
+      <created>1788899448645</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1788899448645</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

@@ -1,7 +1,7 @@
 package org.c2w.gui.guild;
 
 
-import org.tdi.cow2.Config;
+import org.c2w.util.Config;
 
 import javax.swing.BorderFactory;
 import javax.swing.ComboBoxModel;
@@ -30,60 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-/**
- * Editor for ONE team (hero or titan team, T = Hero or Titan): a single
- * FlowLayout row with an optional team label, a text field for the team's
- * total power (see {@link org.tdi.cow2.model.HeroTeam#totalPower()} /
- * {@link org.tdi.cow2.model.TitanTeam#totalPower()}, {@link #buildPowerField})
- * and 5 comboboxes, one slot per possible team member (HeroTeam/TitanTeam
- * both allow up to 5), sorted according to the catalogOrder comparator
- * supplied by the caller - heroes by name, titans by element then name (see
- * {@link MemberEditorPanel#buildTeamRows}). {@link MemberEditorPanel} simply
- * stacks several TeamEditorPanel rows on top of each other (see there) -
- * there is no "remove team" button here: the rows are fixed (3 hero + 2
- * titan rows per member); an "empty" team with totalPower 0 is simply
- * dropped on save instead of having to be removed separately (see
- * {@link GuildDraftConverter#toGuild}).
- *
- * Each combo box automatically hides whatever is already selected in one of
- * the other 4 combos - the same hero/titan can therefore not accidentally
- * end up twice in the same team. An empty slot ("- none -") is allowed;
- * empty slots are simply skipped when the selection is read out.
- *
- * Writes changes back into the given {@link TeamDraft} IMMEDIATELY (no
- * separate "apply" step needed) - the TeamDraft is therefore always the
- * current state of this team.
- *
- * title is placed as a plain JLabel at the start of the row (e.g.
- * "Heroes 1"/"Titans 1", see {@link MemberEditorPanel}) - if it is null/blank
- * this label is simply omitted.
- *
- * icon supplies an already appropriately scaled icon per catalog entry (see
- * {@link org.tdi.cow2.gui.IconLoader}). If icon actually returns an icon for
- * an entry, the combo box renderer shows ONLY that icon (no name text
- * anymore) - both in the dropdown list and for the currently selected entry
- * of the combo box itself - and the name is instead available as a tooltip
- * on the respective dropdown entry / on the combo box itself. If icon is
- * null or returns no icon for an entry (e.g. a missing hero/titan icon), the
- * renderer falls back to showing the name as text, as before.
- *
- * roleDescriber is optional (null = no role display, currently the case for
- * titan teams - titans have an element instead of roles) and supplies a
- * display text per catalog entry (e.g. "TANK, SUPPORT"), shown as its own
- * JLabel NEXT TO the respective slot combo box, updated automatically on
- * every selection change in that slot.
- *
- * Each of the 5 slot combos (added 2026-09-05, per explicit user request -
- * see {@link #buildLabelKeySelectionManager()}) also jumps to the first
- * entry whose DISPLAY name (via label) starts with whatever letter(s) the
- * user types while that combo has focus - e.g. typing "y" jumps to
- * "Yasmine" - the same convenience Swing combo boxes normally provide out
- * of the box, EXCEPT that Swing's own default only matches against
- * {@link Object#toString()}, which for T (Hero/Titan, both records with no
- * display name field of their own - see e.g. {@link org.tdi.cow2.model.Hero})
- * never matches the name shown to the user, so this installs a custom
- * {@link JComboBox.KeySelectionManager} per combo instead.
- */
+
 public final class TeamEditorPanel<T> extends JPanel {
 
     private static final int SLOT_COUNT = 5;
@@ -269,26 +216,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         };
     }
 
-    /**
-     * Builds the power text field: a plain JTextField (rather than a
-     * JSpinner) that only allows digits and at most MAX_POWER_DIGITS of them
-     * via a DocumentFilter (see {@link DigitsOnlyFilter}) - both while typing
-     * and when pasting excess/invalid characters. Writes the parsed value
-     * (empty field = 0) back into teamDraft.totalPower on every change, just
-     * like the selection combo boxes.
-     *
-     * Right-aligned, and displayed formatted via {@link Config#NUMBER_FORMAT}
-     * (e.g. "1.234.567") whenever the field does NOT have focus. While the
-     * field has focus it instead shows the plain digits, since
-     * {@link Config#NUMBER_FORMAT}'s grouping separators are not part of
-     * {@link DigitsOnlyFilter}'s allowed character set and would otherwise
-     * get in the way of typing/caret placement. The reformatting on
-     * focus gained/lost is done via {@link #setPowerFieldText}, which both
-     * suppresses the DocumentFilter (so the separators actually make it into
-     * the field) and marks the change as programmatic (see
-     * {@link #formattingPowerField}) so it does not spuriously touch
-     * teamDraft.lastModified.
-     */
+
     private JTextField buildPowerField(TeamDraft<T> teamDraft) {
         JTextField powerField = new JTextField(Config.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
         powerField.setHorizontalAlignment(JTextField.RIGHT);
@@ -315,15 +243,6 @@ public final class TeamEditorPanel<T> extends JPanel {
         return powerField;
     }
 
-    /**
-     * Programmatically replaces the power field's text (used to switch
-     * between the plain-digits and {@link Config#NUMBER_FORMAT}-formatted
-     * display on focus gained/lost, see {@link #buildPowerField}) without
-     * running into {@link DigitsOnlyFilter} - which would otherwise strip
-     * {@link Config#NUMBER_FORMAT}'s grouping separators right back out -
-     * and without the resulting document event being mistaken for a real
-     * user edit (see {@link #formattingPowerField}).
-     */
     private void setPowerFieldText(JTextField powerField, String text) {
         formattingPowerField = true;
         PlainDocument document = (PlainDocument) powerField.getDocument();
