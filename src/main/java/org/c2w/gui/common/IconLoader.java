@@ -2,13 +2,23 @@ package org.c2w.gui.common;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class IconLoader {
 
+    public static final Color GREEN = new Color(78,133,66);
+    public static final Color BLUE = new Color(27,88,124);
+    public static final Color RED = new Color(159,41,54);
+    public static final Color PURPLE = new Color(96,72,120);
+    public static final Color GRAY = new Color(50,50,50);
+
     private static final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();
+
+    /** RGB mask (alpha channel excluded) of a fully black pixel - see {@link #iconFor(String, int, Color)}. */
+    private static final int BLACK_RGB_MASK = 0x00FFFFFF;
 
     private IconLoader() {
     }
@@ -30,6 +40,34 @@ public final class IconLoader {
         return loaded;
     }
 
+    /**
+     * Same as {@link #iconFor(String, int)}, but every fully black pixel
+     * (RGB 0,0,0 - transparency/alpha of each pixel is kept as-is) of the
+     * scaled image is overwritten with the given color, so e.g. a black
+     * icon glyph can be recolored without needing a separate image file per
+     * color. Every other pixel is left untouched, so non-black icon
+     * content (anti-aliased edges, other colors) is unaffected.
+     *
+     * @return the recolored icon, or null if the image was not found
+     */
+    public static ImageIcon iconFor(String imagePath, int size, Color color) {
+        if (imagePath == null || imagePath.isBlank() || color == null) {
+            return null;
+        }
+        String cacheKey = imagePath + "@" + size + "@" + color.getRGB();
+        ImageIcon cached = cache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+        ImageIcon loaded = loadScaledIcon(imagePath, size);
+        if (loaded == null) {
+            return null;
+        }
+        ImageIcon recolored = recolorBlackPixels(loaded, color);
+        cache.put(cacheKey, recolored);
+        return recolored;
+    }
+
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
         URL resource = IconLoader.class.getResource(imagePath);
         if (resource == null) {
@@ -39,5 +77,27 @@ public final class IconLoader {
         ImageIcon original = new ImageIcon(resource);
         Image scaled = original.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
         return new ImageIcon(scaled);
+    }
+
+    /** Draws {@code icon} into an ARGB {@link BufferedImage} and replaces every fully black pixel's RGB with {@code color}'s, keeping each pixel's original alpha. */
+    private static ImageIcon recolorBlackPixels(ImageIcon icon, Color color) {
+        int width = icon.getIconWidth();
+        int height = icon.getIconHeight();
+        BufferedImage buffered = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = buffered.createGraphics();
+        g.drawImage(icon.getImage(), 0, 0, null);
+        g.dispose();
+
+        int replacementRgb = color.getRGB() & BLACK_RGB_MASK;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int argb = buffered.getRGB(x, y);
+                if ((argb & BLACK_RGB_MASK) == 0) {
+                    int alpha = argb & 0xFF000000;
+                    buffered.setRGB(x, y, alpha | replacementRgb);
+                }
+            }
+        }
+        return new ImageIcon(buffered);
     }
 }

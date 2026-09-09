@@ -4,8 +4,6 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.eval.LineupAlgorithm;
-import org.c2w.eval.LineupAlgorithms;
-import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.util.AppContext;
@@ -34,48 +32,7 @@ public class TeamsOverviewPanel extends JPanel {
      * just like the column headers (see {@link #COLUMN_KEY_POWER} and
      * friends) and the hero/titan/fortification names themselves.
      */
-    /**
-     * Language file key (see resources/language/*.txt) for the tooltip of
-     * the "save guild" toolbar button (see {@link #buildToolbarPanel()}).
-     */
-    private static final String KEY_SAVE_GUILD = "teamsOverview.saveGuild";
-
-    /** Classpath path of the "save guild" button's icon (see {@link IconLoader}). */
-    private static final String ICON_SAVE_GUILD = "/images/app/save.png";
-
     private static final String KEY_NO_FORTIFICATION = "common.none";
-
-    /** Target size of the toolbar buttons' icons. */
-    private static final int TOOLBAR_ICON_SIZE = 20;
-
-    /**
-     * Language file key (see resources/language/*.txt) for the tooltip of
-     * the "open guild editor" toolbar button (see
-     * {@link #buildToolbarPanel()}).
-     */
-    private static final String KEY_OPEN_GUILD_EDITOR = "teamsOverview.openGuildEditor";
-
-    /** Classpath path of the "open guild editor" button's icon (see {@link IconLoader}). */
-    private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
-
-    /**
-     * Language file key (see resources/language/*.txt) for the label in
-     * front of the algorithm combo box (see {@link #buildToolbarPanel()}).
-     * Renamed from "toolbar.algorithm" when this combo box moved here
-     * (2026-09-03) from {@code org.tdi.cow2.gui.ToolbarPanel}, to match this
-     * class's own "teamsOverview.*" key naming.
-     */
-    private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
-
-    /**
-     * Language file key (see resources/language/*.txt) for the tooltip of
-     * the "run algorithm" toolbar button (see {@link #onRunAlgorithm()}).
-     * Renamed from "toolbar.runAlgorithm", same move as {@link #KEY_ALGORITHM_LABEL}.
-     */
-    private static final String KEY_RUN_ALGORITHM = "teamsOverview.runAlgorithm";
-
-    /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
-    private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
 
     /** Target size of the member icons (Heroes/Titans column). */
     private static final int MEMBER_ICON_SIZE = 24;
@@ -93,10 +50,6 @@ public class TeamsOverviewPanel extends JPanel {
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
 
-
-    private final Runnable openGuildEditor;
-
-    private final JLabel statusLabel = new JLabel(" ");
     private final TeamOverviewTableModel<Hero> heroModel =
             new TeamOverviewTableModel<>(COLUMN_KEY_HEROES, this::handleFortificationSelected, this::handlePowerEdited,
                     this::markGuildEdited);
@@ -105,10 +58,8 @@ public class TeamsOverviewPanel extends JPanel {
                     this::markGuildEdited);
     private final JTable heroTable = new JTable(heroModel);
     private final JTable titanTable = new JTable(titanModel);
-    private final JComboBox<LineupAlgorithm> algorithmCombo = new JComboBox<>();
 
-    public TeamsOverviewPanel(AppContext appContext,
-                              FortificationMapPanel fortificationMapPanel, Runnable openGuildEditor) {
+    public TeamsOverviewPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel) {
         super(new BorderLayout(8, 8));
         if (appContext == null) {
             throw new IllegalArgumentException("TeamsOverviewPanel needs appContext");
@@ -117,13 +68,9 @@ public class TeamsOverviewPanel extends JPanel {
         if (fortificationMapPanel == null) {
             throw new IllegalArgumentException("TeamsOverviewPanel needs a fortificationMapPanel");
         }
-        if (openGuildEditor == null) {
-            throw new IllegalArgumentException("TeamsOverviewPanel needs an openGuildEditor callback");
-        }
         this.appContext = appContext;
 
         this.fortificationMapPanel = fortificationMapPanel;
-        this.openGuildEditor = openGuildEditor;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         java.util.List<Fortification> fortificationCatalog = FortificationRepository.findAll();
@@ -137,7 +84,6 @@ public class TeamsOverviewPanel extends JPanel {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_HEROES), new JScrollPane(heroTable));
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_TITANS), new JScrollPane(titanTable));
-        add(buildToolbarPanel(), BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
 
         refreshTables();
@@ -191,53 +137,19 @@ public class TeamsOverviewPanel extends JPanel {
     }
 
 
-    private JPanel buildToolbarPanel() {
-        JPanel panel = new JPanel(new BorderLayout(8, 0));
-
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-
-        FlatButton saveGuildButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE));
-        saveGuildButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
-        saveGuildButton.addActionListener(e -> onSaveGuild());
-        buttons.add(saveGuildButton);
-
-        FlatButton openGuildEditorButton =
-                new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_EDITOR, TOOLBAR_ICON_SIZE));
-        openGuildEditorButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
-        openGuildEditorButton.addActionListener(e -> openGuildEditor.run());
-        buttons.add(openGuildEditorButton);
-
-        buttons.add(new JLabel(LanguageService.displayName(KEY_ALGORITHM_LABEL)));
-        LineupAlgorithms.ALL.forEach(algorithmCombo::addItem);
-        algorithmCombo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof LineupAlgorithm algorithm) {
-                    setText(algorithm.displayName());
-                }
-                return this;
-            }
-        });
-        buttons.add(algorithmCombo);
-
-        FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE));
-        runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
-        runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
-        buttons.add(runAlgorithmButton);
-
-        panel.add(buttons, BorderLayout.WEST);
-        panel.add(statusLabel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-
-    private void onRunAlgorithm() {
-        LineupAlgorithm algorithm = (LineupAlgorithm) algorithmCombo.getSelectedItem();
+    /**
+     * Runs the given algorithm against the current lineup/guild and
+     * refreshes this panel's tables/{@link #fortificationMapPanel}
+     * accordingly - triggered by the algorithm/"run algorithm" toolbar
+     * controls, which live in {@link ToolbarPanel} (moved there 2026-09-09
+     * along with the "save guild"/"open guild editor" buttons, see
+     * {@link #saveGuild()}), since this panel no longer has a toolbar of its
+     * own. Returns the number of teams newly assigned to a fortification by
+     * the run, so the caller can report it (e.g. in a status label).
+     */
+    public int runAlgorithm(LineupAlgorithm algorithm) {
         if (algorithm == null) {
-            return;
+            return 0;
         }
         Lineup currentLineup = appContext.lineup();
         Lineup updatedLineup = algorithm.run(currentLineup, appContext.guild());
@@ -248,11 +160,17 @@ public class TeamsOverviewPanel extends JPanel {
         }
         fortificationMapPanel.refresh(updatedLineup);
         refreshTables();
-        statusLabel.setText(algorithm.displayName() + ": " + assigned + " team(s) newly assigned.");
+        return assigned;
     }
 
 
-    private void onSaveGuild() {
+    /**
+     * Saves the current guild (with whatever's currently in the tables, see
+     * {@link #guildWithCurrentSelection()}) to disk - triggered by the "save
+     * guild" toolbar button, which lives in {@link ToolbarPanel} (see
+     * {@link #runAlgorithm} for why).
+     */
+    public void saveGuild() {
         try {
             Guild updated = guildWithCurrentSelection();
             GuildRepository.save(updated, appContext.guildFilePath());

@@ -4,8 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="run setup">
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add guilds for testing">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/FortificationType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/FortificationType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/FlatButton.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/FlatButton.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/GuildEditorDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/GuildEditorDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,21 +60,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.C2WApp.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/tdiet/IdeaProjects/Cow2Win/src/main/resources/data",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.keymap"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.C2WApp.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/tdiet/IdeaProjects/Cow2Win/src/main/resources/data&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\tdiet\IdeaProjects\Cow2Win\src\main\resources\data" />
@@ -137,7 +148,47 @@
       <option name="project" value="LOCAL" />
       <updated>1788978935578</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="add guilds for testing">
+      <option name="closed" value="true" />
+      <created>1788979542610</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1788979542610</updated>
+    </task>
+    <task id="LOCAL-00007" summary="add guilds for testing">
+      <option name="closed" value="true" />
+      <created>1788979547434</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1788979547434</updated>
+    </task>
+    <task id="LOCAL-00008" summary="add guilds for testing">
+      <option name="closed" value="true" />
+      <created>1788979552276</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1788979552276</updated>
+    </task>
+    <task id="LOCAL-00009" summary="add guilds for testing">
+      <option name="closed" value="true" />
+      <created>1788979566811</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1788979566811</updated>
+    </task>
+    <task id="LOCAL-00010" summary="add guilds for testing">
+      <option name="closed" value="true" />
+      <created>1788979604647</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1788979604647</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -145,6 +196,7 @@
     <MESSAGE value="init2" />
     <MESSAGE value="init3" />
     <MESSAGE value="run setup" />
-    <option name="LAST_COMMIT_MESSAGE" value="run setup" />
+    <MESSAGE value="add guilds for testing" />
+    <option name="LAST_COMMIT_MESSAGE" value="add guilds for testing" />
   </component>
 </project>

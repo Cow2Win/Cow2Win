@@ -15,5 +15,16 @@ public class FlatButton extends JButton {
         setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
+
+    public FlatButton(Icon icon, boolean withCursor) {
+        super(icon);
+        setBorderPainted(false);
+        setContentAreaFilled(false);
+        setFocusPainted(false);
+        setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+        if(withCursor) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+    }
 }
 

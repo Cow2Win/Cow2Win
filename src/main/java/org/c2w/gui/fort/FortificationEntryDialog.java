@@ -308,7 +308,7 @@ public final class FortificationEntryDialog extends JDialog {
     private JPanel buildToolbarPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 0));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_TEAMS, TOOLBAR_ICON_SIZE));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_TEAMS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_TEAMS));
         saveButton.addActionListener(e -> saveAction.run());
         buttons.add(saveButton);

@@ -1,6 +1,7 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.data.model.FortificationType;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
@@ -46,8 +47,8 @@ public class FortificationPanel extends JPanel {
      * Initializes the panel layout and components.
      */
     private void init(){
-        slot_open = IconLoader.iconFor("/images/app/square.png",24);
-        slot_set = IconLoader.iconFor("/images/app/square-team.png",24);
+        slot_open = IconLoader.iconFor(fortification.type().getSlot_open(), 24,fortification.type().getColor() );
+        slot_set = IconLoader.iconFor(fortification.type().getSlot_set(), 24,fortification.type().getColor() );
         setLayout(new FlowLayout());
         add(getHeaderPanel());
 
@@ -62,7 +63,7 @@ public class FortificationPanel extends JPanel {
     private JLabel getDisplayLbl(){
         if(displayLbl == null){
             displayLbl = new JLabel(LanguageService.displayName(fortification.id()),JLabel.CENTER);
-            displayLbl.setBackground(Color.GRAY);
+            displayLbl.setBackground(fortification.type().getColor());
             displayLbl.setForeground(Color.WHITE);
             displayLbl.setOpaque(true);
             displayLbl.setPreferredSize(new Dimension(160,20));
@@ -132,6 +133,7 @@ public class FortificationPanel extends JPanel {
             if(fortification.buff() != null){
                 buffPercentLbl.setText(buffPercent + "%");
                 buffPercentLbl.setToolTipText(fortification.buff().display());
+                buffPercentLbl.setForeground(fortification.type().getColor());
             }
 
         }
@@ -141,6 +143,7 @@ public class FortificationPanel extends JPanel {
     private JLabel getPowerLabel(){
         if(powerlbl == null){
             powerlbl = new JLabel(Config.NUMBER_FORMAT.format(totalPower),JLabel.RIGHT);
+            powerlbl.setForeground(fortification.type().getColor());
         }
         return powerlbl;
     }
@@ -155,7 +158,7 @@ public class FortificationPanel extends JPanel {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p,BoxLayout.LINE_AXIS));
         for (int i = 0; i < fortification.capacity() ; i++) {
-            p.add(new FlatButton(i<filledSlots ?  slot_set : slot_open));
+            p.add(new FlatButton(i<filledSlots ?  slot_set : slot_open, false));
             //p.add(getSlot(i<filledSlots));
         }
 

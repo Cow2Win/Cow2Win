@@ -51,10 +51,15 @@ public class Cow2Frame extends JFrame {
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
-        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, this::onGuildSwitched);
 
-        this.teamsOverviewPanel = new TeamsOverviewPanel(appContext, fortificationMapPanel,
-                this::onOpenGuildEditor);
+        // teamsOverviewPanel is built before toolbarPanel (unlike before
+        // 2026-09-09) since toolbarPanel now needs a direct reference to it
+        // for the "save guild"/"run algorithm" controls moved into it from
+        // teamsOverviewPanel's own (now removed) toolbar - see ToolbarPanel's
+        // class-level KEY_SAVE_GUILD Javadoc.
+        this.teamsOverviewPanel = new TeamsOverviewPanel(appContext, fortificationMapPanel);
+        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, teamsOverviewPanel,
+                this::onOpenGuildEditor, this::onGuildSwitched);
         // FortificationMapPanel is built before teamsOverviewPanel exists (see
         // above), so it cannot take this as a constructor argument - wired up
         // via a setter instead, so a FortificationEntryDialog save (see

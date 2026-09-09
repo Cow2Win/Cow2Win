@@ -78,7 +78,7 @@ public final class GuildEditorDialog extends JDialog {
 
         // Refreshes the last-saved timestamp whenever this non-modal dialog
         // regains focus, since the guild file can be saved from elsewhere
-        // (TeamsOverviewPanel's own "save guild" button) while this dialog
+        // (ToolbarPanel's "save guild" button) while this dialog
         // stays open - see class Javadoc.
         addWindowFocusListener(new WindowAdapter() {
             @Override
@@ -87,7 +87,8 @@ public final class GuildEditorDialog extends JDialog {
             }
         });
 
-        setSize(900, 600);
+        setSize(750, 500);
+        setResizable(false);
         setLocationRelativeTo(owner);
     }
 
@@ -121,17 +122,17 @@ public final class GuildEditorDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout(8, 0));
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE,IconLoader.BLUE));
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
         saveButton.addActionListener(e -> onSaveGuild());
         buttons.add(saveButton);
 
-        FlatButton addMemberButton = new FlatButton(IconLoader.iconFor(ICON_ADD_MEMBER, TOOLBAR_ICON_SIZE));
+        FlatButton addMemberButton = new FlatButton(IconLoader.iconFor(ICON_ADD_MEMBER, TOOLBAR_ICON_SIZE,IconLoader.GREEN));
         addMemberButton.setToolTipText(LanguageService.displayName(KEY_ADD_MEMBER));
         addMemberButton.addActionListener(e -> onAddMember());
         buttons.add(addMemberButton);
 
-        FlatButton removeMemberButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_MEMBER, TOOLBAR_ICON_SIZE));
+        FlatButton removeMemberButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_MEMBER, TOOLBAR_ICON_SIZE,IconLoader.RED));
         removeMemberButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_MEMBER));
         removeMemberButton.addActionListener(e -> onRemoveMember());
         buttons.add(removeMemberButton);

@@ -63,7 +63,7 @@ final class MemberEditorPanel extends JPanel {
         ensureTeamCount(memberDraft.titanTeams, MAX_TITAN_TEAMS);
 
         add(buildHeaderPanel(), BorderLayout.NORTH);
-        add(new JScrollPane(buildTeamRows(heroCatalog, titanCatalog)), BorderLayout.CENTER);
+        add(buildTeamRows(heroCatalog, titanCatalog), BorderLayout.CENTER);
     }
 
     /** Pads teams with empty TeamDraft entries as needed, until exactly maxCount entries exist (see class Javadoc). */
@@ -82,8 +82,8 @@ final class MemberEditorPanel extends JPanel {
      */
     private JPanel buildHeaderPanel() {
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        header.add(new JLabel("Name:"));
         JTextField nameField = new JTextField(memberDraft.name, 20);
+        nameField.setPreferredSize(new Dimension(100,20));
         nameField.getDocument().addDocumentListener(onChange(() -> memberDraft.name = nameField.getText().trim()));
         header.add(nameField);
         return header;

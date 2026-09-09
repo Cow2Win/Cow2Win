@@ -5,6 +5,8 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
@@ -81,16 +83,62 @@ public class ToolbarPanel extends JPanel {
 
     private static final String HERO_WARS_URL = "https://www.hero-wars.com/";
 
+    /**
+     * Language file key (see resources/language/*.txt) for the tooltip of
+     * the "save guild" button (see {@link #onSaveGuild()}). Moved here
+     * (2026-09-09) from {@code TeamsOverviewPanel} together with every other
+     * toolbar control that used to live in that class's own toolbar - kept
+     * its "teamsOverview.*" key naming (no language file changes needed).
+     */
+    private static final String KEY_SAVE_GUILD = "teamsOverview.saveGuild";
+
+    /** Classpath path of the "save guild" button's icon (see {@link IconLoader}). */
+    private static final String ICON_SAVE_GUILD = "/images/app/save.png";
+
+    /** Language file key (see resources/language/*.txt) for the tooltip of the "open guild editor" button (see {@link #openGuildEditor}). */
+    private static final String KEY_OPEN_GUILD_EDITOR = "teamsOverview.openGuildEditor";
+
+    /** Classpath path of the "open guild editor" button's icon (see {@link IconLoader}). */
+    private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
+
+    /** Language file key (see resources/language/*.txt) for the label in front of the algorithm combo box. */
+    private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
+
+    /** Language file key (see resources/language/*.txt) for the tooltip of the "run algorithm" button (see {@link #onRunAlgorithm()}). */
+    private static final String KEY_RUN_ALGORITHM = "teamsOverview.runAlgorithm";
+
+    /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
+    private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
+
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
 
-    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@link #onNewGuild()}) - passed in from the outside since this panel has no reference to {@code TeamsOverviewPanel}/the window title it also needs to refresh, analogous to how {@code Cow2Frame#onOpenGuildEditor} is passed into {@code TeamsOverviewPanel}. */
+    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@link #onNewGuild()}) - passed in from the outside since this panel has no reference to {@code TeamsOverviewPanel}'s window title, which also needs refreshing. */
     private final Runnable onGuildSwitched;
+
+    /** Opens the guild editor dialog (see {@code Cow2Frame#onOpenGuildEditor}) - passed in from the outside for the same reason as {@link #onGuildSwitched}. */
+    private final Runnable openGuildEditor;
+
+    /**
+     * The panel whose "save guild"/"run algorithm" actions the
+     * corresponding buttons below trigger - this panel owns the guild/team
+     * data those actions work on (see {@link TeamsOverviewPanel#saveGuild()}/
+     * {@link TeamsOverviewPanel#runAlgorithm}), so unlike every other
+     * control in this toolbar, those two need a direct reference to it
+     * rather than just a callback.
+     */
+    private final TeamsOverviewPanel teamsOverviewPanel;
 
     private final JComboBox<String> lineupCombo = new JComboBox<>();
 
     /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - added 2026-09-05, sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
+
+    /** Lists the available lineup algorithms (see {@link #onRunAlgorithm()}) - moved here 2026-09-09 from {@code TeamsOverviewPanel}, see {@link #KEY_SAVE_GUILD}. */
+    private final JComboBox<LineupAlgorithm> algorithmCombo = new JComboBox<>();
+
+    /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}) - moved here 2026-09-09, see {@link #KEY_SAVE_GUILD}. */
+    private final JLabel statusLabel = new JLabel(" ");
 
     /**
      * True while {@link #populateLineupCombo()} is (re)building the combo
@@ -106,7 +154,7 @@ public class ToolbarPanel extends JPanel {
     private boolean populatingGuildCombo = false;
 
     public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel,
-                        Runnable onGuildSwitched) {
+                        TeamsOverviewPanel teamsOverviewPanel, Runnable openGuildEditor, Runnable onGuildSwitched) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 4));
         if (appContext == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a guildContext");
@@ -114,11 +162,19 @@ public class ToolbarPanel extends JPanel {
         if (fortificationMapPanel == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a fortificationMapPanel");
         }
+        if (teamsOverviewPanel == null) {
+            throw new IllegalArgumentException("ToolbarPanel needs a teamsOverviewPanel");
+        }
+        if (openGuildEditor == null) {
+            throw new IllegalArgumentException("ToolbarPanel needs an openGuildEditor callback");
+        }
         if (onGuildSwitched == null) {
             throw new IllegalArgumentException("ToolbarPanel needs an onGuildSwitched callback");
         }
         this.appContext = appContext;
         this.fortificationMapPanel = fortificationMapPanel;
+        this.teamsOverviewPanel = teamsOverviewPanel;
+        this.openGuildEditor = openGuildEditor;
         this.onGuildSwitched = onGuildSwitched;
 
         // Leftmost of all (added first, before every other toolbar control -
@@ -137,10 +193,25 @@ public class ToolbarPanel extends JPanel {
             }
         });
 
-        FlatButton newGuildButton = new FlatButton(IconLoader.iconFor(ICON_NEW_GUILD, TOOLBAR_ICON_SIZE));
+
+        FlatButton saveGuildButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE,IconLoader.BLUE));
+        saveGuildButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
+        saveGuildButton.addActionListener(e -> onSaveGuild());
+        add(saveGuildButton);
+
+        FlatButton newGuildButton = new FlatButton(IconLoader.iconFor(ICON_NEW_GUILD, TOOLBAR_ICON_SIZE,IconLoader.GREEN));
         newGuildButton.setToolTipText(LanguageService.displayName(KEY_NEW_GUILD));
         newGuildButton.addActionListener(e -> onNewGuild());
         add(newGuildButton);
+
+
+
+        FlatButton openGuildEditorButton =
+                new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_EDITOR, TOOLBAR_ICON_SIZE));
+        openGuildEditorButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
+        openGuildEditorButton.addActionListener(e -> openGuildEditor.run());
+        add(openGuildEditorButton);
+
 
         JSeparator guildLineupSeparator = new JSeparator(SwingConstants.VERTICAL);
         guildLineupSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -166,17 +237,17 @@ public class ToolbarPanel extends JPanel {
             }
         });
 
-        FlatButton saveLineupButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_LINEUP, TOOLBAR_ICON_SIZE));
+        FlatButton saveLineupButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         saveLineupButton.setToolTipText(LanguageService.displayName(KEY_SAVE_LINEUP));
         saveLineupButton.addActionListener(e -> onSaveLineup());
         add(saveLineupButton);
 
-        FlatButton newLineupButton = new FlatButton(IconLoader.iconFor(ICON_NEW_LINEUP, TOOLBAR_ICON_SIZE));
+        FlatButton newLineupButton = new FlatButton(IconLoader.iconFor(ICON_NEW_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.GREEN));
         newLineupButton.setToolTipText(LanguageService.displayName(KEY_NEW_LINEUP));
         newLineupButton.addActionListener(e -> onNewLineup());
         add(newLineupButton);
 
-        FlatButton removeLineupButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_LINEUP, TOOLBAR_ICON_SIZE));
+        FlatButton removeLineupButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.RED));
         removeLineupButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_LINEUP));
         removeLineupButton.addActionListener(e -> onRemoveLineup());
         add(removeLineupButton);
@@ -195,6 +266,28 @@ public class ToolbarPanel extends JPanel {
         allTeamsButton.setToolTipText(LanguageService.displayName(KEY_ALL_TEAMS));
         allTeamsButton.addActionListener(e -> onOpenAllTeams());
         add(allTeamsButton);
+
+        FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE));
+        runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
+        runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
+        add(runAlgorithmButton);
+
+        add(statusLabel);
+    }
+
+
+    private void onRunAlgorithm() {
+        LineupAlgorithm algorithm =  LineupAlgorithms.ALL.get(0);
+        if (algorithm == null) {
+            return;
+        }
+        int assigned = teamsOverviewPanel.runAlgorithm(algorithm);
+        Logger.log(algorithm.displayName() + ": " + assigned + " team(s) newly assigned.");
+    }
+
+
+    private void onSaveGuild() {
+        teamsOverviewPanel.saveGuild();
     }
 
 

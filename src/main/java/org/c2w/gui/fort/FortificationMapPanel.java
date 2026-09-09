@@ -96,7 +96,10 @@ public class FortificationMapPanel extends GridPanel {
                     appContext, this));
         }
 
-        setComponentAt(0, 0, new LineupSummaryPanel(lineup, guild));
+        clearCellAt(0,0);
+        if(showHeroFortifications || showTitanFortifications) {
+             setComponentAt(0, 0, new LineupSummaryPanel(lineup, guild));
+        }
         setComponentAt(0, 4, buildTypeFilterPanel());
     }
 
@@ -114,12 +117,14 @@ public class FortificationMapPanel extends GridPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
 
         JCheckBox showHeroesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_HEROES), showHeroFortifications);
+        showHeroesCheckbox.setForeground(FortificationType.HERO.getColor());
         showHeroesCheckbox.addActionListener(e -> {
             showHeroFortifications = showHeroesCheckbox.isSelected();
             init();
         });
 
         JCheckBox showTitansCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_TITANS), showTitanFortifications);
+        showTitansCheckbox.setForeground(FortificationType.TITAN.getColor());
         showTitansCheckbox.addActionListener(e -> {
             showTitanFortifications = showTitansCheckbox.isSelected();
             init();
