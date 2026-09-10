@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
 import org.c2w.util.JsonSupport;
+import org.c2w.util.Logger;
 
 import java.io.IOException;
 import java.util.*;
@@ -95,6 +96,8 @@ public class HeroRepository {
         List<Role> roles = parseRoles(obj);
 
         if (id == null || id.isBlank() || roles.isEmpty()) {
+            Logger.log("heroes.json: skipping invalid hero entry (id=" + id + "): "
+                    + (id == null || id.isBlank() ? "missing/blank id" : "no valid role"));
             return null;
         }
 
@@ -103,11 +106,12 @@ public class HeroRepository {
 
     private static List<Role> parseRoles(JsonObject obj) {
         List<Role> roles = new ArrayList<>();
+        String heroId = JsonSupport.getStringOrNull(obj, "id");
         for (String roleName : JsonSupport.getStringList(obj, "roles")) {
             try {
                 roles.add(Role.valueOf(roleName.trim()));
             } catch (IllegalArgumentException e) {
-                // Ignore (or log) unknown role
+                Logger.log("heroes.json: hero '" + heroId + "' has unknown role '" + roleName + "', ignoring it");
             }
         }
         return roles;

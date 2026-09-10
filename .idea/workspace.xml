@@ -4,25 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add Colors to the buttons">
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/FortificationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/FortificationRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/GuildRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/GuildRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/LineupRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/LineupRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/TeamEditorPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/AppContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/AppContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/deutsch.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/deutsch.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/english.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/english.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/francais.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/francais.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/Demo/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/Demo/default.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/config.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -316,7 +303,23 @@
       <option name="project" value="LOCAL" />
       <updated>1788987562165</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox">
+      <option name="closed" value="true" />
+      <created>1789056600937</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1789056600937</updated>
+    </task>
+    <task id="LOCAL-00013" summary="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox">
+      <option name="closed" value="true" />
+      <created>1789056612958</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1789056612958</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -326,6 +329,7 @@
     <MESSAGE value="run setup" />
     <MESSAGE value="add guilds for testing" />
     <MESSAGE value="add Colors to the buttons" />
-    <option name="LAST_COMMIT_MESSAGE" value="add Colors to the buttons" />
+    <MESSAGE value="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox" />
+    <option name="LAST_COMMIT_MESSAGE" value="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox" />
   </component>
 </project>

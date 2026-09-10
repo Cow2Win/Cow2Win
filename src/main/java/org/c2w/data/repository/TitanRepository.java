@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.util.JsonSupport;
+import org.c2w.util.Logger;
 
 import java.io.IOException;
 import java.util.*;
@@ -105,6 +106,7 @@ public class TitanRepository {
         String image = JsonSupport.getStringOrNull(obj, "image");
 
         if (id == null || id.isBlank() || elementStr == null || elementStr.isBlank()) {
+            Logger.log("titans.json: skipping invalid titan entry (id=" + id + "): missing/blank id or element");
             return null;
         }
 
@@ -112,6 +114,7 @@ public class TitanRepository {
         try {
             element = TitanElement.valueOf(elementStr);
         } catch (IllegalArgumentException e) {
+            Logger.log("titans.json: titan '" + id + "' has unknown element '" + elementStr + "', skipping it");
             return null;
         }
 
