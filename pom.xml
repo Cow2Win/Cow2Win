@@ -14,7 +14,38 @@
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gson.version>2.13.2</gson.version>
+        <junit.version>5.14.4</junit.version>
+        <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
     </properties>
+    <dependencies>
+        <!-- JSON (de)serialization for the data/repository catalog and workspace files -
+             replaces the previous hand-rolled, dependency-free JSON parsers/writers (see
+             git history before 2026-09-10). -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
+        <!-- Test framework (added 2026-09-10, first tests: BestPossibleLineupAlgorithmTest). -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <!-- Explicit version so Maven's default (which may not understand the JUnit
+                 Platform) doesn't silently skip the tests above. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
     <distributionManagement>
         <repository>
             <id>local-repo</id>

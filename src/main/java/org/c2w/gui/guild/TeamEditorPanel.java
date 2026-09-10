@@ -49,6 +49,23 @@ public final class TeamEditorPanel<T> extends JPanel {
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                     Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
                     Comparator<T> catalogOrder) {
+        this(catalog, label, icon, roleDescriber, teamDraft, emptyLabel, catalogOrder, null);
+    }
+
+    /**
+     * Same as {@link #TeamEditorPanel(List, Function, Function, Function, TeamDraft, String, Comparator)},
+     * with an additional callback invoked every time a slot selection change
+     * actually updates {@code teamDraft.members} (i.e. alongside
+     * {@link #touchLastModified()} - NOT for the initial population from the
+     * given draft, same as that method) - added 2026-09-10 so a caller like
+     * {@code org.c2w.gui.fort.FortificationEntryDialog} can keep a label
+     * derived from this team's current members (e.g. a buff-member count) in
+     * sync without polling. {@code onChanged} may be null (no-op), same as
+     * {@code roleDescriber}.
+     */
+    public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
+                    Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
+                    Comparator<T> catalogOrder, Runnable onChanged) {
         super(new FlowLayout(FlowLayout.LEFT, 6, 4));
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
@@ -140,6 +157,9 @@ public final class TeamEditorPanel<T> extends JPanel {
                 updateRoleLabels();
                 updateComboTooltips();
                 touchLastModified();
+                if (onChanged != null) {
+                    onChanged.run();
+                }
             });
         }
     }

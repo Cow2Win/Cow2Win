@@ -9,6 +9,7 @@ import org.c2w.gui.common.GridPanel;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
+import org.c2w.util.LineupBaseline;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +25,9 @@ public class FortificationMapPanel extends GridPanel {
     /** Language file key (see resources/language/*.txt) for the "show titans" checkbox label. */
     private static final String KEY_SHOW_TITANS = "fortificationMap.showTitans";
 
+    /** Language file key (see resources/language/*.txt) for the "changes" checkbox label. */
+    private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
+
     private final AppContext appContext;
     private Lineup lineup;
     private Guild guild;
@@ -31,6 +35,9 @@ public class FortificationMapPanel extends GridPanel {
     private Runnable onGuildChangedElsewhere;
     private boolean showHeroFortifications = true;
     private boolean showTitanFortifications = true;
+
+    /** True while the "Changes" checkbox (see {@link #buildTypeFilterPanel()}) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
+    private boolean showChanges = false;
 
     public FortificationMapPanel(AppContext appContext){
         super(8,5);
@@ -92,8 +99,15 @@ public class FortificationMapPanel extends GridPanel {
                     fort.id(), lineup, guild, fort);
             int filledSlots = filledSlotsMap.getOrDefault(fort.id(), 0);
             int totalPower = totalPowerMap.getOrDefault(fort.id(), 0);
-            setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower, buffPercent,
-                    appContext, this));
+            // No baseline entry means this fortification had no team assigned when the lineup was loaded (see AppContext#set(Lineup, Path)) - treat that as a loaded totalPower/buffMemberCount of 0, so anything now assigned here shows up as a full gain.
+            LineupBaseline loadedBaseline = appContext.loadedFortificationBaseline(fort.id());
+            int totalPowerDiff = totalPower - (loadedBaseline == null ? 0 : loadedBaseline.totalPower());
+            // buffPercent = matching members x buff.bonusPercent() (see BuffCalculationService#calculateBuffForFortification) - the loaded side of the diff is derived from the baseline's buffMemberCount the same way, rather than caching buffPercent itself.
+            int loadedBuffPercent = (loadedBaseline == null || fort.buff() == null)
+                    ? 0 : (int) (loadedBaseline.buffMemberCount() * fort.buff().bonusPercent());
+            int buffPercentDiff = buffPercent - loadedBuffPercent;
+            setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower, totalPowerDiff,
+                    showChanges, buffPercent, buffPercentDiff, appContext, this));
         }
 
         clearCellAt(0,0);
@@ -130,8 +144,15 @@ public class FortificationMapPanel extends GridPanel {
             init();
         });
 
+        JCheckBox changesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES), showChanges);
+        changesCheckbox.addActionListener(e -> {
+            showChanges = changesCheckbox.isSelected();
+            init();
+        });
+
         panel.add(showHeroesCheckbox);
         panel.add(showTitansCheckbox);
+        panel.add(changesCheckbox);
         return panel;
     }
 

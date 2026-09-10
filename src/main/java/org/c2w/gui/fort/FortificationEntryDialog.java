@@ -40,6 +40,12 @@ public final class FortificationEntryDialog extends JDialog {
 
     private static final int MEMBER_COMBO_TOP_OFFSET = 6;
 
+    /** Height shared by the member combo box (see {@link #buildMemberCombo()}'s caller) and the buff-member count label (see {@link #buildBuffCountLabel()}), so the two line up. */
+    private static final int MEMBER_COMBO_HEIGHT = 41;
+
+    /** Width of the buff-member count label - just enough for a one/two-digit count (see {@link #buildBuffCountLabel()}). */
+    private static final int BUFF_COUNT_LABEL_WIDTH = 32;
+
     private final Fortification fortification;
     private final AppContext appContext;
     private final Runnable onSaved;
@@ -119,12 +125,14 @@ public final class FortificationEntryDialog extends JDialog {
             buildRowsGeneric(HeroRepository.findAll(), FortificationEntryDialog::heroLabel,
                     h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::heroLabel),
-                    m -> m.heroTeams, Lineup.TeamType.HERO);
+                    m -> m.heroTeams, Lineup.TeamType.HERO,
+                    hero -> fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role()));
         } else {
             buildRowsGeneric(TitanRepository.findAll(), FortificationEntryDialog::titanLabel,
                     t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::titanLabel),
-                    m -> m.titanTeams, Lineup.TeamType.TITAN);
+                    m -> m.titanTeams, Lineup.TeamType.TITAN,
+                    titan -> fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element());
         }
     }
 
@@ -138,7 +146,7 @@ public final class FortificationEntryDialog extends JDialog {
 
     private <T> void buildRowsGeneric(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                                       Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
-                                      Lineup.TeamType teamType) {
+                                      Lineup.TeamType teamType, Function<T, Boolean> matchesBuff) {
         List<RowState<T>> rowStates = new ArrayList<>();
 
         List<Lineup.Entry> existingEntries = appContext.lineup().entries().stream()
@@ -147,7 +155,7 @@ public final class FortificationEntryDialog extends JDialog {
 
         for (int i = 0; i < fortification.capacity(); i++) {
             JComboBox<MemberDraft> combo = buildMemberCombo();
-            combo.setPreferredSize(new Dimension(150, 41));
+            combo.setPreferredSize(new Dimension(150, MEMBER_COMBO_HEIGHT));
 
             TeamDraft<T> rowDraft = new TeamDraft<>();
             MemberDraft originalMember = null;
@@ -171,15 +179,18 @@ public final class FortificationEntryDialog extends JDialog {
                 }
             }
 
-            JPanel teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder);
+            JLabel buffCountLabel = buildBuffCountLabel();
+            JPanel teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
+                    () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff));
+            updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
             rowStates.add(new RowState<>(rowDraft, combo, originalMember, originalTeamIndex));
-            rowsPanel.add(buildRowPanel(i, combo, teamEditor));
+            rowsPanel.add(buildRowPanel(i, combo, teamEditor, buffCountLabel));
         }
 
         saveAction = () -> performSave(rowStates, teamsOf, teamType);
     }
 
-    private JPanel buildRowPanel(int index, JComboBox<MemberDraft> combo, JPanel teamEditor) {
+    private JPanel buildRowPanel(int index, JComboBox<MemberDraft> combo, JPanel teamEditor, JLabel buffCountLabel) {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -203,7 +214,40 @@ public final class FortificationEntryDialog extends JDialog {
         teamEditorConstraints.anchor = GridBagConstraints.NORTHWEST;
         row.add(teamEditor, teamEditorConstraints);
 
+        // Behind (right of) the TeamEditorPanel - shows how many of its currently selected members increase fortification's buff (see buildBuffCountLabel/updateBuffCountLabel).
+        GridBagConstraints buffCountConstraints = new GridBagConstraints();
+        buffCountConstraints.gridx = 2;
+        buffCountConstraints.gridy = 0;
+        buffCountConstraints.anchor = GridBagConstraints.NORTHWEST;
+        buffCountConstraints.insets = new Insets(MEMBER_COMBO_TOP_OFFSET, 8, 0, 0);
+        row.add(buffCountLabel, buffCountConstraints);
+
         return row;
+    }
+
+    /**
+     * Creates the (still empty) label showing how many of a row's currently
+     * selected members increase {@link #fortification}'s buff - see
+     * {@link #updateBuffCountLabel} for the text itself. Same height as the
+     * member combo box (see {@link #MEMBER_COMBO_HEIGHT}), tooltip mirrors
+     * the buff's own descriptive text (same convention as
+     * {@code FortificationPanel#getBuffPercentLabel}), blank tooltip if this
+     * fortification has no buff at all.
+     */
+    private JLabel buildBuffCountLabel() {
+        JLabel buffCountLabel = new JLabel("", JLabel.CENTER);
+        buffCountLabel.setPreferredSize(new Dimension(BUFF_COUNT_LABEL_WIDTH, MEMBER_COMBO_HEIGHT));
+        buffCountLabel.setForeground(fortification.type().getColor());
+        if (fortification.buff() != null) {
+            buffCountLabel.setToolTipText(fortification.buff().display());
+        }
+        return buffCountLabel;
+    }
+
+    /** Sets buffCountLabel's text to how many of teamDraft's currently selected members satisfy matchesBuff (see {@link #buildRows()} for what that means per fortification type). */
+    private static <T> void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft, Function<T, Boolean> matchesBuff) {
+        long count = teamDraft.members.stream().filter(matchesBuff::apply).count();
+        buffCountLabel.setText(String.valueOf(count));
     }
 
     private JComboBox<MemberDraft> buildMemberCombo() {
@@ -268,9 +312,9 @@ public final class FortificationEntryDialog extends JDialog {
     }
 
     private <T> JPanel buildTeamEditorPanel(TeamDraft<T> teamDraft, List<T> catalog, Function<T, String> label,
-                                            Function<T, Icon> icon, Comparator<T> catalogOrder) {
+                                            Function<T, Icon> icon, Comparator<T> catalogOrder, Runnable onChanged) {
         return new TeamEditorPanel<>(catalog, label, icon, null, teamDraft,
-                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder);
+                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged);
     }
 
     private static <T> int resolveTeamIndex(List<TeamDraft<T>> teams, Set<String> boundKeys, String memberId,

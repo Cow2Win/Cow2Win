@@ -146,6 +146,7 @@ lineupSummary.millionsSuffix=M
 #Carte des forteresses
 fortificationMap.showHeroes=Héros
 fortificationMap.showTitans=Titans
+fortificationMap.showChanges=Modifications
 
 #Aperçu des équipes
 teamsOverview.power=Puissance

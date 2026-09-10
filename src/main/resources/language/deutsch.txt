@@ -148,6 +148,7 @@ lineupSummary.millionsSuffix=Mio.
 # Festungsplan
 fortificationMap.showHeroes=Helden
 fortificationMap.showTitans=Titanen
+fortificationMap.showChanges=Änderungen
 
 # Teamübersicht
 teamsOverview.power=Stärke

@@ -148,6 +148,7 @@ lineupSummary.millionsSuffix=M
 #Fortification map
 fortificationMap.showHeroes=Heroes
 fortificationMap.showTitans=Titans
+fortificationMap.showChanges=Changes
 
 #Teams overview
 teamsOverview.power=Power

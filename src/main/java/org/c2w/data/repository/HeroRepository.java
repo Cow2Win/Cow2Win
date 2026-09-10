@@ -1,10 +1,13 @@
 package org.c2w.data.repository;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
+import org.c2w.util.JsonSupport;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,37 +67,20 @@ public class HeroRepository {
 
     private static Map<String, Hero> loadHeroes() {
         try {
-            String json = loadJsonResource(JSON_PATH);
+            String json = JsonSupport.readClasspathResource(HeroRepository.class, JSON_PATH);
             return parseHeroesJson(json);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load hero catalog from " + JSON_PATH, e);
         }
     }
 
-    private static String loadJsonResource(String resourcePath) throws IOException {
-        try (var is = HeroRepository.class.getResourceAsStream(resourcePath)) {
-            if (is == null) {
-                throw new IOException("Resource not found: " + resourcePath);
-            }
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        }
-    }
-
     private static Map<String, Hero> parseHeroesJson(String json) {
         Map<String, Hero> result = new LinkedHashMap<>();
 
-        // Simple JSON parser (no external dependencies)
         // Expects: [{ "id": "...", "image": "...", "roles": [...] }, ...]
-        json = json.trim();
-        if (!json.startsWith("[") || !json.endsWith("]")) {
-            throw new IllegalArgumentException("Heroes JSON must be an array");
-        }
-
-        String content = json.substring(1, json.length() - 1);
-        List<String> objects = splitJsonObjects(content);
-
-        for (String obj : objects) {
-            Hero hero = parseHeroObject(obj.trim());
+        JsonArray array = JsonParser.parseString(json).getAsJsonArray();
+        for (var element : array) {
+            Hero hero = parseHeroObject(element.getAsJsonObject());
             if (hero != null) {
                 result.put(hero.id(), hero);
             }
@@ -103,102 +89,23 @@ public class HeroRepository {
         return result;
     }
 
-    private static List<String> splitJsonObjects(String content) {
-        List<String> objects = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int braceCount = 0;
-        boolean inString = false;
-        boolean escaped = false;
+    private static Hero parseHeroObject(JsonObject obj) {
+        String id = JsonSupport.getStringOrNull(obj, "id");
+        String image = JsonSupport.getStringOrNull(obj, "image");
+        List<Role> roles = parseRoles(obj);
 
-        for (char c : content.toCharArray()) {
-            if (escaped) {
-                current.append(c);
-                escaped = false;
-                continue;
-            }
-
-            if (c == '\\' && inString) {
-                current.append(c);
-                escaped = true;
-                continue;
-            }
-
-            if (c == '"' && !escaped) {
-                inString = !inString;
-            }
-
-            if (!inString) {
-                if (c == '{') {
-                    braceCount++;
-                } else if (c == '}') {
-                    braceCount--;
-                }
-            }
-
-            current.append(c);
-
-            if (!inString && braceCount == 0 && current.toString().trim().endsWith("}")) {
-                String obj = current.toString().trim();
-                // Remove leading comma (separator from the previous object)
-                if (obj.startsWith(",")) {
-                    obj = obj.substring(1).trim();
-                }
-                if (!obj.isEmpty() && !obj.equals(",")) {
-                    if (obj.endsWith(",")) {
-                        obj = obj.substring(0, obj.length() - 1);
-                    }
-                    objects.add(obj);
-                    current = new StringBuilder();
-                }
-            }
-        }
-
-        return objects;
-    }
-
-    private static Hero parseHeroObject(String objJson) {
-        if (!objJson.startsWith("{") || !objJson.endsWith("}")) {
-            return null;
-        }
-
-        String id = extractJsonString(objJson, "id");
-        String image = extractJsonString(objJson, "image");
-        List<Role> roles = extractJsonRoles(objJson, "roles");
-
-        if (id == null || id.isBlank() || roles == null || roles.isEmpty()) {
+        if (id == null || id.isBlank() || roles.isEmpty()) {
             return null;
         }
 
         return new Hero(id, roles, image != null ? "/images/heroes/" + image : null);
     }
 
-    private static String extractJsonString(String json, String key) {
-        String pattern = "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"";
-        var matcher = java.util.regex.Pattern.compile(pattern).matcher(json);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
-    }
-
-    private static List<Role> extractJsonRoles(String json, String key) {
-        String pattern = "\"" + key + "\"\\s*:\\s*\\[([^\\]]*)\\]";
-        var matcher = java.util.regex.Pattern.compile(pattern).matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        String rolesStr = matcher.group(1);
-        if (rolesStr == null || rolesStr.isBlank()) {
-            return List.of();
-        }
-
+    private static List<Role> parseRoles(JsonObject obj) {
         List<Role> roles = new ArrayList<>();
-        String[] roleNames = rolesStr.split(",");
-        for (String roleName : roleNames) {
-            roleName = roleName.trim().replaceAll("\"", "").trim();
+        for (String roleName : JsonSupport.getStringList(obj, "roles")) {
             try {
-                roles.add(Role.valueOf(roleName));
+                roles.add(Role.valueOf(roleName.trim()));
             } catch (IllegalArgumentException e) {
                 // Ignore (or log) unknown role
             }

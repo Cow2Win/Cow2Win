@@ -1,10 +1,13 @@
 package org.c2w.data.repository;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
+import org.c2w.util.JsonSupport;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,37 +77,20 @@ public class TitanRepository {
 
     private static Map<String, Titan> loadTitans() {
         try {
-            String json = loadJsonResource(JSON_PATH);
+            String json = JsonSupport.readClasspathResource(TitanRepository.class, JSON_PATH);
             return parseTitansJson(json);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load titan catalog from " + JSON_PATH, e);
         }
     }
 
-    private static String loadJsonResource(String resourcePath) throws IOException {
-        try (var is = TitanRepository.class.getResourceAsStream(resourcePath)) {
-            if (is == null) {
-                throw new IOException("Resource not found: " + resourcePath);
-            }
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        }
-    }
-
     private static Map<String, Titan> parseTitansJson(String json) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
-        // Simple JSON parser (no external dependencies)
         // Expects: [{ "id": "...", "element": "...", "image": "..." }, ...]
-        json = json.trim();
-        if (!json.startsWith("[") || !json.endsWith("]")) {
-            throw new IllegalArgumentException("Titans JSON must be an array");
-        }
-
-        String content = json.substring(1, json.length() - 1);
-        List<String> objects = splitJsonObjects(content);
-
-        for (String obj : objects) {
-            Titan titan = parseTitanObject(obj.trim());
+        JsonArray array = JsonParser.parseString(json).getAsJsonArray();
+        for (var element : array) {
+            Titan titan = parseTitanObject(element.getAsJsonObject());
             if (titan != null) {
                 result.put(titan.id(), titan);
             }
@@ -113,67 +99,10 @@ public class TitanRepository {
         return result;
     }
 
-    private static List<String> splitJsonObjects(String content) {
-        List<String> objects = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int braceCount = 0;
-        boolean inString = false;
-        boolean escaped = false;
-
-        for (char c : content.toCharArray()) {
-            if (escaped) {
-                current.append(c);
-                escaped = false;
-                continue;
-            }
-
-            if (c == '\\' && inString) {
-                current.append(c);
-                escaped = true;
-                continue;
-            }
-
-            if (c == '"' && !escaped) {
-                inString = !inString;
-            }
-
-            if (!inString) {
-                if (c == '{') {
-                    braceCount++;
-                } else if (c == '}') {
-                    braceCount--;
-                }
-            }
-
-            current.append(c);
-
-            if (!inString && braceCount == 0 && current.toString().trim().endsWith("}")) {
-                String obj = current.toString().trim();
-                // Remove leading comma (separator from the previous object)
-                if (obj.startsWith(",")) {
-                    obj = obj.substring(1).trim();
-                }
-                if (!obj.isEmpty() && !obj.equals(",")) {
-                    if (obj.endsWith(",")) {
-                        obj = obj.substring(0, obj.length() - 1);
-                    }
-                    objects.add(obj);
-                    current = new StringBuilder();
-                }
-            }
-        }
-
-        return objects;
-    }
-
-    private static Titan parseTitanObject(String objJson) {
-        if (!objJson.startsWith("{") || !objJson.endsWith("}")) {
-            return null;
-        }
-
-        String id = extractJsonString(objJson, "id");
-        String elementStr = extractJsonString(objJson, "element");
-        String image = extractJsonString(objJson, "image");
+    private static Titan parseTitanObject(JsonObject obj) {
+        String id = JsonSupport.getStringOrNull(obj, "id");
+        String elementStr = JsonSupport.getStringOrNull(obj, "element");
+        String image = JsonSupport.getStringOrNull(obj, "image");
 
         if (id == null || id.isBlank() || elementStr == null || elementStr.isBlank()) {
             return null;
@@ -187,14 +116,5 @@ public class TitanRepository {
         }
 
         return new Titan(id, element, image != null ? "/images/titans/" + image : null);
-    }
-
-    private static String extractJsonString(String json, String key) {
-        String pattern = "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"";
-        var matcher = java.util.regex.Pattern.compile(pattern).matcher(json);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
     }
 }
