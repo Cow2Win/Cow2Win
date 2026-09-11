@@ -133,6 +133,8 @@ toolbar.clearLineup=Vider le lineup
 toolbar.generateReport=Générer le rapport
 toolbar.heroWars=Ouvrir Hero Wars
 toolbar.allTeams=Afficher toutes les équipes
+toolbar.allTeamsScores=Afficher les scores des équipes
+toolbar.heroBuffFitScores=Gérer les scores de buff des héros
 
 #Résumé du lineup
 lineupSummary.heroPower=Héros
@@ -170,6 +172,11 @@ fortificationDetail.prerequisites=Prérequis
 
 #Attribution des équipes à la fortification
 fortificationEntry.saveTeams=Enregistrer les équipes
+
+#Scores de buff des héros
+heroBuffFitScores.saveScores=Enregistrer les scores
+heroBuffFitScores.generalScore=Score général :
+heroBuffFitScores.buffFitScoresHeader=Forteresses avec buff :
 
 #Général
 common.none=(aucun)

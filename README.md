@@ -76,6 +76,11 @@ language and a guild name, then creates that guild's folder under
   regression test against the real catalog's documented depth table).
 - `FortificationRepositoryValidationTest` - the load-time data validation
   described above.
+- `LanguageFilesConsistencyTest` - fails the build if
+  `src/main/resources/language/{deutsch,english,francais}.txt` don't define
+  exactly the same set of keys (a key added to only one file after a patch
+  is otherwise a silent gap - `LanguageService` just falls back to the raw
+  id, see `PATCH-CHECKLIST.md`'s "all three language files" step).
 
 Not yet covered: the actual team-assignment logic in
 `fillFortifications`/`assignOne`/`assignStrongestFirst` (sorting criteria,

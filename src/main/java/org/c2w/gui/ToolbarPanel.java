@@ -10,6 +10,7 @@ import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -74,6 +75,12 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_ALL_TEAMS = "/images/app/hexagon.png";
 
+    /** Language file key (see resources/language/*.txt) for the tooltip of the "all team scores" button (see {@link #onOpenAllTeamScores()}). */
+    private static final String KEY_ALL_TEAMS_SCORES = "toolbar.allTeamsScores";
+
+    /** Same icon as {@link #ICON_ALL_TEAMS} - {@link AllTeamsScoreOverviewDialog} is the score-showing counterpart of {@link AllTeamsOverviewDialog}, told apart by color alone (see {@link IconLoader#PURPLE}). */
+    private static final String ICON_ALL_TEAMS_SCORES = ICON_ALL_TEAMS;
+
     private static final int TOOLBAR_ICON_SIZE = 20;
 
     /** Language file key (see resources/language/*.txt) for the tooltip of the leftmost "Hero Wars" button (see {@link #onOpenHeroWars()}). */
@@ -109,6 +116,12 @@ public class ToolbarPanel extends JPanel {
 
     /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
+
+    /** Language file key (see resources/language/*.txt) for the tooltip of the "hero buff fit scores" button (see {@link #onOpenHeroBuffFitScores()}). */
+    private static final String KEY_HERO_BUFF_FIT_SCORES = "toolbar.heroBuffFitScores";
+
+    /** Classpath path of the "hero buff fit scores" button's icon - previously unused elsewhere in the app. */
+    private static final String ICON_HERO_BUFF_FIT_SCORES = "/images/app/buff1.png";
 
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
@@ -267,10 +280,24 @@ public class ToolbarPanel extends JPanel {
         allTeamsButton.addActionListener(e -> onOpenAllTeams());
         add(allTeamsButton);
 
+        FlatButton allTeamsScoresButton =
+                new FlatButton(IconLoader.iconFor(ICON_ALL_TEAMS_SCORES, TOOLBAR_ICON_SIZE, IconLoader.PURPLE));
+        allTeamsScoresButton.setToolTipText(LanguageService.displayName(KEY_ALL_TEAMS_SCORES));
+        allTeamsScoresButton.addActionListener(e -> onOpenAllTeamScores());
+        add(allTeamsScoresButton);
+
         FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE));
         runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
         runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
         add(runAlgorithmButton);
+
+        // Hero catalog data (like the fortification catalog) is shared
+        // across every guild, so this button - unlike everything above it -
+        // needs no guild/lineup context, only the owner window.
+        FlatButton heroBuffFitScoresButton = new FlatButton(IconLoader.iconFor(ICON_HERO_BUFF_FIT_SCORES, TOOLBAR_ICON_SIZE));
+        heroBuffFitScoresButton.setToolTipText(LanguageService.displayName(KEY_HERO_BUFF_FIT_SCORES));
+        heroBuffFitScoresButton.addActionListener(e -> onOpenHeroBuffFitScores());
+        add(heroBuffFitScoresButton);
 
         add(statusLabel);
     }
@@ -684,6 +711,17 @@ public class ToolbarPanel extends JPanel {
     private void onOpenAllTeams() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         new AllTeamsOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+    }
+
+    private void onOpenAllTeamScores() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new AllTeamsScoreOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+    }
+
+    /** Opens {@link HeroBuffFitScoresDialog} - see {@link #KEY_HERO_BUFF_FIT_SCORES}. */
+    private void onOpenHeroBuffFitScores() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new HeroBuffFitScoresDialog(owner).setVisible(true);
     }
 
     /** True if name contains any character listed in {@link #ILLEGAL_FILENAME_CHARS}. */

@@ -24,9 +24,6 @@ public record HeroTeam(
     /** Base weight per hero whose role matches the RoleBuff's role. */
     public static final int ROLE_MATCH_WEIGHT = 1;
 
-    /** Additional bonus if the hero is also listed in {@link RoleBuff#buffProfits()}. */
-    public static final int BUFF_PROFIT_BONUS_WEIGHT = 2;
-
     public HeroTeam {
         if (totalPower < 0) {
             throw new IllegalArgumentException("totalPower must not be negative");
@@ -49,14 +46,9 @@ public record HeroTeam(
     /**
      * Second comparison value besides totalPower: how much the given
      * {@link RoleBuff} helps this team. Every hero WITH the required role
-     * contributes {@link #ROLE_MATCH_WEIGHT} points; if they are also
-     * explicitly listed in {@link RoleBuff#buffProfits()} (a catalog value on
-     * the fortification, replacing the former global buffAffinities mapping),
-     * an additional {@link #BUFF_PROFIT_BONUS_WEIGHT} is added on top. Heroes
-     * WITHOUT the required role do NOT contribute to the score, even if they
-     * happen to be listed in buffProfits (see {@link RoleBuff}: "+bonusPercent%
-     * ... per hero WITH matching role" - buffProfits is a bonus on top of
-     * this match, not a substitute for it).
+     * contributes {@link #ROLE_MATCH_WEIGHT} points. Heroes WITHOUT the
+     * required role do NOT contribute to the score (see {@link RoleBuff}:
+     * "+bonusPercent% ... per hero WITH matching role").
      */
     public int buffFitScore(Buff buff) {
         if (!(buff instanceof RoleBuff roleBuff)) {
@@ -66,11 +58,33 @@ public record HeroTeam(
         for (Hero h : heroes) {
             if (h.roles().contains(roleBuff.role())) {
                 score += ROLE_MATCH_WEIGHT;
-                if (roleBuff.buffProfits().contains(h.id())) {
-                    score += BUFF_PROFIT_BONUS_WEIGHT;
-                }
             }
         }
         return score;
+    }
+
+    /**
+     * Divisor {@link #totalPower()} is scaled down by before adding it to
+     * {@link #sortScore()} - totalPower is typically five/six digits, while
+     * a hero's {@link Hero#generalScore()} lives on {@link ScoreTier}'s
+     * 0.5-1.1 grid, so this brings both terms to a comparable order of
+     * magnitude instead of one completely swamping the other.
+     */
+    private static final double SORT_SCORE_POWER_DIVISOR = 100_000.0;
+
+    /**
+     * Used instead of {@link #buffFitScore(Buff)} to pick a team for a
+     * fortification that has NO buff - there is no role to score against
+     * there, so this falls back to a general "how good is this team"
+     * measure: the sum of every hero's {@link Hero#generalScore()} (some
+     * heroes are simply better than others, independent of any specific
+     * buff/role) plus {@link #totalPower()} scaled down via
+     * {@link #SORT_SCORE_POWER_DIVISOR} - per the user's own formula (added
+     * 2026-09-11, see cow2win-verbesserungsvorschlaege.md): generalScore +
+     * power / 100 000.
+     */
+    public double sortScore() {
+        double generalScoreSum = heroes.stream().mapToDouble(h -> h.generalScore().value()).sum();
+        return generalScoreSum + totalPower() / SORT_SCORE_POWER_DIVISOR;
     }
 }

@@ -169,13 +169,10 @@ public final class ReportGenerator {
      * fortification display name - per the user's explicit follow-up request
      * (added 2026-09-04): the fortification's own buff display text and the
      * buff percentage {@link BuffCalculationService#calculateBuffForFortification}
-     * currently computes for it, plus two counts broken out of that same
+     * currently computes for it, plus a count broken out of that same
      * calculation - how many deployed heroes/titans satisfy the buff's
      * role/element requirement (see
-     * {@link BuffCalculationService#countMatchingMembersForFortification})
-     * and how many of the deployed heroes/titans are in the buff's own
-     * catalog {@link Buff#buffProfits()} list (see
-     * {@link BuffCalculationService#countBuffProfitMembersForFortification}).
+     * {@link BuffCalculationService#countMatchingMembersForFortification}).
      * A fortification without a buff, or with no lineup entries at all, is
      * skipped entirely (Claude's own reading of the request - nothing
      * meaningful to report for it here, and the full ~20-entry catalog would
@@ -200,7 +197,6 @@ public final class ReportGenerator {
                 .append("<th>Buff</th>")
                 .append("<th class=\"number\">Buff %</th>")
                 .append("<th class=\"number\">Matching role/element</th>")
-                .append("<th class=\"number\">Buff profits</th>")
                 .append("</tr>\n");
 
         for (String fortificationId : fortificationIds) {
@@ -210,8 +206,6 @@ public final class ReportGenerator {
                     fortificationId, lineup, guild, fortification);
             int matchingCount = BuffCalculationService.countMatchingMembersForFortification(
                     fortificationId, lineup, guild, buff);
-            int buffProfitCount = BuffCalculationService.countBuffProfitMembersForFortification(
-                    fortificationId, lineup, guild, buff);
 
             sb.append("<tr>");
             sb.append("<td>").append(escape(fortificationDisplayName(fortificationId)))
@@ -219,7 +213,6 @@ public final class ReportGenerator {
             sb.append("<td>").append(escape(buffDisplayText(buff))).append("</td>");
             sb.append("<td class=\"number\">").append(buffPercent).append("%</td>");
             sb.append("<td class=\"number\">").append(matchingCount).append("</td>");
-            sb.append("<td class=\"number\">").append(buffProfitCount).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");

@@ -4,12 +4,33 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox">
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add README &amp; Tests">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Buff.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Buff.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/ElementBuff.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/ElementBuff.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Hero.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Hero.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/RoleBuff.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/RoleBuff.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Titan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Titan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/TitanTeam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/TitanTeam.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/FortificationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/FortificationRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/JsonSupport.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/JsonSupport.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/data/fortifications.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/data/fortifications.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/data/heroes.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/data/heroes.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/language/deutsch.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/deutsch.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/language/english.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/english.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/language/francais.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/francais.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/workspace/Demo/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/Demo/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/workspace/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/config.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,34 +74,49 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.C2WApp.executor": "Run",
-    "JUnit.BestPossibleLineupAlgorithmTest.executor": "Run",
-    "Maven.Cow2Win [clean].executor": "Run",
-    "Maven.Cow2Win [compile].executor": "Run",
-    "Maven.Cow2Win [deploy].executor": "Run",
-    "Maven.Cow2Win [package].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/tdiet/IdeaProjects/Cow2Win/src/main/resources/data",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.keymap"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.C2WApp.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ClacTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BestPossibleLineupAlgorithmTest.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Cow2Win [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Cow2Win [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Cow2Win [deploy].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Cow2Win [package].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Cow2Win [test].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/tdiet/IdeaProjects/Cow2Win/src/main/resources/data&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\tdiet\IdeaProjects\Cow2Win\src\main\resources\data" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.BestPossibleLineupAlgorithmTest">
+  <component name="RunManager" selected="Application.C2WApp">
     <configuration name="C2WApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.c2w.C2WApp" />
+      <module name="Cow2Win" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.c2w.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ClacTest" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="org.c2w.ClacTest" />
       <module name="Cow2Win" />
       <extension name="coverage">
         <pattern>
@@ -106,66 +142,6 @@
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
-    </configuration>
-    <configuration name="Cow2Win [clean]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
-      <MavenSettings>
-        <option name="myGeneralSettings" />
-        <option name="myRunnerSettings" />
-        <option name="myRunnerParameters">
-          <MavenRunnerParameters>
-            <option name="cmdOptions" />
-            <option name="profiles">
-              <set />
-            </option>
-            <option name="goals">
-              <list>
-                <option value="clean" />
-              </list>
-            </option>
-            <option name="multimoduleDir" />
-            <option name="pomFileName" value="pom.xml" />
-            <option name="profilesMap">
-              <map />
-            </option>
-            <option name="projectsCmdOptionValues">
-              <list />
-            </option>
-            <option name="resolveToWorkspace" value="false" />
-            <option name="workingDirPath" value="$PROJECT_DIR$" />
-          </MavenRunnerParameters>
-        </option>
-      </MavenSettings>
-      <method v="2" />
-    </configuration>
-    <configuration name="Cow2Win [deploy]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
-      <MavenSettings>
-        <option name="myGeneralSettings" />
-        <option name="myRunnerSettings" />
-        <option name="myRunnerParameters">
-          <MavenRunnerParameters>
-            <option name="cmdOptions" />
-            <option name="profiles">
-              <set />
-            </option>
-            <option name="goals">
-              <list>
-                <option value="deploy" />
-              </list>
-            </option>
-            <option name="multimoduleDir" />
-            <option name="pomFileName" value="pom.xml" />
-            <option name="profilesMap">
-              <map />
-            </option>
-            <option name="projectsCmdOptionValues">
-              <list />
-            </option>
-            <option name="resolveToWorkspace" value="false" />
-            <option name="workingDirPath" value="$PROJECT_DIR$" />
-          </MavenRunnerParameters>
-        </option>
-      </MavenSettings>
-      <method v="2" />
     </configuration>
     <configuration name="Cow2Win [package]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
       <MavenSettings>
@@ -197,13 +173,43 @@
       </MavenSettings>
       <method v="2" />
     </configuration>
+    <configuration name="Cow2Win [test]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="cmdOptions" />
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="test" />
+              </list>
+            </option>
+            <option name="multimoduleDir" />
+            <option name="pomFileName" value="pom.xml" />
+            <option name="profilesMap">
+              <map />
+            </option>
+            <option name="projectsCmdOptionValues">
+              <list />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.C2WApp" />
+        <item itemvalue="Application.ClacTest" />
+        <item itemvalue="Maven.Cow2Win [test]" />
         <item itemvalue="JUnit.BestPossibleLineupAlgorithmTest" />
         <item itemvalue="Maven.Cow2Win [package]" />
-        <item itemvalue="Maven.Cow2Win [clean]" />
-        <item itemvalue="Maven.Cow2Win [deploy]" />
-        <item itemvalue="Application.C2WApp" />
       </list>
     </recent_temporary>
   </component>
@@ -319,7 +325,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789056612958</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="add README &amp; Tests">
+      <option name="closed" value="true" />
+      <created>1789058094031</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1789058094031</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -330,6 +344,7 @@
     <MESSAGE value="add guilds for testing" />
     <MESSAGE value="add Colors to the buttons" />
     <MESSAGE value="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox" />
-    <option name="LAST_COMMIT_MESSAGE" value="add test&#10;add PATCH-CHECKLIST.md&#10;add changes-Checkbox" />
+    <MESSAGE value="add README &amp; Tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="add README &amp; Tests" />
   </component>
 </project>

@@ -11,7 +11,6 @@
       "display": "Armor Increase per Mage Hero",
       "effect": "ARMOR_INCREASE",
       "bonusPercent": 4,
-      "buffProfits": [],
       "role": "MAGE"
     },
     "prerequisites": [
@@ -57,18 +56,6 @@
       "display": "Magic Defense Increase per Warrior Hero ",
       "effect": "MAGIC_DEFENSE_INCREASE",
       "bonusPercent": 3,
-      "buffProfits": [
-        "rufus",
-        "aurora",
-        "astaroth",
-        "alvanor",
-        "ziri",
-        "dorian",
-        "nebula",
-        "cleaver",
-        "corvus",
-        "jorgen"
-      ],
       "role": "WARRIOR"
     },
     "prerequisites": [
@@ -90,7 +77,6 @@
       "display": "Health Increase per Fire Titan",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 8,
-      "buffProfits": [],
       "element": "FIRE"
     },
     "prerequisites": [
@@ -110,7 +96,6 @@
       "display": "Energy Gain per Water Titan",
       "effect": "ENERGY_GAIN",
       "bonusPercent": 3,
-      "buffProfits": [],
       "element": "WATER"
     },
     "prerequisites": [
@@ -155,14 +140,6 @@
       "display": "Healing Increase per Healer Hero",
       "effect": "HEALING_INCREASE",
       "bonusPercent": 7,
-      "buffProfits": [
-        "aurora",
-        "rufus",
-        "ziri",
-        "chabba",
-        "fafnir",
-        "nebula"
-      ],
       "role": "HEALER"
     },
     "prerequisites": [
@@ -182,23 +159,6 @@
       "display": "Energy Gain per Control Hero",
       "effect": "ENERGY_GAIN",
       "bonusPercent": 5,
-      "buffProfits": [
-        "yasmine",
-        "dante",
-        "keira",
-        "astaroth",
-        "aurora",
-        "corvus",
-        "krista",
-        "helios",
-        "faceless",
-        "amira",
-        "karkh",
-        "nebula",
-        "sebastian",
-        "martha",
-        "jorgen"
-      ],
       "role": "CONTROL"
     },
     "prerequisites": [
@@ -233,14 +193,6 @@
       "display": "Health Increase per Tank Hero",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 10,
-      "buffProfits": [
-        "dorian",
-        "jorgen",
-        "nebula",
-        "chabba",
-        "ziri",
-        "alvanor"
-      ],
       "role": "TANK"
     },
     "prerequisites": [
@@ -260,7 +212,6 @@
       "display": "Damage Resist per Earth Titan",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 2,
-      "buffProfits": [],
       "element": "EARTH"
     },
     "prerequisites": [
@@ -317,7 +268,6 @@
       "display": "Health Increase per Dark Titan",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 7,
-      "buffProfits": [],
       "element": "DARK"
     },
     "prerequisites": [
@@ -337,7 +287,6 @@
       "display": "Damage Resist per Marksman Hero",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 3,
-      "buffProfits": [],
       "role": "MARKSMAN"
     },
     "prerequisites": [
@@ -372,7 +321,6 @@
       "display": "Damage Resist per Light Titan",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 2,
-      "buffProfits": [],
       "element": "LIGHT"
     },
     "prerequisites": [

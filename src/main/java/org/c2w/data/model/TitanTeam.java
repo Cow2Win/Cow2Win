@@ -21,9 +21,6 @@ public record TitanTeam(
     /** Base weight per titan whose element matches the ElementBuff's element. */
     public static final int ELEMENT_MATCH_WEIGHT = 1;
 
-    /** Additional bonus if the titan is also listed in {@link ElementBuff#buffProfits()}. */
-    public static final int BUFF_PROFIT_BONUS_WEIGHT = 2;
-
     public TitanTeam {
         if (totalPower < 0) {
             throw new IllegalArgumentException("totalPower must not be negative");
@@ -43,14 +40,10 @@ public record TitanTeam(
     /**
      * Second comparison value besides totalPower: how much the given
      * {@link ElementBuff} helps this team. Every titan WITH the required
-     * element contributes {@link #ELEMENT_MATCH_WEIGHT} points; if it is also
-     * explicitly listed in {@link ElementBuff#buffProfits()} (a catalog value
-     * on the fortification, replacing the former global buffAffinities
-     * mapping), an additional {@link #BUFF_PROFIT_BONUS_WEIGHT} is added on
-     * top. Titans with a different element do NOT contribute to the score,
-     * even if they happen to be listed in buffProfits (see {@link ElementBuff}:
-     * "+bonusPercent% ... per titan WITH matching element" - buffProfits is a
-     * bonus on top of this match, not a substitute for it).
+     * element contributes {@link #ELEMENT_MATCH_WEIGHT} points. Titans with a
+     * different element do NOT contribute to the score (see
+     * {@link ElementBuff}: "+bonusPercent% ... per titan WITH matching
+     * element").
      */
     public int buffFitScore(Buff buff) {
         if (!(buff instanceof ElementBuff elementBuff)) {
@@ -60,11 +53,26 @@ public record TitanTeam(
         for (Titan t : titans) {
             if (t.element() == elementBuff.element()) {
                 score += ELEMENT_MATCH_WEIGHT;
-                if (elementBuff.buffProfits().contains(t.id())) {
-                    score += BUFF_PROFIT_BONUS_WEIGHT;
-                }
             }
         }
         return score;
+    }
+
+    /** See {@link HeroTeam#SORT_SCORE_POWER_DIVISOR} - identical reasoning, here for titan teams. */
+    private static final double SORT_SCORE_POWER_DIVISOR = 100_000.0;
+
+    /**
+     * The TITAN-side counterpart of {@link HeroTeam#sortScore()}, used the
+     * same way to pick a team for a fortification without a buff: the sum of
+     * every titan's {@link Titan#generalScore()} plus {@link #totalPower()}
+     * scaled down via {@link #SORT_SCORE_POWER_DIVISOR} - same formula, same
+     * treatment as the hero side (per the user's explicit request, 2026-09-11,
+     * see cow2win-verbesserungsvorschlaege.md: titans get "die gleiche
+     * Behandlung" as heroes here), now that {@link Titan#generalScore()}
+     * exists.
+     */
+    public double sortScore() {
+        double generalScoreSum = titans.stream().mapToDouble(t -> t.generalScore().value()).sum();
+        return generalScoreSum + totalPower() / SORT_SCORE_POWER_DIVISOR;
     }
 }

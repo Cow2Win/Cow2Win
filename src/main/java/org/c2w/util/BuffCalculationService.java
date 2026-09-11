@@ -69,46 +69,6 @@ public class BuffCalculationService {
         return count;
     }
 
-    public static int countBuffProfitMembersForFortification(String fortificationId, Lineup lineup, Guild guild, Buff buff) {
-        if (buff == null || buff.buffProfits().isEmpty()) {
-            return 0;
-        }
-
-        int count = 0;
-
-        for (Lineup.Entry entry : lineup.entries()) {
-            if (!entry.fortificationId().equals(fortificationId)) {
-                continue;
-            }
-            GuildMember member = findMemberById(guild, entry.teamMemberId());
-            if (member == null) {
-                continue;
-            }
-
-            if (entry.teamType() == Lineup.TeamType.HERO) {
-                if (entry.teamIndex() < member.heroTeams().size()) {
-                    HeroTeam team = member.heroTeams().get(entry.teamIndex());
-                    for (Hero hero : team.heroes()) {
-                        if (buff.buffProfits().contains(hero.id())) {
-                            count++;
-                        }
-                    }
-                }
-            } else if (entry.teamType() == Lineup.TeamType.TITAN) {
-                if (entry.teamIndex() < member.titanTeams().size()) {
-                    TitanTeam team = member.titanTeams().get(entry.teamIndex());
-                    for (Titan titan : team.titans()) {
-                        if (buff.buffProfits().contains(titan.id())) {
-                            count++;
-                        }
-                    }
-                }
-            }
-        }
-
-        return count;
-    }
-
     private static int countHeroesWithRole(HeroTeam team, Buff buff) {
         if (!(buff instanceof RoleBuff roleBuff)) {
             return 0;

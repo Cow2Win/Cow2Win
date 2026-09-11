@@ -3,6 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.c2w.data.model.ScoreTier;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.util.JsonSupport;
@@ -88,7 +89,8 @@ public class TitanRepository {
     private static Map<String, Titan> parseTitansJson(String json) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
-        // Expects: [{ "id": "...", "element": "...", "image": "..." }, ...]
+        // Expects: [{ "id": "...", "element": "...", "image": "...", "generalScore": "..." (optional),
+        //             "buffFitScores": {"fortificationId": "TIER", ...} (optional) }, ...]
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
             Titan titan = parseTitanObject(element.getAsJsonObject());
@@ -118,6 +120,52 @@ public class TitanRepository {
             return null;
         }
 
-        return new Titan(id, element, image != null ? "/images/titans/" + image : null);
+        ScoreTier generalScore = parseGeneralScore(obj, id);
+        Map<String, ScoreTier> buffFitScores = parseBuffFitScores(obj, id);
+
+        return new Titan(id, element, image != null ? "/images/titans/" + image : null, generalScore, buffFitScores);
+    }
+
+    /**
+     * Parses the optional "generalScore" field (a {@link ScoreTier} name, e.g.
+     * "ELEVATED") - analogous to {@code HeroRepository.parseGeneralScore},
+     * same sparse-catalog reasoning: absent for most titans, in which case
+     * {@link Titan}'s own compact constructor falls back to
+     * {@link ScoreTier#STANDARD}, so null is returned here both when the
+     * field is missing and when it names an unknown tier (logged either way
+     * is only the latter, since the former is the expected case).
+     */
+    private static ScoreTier parseGeneralScore(JsonObject obj, String titanId) {
+        String name = JsonSupport.getStringOrNull(obj, "generalScore");
+        if (name == null) {
+            return null;
+        }
+        try {
+            return ScoreTier.valueOf(name.trim());
+        } catch (IllegalArgumentException e) {
+            Logger.log("titans.json: titan '" + titanId + "' has unknown generalScore '" + name + "', using the default");
+            return null;
+        }
+    }
+
+    /**
+     * Parses the optional "buffFitScores" object (fortification id ->
+     * {@link ScoreTier} name) - analogous to
+     * {@code HeroRepository.parseBuffFitScores}, see there for the full
+     * reasoning.
+     */
+    private static Map<String, ScoreTier> parseBuffFitScores(JsonObject obj, String titanId) {
+        Map<String, ScoreTier> result = new LinkedHashMap<>();
+        for (var entry : JsonSupport.getStringMap(obj, "buffFitScores").entrySet()) {
+            String fortificationId = entry.getKey();
+            String tierName = entry.getValue();
+            try {
+                result.put(fortificationId, ScoreTier.valueOf(tierName.trim()));
+            } catch (IllegalArgumentException e) {
+                Logger.log("titans.json: titan '" + titanId + "' has unknown buffFitScores tier '" + tierName
+                        + "' for fortification '" + fortificationId + "', ignoring it");
+            }
+        }
+        return result;
     }
 }

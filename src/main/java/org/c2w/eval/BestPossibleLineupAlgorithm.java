@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -51,9 +52,9 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
         // since the passes don't interact, the order between them does not
         // matter.
         fillFortifications(FortificationType.HERO, Lineup.TeamType.HERO, HERO_BRIDGE_ID, guild, updatedEntries,
-                GuildMember::heroTeams, HeroTeam::totalPower, HeroTeam::buffFitScore, unlockDepth);
+                GuildMember::heroTeams, HeroTeam::totalPower, HeroTeam::buffFitScore, HeroTeam::sortScore, unlockDepth);
         fillFortifications(FortificationType.TITAN, Lineup.TeamType.TITAN, TITAN_BRIDGE_ID, guild, updatedEntries,
-                GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::buffFitScore, unlockDepth);
+                GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::buffFitScore, TitanTeam::sortScore, unlockDepth);
 
         return new Lineup(lineup.guildId(), lineup.guildName(), displayName(), lineup.createdAt(), updatedEntries);
     }
@@ -63,12 +64,13 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
                                                Function<GuildMember, List<T>> teamsOf,
                                                ToIntFunction<T> totalPowerOf,
                                                ToIntBiFunction<T, Buff> buffFitScoreOf,
+                                               ToDoubleFunction<T> sortScoreOf,
                                                Map<String, Integer> unlockDepth) {
 
         // Every team of this side (hero or titan) that isn't already sitting
         // on some fortification - these are the only teams this run is
         // allowed to place; see buildCandidatePool() below.
-        List<Candidate<T>> pool = buildCandidatePool(teamType, guild, updatedEntries, teamsOf, totalPowerOf);
+        List<Candidate<T>> pool = buildCandidatePool(teamType, guild, updatedEntries, teamsOf, totalPowerOf, sortScoreOf);
 
         // All catalog fortifications of this side, e.g. all HERO fortifications
         // when called for the hero pass. A full defensive lineup is planned for
@@ -191,7 +193,8 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
     private static <T> List<Candidate<T>> buildCandidatePool(Lineup.TeamType teamType, Guild guild,
                                                              List<Lineup.Entry> updatedEntries,
                                                              Function<GuildMember, List<T>> teamsOf,
-                                                             ToIntFunction<T> totalPowerOf) {
+                                                             ToIntFunction<T> totalPowerOf,
+                                                             ToDoubleFunction<T> sortScoreOf) {
         List<Candidate<T>> pool = new ArrayList<>();
         for (GuildMember member : guild.members()) {
             // teamsOf is GuildMember::heroTeams or GuildMember::titanTeams (picked by the
@@ -210,10 +213,12 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
                     continue;
                 }
                 T team = teams.get(currentTeamIndex);
-                // totalPowerOf is HeroTeam::totalPower or TitanTeam::totalPower - cached here
-                // once so every later comparator can sort on Candidate::totalPower directly
-                // instead of re-applying the accessor function on every comparison.
-                pool.add(new Candidate<>(member.id(), team, currentTeamIndex, totalPowerOf.applyAsInt(team)));
+                // totalPowerOf/sortScoreOf are HeroTeam::totalPower/HeroTeam::sortScore or their
+                // TitanTeam counterparts - cached here once so every later comparator can sort on
+                // Candidate::totalPower/Candidate::sortScore directly instead of re-applying the
+                // accessor function on every comparison.
+                pool.add(new Candidate<>(member.id(), team, currentTeamIndex, totalPowerOf.applyAsInt(team),
+                        sortScoreOf.applyAsDouble(team)));
             }
         }
         return pool;
@@ -258,14 +263,15 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * for that buff is picked (ties broken by lowest totalPower first, then
      * memberId/teamIndex, so strong teams are kept in the pool as long as
      * possible even when several candidates fit a buff equally well).
-     * Otherwise (criterion 5), the candidate with the lowest totalPower is
+     * Otherwise (criterion 5), the candidate with the lowest {@code sortScore}
+     * (see {@link HeroTeam#sortScore()}/{@link TitanTeam#sortScore()}) is
      * picked outright, so the ordinary, unbuffed fortifications are the ones
-     * that end up with whatever teams are weakest. Either way, the chosen
-     * candidate is removed from {@code pool} and a new {@link Lineup.Entry}
-     * is appended to {@code updatedEntries} with a real buffFitScore
-     * (0 when there is no buff to fit) and weightedScore set to whichever
-     * value the pick was actually made on (buffFitScore for a buff-driven
-     * pick, totalPower for a power-driven one).
+     * that end up with whatever teams are weakest/least valuable. Either
+     * way, the chosen candidate is removed from {@code pool} and a new
+     * {@link Lineup.Entry} is appended to {@code updatedEntries} with a real
+     * buffFitScore (0 when there is no buff to fit) and weightedScore set to
+     * whichever value the pick was actually made on (buffFitScore for a
+     * buff-driven pick, sortScore for an unbuffed one).
      */
     private static <T> void assignOne(Fortification fortification, List<Candidate<T>> pool,
                                       List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType,
@@ -291,11 +297,12 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
             buffFitScore = buffFitScoreOf.applyAsInt(chosen.team(), buff);
         } else {
             // Criterion 5: unbuffed fortification - no buff to optimize for, so it gets
-            // whatever is left over at the bottom of the pool, letting the strongest
-            // remaining teams stay available for buffed fortifications (Criterion 3) and
-            // the bridge (Criterion 1) instead.
+            // whatever is left over at the bottom of the pool (by sortScore, not raw
+            // totalPower - see HeroTeam#sortScore/TitanTeam#sortScore), letting the
+            // strongest/most valuable remaining teams stay available for buffed
+            // fortifications (Criterion 3) and the bridge (Criterion 1) instead.
             chosen = pool.stream()
-                    .sorted(Comparator.<Candidate<T>>comparingInt(Candidate::totalPower)
+                    .sorted(Comparator.<Candidate<T>>comparingDouble(Candidate::sortScore)
                             .thenComparing(Candidate::memberId)
                             .thenComparingInt(Candidate::teamIndex))
                     .findFirst()
@@ -304,7 +311,7 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
         }
 
         pool.remove(chosen);
-        double weightedScore = buff != null ? buffFitScore : chosen.totalPower();
+        double weightedScore = buff != null ? buffFitScore : chosen.sortScore();
         updatedEntries.add(new Lineup.Entry(fortification.id(), chosen.memberId(), teamType, chosen.teamIndex(),
                 chosen.totalPower(), buffFitScore, weightedScore));
     }
@@ -392,12 +399,14 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
     /**
      * One not-yet-assigned team still available for this run - {@code team}
      * is a {@link HeroTeam} or {@link TitanTeam} depending on which
-     * {@link #fillFortifications} call built the pool; {@code totalPower} is
-     * cached at pool-build time (via {@code totalPowerOf}) purely so the
-     * comparators in {@link #assignStrongestFirst}/{@link #assignOne} do not
-     * need a {@code ToIntFunction<T>} passed all the way down as well.
+     * {@link #fillFortifications} call built the pool; {@code totalPower}
+     * and {@code sortScore} are cached at pool-build time (via
+     * {@code totalPowerOf}/{@code sortScoreOf}) purely so the comparators in
+     * {@link #assignStrongestFirst}/{@link #assignOne} do not need a
+     * {@code ToIntFunction<T>}/{@code ToDoubleFunction<T>} passed all the way
+     * down as well.
      */
-    private record Candidate<T>(String memberId, T team, int teamIndex, int totalPower) {
+    private record Candidate<T>(String memberId, T team, int teamIndex, int totalPower, double sortScore) {
     }
 }
 

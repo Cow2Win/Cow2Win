@@ -8,6 +8,7 @@ import org.c2w.gui.guild.*;
 import org.c2w.util.AppContext;
 import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
+import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,8 +44,8 @@ public final class FortificationEntryDialog extends JDialog {
     /** Height shared by the member combo box (see {@link #buildMemberCombo()}'s caller) and the buff-member count label (see {@link #buildBuffCountLabel()}), so the two line up. */
     private static final int MEMBER_COMBO_HEIGHT = 41;
 
-    /** Width of the buff-member count label - just enough for a one/two-digit count (see {@link #buildBuffCountLabel()}). */
-    private static final int BUFF_COUNT_LABEL_WIDTH = 32;
+    /** Width of the buff-member count label - enough for a one/two-digit count plus " (" + score + ")" (see {@link #buildBuffCountLabel()}). */
+    private static final int BUFF_COUNT_LABEL_WIDTH = 64;
 
     private final Fortification fortification;
     private final AppContext appContext;
@@ -54,7 +55,7 @@ public final class FortificationEntryDialog extends JDialog {
     private final List<MemberDraft> memberOptions;
 
     /**
-     * Catalog fields (strategicImportance/buffProfits) editable directly
+     * Catalog fields (e.g. strategicImportance) editable directly
      * above {@link #rowsPanel} (see constructor) - folded into
      * {@link #performSave}'s own save via
      * {@link FortificationInfoPanel#applyEditsTo(Fortification)} rather than
@@ -126,13 +127,15 @@ public final class FortificationEntryDialog extends JDialog {
                     h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::heroLabel),
                     m -> m.heroTeams, Lineup.TeamType.HERO,
-                    hero -> fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role()));
+                    hero -> fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role()),
+                    this::heroScoreBreakdown);
         } else {
             buildRowsGeneric(TitanRepository.findAll(), FortificationEntryDialog::titanLabel,
                     t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::titanLabel),
                     m -> m.titanTeams, Lineup.TeamType.TITAN,
-                    titan -> fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element());
+                    titan -> fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element(),
+                    this::titanScoreBreakdown);
         }
     }
 
@@ -144,10 +147,31 @@ public final class FortificationEntryDialog extends JDialog {
         return LanguageService.displayName(titan.id());
     }
 
+    /**
+     * Builds teamDraft's {@link TeamScoreCalculator.Breakdown} against
+     * {@link #fortification} - delegates to the shared
+     * {@link TeamScoreCalculator#scoreFor(HeroTeam, Fortification)} (see
+     * there for the formula: buffFitScore or generalScore per member,
+     * depending on whether the fortification has a buff, plus the
+     * totalPower term either way).
+     */
+    private TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft) {
+        HeroTeam heroTeam = new HeroTeam(null, teamDraft.members, teamDraft.totalPower);
+        return TeamScoreCalculator.scoreFor(heroTeam, fortification);
+    }
+
+    /** The TITAN-side counterpart of {@link #heroScoreBreakdown} - delegates to {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)}. */
+    private TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft) {
+        TitanTeam titanTeam = new TitanTeam(null, teamDraft.members, teamDraft.totalPower);
+        return TeamScoreCalculator.scoreFor(titanTeam, fortification);
+    }
+
     private <T> void buildRowsGeneric(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                                       Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
-                                      Lineup.TeamType teamType, Function<T, Boolean> matchesBuff) {
+                                      Lineup.TeamType teamType, Function<T, Boolean> matchesBuff,
+                                      Function<TeamDraft<T>, TeamScoreCalculator.Breakdown> scoreBreakdownOf) {
         List<RowState<T>> rowStates = new ArrayList<>();
+        String fortificationName = LanguageService.displayName(fortification.id());
 
         List<Lineup.Entry> existingEntries = appContext.lineup().entries().stream()
                 .filter(e -> e.fortificationId().equals(fortification.id()) && e.teamType() == teamType)
@@ -179,10 +203,11 @@ public final class FortificationEntryDialog extends JDialog {
                 }
             }
 
+            int rowNumber = i + 1;
             JLabel buffCountLabel = buildBuffCountLabel();
             JPanel teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
-                    () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff));
-            updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
+                    () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber));
+            updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
             rowStates.add(new RowState<>(rowDraft, combo, originalMember, originalTeamIndex));
             rowsPanel.add(buildRowPanel(i, combo, teamEditor, buffCountLabel));
         }
@@ -214,7 +239,7 @@ public final class FortificationEntryDialog extends JDialog {
         teamEditorConstraints.anchor = GridBagConstraints.NORTHWEST;
         row.add(teamEditor, teamEditorConstraints);
 
-        // Behind (right of) the TeamEditorPanel - shows how many of its currently selected members increase fortification's buff (see buildBuffCountLabel/updateBuffCountLabel).
+        // Behind (right of) the TeamEditorPanel - shows how many of its currently selected members increase fortification's buff, plus the team's score total (see buildBuffCountLabel/updateBuffCountLabel).
         GridBagConstraints buffCountConstraints = new GridBagConstraints();
         buffCountConstraints.gridx = 2;
         buffCountConstraints.gridy = 0;
@@ -227,10 +252,11 @@ public final class FortificationEntryDialog extends JDialog {
 
     /**
      * Creates the (still empty) label showing how many of a row's currently
-     * selected members increase {@link #fortification}'s buff - see
-     * {@link #updateBuffCountLabel} for the text itself. Same height as the
-     * member combo box (see {@link #MEMBER_COMBO_HEIGHT}), tooltip mirrors
-     * the buff's own descriptive text (same convention as
+     * selected members increase {@link #fortification}'s buff, plus the
+     * team's score total in parentheses - see {@link #updateBuffCountLabel}
+     * for the text itself. Same height as the member combo box (see
+     * {@link #MEMBER_COMBO_HEIGHT}), tooltip mirrors the buff's own
+     * descriptive text (same convention as
      * {@code FortificationPanel#getBuffPercentLabel}), blank tooltip if this
      * fortification has no buff at all.
      */
@@ -244,10 +270,50 @@ public final class FortificationEntryDialog extends JDialog {
         return buffCountLabel;
     }
 
-    /** Sets buffCountLabel's text to how many of teamDraft's currently selected members satisfy matchesBuff (see {@link #buildRows()} for what that means per fortification type). */
-    private static <T> void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft, Function<T, Boolean> matchesBuff) {
+    /**
+     * Sets buffCountLabel's text to how many of teamDraft's currently
+     * selected members satisfy matchesBuff (see {@link #buildRows()} for what
+     * that means per fortification type), followed by the team's score total
+     * (via scoreBreakdownOf - per-member buffFitScore if {@link #fortification}
+     * has a buff, generalScore otherwise, plus the totalPower term either way,
+     * see {@link #heroScoreBreakdown}/{@link #titanScoreBreakdown}) in
+     * parentheses, e.g. "2 (4.5)". Also logs the breakdown to {@link Logger}
+     * (and thus the log panel) for debugging - see
+     * {@link #logSortScoreBreakdown}.
+     */
+    private static <T> void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft,
+                                                 Function<T, Boolean> matchesBuff,
+                                                 Function<TeamDraft<T>, TeamScoreCalculator.Breakdown> scoreBreakdownOf,
+                                                 String fortificationName, int rowNumber) {
         long count = teamDraft.members.stream().filter(matchesBuff::apply).count();
-        buffCountLabel.setText(String.valueOf(count));
+
+        TeamScoreCalculator.Breakdown breakdown = scoreBreakdownOf.apply(teamDraft);
+        logSortScoreBreakdown(fortificationName, rowNumber, breakdown);
+
+        buffCountLabel.setText(count + " (" + String.format(Locale.ROOT, "%.1f", breakdown.total()) + ")");
+    }
+
+    /**
+     * Logs breakdown for one row, e.g. "Wachturm: Team 1 : 10.00 + 1.00 +
+     * 1.00 + 0.70 = 12.70" (buff-less) or "Wachturm: Team 1 : 10.00 + 1.00 +
+     * 1.00 + 0.50 = 12.50" (buffed - same power term, buffFitScore instead of
+     * generalScore per member). Skipped for a still-empty row (no members and
+     * no power) - it carries no information and would just spam the log once
+     * per row every time the dialog opens.
+     */
+    private static void logSortScoreBreakdown(String fortificationName, int rowNumber, TeamScoreCalculator.Breakdown breakdown) {
+        List<Double> memberScores = breakdown.memberScores();
+        if (memberScores.isEmpty() && breakdown.powerTerm() == 0) {
+            return;
+        }
+        StringBuilder message = new StringBuilder();
+        message.append(fortificationName).append(": Team ").append(rowNumber).append(" : ")
+                .append(String.format(Locale.ROOT, "%.2f", breakdown.powerTerm()));
+        for (double memberScore : memberScores) {
+            message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
+        }
+        message.append(" = ").append(String.format(Locale.ROOT, "%.2f", breakdown.total()));
+        Logger.log(message.toString());
     }
 
     private JComboBox<MemberDraft> buildMemberCombo() {

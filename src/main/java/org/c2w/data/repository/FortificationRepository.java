@@ -236,15 +236,14 @@ public class FortificationRepository {
             String display = JsonSupport.getString(buffObj, "display", "");
             BuffEffect effect = BuffEffect.valueOf(JsonSupport.getStringOrNull(buffObj, "effect"));
             Double bonusPercent = JsonSupport.getDouble(buffObj, "bonusPercent");
-            List<String> buffProfits = JsonSupport.getStringList(buffObj, "buffProfits");
 
             if ("ROLE".equals(kind)) {
                 Role role = Role.valueOf(JsonSupport.getStringOrNull(buffObj, "role"));
-                return new RoleBuff(role, effect, bonusPercent, buffProfits, display);
+                return new RoleBuff(role, effect, bonusPercent, display);
             }
             if ("ELEMENT".equals(kind)) {
                 TitanElement element = TitanElement.valueOf(JsonSupport.getStringOrNull(buffObj, "element"));
-                return new ElementBuff(element, effect, bonusPercent, buffProfits, display);
+                return new ElementBuff(element, effect, bonusPercent, display);
             }
             return null;
         } catch (RuntimeException e) {
@@ -287,14 +286,12 @@ public class FortificationRepository {
             obj.addProperty("display", roleBuff.display());
             obj.addProperty("effect", roleBuff.effect().name());
             JsonSupport.addNumber(obj, "bonusPercent", roleBuff.bonusPercent());
-            obj.add("buffProfits", JsonSupport.toStringArray(roleBuff.buffProfits()));
             obj.addProperty("role", roleBuff.role().name());
         } else if (buff instanceof ElementBuff elementBuff) {
             obj.addProperty("kind", "ELEMENT");
             obj.addProperty("display", elementBuff.display());
             obj.addProperty("effect", elementBuff.effect().name());
             JsonSupport.addNumber(obj, "bonusPercent", elementBuff.bonusPercent());
-            obj.add("buffProfits", JsonSupport.toStringArray(elementBuff.buffProfits()));
             obj.addProperty("element", elementBuff.element().name());
         }
         return obj;

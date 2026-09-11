@@ -16,7 +16,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Shared Gson setup, plus small helpers for reading typed values out of a
@@ -93,6 +95,26 @@ public final class JsonSupport {
         for (JsonElement e : getArray(obj, key)) {
             if (!e.isJsonNull()) {
                 result.add(e.getAsString());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Reads a flat object-valued property as a String-to-String map (e.g.
+     * {@code "buffFitScores": {"bastion": "ELEVATED", "city-hall": "LOW"}}) -
+     * insertion order preserved, missing/null property yields an empty map.
+     * Non-string values are read via {@code getAsString()} (fine for the
+     * enum-name-valued maps this is currently used for).
+     */
+    public static Map<String, String> getStringMap(JsonObject obj, String key) {
+        Map<String, String> result = new LinkedHashMap<>();
+        JsonObject sub = getObject(obj, key);
+        if (sub != null) {
+            for (var entry : sub.entrySet()) {
+                if (!entry.getValue().isJsonNull()) {
+                    result.put(entry.getKey(), entry.getValue().getAsString());
+                }
             }
         }
         return result;
