@@ -2,6 +2,7 @@ package org.c2w.gui;
 
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
+import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.Config;
 
@@ -49,6 +50,7 @@ public class Cow2Frame extends JFrame {
         this.appContext = appContext;
         updateTitle();
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
+        setJMenuBar(buildMenuBar());
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
 
@@ -97,6 +99,46 @@ public class Cow2Frame extends JFrame {
         // right after setVisible(true) on every platform - so this is
         // deferred to the next event queue cycle.
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(LEFT_SPLIT_RATIO));
+    }
+
+    /**
+     * Builds the frame's menu bar: "Settings" > "Configs" (see
+     * {@link #onOpenSettings()}) and "Tools" > "Hero Buff Fit Scores" (see
+     * {@link #onOpenHeroBuffFitScores()} - moved here 2026-09-11 from a
+     * {@code ToolbarPanel} toolbar button, since maintaining the hero
+     * catalog's buff fit scores is an infrequent, guild-independent task
+     * that doesn't need a permanently visible button).
+     */
+    private JMenuBar buildMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu settingsMenu = new JMenu("Settings");
+        JMenuItem configsItem = new JMenuItem("Configs");
+        configsItem.addActionListener(e -> onOpenSettings());
+        settingsMenu.add(configsItem);
+        menuBar.add(settingsMenu);
+
+        JMenu toolsMenu = new JMenu("Tools");
+        JMenuItem heroBuffFitScoresItem = new JMenuItem("Hero Buff Fit Scores");
+        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
+        toolsMenu.add(heroBuffFitScoresItem);
+        menuBar.add(toolsMenu);
+
+        return menuBar;
+    }
+
+    /** Opens {@link SettingsDialog} (currently: choosing the display language). */
+    private void onOpenSettings() {
+        SettingsDialog.show(this);
+    }
+
+    /**
+     * Opens {@link HeroBuffFitScoresDialog} - independent of the currently
+     * open guild/lineup (see that dialog's class Javadoc), so this only
+     * needs the frame itself as owner.
+     */
+    private void onOpenHeroBuffFitScores() {
+        new HeroBuffFitScoresDialog(this).setVisible(true);
     }
 
     private void onOpenGuildEditor() {

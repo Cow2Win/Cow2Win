@@ -136,7 +136,6 @@ toolbar.generateReport=Report erzeugen
 toolbar.heroWars=Hero Wars öffnen
 toolbar.allTeams=Alle Teams anzeigen
 toolbar.allTeamsScores=Team-Scores anzeigen
-toolbar.heroBuffFitScores=Buff-Werte der Helden pflegen
 
 # Lineup-Zusammenfassung
 lineupSummary.heroPower=Helden

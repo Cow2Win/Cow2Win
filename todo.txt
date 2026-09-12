@@ -1,0 +1,4 @@
+FortifiactionPanel: Pros / Contra Helden anzeigen rechts oben
+Label CowScore einführen
+Toolbar aufräumen
+

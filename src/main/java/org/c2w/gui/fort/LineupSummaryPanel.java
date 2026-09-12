@@ -1,5 +1,6 @@
 package org.c2w.gui.fort;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.util.BuffCalculationService;
@@ -51,13 +52,13 @@ public class LineupSummaryPanel extends JPanel {
         }
         this.guild = guild;
         setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        setBackground(BACKGROUND_COLOR);
-        setOpaque(true);
+        //setBackground(BACKGROUND_COLOR);
+        //setOpaque(true);
 
-        heroPowerLbl.setForeground(TEXT_COLOR);
-        heroBuffCountLbl.setForeground(TEXT_COLOR);
-        titanPowerLbl.setForeground(TEXT_COLOR);
-        titanBuffCountLbl.setForeground(TEXT_COLOR);
+        heroPowerLbl.setForeground(FortificationType.HERO.getColor());
+        heroBuffCountLbl.setForeground(FortificationType.HERO.getColor());
+        titanPowerLbl.setForeground(FortificationType.TITAN.getColor());
+        titanBuffCountLbl.setForeground(FortificationType.TITAN.getColor());
 
         // Tooltips added 2026-09-05 alongside shortening the hero/titan power
         // labels themselves (see class Javadoc) - static text, set once here

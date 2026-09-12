@@ -1,16 +1,11 @@
 package org.c2w.gui;
 
+import org.c2w.util.LanguageService;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class InitialSetupDialog extends JDialog {
-
-    /** Display name -> file name of the properties file under resources/language. */
-    private static final String[][] LANGUAGES = {
-            {"Deutsch", "deutsch.txt"},
-            {"English", "english.txt"},
-            {"Français", "francais.txt"}
-    };
 
     private final JComboBox<String> languageComboBox = new JComboBox<>();
     private final JTextField guildNameField = new JTextField("myGuild",20);
@@ -29,7 +24,7 @@ public class InitialSetupDialog extends JDialog {
     }
 
     private void buildUi() {
-        for (String[] language : LANGUAGES) {
+        for (String[] language : LanguageService.AVAILABLE_LANGUAGES) {
             languageComboBox.addItem(language[0]);
         }
 
@@ -91,7 +86,7 @@ public class InitialSetupDialog extends JDialog {
             return;
         }
         int languageIndex = languageComboBox.getSelectedIndex();
-        selectedLanguageFile = LANGUAGES[languageIndex][1];
+        selectedLanguageFile = LanguageService.AVAILABLE_LANGUAGES[languageIndex][1];
         guildName = enteredName;
         confirmed = true;
         setVisible(false);

@@ -10,6 +10,19 @@ public class LanguageService {
     private static final String LANGUAGE_RESOURCE_FOLDER = "/language/";
     private static final String DEFAULT_LANGUAGE_FILE = "english.txt";
 
+    /**
+     * Display name -> file name of the properties file under
+     * resources/language, in the order they should be offered to the user.
+     * Shared by every UI spot that lets the user pick a language (see
+     * InitialSetupDialog and SettingsDialog) so the list only needs updating
+     * in one place when a language is added or removed.
+     */
+    public static final String[][] AVAILABLE_LANGUAGES = {
+            {"Deutsch", "deutsch.txt"},
+            {"English", "english.txt"},
+            {"Français", "francais.txt"}
+    };
+
     private static volatile Properties displayNames;
     private static volatile String loadedLanguageFile;
 
