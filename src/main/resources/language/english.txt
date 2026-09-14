@@ -136,6 +136,7 @@ toolbar.generateReport=Generate report
 toolbar.heroWars=Open Hero Wars
 toolbar.allTeams=Show all teams
 toolbar.allTeamsScores=Show team scores
+toolbar.compareLineups=Compare lineups
 
 #Lineup summary
 lineupSummary.heroPower=Heroes
@@ -157,6 +158,7 @@ teamsOverview.member=Member
 teamsOverview.heroes=Heroes
 teamsOverview.titans=Titans
 teamsOverview.fortification=Fortification
+teamsOverview.noBuff=No buff
 teamsOverview.openGuildEditor=Open guild management
 teamsOverview.saveGuild=Save guild
 teamsOverview.algorithm=Algorithm:
@@ -170,6 +172,8 @@ guildEditor.removeMember=Remove member
 #Fortification detail
 fortificationDetail.saveFortification=Save fortification
 fortificationDetail.prerequisites=Prerequisites
+fortificationDetail.negativeHeroesHeader=Not recommended heroes
+fortificationDetail.goodHeroesHeader=Well-suited heroes
 
 #Fortification entry
 fortificationEntry.saveTeams=Save teams
@@ -178,6 +182,33 @@ fortificationEntry.saveTeams=Save teams
 heroBuffFitScores.saveScores=Save scores
 heroBuffFitScores.generalScore=General score:
 heroBuffFitScores.buffFitScoresHeader=Buffed fortifications:
+
+#Lineup comparison
+lineupComparison.modeSavedLineups=Two saved lineups
+lineupComparison.modeCurrentVsAlgorithm=Current lineup vs. algorithm
+lineupComparison.lineupBefore=Lineup A:
+lineupComparison.lineupAfter=Lineup B:
+lineupComparison.compare=Compare
+lineupComparison.onlyChanges=Only show changes
+lineupComparison.tabTeams=Teams
+lineupComparison.tabFortifications=Fortifications
+lineupComparison.columnStatus=Status
+lineupComparison.columnTeam=Team
+lineupComparison.columnFortificationBefore=Fortification (before)
+lineupComparison.columnFortificationAfter=Fortification (after)
+lineupComparison.columnPowerRange=Power
+lineupComparison.columnPowerDiff=Power Δ
+lineupComparison.columnScoreDiff=Score Δ
+lineupComparison.columnSlots=Slots
+lineupComparison.columnBuffPercent=Buff %
+lineupComparison.columnBuffPercentDiff=Buff % Δ
+lineupComparison.statusAdded=added
+lineupComparison.statusRemoved=removed
+lineupComparison.statusMoved=moved
+lineupComparison.statusUpdated=updated
+lineupComparison.statusUnchanged=unchanged
+lineupComparison.summaryTotalPower=Total power
+lineupComparison.summaryChanges=Changes
 
 #General
 common.none=(none)

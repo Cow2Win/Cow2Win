@@ -1,0 +1,213 @@
+{
+  "id": "scoretest",
+  "name": "ScoreTest",
+  "season": 0,
+  "members": [
+    {
+      "id": "Eins",
+      "name": "Eins",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "artemis",
+            "elmir",
+            "dark-star",
+            "ziri",
+            "fox"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "cascade",
+            "augustus",
+            "lyria",
+            "adam",
+            "astaroth"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "aidan",
+            "dorian",
+            "thea",
+            "martha",
+            "maya"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        }
+      ],
+      "titanTeams": []
+    },
+    {
+      "id": "Zwei",
+      "name": "Zwei",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "artemis",
+            "elmir",
+            "dark-star",
+            "ziri",
+            "fox"
+          ],
+          "totalPower": 200000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "cascade",
+            "augustus",
+            "lyria",
+            "adam",
+            "astaroth"
+          ],
+          "totalPower": 200000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "aidan",
+            "dorian",
+            "thea",
+            "martha",
+            "maya"
+          ],
+          "totalPower": 200000,
+          "lastModified": "2026-09-13"
+        }
+      ],
+      "titanTeams": []
+    },
+    {
+      "id": "Fünf",
+      "name": "Fünf",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "artemis",
+            "elmir",
+            "dark-star",
+            "ziri",
+            "fox"
+          ],
+          "totalPower": 500000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "cascade",
+            "augustus",
+            "lyria",
+            "adam",
+            "astaroth"
+          ],
+          "totalPower": 500000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "aidan",
+            "dorian",
+            "thea",
+            "martha",
+            "maya"
+          ],
+          "totalPower": 500000,
+          "lastModified": "2026-09-13"
+        }
+      ],
+      "titanTeams": []
+    },
+    {
+      "id": "Acht",
+      "name": "Acht",
+      "heroTeams": [],
+      "titanTeams": []
+    },
+    {
+      "id": "Zehn",
+      "name": "Zehn",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "artemis",
+            "elmir",
+            "dark-star",
+            "ziri",
+            "fox"
+          ],
+          "totalPower": 1000000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "cascade",
+            "augustus",
+            "lyria",
+            "adam",
+            "astaroth"
+          ],
+          "totalPower": 1000000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "aidan",
+            "dorian",
+            "thea",
+            "martha",
+            "maya"
+          ],
+          "totalPower": 1000000,
+          "lastModified": "2026-09-13"
+        }
+      ],
+      "titanTeams": []
+    },
+    {
+      "id": "Eins1",
+      "name": "Eins1",
+      "heroTeams": [
+        {
+          "heroIds": [
+            "electra",
+            "fluffy",
+            "orion",
+            "augustus",
+            "dorian"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "galahad",
+            "lyria",
+            "guus",
+            "keira",
+            "kayla"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        },
+        {
+          "heroIds": [
+            "alvanor",
+            "thea",
+            "amira",
+            "fafnir",
+            "astrid-and-lucas"
+          ],
+          "totalPower": 100000,
+          "lastModified": "2026-09-13"
+        }
+      ],
+      "titanTeams": []
+    }
+  ]
+}

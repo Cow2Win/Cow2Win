@@ -4,10 +4,10 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.eval.LineupAlgorithm;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.util.AppContext;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
 
@@ -156,7 +156,7 @@ public class TeamsOverviewPanel extends JPanel {
         int assigned = updatedLineup.entries().size() - currentLineup.entries().size();
         appContext.setLineup(updatedLineup);
         if (assigned > 0) {
-            Config.editedLineup = true;
+            GuiUtils.editedLineup = true;
         }
         fortificationMapPanel.refresh(updatedLineup);
         refreshTables();
@@ -175,7 +175,7 @@ public class TeamsOverviewPanel extends JPanel {
             Guild updated = guildWithCurrentSelection();
             GuildRepository.save(updated, appContext.guildFilePath());
             appContext.setGuild(updated);
-            Config.editedGuild = false;
+            GuiUtils.editedGuild = false;
             Logger.log("Saved: " + appContext.guildFilePath());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Could not save guild:\n" + ex.getMessage(),
@@ -216,7 +216,7 @@ public class TeamsOverviewPanel extends JPanel {
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
         appContext.setLineup(updatedLineup);
-        Config.editedLineup = true;
+        GuiUtils.editedLineup = true;
         fortificationMapPanel.refresh(updatedLineup);
         return true;
     }
@@ -232,7 +232,7 @@ public class TeamsOverviewPanel extends JPanel {
 
 
     private void markGuildEdited() {
-        Config.editedGuild = true;
+        GuiUtils.editedGuild = true;
     }
 
 
@@ -296,7 +296,7 @@ public class TeamsOverviewPanel extends JPanel {
         }
         heroModel.setRows(heroRows);
         titanModel.setRows(titanRows);
-        Config.editedGuild = false;
+        GuiUtils.editedGuild = false;
     }
 
     /**
@@ -332,7 +332,7 @@ public class TeamsOverviewPanel extends JPanel {
      * members (column 2) carries the raw member list (Hero or Titan) - the
      * display is handled by {@link MembersCellRenderer}. Column 0 is
      * rendered formatted via {@link PowerCellRenderer}
-     * ({@link Config#NUMBER_FORMAT}) while not being edited.
+     * ({@link GuiUtils#NUMBER_FORMAT}) while not being edited.
      */
     static final class TeamOverviewTableModel<T> extends AbstractTableModel {
 
@@ -524,7 +524,7 @@ public class TeamsOverviewPanel extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            JLabel label = new JLabel(Config.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
+            JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;

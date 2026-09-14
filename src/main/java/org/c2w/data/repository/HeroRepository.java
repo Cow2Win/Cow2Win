@@ -11,7 +11,6 @@ import org.c2w.util.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,7 +18,8 @@ import java.util.stream.Collectors;
 public class HeroRepository {
     private static final String JSON_PATH = "/data/heroes.json";
 
-    private static final Path CATALOG_FILE_PATH = Paths.get("src", "main", "resources", "data", "heroes.json");
+    /** See {@link JsonSupport#resolveDataFile} for how this resolves in the IDE vs. the packaged app. */
+    private static final Path CATALOG_FILE_PATH = JsonSupport.resolveDataFile("data", "heroes.json");
 
     /** Classpath-relative folder every hero's "image" JSON field is resolved against - see {@link #parseHeroObject}/{@link #stripImagePrefix}. */
     private static final String IMAGE_PATH_PREFIX = "/images/heroes/";

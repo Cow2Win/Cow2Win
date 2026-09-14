@@ -68,3 +68,7 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
       Cow2Win Claude Project (captureBonus table, buff tables, unlock-depth
       table) so it doesn't quietly go stale relative to the actual data
       files.
+- [ ] Update `dataVersion` (and `note`, if useful) in
+      `src/main/resources/data/catalog-version.json` to today's date - it's
+      logged at app startup so it's visible at a glance which patch state
+      the catalog data was last checked against.

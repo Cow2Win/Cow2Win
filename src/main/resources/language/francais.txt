@@ -134,6 +134,7 @@ toolbar.generateReport=Générer le rapport
 toolbar.heroWars=Ouvrir Hero Wars
 toolbar.allTeams=Afficher toutes les équipes
 toolbar.allTeamsScores=Afficher les scores des équipes
+toolbar.compareLineups=Comparer les lineups
 
 #Résumé du lineup
 lineupSummary.heroPower=Héros
@@ -155,6 +156,7 @@ teamsOverview.member=Membre
 teamsOverview.heroes=Héros
 teamsOverview.titans=Titans
 teamsOverview.fortification=Forteresse
+teamsOverview.noBuff=Sans buff
 teamsOverview.openGuildEditor=Ouvrir la gestion de la guilde
 teamsOverview.saveGuild=Enregistrer la guilde
 teamsOverview.algorithm=Algorithme :
@@ -168,6 +170,8 @@ guildEditor.removeMember=Supprimer un membre
 #Détail de la fortification
 fortificationDetail.saveFortification=Enregistrer la fortification
 fortificationDetail.prerequisites=Prérequis
+fortificationDetail.negativeHeroesHeader=Héros non recommandés
+fortificationDetail.goodHeroesHeader=Héros bien adaptés
 
 #Attribution des équipes à la fortification
 fortificationEntry.saveTeams=Enregistrer les équipes
@@ -176,6 +180,33 @@ fortificationEntry.saveTeams=Enregistrer les équipes
 heroBuffFitScores.saveScores=Enregistrer les scores
 heroBuffFitScores.generalScore=Score général :
 heroBuffFitScores.buffFitScoresHeader=Forteresses avec buff :
+
+#Comparaison de lineups
+lineupComparison.modeSavedLineups=Deux lineups enregistrés
+lineupComparison.modeCurrentVsAlgorithm=Lineup actuel vs. algorithme
+lineupComparison.lineupBefore=Lineup A :
+lineupComparison.lineupAfter=Lineup B :
+lineupComparison.compare=Comparer
+lineupComparison.onlyChanges=Afficher seulement les changements
+lineupComparison.tabTeams=Équipes
+lineupComparison.tabFortifications=Fortifications
+lineupComparison.columnStatus=Statut
+lineupComparison.columnTeam=Équipe
+lineupComparison.columnFortificationBefore=Fortification (avant)
+lineupComparison.columnFortificationAfter=Fortification (après)
+lineupComparison.columnPowerRange=Puissance
+lineupComparison.columnPowerDiff=Puissance Δ
+lineupComparison.columnScoreDiff=Score Δ
+lineupComparison.columnSlots=Emplacements
+lineupComparison.columnBuffPercent=Buff %
+lineupComparison.columnBuffPercentDiff=Buff % Δ
+lineupComparison.statusAdded=ajouté
+lineupComparison.statusRemoved=supprimé
+lineupComparison.statusMoved=déplacé
+lineupComparison.statusUpdated=mis à jour
+lineupComparison.statusUnchanged=inchangé
+lineupComparison.summaryTotalPower=Puissance totale
+lineupComparison.summaryChanges=Changements
 
 #Général
 common.none=(aucun)

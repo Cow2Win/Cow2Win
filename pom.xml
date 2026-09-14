@@ -17,6 +17,27 @@
         <gson.version>2.13.2</gson.version>
         <junit.version>5.14.4</junit.version>
         <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
+
+        <!-- Windows app-image packaging (bundled JRE + resources folder) - see the
+             maven-shade-plugin/jpackage-maven-plugin/maven-assembly-plugin executions
+             below and the "Distribution package" section in README.md. -->
+        <maven.shade.plugin.version>3.6.2</maven.shade.plugin.version>
+        <maven.assembly.plugin.version>3.8.0</maven.assembly.plugin.version>
+        <maven.resources.plugin.version>3.5.0</maven.resources.plugin.version>
+        <jpackage.maven.plugin.version>1.8.0</jpackage.maven.plugin.version>
+        <app.mainClass>org.c2w.C2WApp</app.mainClass>
+        <!-- Folder/exe name used by jpackage - deliberately NOT ${project.name}
+             ("Cow 2", with a space) to keep the installed folder and Cow2Win.exe
+             name script-friendly. -->
+        <app.name>Cow2Win</app.name>
+        <!-- jpackage's "app-version" option must be a clean digits-and-dots version (no
+             "-SNAPSHOT"/qualifiers), so this is intentionally decoupled from
+             ${project.version} rather than reused from it. Bump by hand for now. -->
+        <app.version>1.0.0</app.version>
+        <app.vendor>org.tdi</app.vendor>
+        <!-- Set -Ddist.skip=true to skip the jpackage/zip steps below (e.g. for a
+             quick "mvn clean test") without touching the rest of the build. -->
+        <dist.skip>false</dist.skip>
     </properties>
     <dependencies>
         <!-- JSON (de)serialization for the data/repository catalog and workspace files -
@@ -43,6 +64,150 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+
+            <!-- Stages a plain copy of src/main/resources under target/app-content/resources
+                 so it can be dropped into the packaged app image as a real, on-disk
+                 "resources" folder (see the jpackage appContentPaths below) - separate from
+                 (and in addition to) the same files being compiled into the jar's classpath
+                 as usual via the standard resources:resources execution. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven.resources.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>stage-app-content-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/app-content/resources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Builds a single executable "fat" jar (gson merged in, Main-Class set) into
+                 target/jpackage-input/ - this is jpackage's "input" directory below, kept separate
+                 from the normal target/Cow2Win-1.0-SNAPSHOT.jar produced by the standard
+                 jar:jar execution (that one is untouched and still what gets deployed as
+                 the plain Maven artifact). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven.shade.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>build-executable-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/jpackage-input</outputDirectory>
+                            <finalName>${app.name}</finalName>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${app.mainClass}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- The actual "real" deploy artifact: runs the JDK's own jpackage tool to
+                 build a Windows app-image under target/dist/Cow2Win/ containing
+                 Cow2Win.exe, a bundled runtime/ (a jlink-built JRE - no separately
+                 installed Java needed to run it) and, via appContentPaths, a plain
+                 resources/ folder (the staged copy from the execution above).
+
+                 Requires a full JDK 24 (with jmods, i.e. not a JRE-only install) on the
+                 machine running `mvn package`/`deploy` - jpackage is bundled with the JDK
+                 since Java 14, but needs jmods to build the custom runtime image.
+                 jpackage always targets the OS it runs on, so this produces a Windows
+                 app-image when run here. -->
+            <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>${jpackage.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>build-app-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jpackage</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dist.skip}</skip>
+                            <type>APP_IMAGE</type>
+                            <name>${app.name}</name>
+                            <appVersion>${app.version}</appVersion>
+                            <vendor>${app.vendor}</vendor>
+                            <description>${project.description}</description>
+                            <input>${project.build.directory}/jpackage-input</input>
+                            <mainJar>${app.name}.jar</mainJar>
+                            <mainClass>${app.mainClass}</mainClass>
+                            <destination>${project.build.directory}/dist</destination>
+                            <removeDestination>true</removeDestination>
+                            <winConsole>false</winConsole>
+                            <addModules>
+                                <addModule>java.base</addModule>
+                                <addModule>java.desktop</addModule>
+                            </addModules>
+                            <appContentPaths>
+                                <appContentPath>${project.build.directory}/app-content/resources</appContentPath>
+                            </appContentPaths>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Zips target/dist/Cow2Win/ into target/Cow2Win-<version>-windows-app.zip
+                 (descriptor: src/assembly/windows-app.xml) and attaches it as a secondary
+                 artifact, so a plain `mvn deploy` uploads this distributable package -
+                 JRE, app jar and resources folder together - to the repository in
+                 distributionManagement below, not just the plain code jar. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven.assembly.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>zip-app-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <skipAssembly>${dist.skip}</skipAssembly>
+                            <descriptors>
+                                <descriptor>src/assembly/windows-app.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>true</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

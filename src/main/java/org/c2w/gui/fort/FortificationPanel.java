@@ -1,11 +1,10 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
-import org.c2w.data.model.FortificationType;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
@@ -169,7 +168,7 @@ public class FortificationPanel extends JPanel {
      */
     private JLabel getPowerLabel(){
         if(powerlbl == null){
-            String text = showChanges ? formatPowerDiff(totalPowerDiff) : Config.NUMBER_FORMAT.format(totalPower);
+            String text = showChanges ? formatPowerDiff(totalPowerDiff) : GuiUtils.NUMBER_FORMAT.format(totalPower);
             Color color = showChanges ? diffColor(totalPowerDiff) : fortification.type().getColor();
             powerlbl = new JLabel(text, JLabel.RIGHT);
             powerlbl.setForeground(color);
@@ -177,9 +176,9 @@ public class FortificationPanel extends JPanel {
         return powerlbl;
     }
 
-    /** "+1.234"/"-1.234"/"0" - {@link Config#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
+    /** "+1.234"/"-1.234"/"0" - {@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
     private static String formatPowerDiff(int diff) {
-        String formatted = Config.NUMBER_FORMAT.format(diff);
+        String formatted = GuiUtils.NUMBER_FORMAT.format(diff);
         return diff > 0 ? "+" + formatted : formatted;
     }
 

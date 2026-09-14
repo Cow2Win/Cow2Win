@@ -1,0 +1,4 @@
+{
+  "dataVersion": "2026-09-13",
+  "note": "heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md."
+}

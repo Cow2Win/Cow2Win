@@ -2,10 +2,10 @@ package org.c2w.gui;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.util.AppContext;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 import org.c2w.util.TeamScoreCalculator;
 
@@ -31,8 +31,16 @@ import java.util.function.Function;
  * {@link TeamScoreCalculator} for the formula) instead of a buff match
  * count. Unlike {@link AllTeamsOverviewDialog}, which only adds a column per
  * BUFFED fortification (match counts are meaningless without a buff to match
- * against), this dialog adds one per fortification of the matching type
- * regardless of buff, since a score exists either way.
+ * against), this dialog adds one column per BUFFED fortification of the
+ * matching type, plus a single shared column standing in for every
+ * buff-less fortification of that type: a buff-less fortification's score
+ * always falls back to the same generalScore-based formula (see
+ * {@link TeamScoreCalculator}), so it is identical no matter which buff-less
+ * fortification is actually picked, and listing one column per buff-less
+ * fortification would just repeat the same number (see {@link ScoreColumn}).
+ * The "Fortification" assignment column/combo is unaffected by this
+ * collapsing - every individual fortification, buffed or not, is still its
+ * own pickable map location with its own capacity.
  *
  * <p>Most of this class - the table structure, the editable "Fortification"
  * column, the member/power rendering - is a deliberate near-duplicate of
@@ -68,18 +76,27 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
     private static final String COLUMN_KEY_TITANS = "teamsOverview.titans";
     private static final String COLUMN_KEY_FORTIFICATION = "teamsOverview.fortification";
 
+    /** Language file key (see resources/language/*.txt) for the shared "no buff" score column header - see {@link ScoreColumn}. */
+    private static final String COLUMN_KEY_NO_BUFF = "teamsOverview.noBuff";
+
     private final AppContext appContext;
 
     private final FortificationMapPanel fortificationMapPanel;
 
+    /** Every fortification of the matching type, buffed or not - used for the "Fortification" assignment combo, unaffected by the score-column collapsing (see class Javadoc). */
     private final List<Fortification> heroFortifications = sortedFortifications(FortificationType.HERO);
 
     private final List<Fortification> titanFortifications = sortedFortifications(FortificationType.TITAN);
 
+    /** This dialog's own score-table columns - one per buffed fortification plus one shared "no buff" column (see {@link ScoreColumn}/class Javadoc), derived from the full lists above. */
+    private final List<ScoreColumn> heroScoreColumns = buildScoreColumns(heroFortifications);
+
+    private final List<ScoreColumn> titanScoreColumns = buildScoreColumns(titanFortifications);
+
     private final AllTeamsScoreTableModel<Hero> heroModel =
-            new AllTeamsScoreTableModel<>(COLUMN_KEY_HEROES, heroFortifications, this::handleFortificationSelected);
+            new AllTeamsScoreTableModel<>(COLUMN_KEY_HEROES, heroScoreColumns, this::handleFortificationSelected);
     private final AllTeamsScoreTableModel<Titan> titanModel =
-            new AllTeamsScoreTableModel<>(COLUMN_KEY_TITANS, titanFortifications, this::handleFortificationSelected);
+            new AllTeamsScoreTableModel<>(COLUMN_KEY_TITANS, titanScoreColumns, this::handleFortificationSelected);
     private final JTable heroTable = new JTable(heroModel);
     private final JTable titanTable = new JTable(titanModel);
 
@@ -124,6 +141,30 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
                 .filter(f -> f.type() == type)
                 .sorted(Comparator.comparing(f -> LanguageService.displayName(f.id())))
                 .toList();
+    }
+
+    /**
+     * Turns {@code fortifications} (already sorted, one type) into this
+     * dialog's score columns: every buffed fortification keeps its own
+     * column (same order), and every buff-less fortification is folded into
+     * a single shared column appended at the end - see {@link ScoreColumn}/
+     * class Javadoc. Returns only the buffed columns, with no shared column
+     * appended, if {@code fortifications} has no buff-less entry at all.
+     */
+    private static List<ScoreColumn> buildScoreColumns(List<Fortification> fortifications) {
+        List<ScoreColumn> columns = new ArrayList<>();
+        Fortification firstBuffLess = null;
+        for (Fortification fortification : fortifications) {
+            if (fortification.buff() != null) {
+                columns.add(ScoreColumn.forBuffedFortification(fortification));
+            } else if (firstBuffLess == null) {
+                firstBuffLess = fortification;
+            }
+        }
+        if (firstBuffLess != null) {
+            columns.add(ScoreColumn.sharedNoBuff(firstBuffLess));
+        }
+        return List.copyOf(columns);
     }
 
     private static <T> void configureTable(JTable table, Function<T, Icon> iconResolver, Function<T, String> nameResolver,
@@ -208,7 +249,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
         appContext.setLineup(updatedLineup);
-        Config.editedLineup = true;
+        GuiUtils.editedLineup = true;
         fortificationMapPanel.refresh(updatedLineup);
         return true;
     }
@@ -225,7 +266,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
             for (int i = 0; i < heroTeams.size(); i++) {
                 HeroTeam team = heroTeams.get(i);
                 Fortification assigned = findAssignedFortification(currentLineup, member.id(), Lineup.TeamType.HERO, i);
-                double[] scores = heroScoresFor(team, heroFortifications);
+                double[] scores = heroScoresFor(team, heroScoreColumns);
                 heroRows.add(new AllTeamsScoreTableModel.Row<>(memberLabel, team.heroes(), team.totalPower(),
                         member.id(), Lineup.TeamType.HERO, i, assigned, scores));
             }
@@ -234,7 +275,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
             for (int i = 0; i < titanTeams.size(); i++) {
                 TitanTeam team = titanTeams.get(i);
                 Fortification assigned = findAssignedFortification(currentLineup, member.id(), Lineup.TeamType.TITAN, i);
-                double[] scores = titanScoresFor(team, titanFortifications);
+                double[] scores = titanScoresFor(team, titanScoreColumns);
                 titanRows.add(new AllTeamsScoreTableModel.Row<>(memberLabel, team.titans(), team.totalPower(),
                         member.id(), Lineup.TeamType.TITAN, i, assigned, scores));
             }
@@ -243,20 +284,26 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
         titanModel.setRows(titanRows);
     }
 
-    /** {@code team}'s {@link TeamScoreCalculator} score against every entry of {@code fortifications}, same order. */
-    private static double[] heroScoresFor(HeroTeam team, List<Fortification> fortifications) {
-        double[] scores = new double[fortifications.size()];
-        for (int i = 0; i < fortifications.size(); i++) {
-            scores[i] = TeamScoreCalculator.scoreFor(team, fortifications.get(i)).total();
+    /**
+     * {@code team}'s {@link TeamScoreCalculator} score against every entry of
+     * {@code scoreColumns}, same order - for the shared "no buff" column
+     * (see {@link ScoreColumn}), this uses that column's representative
+     * buff-less fortification, which yields the same result as any other
+     * buff-less fortification would (see class Javadoc).
+     */
+    private static double[] heroScoresFor(HeroTeam team, List<ScoreColumn> scoreColumns) {
+        double[] scores = new double[scoreColumns.size()];
+        for (int i = 0; i < scoreColumns.size(); i++) {
+            scores[i] = TeamScoreCalculator.scoreFor(team, scoreColumns.get(i).representative()).total();
         }
         return scores;
     }
 
     /** The TITAN-side counterpart of {@link #heroScoresFor}. */
-    private static double[] titanScoresFor(TitanTeam team, List<Fortification> fortifications) {
-        double[] scores = new double[fortifications.size()];
-        for (int i = 0; i < fortifications.size(); i++) {
-            scores[i] = TeamScoreCalculator.scoreFor(team, fortifications.get(i)).total();
+    private static double[] titanScoresFor(TitanTeam team, List<ScoreColumn> scoreColumns) {
+        double[] scores = new double[scoreColumns.size()];
+        for (int i = 0; i < scoreColumns.size(); i++) {
+            scores[i] = TeamScoreCalculator.scoreFor(team, scoreColumns.get(i).representative()).total();
         }
         return scores;
     }
@@ -281,10 +328,10 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
      * Redundant copy of {@code AllTeamsOverviewDialog.AllTeamsTableModel} -
      * identical structure (one row per team, only column 3 "Fortification"
      * editable), but {@code scoreColumns}/{@code Row#scores} hold a
-     * {@code double} {@link TeamScoreCalculator} total per fortification
-     * instead of an {@code int} buff match count, and cover every
-     * fortification of the matching type (not only buffed ones - see class
-     * Javadoc).
+     * {@code double} {@link TeamScoreCalculator} total per {@link ScoreColumn}
+     * instead of an {@code int} buff match count, and cover every BUFFED
+     * fortification of the matching type plus one shared "no buff" column
+     * (not only buffed ones - see class Javadoc/{@link ScoreColumn}).
      */
     static final class AllTeamsScoreTableModel<T> extends AbstractTableModel {
 
@@ -293,8 +340,8 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
 
         private final String membersColumnKey;
 
-        /** This table's own per-fortification score columns, in display order - see {@link AllTeamsScoreOverviewDialog#heroScoresFor}/{@link AllTeamsScoreOverviewDialog#titanScoresFor}. */
-        private final List<Fortification> scoreColumns;
+        /** This table's own score columns, in display order - see {@link AllTeamsScoreOverviewDialog#heroScoresFor}/{@link AllTeamsScoreOverviewDialog#titanScoresFor}. */
+        private final List<ScoreColumn> scoreColumns;
 
         /**
          * Called from {@link #setValueAt} after a "Fortification" combo box
@@ -307,7 +354,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
 
         private List<Row<T>> rows = new ArrayList<>();
 
-        AllTeamsScoreTableModel(String membersColumnKey, List<Fortification> scoreColumns,
+        AllTeamsScoreTableModel(String membersColumnKey, List<ScoreColumn> scoreColumns,
                                 BiFunction<Row<T>, Fortification, Boolean> onFortificationSelected) {
             this.membersColumnKey = membersColumnKey;
             this.scoreColumns = scoreColumns;
@@ -323,8 +370,8 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
             return rows;
         }
 
-        /** This table's own per-fortification score columns, in display order - see {@link ScoreCellRenderer}. */
-        List<Fortification> scoreColumns() {
+        /** This table's own score columns, in display order - see {@link ScoreCellRenderer}. */
+        List<ScoreColumn> scoreColumns() {
             return scoreColumns;
         }
 
@@ -341,7 +388,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
         @Override
         public String getColumnName(int column) {
             if (column >= FIXED_COLUMN_COUNT) {
-                return LanguageService.displayName(scoreColumns.get(column - FIXED_COLUMN_COUNT).id());
+                return scoreColumns.get(column - FIXED_COLUMN_COUNT).headerText();
             }
             return switch (column) {
                 case 0 -> LanguageService.displayName(COLUMN_KEY_POWER);
@@ -473,7 +520,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            JLabel label = new JLabel(Config.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
+            JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
@@ -496,10 +543,11 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
     }
 
     /**
-     * Renders one per-fortification score cell, e.g. "12.5" - the
-     * SCORE-column counterpart of {@code AllTeamsOverviewDialog.MatchCountCellRenderer},
-     * same light-green highlight for a row's currently assigned
-     * fortification's own column.
+     * Renders one score cell, e.g. "12.5" - the SCORE-column counterpart of
+     * {@code AllTeamsOverviewDialog.MatchCountCellRenderer}, same
+     * light-green highlight for a row's currently assigned fortification's
+     * own column (for the shared "no buff" column, see {@link ScoreColumn},
+     * that means ANY buff-less assignment, not one specific fortification).
      */
     static final class ScoreCellRenderer implements TableCellRenderer {
 
@@ -523,9 +571,71 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
             AllTeamsScoreTableModel<?> model = (AllTeamsScoreTableModel<?>) table.getModel();
             int modelRow = table.convertRowIndexToModel(row);
             int modelColumn = table.convertColumnIndexToModel(column);
-            Fortification columnFortification = model.scoreColumns().get(modelColumn - AllTeamsScoreTableModel.FIXED_COLUMN_COUNT);
+            ScoreColumn scoreColumn = model.scoreColumns().get(modelColumn - AllTeamsScoreTableModel.FIXED_COLUMN_COUNT);
             Fortification assignedFortification = model.rows().get(modelRow).assignedFortification;
-            return columnFortification.equals(assignedFortification) ? SCORE_HIGHLIGHT_BACKGROUND : table.getBackground();
+            return scoreColumn.matchesAssignment(assignedFortification) ? SCORE_HIGHLIGHT_BACKGROUND : table.getBackground();
+        }
+    }
+
+    /**
+     * One score-table column (see class Javadoc): either one specific
+     * BUFFED fortification, or the single column shared by every buff-less
+     * fortification of this type. A buff-less fortification's
+     * {@link TeamScoreCalculator} score always uses the generalScore-based
+     * branch - never that specific fortification's (non-existent) buff - so
+     * it is numerically identical no matter which buff-less fortification is
+     * actually assigned; {@link #representative()} is therefore only ever
+     * used to drive that shared calculation, never to tell two buff-less
+     * fortifications apart.
+     */
+    static final class ScoreColumn {
+
+        private final Fortification representative;
+        private final boolean sharedNoBuffColumn;
+
+        private ScoreColumn(Fortification representative, boolean sharedNoBuffColumn) {
+            this.representative = representative;
+            this.sharedNoBuffColumn = sharedNoBuffColumn;
+        }
+
+        /** One column for exactly this (buffed) fortification. */
+        static ScoreColumn forBuffedFortification(Fortification fortification) {
+            return new ScoreColumn(fortification, false);
+        }
+
+        /**
+         * The single shared "no buff" column - {@code anyBuffLessFortification}
+         * is an arbitrary representative (any buff-less fortification of
+         * this type does equally well, see class Javadoc) used only to
+         * compute the (shared) score, never shown or compared by identity.
+         */
+        static ScoreColumn sharedNoBuff(Fortification anyBuffLessFortification) {
+            return new ScoreColumn(anyBuffLessFortification, true);
+        }
+
+        /** The fortification to score teams against for this column - see class Javadoc. */
+        Fortification representative() {
+            return representative;
+        }
+
+        /** This column's header text, in the currently configured language. */
+        String headerText() {
+            return sharedNoBuffColumn ? LanguageService.displayName(COLUMN_KEY_NO_BUFF)
+                    : LanguageService.displayName(representative.id());
+        }
+
+        /**
+         * Whether {@code assignedFortification} (a row's current
+         * "Fortification" assignment, possibly null) belongs to this column
+         * - for the shared "no buff" column, that means any buff-less
+         * fortification at all, not just {@link #representative()}.
+         */
+        boolean matchesAssignment(Fortification assignedFortification) {
+            if (assignedFortification == null) {
+                return false;
+            }
+            return sharedNoBuffColumn ? assignedFortification.buff() == null
+                    : representative.equals(assignedFortification);
         }
     }
 }

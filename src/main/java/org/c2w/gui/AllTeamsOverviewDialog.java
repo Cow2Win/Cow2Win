@@ -2,11 +2,11 @@ package org.c2w.gui;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
@@ -201,7 +201,7 @@ public class AllTeamsOverviewDialog extends JDialog {
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
         appContext.setLineup(updatedLineup);
-        Config.editedLineup = true;
+        GuiUtils.editedLineup = true;
         fortificationMapPanel.refresh(updatedLineup);
         return true;
     }
@@ -470,7 +470,7 @@ public class AllTeamsOverviewDialog extends JDialog {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            JLabel label = new JLabel(Config.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
+            JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;

@@ -8,6 +8,7 @@ import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.util.*;
@@ -115,6 +116,12 @@ public class ToolbarPanel extends JPanel {
 
     /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
+
+    /** Language file key (see resources/language/*.txt) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). Added 2026-09-13. */
+    private static final String KEY_COMPARE_LINEUPS = "toolbar.compareLineups";
+
+    /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_ALL_TEAMS}/{@link #ICON_ALL_TEAMS_SCORES}, told apart by shape (paired hexagons) instead of color. */
+    private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
@@ -284,6 +291,11 @@ public class ToolbarPanel extends JPanel {
         runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
         add(runAlgorithmButton);
 
+        FlatButton compareLineupsButton = new FlatButton(IconLoader.iconFor(ICON_COMPARE_LINEUPS, TOOLBAR_ICON_SIZE));
+        compareLineupsButton.setToolTipText(LanguageService.displayName(KEY_COMPARE_LINEUPS));
+        compareLineupsButton.addActionListener(e -> onOpenLineupComparison());
+        add(compareLineupsButton);
+
         add(statusLabel);
     }
 
@@ -349,11 +361,11 @@ public class ToolbarPanel extends JPanel {
 
 
     private boolean confirmDiscardUnsavedChanges() {
-        if (!Config.editedGuild && !Config.editedLineup) {
+        if (!GuiUtils.editedGuild && !GuiUtils.editedLineup) {
             return true;
         }
-        String what = Config.editedGuild && Config.editedLineup ? "guild and lineup"
-                : Config.editedGuild ? "guild" : "lineup";
+        String what = GuiUtils.editedGuild && GuiUtils.editedLineup ? "guild and lineup"
+                : GuiUtils.editedGuild ? "guild" : "lineup";
         int choice = JOptionPane.showConfirmDialog(this,
                 "There are unsaved " + what + " changes. Switch guild anyway?",
                 "Unsaved changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -391,7 +403,7 @@ public class ToolbarPanel extends JPanel {
         Config.setLastGuildPath(guildFilePath.toString());
         Config.setLastLineUpPath(lineupPath.toString());
         Config.save();
-        Config.editedLineup = false;
+        GuiUtils.editedLineup = false;
         fortificationMapPanel.refresh(lineup, guild);
         populateGuildCombo();
         populateLineupCombo();
@@ -516,7 +528,7 @@ public class ToolbarPanel extends JPanel {
             appContext.set(lineup, lineupPath);
             Config.setLastLineUpPath(lineupPath.toString());
             Config.save();
-            Config.editedLineup = false;
+            GuiUtils.editedLineup = false;
             fortificationMapPanel.refresh(lineup);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Could not load lineup:\n" + e.getMessage(),
@@ -527,7 +539,7 @@ public class ToolbarPanel extends JPanel {
     private void onSaveLineup() {
         try {
             LineupRepository.save(appContext.lineup(), appContext.lineupFilePath());
-            Config.editedLineup = false;
+            GuiUtils.editedLineup = false;
             Logger.log("Saved: " + appContext.lineupFilePath());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Could not save lineup:\n" + ex.getMessage(),
@@ -576,7 +588,7 @@ public class ToolbarPanel extends JPanel {
             appContext.set(lineup, lineupPath);
             Config.setLastLineUpPath(lineupPath.toString());
             Config.save();
-            Config.editedLineup = false;
+            GuiUtils.editedLineup = false;
             fortificationMapPanel.refresh(lineup);
             populateLineupCombo();
             Logger.log("Created: " + lineupPath);
@@ -632,7 +644,7 @@ public class ToolbarPanel extends JPanel {
             appContext.set(lineup, nextLineupPath);
             Config.setLastLineUpPath(nextLineupPath.toString());
             Config.save();
-            Config.editedLineup = false;
+            GuiUtils.editedLineup = false;
             fortificationMapPanel.refresh(lineup);
             populateLineupCombo();
             Logger.log("Removed: " + fileName);
@@ -660,7 +672,7 @@ public class ToolbarPanel extends JPanel {
         Lineup clearedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), List.of());
         appContext.setLineup(clearedLineup);
-        Config.editedLineup = true;
+        GuiUtils.editedLineup = true;
         fortificationMapPanel.refresh(clearedLineup);
         Logger.log("Cleared: " + appContext.lineupFilePath());
     }
@@ -701,6 +713,17 @@ public class ToolbarPanel extends JPanel {
     private void onOpenAllTeamScores() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         new AllTeamsScoreOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+    }
+
+    /**
+     * Opens {@link LineupComparisonDialog} (added 2026-09-13) - purely a
+     * read-only preview/comparison, so unlike {@link #onOpenAllTeamScores()}
+     * it needs no {@link #fortificationMapPanel} reference (nothing here
+     * ever changes {@link #appContext}'s lineup).
+     */
+    private void onOpenLineupComparison() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new LineupComparisonDialog(owner, appContext).setVisible(true);
     }
 
     /** True if name contains any character listed in {@link #ILLEGAL_FILENAME_CHARS}. */

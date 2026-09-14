@@ -234,8 +234,12 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * a buff in this catalog - both {@link #HERO_BRIDGE_ID} and
      * {@link #TITAN_BRIDGE_ID} have {@code buff() == null}) and
      * weightedScore = totalPower (the value this pick was actually made on).
+     *
+     * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
+     * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
+     * via {@link #run}, analogous to {@link #computeUnlockDepths}.
      */
-    private static <T> void assignStrongestFirst(Fortification bridge, List<Candidate<T>> pool,
+    static <T> void assignStrongestFirst(Fortification bridge, List<Candidate<T>> pool,
                                                  List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType) {
         List<Candidate<T>> strongestFirst = pool.stream()
                 .sorted(Comparator.<Candidate<T>>comparingInt(Candidate::totalPower).reversed()
@@ -272,8 +276,12 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * buffFitScore (0 when there is no buff to fit) and weightedScore set to
      * whichever value the pick was actually made on (buffFitScore for a
      * buff-driven pick, sortScore for an unbuffed one).
+     *
+     * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
+     * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
+     * via {@link #run}, analogous to {@link #computeUnlockDepths}.
      */
-    private static <T> void assignOne(Fortification fortification, List<Candidate<T>> pool,
+    static <T> void assignOne(Fortification fortification, List<Candidate<T>> pool,
                                       List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType,
                                       ToIntBiFunction<T, Buff> buffFitScoreOf) {
         Buff buff = fortification.buff();
@@ -405,8 +413,11 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * {@link #assignStrongestFirst}/{@link #assignOne} do not need a
      * {@code ToIntFunction<T>}/{@code ToDoubleFunction<T>} passed all the way
      * down as well.
+     *
+     * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest} can
+     * construct candidates directly for {@link #assignStrongestFirst}/{@link #assignOne}.
      */
-    private record Candidate<T>(String memberId, T team, int teamIndex, int totalPower, double sortScore) {
+    record Candidate<T>(String memberId, T team, int teamIndex, int totalPower, double sortScore) {
     }
 }
 

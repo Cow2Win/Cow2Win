@@ -136,6 +136,7 @@ toolbar.generateReport=Report erzeugen
 toolbar.heroWars=Hero Wars öffnen
 toolbar.allTeams=Alle Teams anzeigen
 toolbar.allTeamsScores=Team-Scores anzeigen
+toolbar.compareLineups=Aufstellungen vergleichen
 
 # Lineup-Zusammenfassung
 lineupSummary.heroPower=Helden
@@ -157,6 +158,7 @@ teamsOverview.member=Mitglied
 teamsOverview.heroes=Helden
 teamsOverview.titans=Titanen
 teamsOverview.fortification=Festung
+teamsOverview.noBuff=Ohne Buff
 teamsOverview.openGuildEditor=Gildenverwaltung öffnen
 teamsOverview.saveGuild=Gilde speichern
 teamsOverview.algorithm=Algorithmus:
@@ -170,6 +172,8 @@ guildEditor.removeMember=Mitglied entfernen
 # Festungsdetail
 fortificationDetail.saveFortification=Festung speichern
 fortificationDetail.prerequisites=Voraussetzungen
+fortificationDetail.negativeHeroesHeader=Nicht empfohlene Helden
+fortificationDetail.goodHeroesHeader=Gut geeignete Helden
 
 # Festungszuweisung
 fortificationEntry.saveTeams=Teams speichern
@@ -178,6 +182,33 @@ fortificationEntry.saveTeams=Teams speichern
 heroBuffFitScores.saveScores=Werte speichern
 heroBuffFitScores.generalScore=Allgemeine Bewertung:
 heroBuffFitScores.buffFitScoresHeader=Buff-Festungen:
+
+# Lineup-Vergleich
+lineupComparison.modeSavedLineups=Zwei gespeicherte Lineups
+lineupComparison.modeCurrentVsAlgorithm=Aktuelles Lineup vs. Algorithmus
+lineupComparison.lineupBefore=Lineup A:
+lineupComparison.lineupAfter=Lineup B:
+lineupComparison.compare=Vergleichen
+lineupComparison.onlyChanges=Nur Änderungen anzeigen
+lineupComparison.tabTeams=Teams
+lineupComparison.tabFortifications=Festungen
+lineupComparison.columnStatus=Status
+lineupComparison.columnTeam=Team
+lineupComparison.columnFortificationBefore=Festung (vorher)
+lineupComparison.columnFortificationAfter=Festung (nachher)
+lineupComparison.columnPowerRange=Power
+lineupComparison.columnPowerDiff=Power Δ
+lineupComparison.columnScoreDiff=Score Δ
+lineupComparison.columnSlots=Plätze
+lineupComparison.columnBuffPercent=Buff %
+lineupComparison.columnBuffPercentDiff=Buff % Δ
+lineupComparison.statusAdded=hinzugefügt
+lineupComparison.statusRemoved=entfernt
+lineupComparison.statusMoved=verschoben
+lineupComparison.statusUpdated=aktualisiert
+lineupComparison.statusUnchanged=unverändert
+lineupComparison.summaryTotalPower=Gesamt-Power
+lineupComparison.summaryChanges=Änderungen
 
 # Allgemein
 common.none=(keine)

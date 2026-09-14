@@ -1,7 +1,7 @@
 package org.c2w.gui.guild;
 
 
-import org.c2w.util.Config;
+import org.c2w.gui.common.GuiUtils;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -226,7 +226,7 @@ public final class TeamEditorPanel<T> extends JPanel {
 
 
     private JTextField buildPowerField(TeamDraft<T> teamDraft) {
-        JTextField powerField = new JTextField(Config.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
+        JTextField powerField = new JTextField(GuiUtils.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
         powerField.setHorizontalAlignment(JTextField.RIGHT);
         ((PlainDocument) powerField.getDocument()).setDocumentFilter(new DigitsOnlyFilter(MAX_POWER_DIGITS));
         powerField.getDocument().addDocumentListener(onChange(() -> {
@@ -244,7 +244,7 @@ public final class TeamEditorPanel<T> extends JPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
-                setPowerFieldText(powerField, Config.NUMBER_FORMAT.format(parsePower(powerField.getText())));
+                setPowerFieldText(powerField, GuiUtils.NUMBER_FORMAT.format(parsePower(powerField.getText())));
             }
         });
         powerField.setPreferredSize(new Dimension(50, powerField.getPreferredSize().height));
@@ -264,7 +264,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         }
     }
 
-    /** Strips everything but digits (e.g. {@link Config#NUMBER_FORMAT}'s grouping separators) before parsing - empty/blank (or digit-less) text = 0. */
+    /** Strips everything but digits (e.g. {@link GuiUtils#NUMBER_FORMAT}'s grouping separators) before parsing - empty/blank (or digit-less) text = 0. */
     private static int parsePower(String text) {
         String digitsOnly = text == null ? "" : text.replaceAll("[^0-9]", "");
         return digitsOnly.isBlank() ? 0 : Integer.parseInt(digitsOnly);

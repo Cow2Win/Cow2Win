@@ -1,0 +1,32 @@
+name: CI
+
+# Runs on every push (any branch) and on every pull request - see the
+# "Kein CI" item in the project's todos.md. Only `mvn test` is run here (not
+# `package`/`deploy`), so the Windows-only jpackage app-image build (bound to
+# the `package` phase in pom.xml, see README.md's "Distribution package"
+# section) never runs in this workflow and a plain ubuntu-latest runner is
+# enough - no full JDK-with-jmods or Windows runner needed just to compile
+# and run the tests.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # Must match pom.xml's maven.compiler.source/target (24) - the
+          # compiler plugin needs a JDK of at least that version installed
+          # to target it.
+          java-version: '24'
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B -q test

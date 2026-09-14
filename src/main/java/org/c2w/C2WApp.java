@@ -7,7 +7,11 @@ import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.Cow2Frame;
 import org.c2w.gui.InitialSetupDialog;
 import org.c2w.util.AppContext;
+import org.c2w.util.BackupService;
+import org.c2w.util.CatalogVersion;
 import org.c2w.util.Config;
+import org.c2w.util.JsonSupport;
+import org.c2w.util.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -21,8 +25,9 @@ public class C2WApp {
     private static final String DEFAULT_GUILD_NAME = "Demo";
     public static final String GUILD_FILE_NAME = "guild.json";
     public static final String LINEUP_FILE_NAME = "default.lineup";
-    private static final Path DEMO_GUILD_PATH = Paths.get("src", "main", "resources", "data", "guild.json");
-    private static final Path DEMO_GUILD_LINEUP = Paths.get("src", "main", "resources", "data", "default.lineup");
+    // See JsonSupport#resolveDataFile for how these resolve in the IDE vs. the packaged app.
+    private static final Path DEMO_GUILD_PATH = JsonSupport.resolveDataFile("data", "guild.json");
+    private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
 
     public static void main(String[] args) {
         boolean first = false;
@@ -31,6 +36,8 @@ public class C2WApp {
         }
 
         Config.load();
+        BackupService.checkAndCreateBackups();
+        logCatalogVersion();
         AppContext context = new AppContext();
         loadGuildContext(context);
         loadLineupContext(context);
@@ -58,6 +65,17 @@ public class C2WApp {
         Config.setLastGuildPath(guildFilePath.toString());
         Config.setLastLineUpPath(lineupFilePath.toString());
         Config.save();
+    }
+
+    /**
+     * Logs the {@link CatalogVersion} of heroes.json/titans.json/fortifications.json
+     * at startup (visible in the app's log panel), so it's clear at a glance
+     * which game/patch state the catalog data was last checked against
+     * without having to go dig through the data files themselves.
+     */
+    private static void logCatalogVersion() {
+        String suffix = CatalogVersion.note().isBlank() ? "" : " (" + CatalogVersion.note() + ")";
+        Logger.log("Catalog data version: " + CatalogVersion.dataVersion() + suffix);
     }
 
     private static void loadDemo(AppContext context){

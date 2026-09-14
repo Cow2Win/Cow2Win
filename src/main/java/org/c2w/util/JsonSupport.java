@@ -13,6 +13,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -52,6 +53,55 @@ public final class JsonSupport {
             }
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    // --- resolving a writable data file (relative paths only) ---
+
+    /**
+     * Resolves the on-disk location of a writable catalog/demo data file - used where a real
+     * {@link Path} is needed (via {@link Files}/{@link #writeJsonFile}), not just a classpath
+     * resource: {@code HeroRepository}/{@code FortificationRepository}'s {@code save(...)}
+     * (the catalog-editing dialogs, e.g. {@code HeroBuffFitScoresDialog}) and {@code C2WApp}'s
+     * first-run demo guild/lineup.
+     *
+     * <p>Always a path relative to the current working directory, never absolute or tied to
+     * one specific layout, so the same code works both:
+     * <ul>
+     *     <li>run from the IDE/source checkout - working directory is the project root, so
+     *         there is no top-level {@code resources/} folder and this falls back to the
+     *         source tree's {@code src/main/resources/...}; and</li>
+     *     <li>run from the packaged Windows app-image (see {@code pom.xml}'s jpackage
+     *         execution) - working directory is the app's own install folder, which has a
+     *         plain, on-disk {@code resources/...} folder shipped right there via jpackage's
+     *         {@code appContentPaths} (a copy of {@code src/main/resources}), and that
+     *         packaged layout is preferred over the source-tree fallback whenever it's
+     *         present.</li>
+     * </ul>
+     *
+     * <p>Note this only decides WHERE to read/write the file - it does not make edits saved
+     * this way visible to the normal catalog loading in {@link #readClasspathResource}, which
+     * always reads the classpath copy embedded in the jar. Callers that already hold the
+     * updated data in memory (as both current {@code save(...)} implementations do) are
+     * unaffected by that; it would only matter for picking up such an edit after restarting
+     * the packaged app without rebuilding it.
+     *
+     * @param relativeParts path segments under the data folder, e.g. {@code "data",
+     *         "heroes.json"} - joined the same way as {@link Paths#get(String, String...)}.
+     */
+    public static Path resolveDataFile(String... relativeParts) {
+        Path packaged = resolveUnder(Paths.get("resources"), relativeParts);
+        if (Files.exists(packaged)) {
+            return packaged;
+        }
+        return resolveUnder(Paths.get("src", "main", "resources"), relativeParts);
+    }
+
+    private static Path resolveUnder(Path base, String... parts) {
+        Path path = base;
+        for (String part : parts) {
+            path = path.resolve(part);
+        }
+        return path;
     }
 
     // --- reading typed values out of a JsonObject ---

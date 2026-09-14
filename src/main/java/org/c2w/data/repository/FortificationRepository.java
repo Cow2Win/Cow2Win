@@ -11,15 +11,14 @@ import org.c2w.util.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class FortificationRepository {
     private static final String JSON_PATH = "/data/fortifications.json";
 
-
-    private static final Path CATALOG_FILE_PATH = Paths.get("src", "main", "resources", "data", "fortifications.json");
+    /** See {@link JsonSupport#resolveDataFile} for how this resolves in the IDE vs. the packaged app. */
+    private static final Path CATALOG_FILE_PATH = JsonSupport.resolveDataFile("data", "fortifications.json");
 
     private static volatile Map<String, Fortification> fortificationsByid;
 

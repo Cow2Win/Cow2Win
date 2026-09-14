@@ -3,8 +3,8 @@ package org.c2w.gui.fort;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.util.BuffCalculationService;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
@@ -83,11 +83,11 @@ public class LineupSummaryPanel extends JPanel {
         heroPowerLbl.setText(LanguageService.displayName(KEY_HERO_POWER) + ": "
                 + formatPower(totalPower(lineup, Lineup.TeamType.HERO)));
         heroBuffCountLbl.setText(LanguageService.displayName(KEY_HERO_BUFF_COUNT) + ": "
-                + Config.NUMBER_FORMAT.format(BuffCalculationService.countHeroesIncreasingBuff(lineup, guild)));
+                + GuiUtils.NUMBER_FORMAT.format(BuffCalculationService.countHeroesIncreasingBuff(lineup, guild)));
         titanPowerLbl.setText(LanguageService.displayName(KEY_TITAN_POWER) + ": "
                 + formatPower(totalPower(lineup, Lineup.TeamType.TITAN)));
         titanBuffCountLbl.setText(LanguageService.displayName(KEY_TITAN_BUFF_COUNT) + ": "
-                + Config.NUMBER_FORMAT.format(BuffCalculationService.countTitansIncreasingBuff(lineup, guild)));
+                + GuiUtils.NUMBER_FORMAT.format(BuffCalculationService.countTitansIncreasingBuff(lineup, guild)));
     }
 
     /** Sums {@link Lineup.Entry#totalPower()} over every entry of the given team type. */
@@ -106,7 +106,7 @@ public class LineupSummaryPanel extends JPanel {
             double millions = power / (double) MILLIONS_THRESHOLD;
             return MILLIONS_FORMAT.format(millions) + " " + LanguageService.displayName(KEY_MILLIONS_SUFFIX);
         }
-        return Config.NUMBER_FORMAT.format(power);
+        return GuiUtils.NUMBER_FORMAT.format(power);
     }
 
   

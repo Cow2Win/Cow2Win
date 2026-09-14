@@ -24,11 +24,11 @@ package org.c2w.data.model;
  * tier means there.
  */
 public enum ScoreTier {
-    NEGATIVE(0.6),
-    NORMAL(0.8),
-    MODERATE(0.9),
-    STANDARD(1.0),
-    ELEVATED(1.1);
+    NEGATIVE(0.4),
+    NORMAL(0.6),
+    MODERATE(0.7),
+    STANDARD(0.8),
+    ELEVATED(0.9);
 
     private final double value;
 

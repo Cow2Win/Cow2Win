@@ -1,0 +1,22 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <!-- Zips the jpackage app-image (target/dist/${app.name}/ - Cow2Win.exe, the bundled
+         runtime/ JRE and the resources/ folder) into one archive, e.g.
+         Cow2Win-1.0-SNAPSHOT-windows-app.zip, so it travels as a single file and unzips
+         back into a "Cow2Win" folder ready to run. Bound to the maven-assembly-plugin
+         execution in pom.xml (runs after the jpackage-maven-plugin execution, in the
+         same "package" phase). -->
+    <id>windows-app</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/dist/${app.name}</directory>
+            <outputDirectory>${app.name}</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+    </fileSets>
+</assembly>

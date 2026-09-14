@@ -24,9 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * place a previous reading of this code got the semantics wrong (OR vs AND
  * on {@link Fortification#prerequisites()} - see the class javadoc there).
  *
- * Does NOT yet cover assignStrongestFirst/assignOne/the sorting criteria in
- * fillFortifications() or buffFitScore - a good next test class, but this
- * one focuses on unlock-depth computation only.
+ * Does NOT cover assignStrongestFirst/assignOne/the sorting criteria in
+ * fillFortifications() or buffFitScore - see
+ * {@link BestPossibleLineupAlgorithmAssignmentTest} for those; this class
+ * focuses on unlock-depth computation only.
  */
 class BestPossibleLineupAlgorithmTest {
 

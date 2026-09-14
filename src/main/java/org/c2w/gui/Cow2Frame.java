@@ -1,10 +1,10 @@
 package org.c2w.gui;
 
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.AppContext;
-import org.c2w.util.Config;
 
 import javax.swing.*;
 import java.awt.*;
@@ -159,9 +159,9 @@ public class Cow2Frame extends JFrame {
 
 
     private void onWindowClosing() {
-        if (Config.editedGuild || Config.editedLineup) {
-            String what = Config.editedGuild && Config.editedLineup ? "guild and lineup"
-                    : Config.editedGuild ? "guild" : "lineup";
+        if (GuiUtils.editedGuild || GuiUtils.editedLineup) {
+            String what = GuiUtils.editedGuild && GuiUtils.editedLineup ? "guild and lineup"
+                    : GuiUtils.editedGuild ? "guild" : "lineup";
             int choice = JOptionPane.showConfirmDialog(this,
                     "There are unsaved " + what + " changes. Close anyway?",
                     "Unsaved changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
