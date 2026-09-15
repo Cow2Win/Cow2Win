@@ -313,7 +313,7 @@ public final class FortificationEntryDialog extends JDialog {
             message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
         }
         message.append(" = ").append(String.format(Locale.ROOT, "%.2f", breakdown.total()));
-        Logger.log(message.toString());
+        Logger.logToFile(message.toString());
     }
 
     private JComboBox<MemberDraft> buildMemberCombo() {

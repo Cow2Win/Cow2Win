@@ -62,7 +62,7 @@ Implementation: `maven-shade-plugin` (executable jar) ->
 `src/assembly/windows-app.xml`) - all three bound to the `package` phase in
 `pom.xml`.
 
-**Known limitation:** `HeroRepository.save`/`FortificationRepository.save`
+**Known limitation:** `HeroRepository.saveCowScores`/`FortificationRepository.save`
 (used by the in-app catalog-editing dialogs, e.g. `HeroBuffFitScoresDialog`)
 write to the hardcoded dev-time path `src/main/resources/data/*.json`, and
 `C2WApp`'s first-run demo guild loads from that same source path via
@@ -76,7 +76,9 @@ resolving against the new `resources/` folder next to the exe).
 ## Data model overview
 
 - **Hero** (`id`, `roles[]`, `image`) - see `Role.java` for the valid roles;
-  some heroes have two roles (e.g. Cleaver = TANK + CONTROL).
+  some heroes have two roles (e.g. Cleaver = TANK + CONTROL). Its manually
+  curated `CowScore` (`generalScore`/`buffFitScores`) lives in a separate
+  file, `cowScore.json` - see "Canonical data files" below.
 - **Titan** (`id`, `element`, `image`) - see `TitanElement.java`, which
   includes the rare `DISTORTION` element used by some event titans.
 - **Fortification** (`id`, `type` HERO/TITAN, `capacity`, `captureBonus`,
@@ -97,6 +99,16 @@ resolving against the new `resources/` folder next to the exe).
   are the canonical source for the app's catalog. When the game itself
   changes (new heroes/titans, balance changes, new fortifications), edit
   these files, not the research doc.
+- `src/main/resources/data/cowScore.json` (since 2026-09-14) holds Thorsten's
+  manually curated per-hero `CowScore` (`generalScore`/`buffFitScores`,
+  keyed by hero `id`) - deliberately kept OUT of `heroes.json`, which now
+  only ever carries "objective" master data (`id`/`roles`/`image`). The
+  split means a future wholesale refresh of `heroes.json` (e.g. new heroes
+  pulled from GitHub) can't accidentally clobber these hand-tuned scores,
+  and vice versa: `HeroBuffFitScoresDialog`/`HeroRepository#saveCowScores`
+  only ever write `cowScore.json`, never `heroes.json`. Titans don't (yet)
+  have this split - `Titan#generalScore()`/`#buffFitScores()` still live
+  directly in `titans.json`, same as before.
 - `src/main/resources/data/catalog-version.json` records the `dataVersion`
   (a date) that the three catalog files above were last checked against,
   read via `CatalogVersion` and logged once at app startup so it's visible

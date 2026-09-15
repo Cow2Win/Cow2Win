@@ -79,6 +79,8 @@ public class FortificationMapPanel extends GridPanel {
     }
 
     private void init(){
+        setBackground(new Color(61,109,182).darker());
+        setOpaque(true);
         List<Fortification> fortificationCatalog = FortificationRepository.findAll();
         Map<String, Integer> filledSlotsMap = new HashMap<>();
         Map<String, Integer> totalPowerMap = new HashMap<>();
@@ -129,8 +131,9 @@ public class FortificationMapPanel extends GridPanel {
 
     private JPanel buildTypeFilterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-
+        panel.setOpaque(false);
         JCheckBox showHeroesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_HEROES), showHeroFortifications);
+        showHeroesCheckbox.setOpaque(false);
         showHeroesCheckbox.setForeground(FortificationType.HERO.getColor());
         showHeroesCheckbox.addActionListener(e -> {
             showHeroFortifications = showHeroesCheckbox.isSelected();
@@ -139,12 +142,14 @@ public class FortificationMapPanel extends GridPanel {
 
         JCheckBox showTitansCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_TITANS), showTitanFortifications);
         showTitansCheckbox.setForeground(FortificationType.TITAN.getColor());
+        showTitansCheckbox.setOpaque(false);
         showTitansCheckbox.addActionListener(e -> {
             showTitanFortifications = showTitansCheckbox.isSelected();
             init();
         });
 
         JCheckBox changesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES), showChanges);
+        changesCheckbox.setOpaque(false);
         changesCheckbox.addActionListener(e -> {
             showChanges = changesCheckbox.isSelected();
             init();

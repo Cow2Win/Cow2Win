@@ -22,6 +22,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -82,13 +83,6 @@ public class ToolbarPanel extends JPanel {
     private static final String ICON_ALL_TEAMS_SCORES = ICON_ALL_TEAMS;
 
     private static final int TOOLBAR_ICON_SIZE = 20;
-
-    /** Language file key (see resources/language/*.txt) for the tooltip of the leftmost "Hero Wars" button (see {@link #onOpenHeroWars()}). */
-    private static final String KEY_HERO_WARS = "toolbar.heroWars";
-
-    private static final String ICON_HERO_WARS = "/images/app/herowars32.png";
-
-    private static final String HERO_WARS_URL = "https://www.hero-wars.com/";
 
     /**
      * Language file key (see resources/language/*.txt) for the tooltip of
@@ -189,13 +183,6 @@ public class ToolbarPanel extends JPanel {
         this.teamsOverviewPanel = teamsOverviewPanel;
         this.openGuildEditor = openGuildEditor;
         this.onGuildSwitched = onGuildSwitched;
-
-        // Leftmost of all (added first, before every other toolbar control -
-        // see class Javadoc) - opens hero-wars.com in the system browser.
-        FlatButton heroWarsButton = new FlatButton(IconLoader.iconFor(ICON_HERO_WARS, TOOLBAR_ICON_SIZE));
-        heroWarsButton.setToolTipText(LanguageService.displayName(KEY_HERO_WARS));
-        heroWarsButton.addActionListener(e -> onOpenHeroWars());
-        add(heroWarsButton);
 
         add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
         add(guildCombo);
@@ -335,7 +322,7 @@ public class ToolbarPanel extends JPanel {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Could not list guild folders in " + workspaceDir + ": " + e.getMessage());
+            Logger.logException("Could not list guild folders in " + workspaceDir, e);
         }
         result.sort(Comparator.naturalOrder());
         return result;
@@ -505,7 +492,7 @@ public class ToolbarPanel extends JPanel {
                 result.add(path.getFileName().toString());
             }
         } catch (IOException e) {
-            System.err.println("Could not list lineup files in " + guildDir + ": " + e.getMessage());
+            Logger.logException("Could not list lineup files in " + guildDir, e);
         }
         result.sort(Comparator.naturalOrder());
         return result;
@@ -675,20 +662,6 @@ public class ToolbarPanel extends JPanel {
         GuiUtils.editedLineup = true;
         fortificationMapPanel.refresh(clearedLineup);
         Logger.log("Cleared: " + appContext.lineupFilePath());
-    }
-
-    private void onOpenHeroWars() {
-        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            JOptionPane.showMessageDialog(this, "This system has no default browser Cow2 can open.",
-                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        try {
-            Desktop.getDesktop().browse(new URI(HERO_WARS_URL));
-        } catch (IOException | URISyntaxException e) {
-            JOptionPane.showMessageDialog(this, "Could not open " + HERO_WARS_URL + ":\n" + e.getMessage(),
-                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     private void onGenerateReport() {

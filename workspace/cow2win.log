@@ -1,0 +1,222 @@
+[11:29:27] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[16:24:27] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[16:24:39] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[16:24:39] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[16:24:39] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[16:24:39] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-1700988106605973548\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-1700988106605973548\backup\workspace-weekly.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-1700988106605973548\backup\workspace-weekly.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-10863786277315764710\workspace\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-10863786277315764710\workspace\backup\workspace-weekly.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-6354723733950160930\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-6354723733950160930\backup\workspace-weekly.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7921439965824768014\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7921439965824768014\backup\workspace-weekly.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7921439965824768014\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-433043516057074550\backup\workspace-daily.zip
+[16:24:39] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-433043516057074550\backup\workspace-weekly.zip
+[19:30:36] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[19:50:29] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:01:35] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:03:57] Heldenbrücke: Team 1 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[20:03:58] Heldenbrücke: Team 2 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[20:03:58] Heldenbrücke: Team 3 : 11.65 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.65
+[20:03:58] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[20:03:58] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[20:03:58] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[20:10:05] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:10:08] Festung: Team 1 : 8.26 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 12.26
+[20:10:08] Festung: Team 2 : 9.05 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 13.05
+[20:10:08] Festung: Team 3 : 8.84 + 0.80 + 0.90 + 0.80 + 0.80 + 0.80 = 12.94
+[20:10:08] Festung: Team 4 : 7.54 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 11.54
+[20:10:08] Festung: Team 5 : 8.10 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 12.10
+[20:10:08] Festung: Team 6 : 7.31 + 0.80 + 0.80 + 0.90 + 0.80 + 0.80 = 11.41
+[20:10:08] Festung: Team 7 : 8.14 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 12.14
+[20:10:08] Festung: Team 8 : 7.81 + 0.80 + 0.90 + 0.80 + 0.80 + 0.90 = 12.01
+[20:11:32] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:11:32] Started: 
+[20:12:29] Best possible lineup: 0 team(s) newly assigned.
+[20:12:52] Cleared: workspace\Deutscher Bund\2026-09-04.lineup
+[20:12:55] Best possible lineup: 95 team(s) newly assigned.
+[20:13:10] Config changed: lastLineUpPath = "workspace\Deutscher Bund\Test.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[20:13:11] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-04.lineup" (previously "workspace\Deutscher Bund\Test.lineup")
+[20:13:40] Heldenbrücke: Team 1 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[20:13:40] Heldenbrücke: Team 2 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[20:13:40] Heldenbrücke: Team 3 : 11.65 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.65
+[20:13:40] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[20:13:40] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[20:13:40] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[20:15:56] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:15:56] Started: 
+[20:24:16] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:24:16] Started: 
+[20:25:24] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:25:24] Started: 
+[20:57:10] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:57:10] Started: 
+[21:10:04] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:10:04] Started: 
+[21:13:00] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:13:00] Started: 
+[21:26:57] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:26:57] Started: 
+[21:27:24] Heldenbrücke: Team 1 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[21:27:24] Heldenbrücke: Team 2 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[21:27:24] Heldenbrücke: Team 3 : 11.65 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.65
+[21:27:24] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[21:27:24] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[21:27:24] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[21:27:45] Config changed: lastLineUpPath = "workspace\Deutscher Bund\Test.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[21:53:04] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:53:04] Started: 
+[21:53:53] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:53:53] Started: 
+[21:54:58] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:54:58] Started: 
+[21:55:39] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:55:39] Started: 
+[21:57:49] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:57:49] Started: 
+[22:02:45] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[22:02:45] Started: 
+[22:03:23] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[22:03:23] Started: 
+[22:15:24] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[22:15:24] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[22:15:24] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[22:15:24] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-16533096521313500038\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-16533096521313500038\backup\workspace-weekly.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-16533096521313500038\backup\workspace-weekly.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-11164829654829310206\workspace\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-11164829654829310206\workspace\backup\workspace-weekly.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-10349054855240741628\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-10349054855240741628\backup\workspace-weekly.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7581252660780407120\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7581252660780407120\backup\workspace-weekly.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7581252660780407120\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-399097342667936590\backup\workspace-daily.zip
+[22:15:25] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-399097342667936590\backup\workspace-weekly.zip
+[22:15:38] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[22:15:38] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[22:15:38] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[22:15:38] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-14621161827571265845\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-14621161827571265845\backup\workspace-weekly.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-14621161827571265845\backup\workspace-weekly.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-143758445562761549\workspace\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-143758445562761549\workspace\backup\workspace-weekly.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7521798117918672383\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-7521798117918672383\backup\workspace-weekly.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-8871611908787209514\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-8871611908787209514\backup\workspace-weekly.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-8871611908787209514\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-8130925042762370045\backup\workspace-daily.zip
+[22:15:38] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-8130925042762370045\backup\workspace-weekly.zip
+[22:19:48] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[22:19:48] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[22:19:48] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[22:19:48] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-5156539123428006565\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-5156539123428006565\backup\workspace-weekly.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-5156539123428006565\backup\workspace-weekly.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-13439489431503189142\workspace\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-13439489431503189142\workspace\backup\workspace-weekly.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-14403069416253274014\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-14403069416253274014\backup\workspace-weekly.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3103747580474319379\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3103747580474319379\backup\workspace-weekly.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3103747580474319379\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-2719002564115920819\backup\workspace-daily.zip
+[22:19:48] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-2719002564115920819\backup\workspace-weekly.zip
+[22:20:20] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[22:20:20] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[22:20:20] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[22:20:20] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-17073368561621334427\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-17073368561621334427\backup\workspace-weekly.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-17073368561621334427\backup\workspace-weekly.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-12772457568613653683\workspace\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-12772457568613653683\workspace\backup\workspace-weekly.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-537050756319581643\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-537050756319581643\backup\workspace-weekly.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-4734852596271803815\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-4734852596271803815\backup\workspace-weekly.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-4734852596271803815\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-11440781707780464230\backup\workspace-daily.zip
+[22:20:20] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-11440781707780464230\backup\workspace-weekly.zip
+[05:17:24] fortifications.json: cyclic prerequisites detected: b -> c -> b
+[05:17:24] fortifications.json: skipping invalid fortification entry (id=a): missing required field(s)
+[05:17:24] fortifications.json: fortification 'a' has prerequisite 'does-not-exist' which does not exist in the catalog
+[05:17:24] fortifications.json: fortification 'a' has unknown type 'NOT_A_REAL_TYPE', skipping it
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3729901496338532247\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3729901496338532247\backup\workspace-weekly.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3729901496338532247\backup\workspace-weekly.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-17886180129176649658\workspace\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-17886180129176649658\workspace\backup\workspace-weekly.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3253028959587280761\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-3253028959587280761\backup\workspace-weekly.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-6822222204538119187\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-6822222204538119187\backup\workspace-weekly.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-6822222204538119187\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-13535685841377085582\backup\workspace-daily.zip
+[05:17:24] Backup created: C:\Users\tdiet\AppData\Local\Temp\junit-13535685841377085582\backup\workspace-weekly.zip
+[05:17:35] Backup created: C:\Entwicklung\backup\workspace-daily.zip
+[05:17:35] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:17:35] Started: 
+[05:26:01] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:26:01] Started: 
+[05:27:59] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:27:59] Started: 
+[05:28:20] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:28:20] Started: 
+[05:28:38] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:28:38] Started: 
+[05:30:43] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:30:43] Started: 
+[05:31:30] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:31:30] Started: 
+[05:32:47] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:32:47] Started: 
+[05:33:28] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:33:28] Started: 
+[05:33:42] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:33:42] Started: 
+[05:34:06] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:34:06] Started: 
+[05:35:07] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:35:07] Started: 
+[05:35:30] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-04.lineup" (previously "workspace\Deutscher Bund\Test.lineup")
+[05:37:46] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:37:46] Started: 
+[05:39:07] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:39:08] Started: 
+[05:40:15] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:40:15] Started: 
+[05:41:22] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:41:22] Started: 
+[05:42:12] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:42:12] Started: 
+[05:43:39] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:43:39] Started: 
+[05:44:01] Bastion: Team 1 : 11.42 + 0.90 + 0.80 + 0.60 + 0.60 + 0.60 = 14.92
+[05:44:01] Bastion: Team 2 : 11.17 + 0.90 + 0.80 + 0.60 + 0.60 + 0.60 = 14.67
+[05:44:01] Bastion: Team 3 : 10.70 + 0.80 + 0.80 + 0.80 + 0.60 + 0.60 = 14.30
+[05:44:01] Bastion: Team 4 : 9.10 + 0.80 + 0.60 + 0.60 + 0.60 + 0.70 = 12.40
+[05:44:01] Bastion: Team 5 : 10.60 + 0.70 + 0.80 + 0.80 + 0.60 + 0.60 = 14.10
+[05:45:00] Schießstand: Team 1 : 10.56 + 0.60 + 0.60 + 0.80 + 0.60 + 0.60 = 13.76
+[05:45:00] Schießstand: Team 2 : 10.25 + 0.60 + 0.60 + 0.80 + 0.80 + 0.60 = 13.65
+[05:45:00] Schießstand: Team 3 : 9.25 + 0.70 + 0.60 + 0.60 + 0.60 + 0.60 = 12.35
+[05:45:00] Schießstand: Team 4 : 9.51 + 0.60 + 0.80 + 0.60 + 0.60 + 0.60 = 12.71
+[05:45:00] Schießstand: Team 5 : 8.88 + 0.60 + 0.80 + 0.40 + 0.80 + 0.60 = 12.08
+[05:50:14] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[05:50:14] Started: 
+[18:22:36] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:22:36] Started: 
+[18:25:53] Heldenbrücke: Team 1 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[18:25:53] Heldenbrücke: Team 2 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[18:25:53] Heldenbrücke: Team 3 : 11.65 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.65
+[18:25:53] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[18:25:53] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[18:25:53] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80

@@ -1,5 +1,6 @@
 package org.c2w.gui.hero;
 
+import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Hero;
@@ -21,10 +22,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dialog for maintaining {@link Hero#generalScore()} and
- * {@link Hero#buffFitScores()} - the two {@link ScoreTier}-based scores that
- * replaced the old {@code buffProfits} list (see
- * {@code cow2win-verbesserungsvorschlaege.md}, "Fortification-Scoring:
+ * Dialog for maintaining a hero's {@link CowScore} - {@link
+ * Hero#generalScore()} and {@link Hero#buffFitScores()}, the two {@link
+ * ScoreTier}-based scores that replaced the old {@code buffProfits} list
+ * (see {@code cow2win-verbesserungsvorschlaege.md}, "Fortification-Scoring:
  * Ablösung von buffProfits", Stufen 1 and 3). Opened from
  * {@link org.c2w.gui.ToolbarPanel}'s toolbar (see
  * {@code ToolbarPanel#onOpenHeroBuffFitScores}) - independent of the
@@ -41,9 +42,9 @@ import java.util.Map;
  * already use generalScore instead (see its Javadoc) and are therefore not
  * listed among these per-fortification rows.
  *
- * <p>Per the "sparse catalog" convention already used for
- * {@link Hero#generalScore()} (see its Javadoc - {@link ScoreTier#STANDARD}
- * is the default and is never written to disk), picking
+ * <p>Per the "sparse file" convention already used for {@link
+ * Hero#generalScore()} (see {@link CowScore}'s Javadoc - {@link
+ * ScoreTier#STANDARD} is the default and is never written to disk), picking
  * {@link ScoreTier#STANDARD} in either kind of combo box is equivalent to
  * having no override at all: for a fortification row, selecting it removes
  * any entry from that hero's working scores (see
@@ -51,9 +52,10 @@ import java.util.Map;
  * remove (it is a single field, not a sparse map), but
  * {@link HeroRepository} drops a {@code STANDARD}-valued
  * {@code generalScore}/{@code buffFitScores} entry on save regardless (see
- * {@code HeroRepository#heroToTree}/{@code #buffFitScoresToTree}) - so
- * {@code heroes.json} only ever grows an entry for a deliberately-set,
- * non-default tier.
+ * {@code HeroRepository#cowScoreToTree}/{@code #buffFitScoresToTree}) - so
+ * {@code cowScore.json} (not {@code heroes.json} - see {@link
+ * HeroRepository}'s class Javadoc for why the two are separate files) only
+ * ever grows an entry for a deliberately-set, non-default tier.
  */
 public final class HeroBuffFitScoresDialog extends JDialog {
 
@@ -323,10 +325,13 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * {@link #workingGeneralScores} entry back into a fresh {@link Hero}
      * (untouched, i.e. still the hero's original
      * {@link Hero#buffFitScores()}/{@link Hero#generalScore()}, for a hero
-     * never opened in this dialog session - see those fields' Javadoc) and
-     * saves the whole catalog via {@link HeroRepository#save} - which is
-     * also where {@link ScoreTier#STANDARD} entries actually get dropped
-     * from the written JSON (see class Javadoc), not here.
+     * never opened in this dialog session - see those fields' Javadoc),
+     * bundles both into a fresh {@link CowScore}, and saves the whole
+     * catalog via {@link HeroRepository#saveCowScores} - which only writes
+     * {@code cowScore.json} (never {@code heroes.json}, see {@link
+     * HeroRepository}'s class Javadoc) and is also where {@link
+     * ScoreTier#STANDARD} entries actually get dropped from the written
+     * JSON (see class Javadoc), not here.
      */
     private void onSaveScores() {
         List<Hero> updatedCatalog = heroCatalog.stream()
@@ -334,13 +339,13 @@ public final class HeroBuffFitScoresDialog extends JDialog {
                     Map<String, ScoreTier> scores = workingScores.get(hero.id());
                     Map<String, ScoreTier> buffFitScores = scores == null ? hero.buffFitScores() : scores;
                     ScoreTier generalScore = workingGeneralScores.getOrDefault(hero.id(), hero.generalScore());
-                    return new Hero(hero.id(), hero.roles(), hero.imagePath(), generalScore, buffFitScores);
+                    return new Hero(hero.id(), hero.roles(), hero.imagePath(), new CowScore(generalScore, buffFitScores));
                 })
                 .toList();
 
         try {
-            HeroRepository.save(updatedCatalog);
-            Logger.log("Saved: heroes.json");
+            HeroRepository.saveCowScores(updatedCatalog);
+            Logger.log("Saved: cowScore.json");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Could not save heroes:\n" + ex.getMessage(),
                     "Error while saving", JOptionPane.ERROR_MESSAGE);

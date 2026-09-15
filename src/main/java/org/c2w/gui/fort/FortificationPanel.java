@@ -8,6 +8,7 @@ import org.c2w.util.AppContext;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -60,7 +61,7 @@ public class FortificationPanel extends JPanel {
         slot_set = IconLoader.iconFor(fortification.type().getSlot_set(), 24,fortification.type().getColor() );
         setLayout(new FlowLayout());
         add(getHeaderPanel());
-
+        setOpaque(false);
 
     }
 
@@ -71,13 +72,7 @@ public class FortificationPanel extends JPanel {
      */
     private JLabel getDisplayLbl(){
         if(displayLbl == null){
-            displayLbl = new JLabel(LanguageService.displayName(fortification.id()),JLabel.CENTER);
-            displayLbl.setBackground(fortification.type().getColor());
-            displayLbl.setForeground(Color.WHITE);
-            displayLbl.setOpaque(true);
-            displayLbl.setPreferredSize(new Dimension(160,20));
-            displayLbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            displayLbl.setToolTipText("Click to assign teams to this fortification");
+            displayLbl = new FortificationDisplayLabel(fortification);
             displayLbl.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -114,8 +109,9 @@ public class FortificationPanel extends JPanel {
         if(headerPanel == null){
             headerPanel = new JPanel(new GridLayout(3, 1));
             headerPanel.add(getDisplayLbl());
-
+            headerPanel.setOpaque(false);
             JPanel powerPanel = new JPanel(new GridLayout(1,2));
+            powerPanel.setOpaque(false);
             powerPanel.add(getBuffPercentLabel());
             powerPanel.add(getPowerLabel());
             headerPanel.add(powerPanel);
@@ -202,6 +198,7 @@ public class FortificationPanel extends JPanel {
     private JPanel getSlotPanel(){
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p,BoxLayout.LINE_AXIS));
+        p.setOpaque(false);
         for (int i = 0; i < fortification.capacity() ; i++) {
             p.add(new FlatButton(i<filledSlots ?  slot_set : slot_open, false));
             //p.add(getSlot(i<filledSlots));

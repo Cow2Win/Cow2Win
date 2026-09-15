@@ -1,5 +1,7 @@
 package org.c2w.gui.common;
 
+import org.c2w.util.Logger;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -71,7 +73,7 @@ public final class IconLoader {
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
         URL resource = IconLoader.class.getResource(imagePath);
         if (resource == null) {
-            System.err.println("Image not found on classpath: " + imagePath);
+            Logger.log("Image not found on classpath: " + imagePath);
             return null;
         }
         ImageIcon original = new ImageIcon(resource);

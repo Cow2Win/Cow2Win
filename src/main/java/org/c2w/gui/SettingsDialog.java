@@ -24,7 +24,7 @@ public class SettingsDialog extends JDialog {
     private boolean confirmed = false;
 
     public SettingsDialog(Frame owner) {
-        super(owner, "Cow2Win - Settings", true);
+        super(owner, LanguageService.displayTitle("menu.configuration"), true);
         buildUi();
         preselectCurrentValues();
         pack();

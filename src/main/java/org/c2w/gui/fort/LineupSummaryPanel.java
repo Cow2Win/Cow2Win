@@ -53,7 +53,7 @@ public class LineupSummaryPanel extends JPanel {
         this.guild = guild;
         setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         //setBackground(BACKGROUND_COLOR);
-        //setOpaque(true);
+        setOpaque(false);
 
         heroPowerLbl.setForeground(FortificationType.HERO.getColor());
         heroBuffCountLbl.setForeground(FortificationType.HERO.getColor());

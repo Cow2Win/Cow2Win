@@ -178,7 +178,7 @@ public final class JsonSupport {
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
-            System.err.println("Invalid date for '" + key + "', ignoring: " + value);
+            Logger.log("Invalid date for '" + key + "', ignoring: " + value);
             return null;
         }
     }

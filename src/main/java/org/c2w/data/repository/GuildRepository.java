@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.*;
 import org.c2w.util.JsonSupport;
+import org.c2w.util.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -131,7 +132,7 @@ public class GuildRepository {
         List<Hero> heroes = new ArrayList<>();
         for (String heroId : JsonSupport.getStringList(obj, "heroIds")) {
             HeroRepository.findById(heroId).ifPresentOrElse(heroes::add,
-                    () -> System.err.println("Unknown hero id in guild file, skipping: " + heroId));
+                    () -> Logger.log("Unknown hero id in guild file, skipping: " + heroId));
         }
 
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);
@@ -159,7 +160,7 @@ public class GuildRepository {
         List<Titan> titans = new ArrayList<>();
         for (String titanId : JsonSupport.getStringList(obj, "titanIds")) {
             TitanRepository.findById(titanId).ifPresentOrElse(titans::add,
-                    () -> System.err.println("Unknown titan id in guild file, skipping: " + titanId));
+                    () -> Logger.log("Unknown titan id in guild file, skipping: " + titanId));
         }
 
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);

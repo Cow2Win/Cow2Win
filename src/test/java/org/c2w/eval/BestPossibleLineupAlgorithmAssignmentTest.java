@@ -51,9 +51,9 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         return new Fortification(id, type, capacity, 100, 0, 0, buff, List.of(), 1);
     }
 
-    /** A hero with an explicit generalScore/roles, avatar and buffFitScores overrides left at their defaults. */
+    /** A hero with an explicit generalScore/roles, no avatar, and buffFitScores overrides left at their defaults (see {@link CowScore}). */
     private static Hero hero(String id, ScoreTier generalScore, Role... roles) {
-        return new Hero(id, List.of(roles), null, generalScore, null);
+        return new Hero(id, List.of(roles), null, new CowScore(generalScore, null));
     }
 
     private static Titan titan(String id, ScoreTier generalScore, TitanElement element) {

@@ -18,6 +18,12 @@ organized by the actual files/checks involved, not by patch-note wording.
       (`src/main/resources/language/deutsch.txt`, `english.txt`,
       `francais.txt`) - `displayName` is looked up from there at runtime
       (`LanguageService`), not stored on the `Hero` record itself.
+- [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
+      assessment (most don't - `STANDARD`/no override is the expected
+      default), set it via the "Hero Buff Fit Scores" dialog in-app, or by
+      hand in `src/main/resources/data/cowScore.json` - NOT in
+      `heroes.json` (see README.md, "Canonical data files": the two are
+      deliberately separate files since 2026-09-14).
 
 ## 2. New titans
 

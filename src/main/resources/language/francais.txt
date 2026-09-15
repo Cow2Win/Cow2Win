@@ -167,6 +167,9 @@ guildEditor.saveGuild=Enregistrer la guilde
 guildEditor.addMember=Ajouter un membre
 guildEditor.removeMember=Supprimer un membre
 
+#exposition sur les fortifications
+fortificationDisplay.tooltip=Cliquez pour affecter des équipes à cette fortification.
+
 #Détail de la fortification
 fortificationDetail.saveFortification=Enregistrer la fortification
 fortificationDetail.prerequisites=Prérequis
@@ -210,3 +213,7 @@ lineupComparison.summaryChanges=Changements
 
 #Général
 common.none=(aucun)
+
+# barre de menus
+menu.settings=Paramètres
+menu.configuration=Configuration

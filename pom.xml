@@ -6,7 +6,7 @@
 
     <groupId>org.tdi</groupId>
     <artifactId>Cow2Win</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
     <name>Cow 2</name>
     <description>An Assistant for Clash of world (Hero wars: Dominion Era)</description>
@@ -171,6 +171,11 @@
                             <destination>${project.build.directory}/dist</destination>
                             <removeDestination>true</removeDestination>
                             <winConsole>false</winConsole>
+                            <!-- .ico for Cow2Win.exe / the app-image folder icon, generated from
+                                 src/main/resources/images/app/cow.png (the same image used as the
+                                 in-app frame icon, see Cow2Frame#FRAME_ICON_PATH). Without this,
+                                 jpackage falls back to the default Java coffee-cup icon. -->
+                            <icon>${project.basedir}/src/main/resources/images/app/cow.ico</icon>
                             <addModules>
                                 <addModule>java.base</addModule>
                                 <addModule>java.desktop</addModule>

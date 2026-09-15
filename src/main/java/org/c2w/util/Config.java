@@ -34,7 +34,7 @@ public final class Config {
             try (InputStream in = Files.newInputStream(CONFIG_FILE_PATH)) {
                 properties.load(in);
             } catch (IOException e) {
-                System.err.println("Could not read " + CONFIG_FILE_PATH + ": " + e.getMessage());
+                Logger.logException("Could not read " + CONFIG_FILE_PATH, e);
             }
         }
     }
@@ -48,8 +48,26 @@ public final class Config {
                 properties.store(out, "Cow2Win - recently used settings (auto-generated)");
             }
         } catch (IOException e) {
-            System.err.println("Could not write " + CONFIG_FILE_PATH + ": " + e.getMessage());
+            Logger.logException("Could not write " + CONFIG_FILE_PATH, e);
         }
+    }
+
+    /**
+     * Sets one property and, if this actually changes its previous value,
+     * logs that via {@link Logger#log} (e.g. "Config changed: language =
+     * \"deutsch.txt\" (previously \"english.txt\")") - this is how every
+     * {@code setXxx} method below reports a "technical change" to the log
+     * file/LogPanel, without each of them having to do it individually.
+     * Never logs anything during {@link #load()}, since that only replays
+     * values already on disk rather than changing them.
+     */
+    private static void setProperty(String key, String value) {
+        String previous = properties.getProperty(key, "");
+        if (!previous.equals(value)) {
+            String previousNote = previous.isEmpty() ? "" : " (previously \"" + previous + "\")";
+            Logger.log("Config changed: " + key + " = \"" + value + "\"" + previousNote);
+        }
+        properties.setProperty(key, value);
     }
 
     // --- lastGuildPath ---
@@ -59,7 +77,7 @@ public final class Config {
     }
 
     public static void setLastGuildPath(String lastGuildPath) {
-        properties.setProperty(KEY_LAST_GUILD_PATH, lastGuildPath == null ? "" : lastGuildPath);
+        setProperty(KEY_LAST_GUILD_PATH, lastGuildPath == null ? "" : lastGuildPath);
     }
 
     // --- language ---
@@ -69,7 +87,7 @@ public final class Config {
     }
 
     public static void setLanguage(String languageFile) {
-        properties.setProperty(KEY_LANGUAGE_FILE, languageFile == null ? "" : languageFile);
+        setProperty(KEY_LANGUAGE_FILE, languageFile == null ? "" : languageFile);
     }
 
     // --- lastLineUpPath ---
@@ -79,7 +97,7 @@ public final class Config {
     }
 
     public static void setLastLineUpPath(String lastLineUpPath) {
-        properties.setProperty(KEY_LAST_LINEUP_PATH, lastLineUpPath == null ? "" : lastLineUpPath);
+        setProperty(KEY_LAST_LINEUP_PATH, lastLineUpPath == null ? "" : lastLineUpPath);
     }
 
     // --- defaultAlgorithm ---
@@ -89,7 +107,7 @@ public final class Config {
     }
 
     public static void setDefaultAlgorithm(String defaultAlgorithm) {
-        properties.setProperty(KEY_DEFAULT_ALGORITHM, defaultAlgorithm == null ? "" : defaultAlgorithm);
+        setProperty(KEY_DEFAULT_ALGORITHM, defaultAlgorithm == null ? "" : defaultAlgorithm);
     }
 
     // --- backupDir ---
@@ -100,7 +118,7 @@ public final class Config {
     }
 
     public static void setBackupDir(String backupDir) {
-        properties.setProperty(KEY_BACKUP_DIR, (backupDir == null || backupDir.isBlank()) ? DEFAULT_BACKUP_DIR : backupDir);
+        setProperty(KEY_BACKUP_DIR, (backupDir == null || backupDir.isBlank()) ? DEFAULT_BACKUP_DIR : backupDir);
     }
 
     /** {@link #getBackupDir()} as a {@link Path}, for callers (e.g. {@link BackupService}) that need to use it directly. */

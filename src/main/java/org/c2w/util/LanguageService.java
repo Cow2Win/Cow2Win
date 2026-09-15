@@ -1,5 +1,7 @@
 package org.c2w.util;
 
+import org.c2w.C2WApp;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -40,6 +42,12 @@ public class LanguageService {
         return displayNames.getProperty(id, id);
     }
 
+
+    public static String displayTitle(String id){
+        ensureLoaded();
+        return C2WApp.BASE_TITLE + " - " + displayNames.getProperty(id, id);
+    }
+
     /** Forces the language file to be reloaded on the next call to {@link #displayName}. */
     public static void resetCache() {
         synchronized (LanguageService.class) {
@@ -73,14 +81,14 @@ public class LanguageService {
         String resourcePath = LANGUAGE_RESOURCE_FOLDER + fileName;
         try (InputStream in = LanguageService.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
-                System.err.println("Language file not found on classpath: " + resourcePath);
+                Logger.log("Language file not found on classpath: " + resourcePath);
                 return properties;
             }
             try (InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 properties.load(reader);
             }
         } catch (IOException e) {
-            System.err.println("Could not read language file " + resourcePath + ": " + e.getMessage());
+            Logger.logException("Could not read language file " + resourcePath, e);
         }
         return properties;
     }

@@ -13,6 +13,7 @@ import org.c2w.util.LineupComparisonService;
 import org.c2w.util.LineupComparisonService.FortificationDiff;
 import org.c2w.util.LineupComparisonService.LineupComparison;
 import org.c2w.util.LineupComparisonService.TeamDiff;
+import org.c2w.util.Logger;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -247,7 +248,7 @@ public class LineupComparisonDialog extends JDialog {
                 result.add(path.getFileName().toString());
             }
         } catch (IOException e) {
-            System.err.println("Could not list lineup files in " + guildDir + ": " + e.getMessage());
+            Logger.logException("Could not list lineup files in " + guildDir, e);
         }
         result.sort(Comparator.naturalOrder());
         return result;

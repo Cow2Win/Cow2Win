@@ -1,10 +1,9 @@
 Config-Klasse: KEY_DEFAULT_ALGORITHM, in den Settings-Dialog aufnehmen, und onRunAlgorithm soll den aus der Config nehmen
-Hero buff fits Dialog umbenennen in Heroes.
 Später: Fremdes Lineup eintragen und Strategie ermitteln
 Label CowScore einführen
 Toolbar aufräumen
 Abfrage auf neue Version und aktualisierung von Helden. Helden aktualisierung
-Trennung von Helden Einstufung
-Log-Datei einführen
+News-Dialog: This is a Demo Guild blabla
+Die DialogTitle alle anpassen
 
 

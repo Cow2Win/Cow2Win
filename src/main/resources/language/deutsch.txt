@@ -169,6 +169,9 @@ guildEditor.saveGuild=Gilde speichern
 guildEditor.addMember=Mitglied hinzufügen
 guildEditor.removeMember=Mitglied entfernen
 
+#Fortification display
+fortificationDisplay.tooltip=Klicken, um dieser Festigung Teams zuzuweisen.
+
 # Festungsdetail
 fortificationDetail.saveFortification=Festung speichern
 fortificationDetail.prerequisites=Voraussetzungen
@@ -212,3 +215,7 @@ lineupComparison.summaryChanges=Änderungen
 
 # Allgemein
 common.none=(keine)
+
+# Menü
+menu.settings=Einstellungen
+menu.configuration=Konfiguration

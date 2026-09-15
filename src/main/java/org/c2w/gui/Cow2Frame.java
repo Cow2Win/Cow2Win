@@ -5,24 +5,30 @@ import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.AppContext;
+import org.c2w.util.LanguageService;
+import org.c2w.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
+import static org.c2w.C2WApp.BASE_TITLE;
+
 public class Cow2Frame extends JFrame {
 
-    /** Base window title, prefixed to the guild name/season (see {@link #updateTitle()}). */
-    private static final String BASE_TITLE = "Cow2Win";
-
-    /** Classpath-absolute path to the frame icon (see {@link #loadFrameIcon()}). */
+   /** Classpath-absolute path to the frame icon (see {@link #loadFrameIcon()}). */
     private static final String FRAME_ICON_PATH = "/images/app/cow.png";
 
     /** Fraction of the window width given to the left side of the split pane by default. */
     private static final double LEFT_SPLIT_RATIO = 2.0 / 3.0;
+
+    private static final String HERO_WARS_URL = "https://www.hero-wars.com/";
 
     private final JSplitPane splitPane;
     private final AppContext appContext;
@@ -112,17 +118,33 @@ public class Cow2Frame extends JFrame {
     private JMenuBar buildMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        JMenu settingsMenu = new JMenu("Settings");
-        JMenuItem configsItem = new JMenuItem("Configs");
+        JMenu settingsMenu = new JMenu(LanguageService.displayName("menu.settings"));
+        JMenuItem configsItem = new JMenuItem(LanguageService.displayName("menu.configuration"));
         configsItem.addActionListener(e -> onOpenSettings());
         settingsMenu.add(configsItem);
+
+
+        JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
+        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
+        settingsMenu.add(heroBuffFitScoresItem);
         menuBar.add(settingsMenu);
 
-        JMenu toolsMenu = new JMenu("Tools");
-        JMenuItem heroBuffFitScoresItem = new JMenuItem("Hero Buff Fit Scores");
-        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
-        toolsMenu.add(heroBuffFitScoresItem);
-        menuBar.add(toolsMenu);
+        JMenu hwMenu = new JMenu("Hero wars");
+        JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
+        hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
+        hwMenu.add(hwWebItem);
+
+        JMenuItem hwFandomItem = new JMenuItem("Hero wars Fandom");
+        hwFandomItem.addActionListener(e -> onOpenWeb("https://hero-wars.fandom.com/wiki/Guild/Clash_of_Worlds"));
+        hwMenu.add(hwFandomItem);
+
+        JMenuItem hwNexterItem = new JMenuItem("Nexters");
+        hwNexterItem.addActionListener(e -> onOpenWeb("https://support-hwde.nexters.com/hc/en-us/articles/7829409962386-Clash-of-Worlds"));
+        hwMenu.add(hwNexterItem);
+
+
+        menuBar.add(hwMenu);
+
 
         return menuBar;
     }
@@ -182,10 +204,24 @@ public class Cow2Frame extends JFrame {
     private static Optional<ImageIcon> loadFrameIcon() {
         URL resource = Cow2Frame.class.getResource(FRAME_ICON_PATH);
         if (resource == null) {
-            System.err.println("Frame icon not found on classpath: " + FRAME_ICON_PATH);
+            Logger.log("Frame icon not found on classpath: " + FRAME_ICON_PATH);
             return Optional.empty();
         }
         return Optional.of(new ImageIcon(resource));
+    }
+
+    private void onOpenWeb(String url) {
+        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            JOptionPane.showMessageDialog(this, "This system has no default browser Cow2 can open.",
+                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            Desktop.getDesktop().browse(new URI(url));
+        } catch (IOException | URISyntaxException e) {
+            JOptionPane.showMessageDialog(this, "Could not open " + url + ":\n" + e.getMessage(),
+                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
 

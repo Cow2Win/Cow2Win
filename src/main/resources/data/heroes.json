@@ -12,11 +12,7 @@
     "roles": [
       "SUPPORT",
       "HEALER"
-    ],
-    "buffFitScores": {
-      "bastion": "MODERATE",
-      "alchemy-tower": "MODERATE"
-    }
+    ]
   },
   {
     "id": "alvanor",
@@ -24,11 +20,7 @@
     "roles": [
       "SUPPORT",
       "MAGE"
-    ],
-    "buffFitScores": {
-      "foundry": "MODERATE",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "amira",
@@ -43,10 +35,7 @@
     "roles": [
       "SUPPORT",
       "CONTROL"
-    ],
-    "buffFitScores": {
-      "foundry": "MODERATE"
-    }
+    ]
   },
   {
     "id": "arachne",
@@ -54,21 +43,14 @@
     "roles": [
       "CONTROL",
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "artemis",
     "image": "Artemis.png",
     "roles": [
       "MARKSMAN"
-    ],
-    "buffFitScores": {
-      "shooting-range": "NORMAL",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "astaroth",
@@ -98,8 +80,7 @@
     "image": "Augustus.png",
     "roles": [
       "MAGE"
-    ],
-    "generalScore": "ELEVATED"
+    ]
   },
   {
     "id": "Byrna",
@@ -151,10 +132,7 @@
     "image": "Corvus.png",
     "roles": [
       "TANK"
-    ],
-    "buffFitScores": {
-      "foundry": "ELEVATED"
-    }
+    ]
   },
   {
     "id": "dante",
@@ -176,12 +154,7 @@
     "roles": [
       "MARKSMAN",
       "CONTROL"
-    ],
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "engineerium": "MODERATE",
-      "shooting-range": "MODERATE"
-    }
+    ]
   },
   {
     "id": "dorian",
@@ -196,25 +169,14 @@
     "image": "Electra.png",
     "roles": [
       "TANK"
-    ],
-    "buffFitScores": {
-      "alchemy-tower": "MODERATE",
-      "city-hall": "MODERATE",
-      "foundry": "ELEVATED",
-      "bastion": "MODERATE",
-      "shooting-range": "MODERATE"
-    }
+    ]
   },
   {
     "id": "elmir",
     "image": "Elmir.png",
     "roles": [
       "WARRIOR"
-    ],
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "shooting-range": "MODERATE"
-    }
+    ]
   },
   {
     "id": "faceless",
@@ -237,10 +199,7 @@
     "roles": [
       "MAGE",
       "SUPPORT"
-    ],
-    "buffFitScores": {
-      "foundry": "NEGATIVE"
-    }
+    ]
   },
   {
     "id": "folio",
@@ -255,8 +214,7 @@
     "image": "Fox.png",
     "roles": [
       "MARKSMAN"
-    ],
-    "generalScore": "MODERATE"
+    ]
   },
   {
     "id": "galahad",
@@ -264,11 +222,7 @@
     "roles": [
       "WARRIOR",
       "TANK"
-    ],
-    "buffFitScores": {
-      "bastion": "ELEVATED",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "ginger",
@@ -312,20 +266,14 @@
     "roles": [
       "SUPPORT",
       "CONTROL"
-    ],
-    "buffFitScores": {
-      "shooting-range": "NEGATIVE"
-    }
+    ]
   },
   {
     "id": "ishmael",
     "image": "Ishmael.png",
     "roles": [
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
+    ]
   },
   {
     "id": "jet",
@@ -333,20 +281,14 @@
     "roles": [
       "HEALER",
       "SUPPORT"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "jhu",
     "image": "Jhu.png",
     "roles": [
       "MARKSMAN"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "jorgen",
@@ -363,41 +305,28 @@
       "MAGE",
       "SUPPORT",
       "CONTROL"
-    ],
-    "buffFitScores": {
-      "shooting-range": "NEGATIVE",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "julius",
     "image": "Julius.png",
     "roles": [
       "TANK"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "kai",
     "image": "Kai.png",
     "roles": [
       "MAGE"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "kayla",
     "image": "Kayla.png",
     "roles": [
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "shooting-range": "MODERATE"
-    }
+    ]
   },
   {
     "id": "keira",
@@ -418,21 +347,14 @@
     "image": "Karkh.png",
     "roles": [
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "engineerium": "MODERATE",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "lara",
     "image": "Lara.png",
     "roles": [
       "MARKSMAN"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "lars",
@@ -454,24 +376,21 @@
     "image": "Lilith.png",
     "roles": [
       "MAGE"
-    ],
-    "generalScore": "MODERATE"
+    ]
   },
   {
     "id": "luther",
     "image": "Luther.png",
     "roles": [
       "TANK"
-    ],
-    "generalScore": "MODERATE"
+    ]
   },
   {
     "id": "lyria",
     "image": "Lyria.png",
     "roles": [
       "WARRIOR"
-    ],
-    "generalScore": "ELEVATED"
+    ]
   },
   {
     "id": "markus",
@@ -479,10 +398,7 @@
     "roles": [
       "SUPPORT",
       "HEALER"
-    ],
-    "buffFitScores": {
-      "city-hall": "ELEVATED"
-    }
+    ]
   },
   {
     "id": "martha",
@@ -506,10 +422,7 @@
     "roles": [
       "MAGE",
       "SUPPORT"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "morrigan",
@@ -524,11 +437,7 @@
     "image": "Mushy.png",
     "roles": [
       "TANK"
-    ],
-    "buffFitScores": {
-      "foundry": "ELEVATED",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "nebula",
@@ -536,28 +445,21 @@
     "roles": [
       "HEALER",
       "SUPPORT"
-    ],
-    "generalScore": "ELEVATED"
+    ]
   },
   {
     "id": "ninja-turtles",
     "image": "NinjaTurtles.png",
     "roles": [
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "orion",
     "image": "Orion.png",
     "roles": [
       "MAGE"
-    ],
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
+    ]
   },
   {
     "id": "peppy",
@@ -565,8 +467,7 @@
     "roles": [
       "MAGE",
       "SUPPORT"
-    ],
-    "generalScore": "MODERATE"
+    ]
   },
   {
     "id": "phobos",
@@ -574,10 +475,7 @@
     "roles": [
       "CONTROL",
       "MAGE"
-    ],
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "polaris",
@@ -599,11 +497,7 @@
     "image": "Rufus.png",
     "roles": [
       "TANK"
-    ],
-    "buffFitScores": {
-      "bastion": "MODERATE",
-      "city-hall": "MODERATE"
-    }
+    ]
   },
   {
     "id": "satori",
@@ -617,10 +511,7 @@
     "image": "Sebastian.png",
     "roles": [
       "SUPPORT"
-    ],
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
+    ]
   },
   {
     "id": "thea",
@@ -634,10 +525,7 @@
     "image": "Tristan.png",
     "roles": [
       "WARRIOR"
-    ],
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
+    ]
   },
   {
     "id": "yasmine",
@@ -651,11 +539,6 @@
     "image": "Ziri.png",
     "roles": [
       "TANK"
-    ],
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "foundry": "MODERATE",
-      "alchemy-tower": "MODERATE"
-    }
+    ]
   }
 ]

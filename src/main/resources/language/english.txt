@@ -169,6 +169,9 @@ guildEditor.saveGuild=Save guild
 guildEditor.addMember=Add member
 guildEditor.removeMember=Remove member
 
+#Fortification display
+fortificationDisplay.tooltip=Click to assign teams to this fortification
+
 #Fortification detail
 fortificationDetail.saveFortification=Save fortification
 fortificationDetail.prerequisites=Prerequisites
@@ -212,3 +215,7 @@ lineupComparison.summaryChanges=Changes
 
 #General
 common.none=(none)
+
+# Menü
+menu.settings=Settings
+menu.configuration=Configuration

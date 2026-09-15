@@ -68,9 +68,10 @@ public class BackupService {
             boolean due = !Files.isRegularFile(backupFile) || dueCheck.test(Files.getLastModifiedTime(backupFile));
             if (due) {
                 createBackup(workspaceDir, backupFile);
+                Logger.log("Backup created: " + backupFile);
             }
         } catch (IOException e) {
-            System.err.println("Could not check/create backup " + backupFile + ": " + e.getMessage());
+            Logger.logException("Could not check/create backup " + backupFile, e);
         }
     }
 

@@ -1,0 +1,233 @@
+[
+  {
+    "id": "aidan",
+    "buffFitScores": {
+      "bastion": "MODERATE",
+      "alchemy-tower": "MODERATE"
+    }
+  },
+  {
+    "id": "alvanor",
+    "buffFitScores": {
+      "foundry": "MODERATE",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "andvari",
+    "buffFitScores": {
+      "foundry": "MODERATE"
+    }
+  },
+  {
+    "id": "arachne",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "artemis",
+    "buffFitScores": {
+      "shooting-range": "NORMAL",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "augustus",
+    "generalScore": "ELEVATED"
+  },
+  {
+    "id": "corvus",
+    "buffFitScores": {
+      "foundry": "ELEVATED"
+    }
+  },
+  {
+    "id": "dark-star",
+    "generalScore": "MODERATE",
+    "buffFitScores": {
+      "engineerium": "MODERATE",
+      "shooting-range": "MODERATE"
+    }
+  },
+  {
+    "id": "electra",
+    "buffFitScores": {
+      "alchemy-tower": "MODERATE",
+      "city-hall": "MODERATE",
+      "foundry": "ELEVATED",
+      "bastion": "MODERATE",
+      "shooting-range": "MODERATE"
+    }
+  },
+  {
+    "id": "elmir",
+    "generalScore": "MODERATE",
+    "buffFitScores": {
+      "shooting-range": "MODERATE"
+    }
+  },
+  {
+    "id": "fluffy",
+    "buffFitScores": {
+      "foundry": "NEGATIVE"
+    }
+  },
+  {
+    "id": "fox",
+    "generalScore": "MODERATE"
+  },
+  {
+    "id": "galahad",
+    "buffFitScores": {
+      "bastion": "ELEVATED",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "isaac",
+    "buffFitScores": {
+      "shooting-range": "NEGATIVE"
+    }
+  },
+  {
+    "id": "ishmael",
+    "buffFitScores": {
+      "engineerium": "MODERATE"
+    }
+  },
+  {
+    "id": "jet",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "jhu",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "judge",
+    "buffFitScores": {
+      "shooting-range": "NEGATIVE",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "julius",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "kai",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "kayla",
+    "buffFitScores": {
+      "shooting-range": "MODERATE"
+    }
+  },
+  {
+    "id": "karkh",
+    "buffFitScores": {
+      "engineerium": "MODERATE",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "lara",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "lilith",
+    "generalScore": "MODERATE"
+  },
+  {
+    "id": "luther",
+    "generalScore": "MODERATE"
+  },
+  {
+    "id": "lyria",
+    "generalScore": "ELEVATED"
+  },
+  {
+    "id": "markus",
+    "buffFitScores": {
+      "city-hall": "ELEVATED"
+    }
+  },
+  {
+    "id": "mojo",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "mushy-and-shroom",
+    "buffFitScores": {
+      "foundry": "ELEVATED",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "nebula",
+    "generalScore": "ELEVATED"
+  },
+  {
+    "id": "ninja-turtles",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "orion",
+    "buffFitScores": {
+      "engineerium": "MODERATE"
+    }
+  },
+  {
+    "id": "peppy",
+    "generalScore": "MODERATE"
+  },
+  {
+    "id": "phobos",
+    "buffFitScores": {
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "rufus",
+    "buffFitScores": {
+      "bastion": "MODERATE",
+      "city-hall": "MODERATE"
+    }
+  },
+  {
+    "id": "sebastian",
+    "buffFitScores": {
+      "engineerium": "MODERATE"
+    }
+  },
+  {
+    "id": "tristan",
+    "buffFitScores": {
+      "engineerium": "MODERATE"
+    }
+  },
+  {
+    "id": "ziri",
+    "generalScore": "MODERATE",
+    "buffFitScores": {
+      "foundry": "MODERATE",
+      "alchemy-tower": "MODERATE"
+    }
+  }
+]
