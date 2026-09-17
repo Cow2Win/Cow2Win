@@ -6,7 +6,10 @@ public final class LineupAlgorithms {
 
     /** Every available strategy, in the order the combo box should list them. */
     public static final List<LineupAlgorithm> ALL = List.of(
-            new BestPossibleLineupAlgorithm()
+            new BestPossibleLineupAlgorithm(),
+            new BalancedDefenseAlgorithm(),
+            new CowScoreMaximizerAlgorithm(),
+            new ConsensusAlgorithm()
     );
 
     private LineupAlgorithms() {

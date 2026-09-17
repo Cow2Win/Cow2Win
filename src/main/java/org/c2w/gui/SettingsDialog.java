@@ -1,5 +1,7 @@
 package org.c2w.gui;
 
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.eval.LineupAlgorithms;
 import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 
@@ -9,13 +11,27 @@ import java.io.File;
 
 /**
  * Dialog opened from Cow2Frame's "Settings" > "Configs" menu item (see
- * Cow2Frame#buildMenuBar). Lets the user change the display language and the
- * backup directory (see org.c2w.util.BackupService); named generically since
- * more application-wide settings are expected to move in here later.
+ * Cow2Frame#buildMenuBar). Lets the user change the display language, the
+ * default lineup algorithm (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
+ * and the backup directory (see org.c2w.util.BackupService); named
+ * generically since more application-wide settings are expected to move in
+ * here later.
  */
 public class SettingsDialog extends JDialog {
 
     private final JComboBox<String> languageComboBox = new JComboBox<>();
+
+    /**
+     * Lists {@link LineupAlgorithms#ALL} by {@link LineupAlgorithm#displayName()}
+     * (added 2026-09-15, see Cow2Win todos 3.4) - a plain {@code JComboBox<String>}
+     * like {@link #languageComboBox} rather than a {@code JComboBox<LineupAlgorithm>},
+     * since {@link LineupAlgorithm} has no {@code toString()} of its own and this
+     * avoids a custom cell renderer just for one combo box. The selected display
+     * name is what actually gets persisted via {@link Config#setDefaultAlgorithm}
+     * (see {@link #onOk()}) - simple and consistent with how {@link #languageComboBox}
+     * persists a language name rather than an index.
+     */
+    private final JComboBox<String> algorithmComboBox = new JComboBox<>();
     private final JTextField backupDirField = new JTextField(20);
     private final JButton browseBackupDirButton = new JButton("...");
     private final JButton okButton = new JButton("OK");
@@ -33,8 +49,11 @@ public class SettingsDialog extends JDialog {
     }
 
     private void buildUi() {
-        for (String[] language : LanguageService.AVAILABLE_LANGUAGES) {
-            languageComboBox.addItem(language[0]);
+        for (String language : LanguageService.availableLanguages()) {
+            languageComboBox.addItem(language);
+        }
+        for (LineupAlgorithm algorithm : LineupAlgorithms.ALL) {
+            algorithmComboBox.addItem(algorithm.displayName());
         }
 
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -52,6 +71,14 @@ public class SettingsDialog extends JDialog {
 
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Default algorithm:"), gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(algorithmComboBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.fill = GridBagConstraints.NONE;
         formPanel.add(new JLabel("Backup directory:"), gbc);
 
@@ -76,24 +103,37 @@ public class SettingsDialog extends JDialog {
     }
 
     /**
-     * Selects whichever {@link LanguageService#AVAILABLE_LANGUAGES} entry
-     * matches the currently configured language file, defaulting to the
-     * first entry if none matches (e.g. no config saved yet), and fills in
+     * Selects whichever {@link LanguageService#availableLanguages()} entry
+     * matches the currently configured language (via {@link
+     * LanguageService#configuredLanguage()}, so an older, pre-restructuring
+     * config value is matched correctly too), defaulting to the first entry
+     * if none matches (e.g. no config saved yet); selects whichever {@link
+     * LineupAlgorithms#ALL} entry matches {@link Config#getDefaultAlgorithm()}
+     * the same way (added 2026-09-15, see Cow2Win todos 3.4); and fills in
      * the currently configured backup directory (see {@link Config#getBackupDir()}).
      */
     private void preselectCurrentValues() {
-        String configured = Config.getLanguage();
-        String[][] languages = LanguageService.AVAILABLE_LANGUAGES;
-        boolean matched = false;
-        for (int i = 0; i < languages.length; i++) {
-            if (languages[i][1].equals(configured)) {
-                languageComboBox.setSelectedIndex(i);
-                matched = true;
+        String configured = LanguageService.configuredLanguage();
+        int matchedIndex = -1;
+        for (int i = 0; i < languageComboBox.getItemCount(); i++) {
+            if (languageComboBox.getItemAt(i).equals(configured)) {
+                matchedIndex = i;
                 break;
             }
         }
-        if (!matched) {
-            languageComboBox.setSelectedIndex(0);
+        languageComboBox.setSelectedIndex(matchedIndex >= 0 ? matchedIndex : 0);
+
+        String configuredAlgorithm = Config.getDefaultAlgorithm();
+        boolean algorithmMatched = false;
+        for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
+            if (algorithmComboBox.getItemAt(i).equals(configuredAlgorithm)) {
+                algorithmComboBox.setSelectedIndex(i);
+                algorithmMatched = true;
+                break;
+            }
+        }
+        if (!algorithmMatched && algorithmComboBox.getItemCount() > 0) {
+            algorithmComboBox.setSelectedIndex(0);
         }
 
         backupDirField.setText(Config.getBackupDir());
@@ -116,9 +156,12 @@ public class SettingsDialog extends JDialog {
     }
 
     private void onOk() {
-        String selectedLanguageFile = LanguageService.AVAILABLE_LANGUAGES[languageComboBox.getSelectedIndex()][1];
-        boolean languageChanged = !selectedLanguageFile.equals(Config.getLanguage());
-        Config.setLanguage(selectedLanguageFile);
+        String selectedLanguage = (String) languageComboBox.getSelectedItem();
+        boolean languageChanged = !selectedLanguage.equals(LanguageService.configuredLanguage());
+        Config.setLanguage(selectedLanguage);
+        if (algorithmComboBox.getSelectedItem() != null) {
+            Config.setDefaultAlgorithm((String) algorithmComboBox.getSelectedItem());
+        }
         Config.setBackupDir(backupDirField.getText().trim());
         Config.save();
         // So that any lookups happening right after this dialog closes

@@ -11,7 +11,7 @@ import java.util.Map;
  *
  * Deliberately NOT a persisted concept, unlike {@link Hero#buffFitScores()}:
  * this wraps a {@link HeroTeam} together with the per-member
- * {@link ScoreTier} values (resolved via
+ * {@link CowScoreTier} values (resolved via
  * {@link Hero#buffFitScore(String, boolean)}) for one candidate
  * {@link Fortification}, plus their sum as {@link #total()} - per the user's
  * stated intent, this is meant to be surfaced later as a table per team
@@ -28,7 +28,7 @@ import java.util.Map;
 public record HeroTeamBuffFitScore(
         HeroTeam team,
         Fortification fortification,
-        Map<String, ScoreTier> memberScores,
+        Map<String, CowScoreTier> memberScores,
         double total
 ) {
     public HeroTeamBuffFitScore {
@@ -53,11 +53,11 @@ public record HeroTeamBuffFitScore(
             throw new IllegalArgumentException(
                     "HeroTeamBuffFitScore.of expects a fortification with a RoleBuff, was: " + fortification.buff());
         }
-        Map<String, ScoreTier> scores = new LinkedHashMap<>();
+        Map<String, CowScoreTier> scores = new LinkedHashMap<>();
         double total = 0;
         for (Hero hero : team.heroes()) {
             boolean roleMatches = hero.roles().contains(roleBuff.role());
-            ScoreTier tier = hero.buffFitScore(fortification.id(), roleMatches);
+            CowScoreTier tier = hero.buffFitScore(fortification.id(), roleMatches);
             scores.put(hero.id(), tier);
             total += tier.value();
         }

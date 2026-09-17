@@ -12,7 +12,7 @@ public final class Config {
 
     private static final Path CONFIG_FILE_PATH = Paths.get("workspace", "config.properties");
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
-    private static final String KEY_LANGUAGE_FILE = "language";
+    private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
@@ -55,7 +55,7 @@ public final class Config {
     /**
      * Sets one property and, if this actually changes its previous value,
      * logs that via {@link Logger#log} (e.g. "Config changed: language =
-     * \"deutsch.txt\" (previously \"english.txt\")") - this is how every
+     * \"deutsch\" (previously \"english\")") - this is how every
      * {@code setXxx} method below reports a "technical change" to the log
      * file/LogPanel, without each of them having to do it individually.
      * Never logs anything during {@link #load()}, since that only replays
@@ -82,12 +82,22 @@ public final class Config {
 
     // --- language ---
 
+    /**
+     * Raw configured language, e.g. {@code "deutsch"} - the name of the
+     * subdirectory under {@code resources/language} (see {@link
+     * LanguageService#availableLanguages()}), not a file name. May also
+     * still hold a pre-2026-09-16 value like {@code "deutsch.txt"} for a
+     * config saved by an older Cow2Win version; {@link
+     * LanguageService#configuredLanguage()} is what normalizes that,
+     * callers that just need "the language to use" should go through it
+     * rather than this raw getter.
+     */
     public static String getLanguage() {
-        return properties.getProperty(KEY_LANGUAGE_FILE, "");
+        return properties.getProperty(KEY_LANGUAGE, "");
     }
 
-    public static void setLanguage(String languageFile) {
-        setProperty(KEY_LANGUAGE_FILE, languageFile == null ? "" : languageFile);
+    public static void setLanguage(String language) {
+        setProperty(KEY_LANGUAGE, language == null ? "" : language);
     }
 
     // --- lastLineUpPath ---

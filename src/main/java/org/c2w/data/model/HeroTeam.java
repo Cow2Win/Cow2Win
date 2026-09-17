@@ -66,7 +66,7 @@ public record HeroTeam(
     /**
      * Divisor {@link #totalPower()} is scaled down by before adding it to
      * {@link #sortScore()} - totalPower is typically five/six digits, while
-     * a hero's {@link Hero#generalScore()} lives on {@link ScoreTier}'s
+     * a hero's {@link Hero#generalScore()} lives on {@link CowScoreTier}'s
      * 0.5-1.1 grid, so this brings both terms to a comparable order of
      * magnitude instead of one completely swamping the other.
      */

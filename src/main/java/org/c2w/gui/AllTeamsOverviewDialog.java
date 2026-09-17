@@ -26,7 +26,7 @@ public class AllTeamsOverviewDialog extends JDialog {
     /** Dialog title - hardcoded, not localized (matches {@link ReportViewerDialog}). */
     private static final String BASE_TITLE = "Cow2 - All Teams";
 
-    /** Language file key (see resources/language/*.txt) for "no fortification assigned". */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for "no fortification assigned". */
     private static final String KEY_NO_FORTIFICATION = "common.none";
 
     /** Target size of the member icons (Heroes/Titans column). */
@@ -39,7 +39,7 @@ public class AllTeamsOverviewDialog extends JDialog {
     private static final int MATCH_COLUMN_WIDTH = 60;
 
     /**
-     * Language file keys (see resources/language/*.txt) for the table
+     * Language file keys (see {@code resources/language/<name>/<name>.properties}) for the table
      * column headers/tab titles - the SAME keys {@link TeamsOverviewPanel}
      * uses (the German/English/French text is identical, only the Java
      * constants/classes here are a redundant copy, not the resource keys).

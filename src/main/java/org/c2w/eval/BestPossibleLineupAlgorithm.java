@@ -189,8 +189,12 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * neither be reassigned nor counted twice, and every {@code assign*}
      * helper further down only ever removes from - never adds back to -
      * this same pool, so a team leaves it for good the moment it is placed.
+     *
+     * Package-private (not private) so {@link BalancedDefenseAlgorithm} can
+     * build its own candidate pool the same way (added 2026-09-15) instead
+     * of duplicating this method.
      */
-    private static <T> List<Candidate<T>> buildCandidatePool(Lineup.TeamType teamType, Guild guild,
+    static <T> List<Candidate<T>> buildCandidatePool(Lineup.TeamType teamType, Guild guild,
                                                              List<Lineup.Entry> updatedEntries,
                                                              Function<GuildMember, List<T>> teamsOf,
                                                              ToIntFunction<T> totalPowerOf,
@@ -237,7 +241,9 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      *
      * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
      * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
-     * via {@link #run}, analogous to {@link #computeUnlockDepths}.
+     * via {@link #run}, analogous to {@link #computeUnlockDepths} - and so
+     * {@link BalancedDefenseAlgorithm} can reuse the exact same bridge-filling
+     * logic (added 2026-09-15) rather than duplicating it.
      */
     static <T> void assignStrongestFirst(Fortification bridge, List<Candidate<T>> pool,
                                                  List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType) {
@@ -279,7 +285,9 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      *
      * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
      * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
-     * via {@link #run}, analogous to {@link #computeUnlockDepths}.
+     * via {@link #run}, analogous to {@link #computeUnlockDepths} - and so
+     * {@link BalancedDefenseAlgorithm} can reuse the exact same per-fortification
+     * team-selection logic (added 2026-09-15) rather than duplicating it.
      */
     static <T> void assignOne(Fortification fortification, List<Candidate<T>> pool,
                                       List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType,
@@ -324,8 +332,13 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
                 chosen.totalPower(), buffFitScore, weightedScore));
     }
 
-    /** Free capacity of {@code fortification} given every entry already in {@code updatedEntries} (any source). */
-    private static int freeSlots(Fortification fortification, List<Lineup.Entry> updatedEntries) {
+    /**
+     * Free capacity of {@code fortification} given every entry already in
+     * {@code updatedEntries} (any source). Package-private (not private) so
+     * {@link BalancedDefenseAlgorithm} can reuse it (added 2026-09-15)
+     * instead of duplicating this method.
+     */
+    static int freeSlots(Fortification fortification, List<Lineup.Entry> updatedEntries) {
         long used = updatedEntries.stream()
                 .filter(entry -> entry.fortificationId().equals(fortification.id()))
                 .count();
@@ -354,7 +367,10 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * from (see the {@code others} javadoc comment in fillFortifications).
      *
      * Package-private (not private) so {@code BestPossibleLineupAlgorithmTest}
-     * can exercise it directly instead of via reflection.
+     * can exercise it directly instead of via reflection, and so
+     * {@link BalancedDefenseAlgorithm} can reuse the exact same depths for
+     * its own tiebreaker (added 2026-09-15) instead of recomputing them
+     * separately.
      */
     static Map<String, Integer> computeUnlockDepths(List<Fortification> catalog) {
         Map<String, Fortification> byId = catalog.stream()

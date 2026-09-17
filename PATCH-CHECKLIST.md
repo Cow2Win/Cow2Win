@@ -15,9 +15,10 @@ organized by the actual files/checks involved, not by patch-note wording.
       Missing icon → falls back to `placeholder.png` (see `Hero.java`), not
       an error, but worth noticing.
 - [ ] Add the display name to **all three** language files
-      (`src/main/resources/language/deutsch.txt`, `english.txt`,
-      `francais.txt`) - `displayName` is looked up from there at runtime
-      (`LanguageService`), not stored on the `Hero` record itself.
+      (`src/main/resources/language/deutsch/deutsch.properties`,
+      `english/english.properties`, `francais/francais.properties`) -
+      `displayName` is looked up from there at runtime (`LanguageService`),
+      not stored on the `Hero` record itself.
 - [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
       assessment (most don't - `STANDARD`/no override is the expected
       default), set it via the "Hero Buff Fit Scores" dialog in-app, or by

@@ -53,7 +53,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
     /** Dialog title - hardcoded, not localized (matches {@link AllTeamsOverviewDialog}/{@link ReportViewerDialog}). */
     private static final String BASE_TITLE = "Cow2 - Team Scores";
 
-    /** Language file key (see resources/language/*.txt) for "no fortification assigned". */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for "no fortification assigned". */
     private static final String KEY_NO_FORTIFICATION = "common.none";
 
     /** Target size of the member icons (Heroes/Titans column). */
@@ -66,7 +66,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
     private static final int SCORE_COLUMN_WIDTH = 70;
 
     /**
-     * Language file keys (see resources/language/*.txt) for the table
+     * Language file keys (see {@code resources/language/<name>/<name>.properties}) for the table
      * column headers/tab titles - the SAME keys {@link AllTeamsOverviewDialog}/
      * {@link TeamsOverviewPanel} use (redundant copy, not the resource keys).
      */
@@ -76,7 +76,7 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
     private static final String COLUMN_KEY_TITANS = "teamsOverview.titans";
     private static final String COLUMN_KEY_FORTIFICATION = "teamsOverview.fortification";
 
-    /** Language file key (see resources/language/*.txt) for the shared "no buff" score column header - see {@link ScoreColumn}. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the shared "no buff" score column header - see {@link ScoreColumn}. */
     private static final String COLUMN_KEY_NO_BUFF = "teamsOverview.noBuff";
 
     private final AppContext appContext;

@@ -2,6 +2,7 @@ package org.c2w.util;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.eval.AlgorithmDescriptions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -105,12 +106,37 @@ public final class ReportGenerator {
     private static String metaTableHtml(Lineup lineup, String lineupName) {
         StringBuilder sb = new StringBuilder();
         sb.append("<table class=\"meta-table\">\n");
-        appendMetaRow(sb, "Guild", lineup.guildName() + " (" + lineup.guildId() + ")");
+        appendMetaRow(sb, "Guild", lineup.guildName());
         appendMetaRow(sb, "Lineup", lineupName);
         appendMetaRow(sb, "Lineup created at", lineup.createdAt().format(TIMESTAMP_FORMAT));
         appendMetaRow(sb, "Report generated at", java.time.LocalDateTime.now().format(TIMESTAMP_FORMAT));
+        appendAlgorithmRowsIfPresent(sb, lineup);
         sb.append("</table>\n");
         return sb.toString();
+    }
+
+    /**
+     * Adds an "Algorithm" row (and, if one is on file, an "Algorithm
+     * description" row right below it) to the meta table - per the user's
+     * explicit request (added 2026-09-16): whenever a lineup was (at least
+     * partly) filled by an algorithm run, the report's very first section
+     * ("Lineup Report") should name that algorithm and explain how it
+     * works, not just leave it implicit in the raw lineup data further
+     * down. Skipped entirely for a lineup with no {@link
+     * Lineup#algorithmName()} yet (see that field's Javadoc) - e.g. a
+     * brand-new lineup or one built purely from manual picks - since there
+     * is nothing to report here in that case.
+     */
+    private static void appendAlgorithmRowsIfPresent(StringBuilder sb, Lineup lineup) {
+        String algorithmName = lineup.algorithmName();
+        if (algorithmName == null || algorithmName.isBlank()) {
+            return;
+        }
+        appendMetaRow(sb, "Algorithm", algorithmName);
+        String description = AlgorithmDescriptions.forDisplayName(algorithmName);
+        if (!description.isBlank()) {
+            appendMetaRow(sb, "Algorithm description", description);
+        }
     }
 
     private static void appendMetaRow(StringBuilder sb, String label, String value) {
@@ -137,26 +163,16 @@ public final class ReportGenerator {
         sb.append("<table>\n<tr>")
                 .append("<th>Fortification</th>")
                 .append("<th>Team member</th>")
-                .append("<th>Team</th>")
-                .append("<th>Team type</th>")
                 .append("<th>Team composition</th>")
                 .append("<th class=\"number\">Power</th>")
-                .append("<th class=\"number\">Buff fit score</th>")
-                .append("<th class=\"number\">Weighted score</th>")
                 .append("</tr>\n");
 
         for (Lineup.Entry entry : entries) {
             sb.append("<tr>");
-            sb.append("<td>").append(escape(fortificationDisplayName(entry.fortificationId())))
-                    .append(" (").append(escape(entry.fortificationId())).append(")</td>");
-            sb.append("<td>").append(escape(memberName(guild, entry.teamMemberId())))
-                    .append(" (").append(escape(entry.teamMemberId())).append(")</td>");
-            sb.append("<td>").append(escape(GuildMember.teamLabel(entry.teamIndex()))).append("</td>");
-            sb.append("<td>").append(escape(entry.teamType().name())).append("</td>");
+            sb.append("<td>").append(escape(fortificationDisplayName(entry.fortificationId()))).append("</td>");
+            sb.append("<td>").append(escape(memberName(guild, entry.teamMemberId()))).append("</td>");
             sb.append("<td>").append(escape(teamCompositionOf(guild, entry))).append("</td>");
             sb.append("<td class=\"number\">").append(entry.totalPower()).append("</td>");
-            sb.append("<td class=\"number\">").append(entry.buffFitScore()).append("</td>");
-            sb.append("<td class=\"number\">").append(entry.weightedScore()).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");
@@ -197,6 +213,7 @@ public final class ReportGenerator {
                 .append("<th>Buff</th>")
                 .append("<th class=\"number\">Buff %</th>")
                 .append("<th class=\"number\">Matching role/element</th>")
+                .append("<th class=\"number\">CowScore</th>")
                 .append("</tr>\n");
 
         for (String fortificationId : fortificationIds) {
@@ -206,13 +223,15 @@ public final class ReportGenerator {
                     fortificationId, lineup, guild, fortification);
             int matchingCount = BuffCalculationService.countMatchingMembersForFortification(
                     fortificationId, lineup, guild, buff);
+            double cowScore = BuffCalculationService.sumCowScoreForFortification(
+                    fortificationId, lineup, guild, fortification);
 
             sb.append("<tr>");
-            sb.append("<td>").append(escape(fortificationDisplayName(fortificationId)))
-                    .append(" (").append(escape(fortificationId)).append(")</td>");
+            sb.append("<td>").append(escape(fortificationDisplayName(fortificationId))).append("</td>");
             sb.append("<td>").append(escape(buffDisplayText(buff))).append("</td>");
             sb.append("<td class=\"number\">").append(buffPercent).append("%</td>");
             sb.append("<td class=\"number\">").append(matchingCount).append("</td>");
+            sb.append("<td class=\"number\">").append(formatCowScore(cowScore)).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");
@@ -249,6 +268,8 @@ public final class ReportGenerator {
         int titanPower = totalPower(lineup, Lineup.TeamType.TITAN);
         int heroBuffCount = BuffCalculationService.countHeroesIncreasingBuff(lineup, guild);
         int titanBuffCount = BuffCalculationService.countTitansIncreasingBuff(lineup, guild);
+        double heroCowScore = BuffCalculationService.sumHeroCowScore(lineup, guild);
+        double titanCowScore = BuffCalculationService.sumTitanCowScore(lineup, guild);
         int guildHeroPower = guildHeroPower(guild);
         int guildTitanPower = guildTitanPower(guild);
 
@@ -258,16 +279,23 @@ public final class ReportGenerator {
         appendStatRow(sb, "Total hero power (guild)", guildHeroPower);
         appendStatRow(sb, "Hero power deployed", percentText(heroPower, guildHeroPower));
         appendStatRow(sb, "Heroes increasing a buff", heroBuffCount);
+        appendStatRow(sb, "Hero CowScore", formatCowScore(heroCowScore));
         appendStatRow(sb, "Total titan power (deployed)", titanPower);
         appendStatRow(sb, "Total titan power (guild)", guildTitanPower);
         appendStatRow(sb, "Titan power deployed", percentText(titanPower, guildTitanPower));
         appendStatRow(sb, "Titans increasing a buff", titanBuffCount);
+        appendStatRow(sb, "Titan CowScore", formatCowScore(titanCowScore));
         appendStatRow(sb, "Total power (heroes + titans, deployed)", heroPower + titanPower);
         appendStatRow(sb, "Total power (heroes + titans, guild)", guildHeroPower + guildTitanPower);
         appendStatRow(sb, "Total power deployed", percentText(heroPower + titanPower, guildHeroPower + guildTitanPower));
         appendStatRow(sb, "Total team assignments", lineup.entries().size());
         sb.append("</table>\n");
         return sb.toString();
+    }
+
+    /** Formats a summed CowScore total (see {@link BuffCalculationService#sumHeroCowScore}/{@link BuffCalculationService#sumTitanCowScore}/{@link BuffCalculationService#sumCowScoreForFortification}) to one decimal place, {@link Locale#ROOT} like the rest of this English-only report - same precision {@code LineupSummaryPanel}'s COW_SCORE_FORMAT uses in the GUI. */
+    private static String formatCowScore(double cowScore) {
+        return String.format(Locale.ROOT, "%.1f", cowScore);
     }
 
     private static void appendStatRow(StringBuilder sb, String label, int value) {

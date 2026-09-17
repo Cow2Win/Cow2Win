@@ -6,6 +6,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.gui.common.GridPanel;
+import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
@@ -19,13 +20,13 @@ import java.util.Map;
 
 public class FortificationMapPanel extends GridPanel {
 
-    /** Language file key (see resources/language/*.txt) for the "show heroes" checkbox label. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show heroes" checkbox label. */
     private static final String KEY_SHOW_HEROES = "fortificationMap.showHeroes";
 
-    /** Language file key (see resources/language/*.txt) for the "show titans" checkbox label. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show titans" checkbox label. */
     private static final String KEY_SHOW_TITANS = "fortificationMap.showTitans";
 
-    /** Language file key (see resources/language/*.txt) for the "changes" checkbox label. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "changes" checkbox label. */
     private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
 
     private final AppContext appContext;
@@ -38,6 +39,7 @@ public class FortificationMapPanel extends GridPanel {
 
     /** True while the "Changes" checkbox (see {@link #buildTypeFilterPanel()}) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
     private boolean showChanges = false;
+    private Image background;
 
     public FortificationMapPanel(AppContext appContext){
         super(8,5);
@@ -78,8 +80,11 @@ public class FortificationMapPanel extends GridPanel {
         init();
     }
 
+
     private void init(){
-        setBackground(new Color(61,109,182).darker());
+        background = IconLoader.getBackgroundImage();
+
+        setBackground(Color.BLACK);//new Color(61,109,182).darker());
         setOpaque(true);
         List<Fortification> fortificationCatalog = FortificationRepository.findAll();
         Map<String, Integer> filledSlotsMap = new HashMap<>();
@@ -161,5 +166,12 @@ public class FortificationMapPanel extends GridPanel {
         return panel;
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+
+        super.paintComponent(g);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        g.drawImage(background, 0, 0, (int) screenSize.getWidth(), (int) screenSize.getHeight(),null);
+    }
 }
 

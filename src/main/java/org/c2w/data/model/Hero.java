@@ -20,7 +20,7 @@ import java.util.Map;
  * Stufe 3).
  *
  * displayName is no longer stored in this class - that information now lives
- * in the properties files (deutsch.txt, english.txt, francais.txt). The
+ * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
  * displayName can be retrieved at runtime via the LanguageService.
  *
  * imagePath: classpath-absolute path (with leading "/") to this hero's avatar
@@ -68,12 +68,12 @@ public record Hero(
     }
 
     /** This hero's general quality/usefulness - delegates to {@link #cowScore()}, see {@link CowScore#generalScore()}. */
-    public ScoreTier generalScore() {
+    public CowScoreTier generalScore() {
         return cowScore.generalScore();
     }
 
     /** This hero's buff-specific fit overrides - delegates to {@link #cowScore()}, see {@link CowScore#buffFitScores()}. */
-    public Map<String, ScoreTier> buffFitScores() {
+    public Map<String, CowScoreTier> buffFitScores() {
         return cowScore.buffFitScores();
     }
 
@@ -85,7 +85,7 @@ public record Hero(
      * Fortification)}, which resolves {@code roleMatches} against the
      * fortification's {@link RoleBuff#role()}.
      */
-    public ScoreTier buffFitScore(String fortificationId, boolean roleMatches) {
+    public CowScoreTier buffFitScore(String fortificationId, boolean roleMatches) {
         return cowScore.buffFitScore(fortificationId, roleMatches);
     }
 }

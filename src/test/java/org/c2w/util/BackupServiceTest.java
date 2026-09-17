@@ -39,7 +39,7 @@ class BackupServiceTest {
     void createsBothBackupsOnFirstRun(@TempDir Path tempDir) throws IOException {
         Path workspaceDir = tempDir.resolve("workspace");
         Files.createDirectories(workspaceDir.resolve("Demo"));
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=english.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=english");
         Files.writeString(workspaceDir.resolve("Demo").resolve("guild.json"), "{}");
         Path backupDir = tempDir.resolve("backup");
 
@@ -58,51 +58,51 @@ class BackupServiceTest {
     void doesNotRecreateDailyBackupOnTheSameDay(@TempDir Path tempDir) throws IOException {
         Path workspaceDir = tempDir.resolve("workspace");
         Files.createDirectories(workspaceDir);
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=english.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=english");
         Path backupDir = tempDir.resolve("backup");
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
         // Workspace changes, but the daily backup was already taken today -
         // a second check on the same day must leave it untouched.
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=deutsch.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=deutsch");
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
         Path dailyBackup = backupDir.resolve(BackupService.DAILY_BACKUP_FILE_NAME);
-        assertTrue(zipEntryContent(dailyBackup, "config.properties").contains("english.txt"));
+        assertTrue(zipEntryContent(dailyBackup, "config.properties").contains("english"));
     }
 
     @Test
     void recreatesDailyBackupOnceItIsFromAPreviousDay(@TempDir Path tempDir) throws IOException {
         Path workspaceDir = tempDir.resolve("workspace");
         Files.createDirectories(workspaceDir);
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=english.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=english");
         Path backupDir = tempDir.resolve("backup");
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
         Path dailyBackup = backupDir.resolve(BackupService.DAILY_BACKUP_FILE_NAME);
         setLastModifiedDate(dailyBackup, LocalDate.now().minusDays(1));
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=deutsch.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=deutsch");
 
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
-        assertTrue(zipEntryContent(dailyBackup, "config.properties").contains("deutsch.txt"));
+        assertTrue(zipEntryContent(dailyBackup, "config.properties").contains("deutsch"));
     }
 
     @Test
     void recreatesWeeklyBackupOnceItIsFromAPreviousIsoWeek(@TempDir Path tempDir) throws IOException {
         Path workspaceDir = tempDir.resolve("workspace");
         Files.createDirectories(workspaceDir);
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=english.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=english");
         Path backupDir = tempDir.resolve("backup");
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
         Path weeklyBackup = backupDir.resolve(BackupService.WEEKLY_BACKUP_FILE_NAME);
         setLastModifiedDate(weeklyBackup, LocalDate.now().minusWeeks(1));
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=francais.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=francais");
 
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 
-        assertTrue(zipEntryContent(weeklyBackup, "config.properties").contains("francais.txt"));
+        assertTrue(zipEntryContent(weeklyBackup, "config.properties").contains("francais"));
     }
 
     @Test
@@ -110,7 +110,7 @@ class BackupServiceTest {
         Path workspaceDir = tempDir.resolve("workspace");
         Path backupDir = workspaceDir.resolve("backup"); // nested inside workspace, on purpose
         Files.createDirectories(workspaceDir);
-        Files.writeString(workspaceDir.resolve("config.properties"), "language=english.txt");
+        Files.writeString(workspaceDir.resolve("config.properties"), "language=english");
 
         BackupService.checkAndCreateBackups(workspaceDir, backupDir);
 

@@ -5,7 +5,7 @@ import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.RoleBuff;
-import org.c2w.data.model.ScoreTier;
+import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.HeroRepository;
 import org.c2w.gui.common.FlatButton;
@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Dialog for maintaining a hero's {@link CowScore} - {@link
  * Hero#generalScore()} and {@link Hero#buffFitScores()}, the two {@link
- * ScoreTier}-based scores that replaced the old {@code buffProfits} list
+ * CowScoreTier}-based scores that replaced the old {@code buffProfits} list
  * (see {@code cow2win-verbesserungsvorschlaege.md}, "Fortification-Scoring:
  * Ablösung von buffProfits", Stufen 1 and 3). Opened from
  * {@link org.c2w.gui.ToolbarPanel}'s toolbar (see
@@ -34,18 +34,18 @@ import java.util.Map;
  * needs an owner window, not an {@code AppContext}.
  *
  * <p>Left side lists every known hero; picking one shows, at the top, a
- * single {@link ScoreTier} combo box for that hero's {@link Hero#generalScore()}
+ * single {@link CowScoreTier} combo box for that hero's {@link Hero#generalScore()}
  * (used for buff-less fortifications), followed by one row per fortification
  * that is both of type {@link FortificationType#HERO} and has a buff, each
- * with its own {@link ScoreTier} combo box for that (hero, fortification)
+ * with its own {@link CowScoreTier} combo box for that (hero, fortification)
  * pair's {@link Hero#buffFitScores()} entry - buff-less fortifications
  * already use generalScore instead (see its Javadoc) and are therefore not
  * listed among these per-fortification rows.
  *
  * <p>Per the "sparse file" convention already used for {@link
  * Hero#generalScore()} (see {@link CowScore}'s Javadoc - {@link
- * ScoreTier#STANDARD} is the default and is never written to disk), picking
- * {@link ScoreTier#STANDARD} in either kind of combo box is equivalent to
+ * CowScoreTier#GOOD} is the default and is never written to disk), picking
+ * {@link CowScoreTier#GOOD} in either kind of combo box is equivalent to
  * having no override at all: for a fortification row, selecting it removes
  * any entry from that hero's working scores (see
  * {@link #buildFortificationRow}); for generalScore there is nothing to
@@ -61,17 +61,17 @@ public final class HeroBuffFitScoresDialog extends JDialog {
 
     private static final String BASE_TITLE = "Cow2 - Hero Buff Fit Scores";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "save" toolbar button (see {@link #onSaveScores()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button (see {@link #onSaveScores()}). */
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
 
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
 
     private static final int TOOLBAR_ICON_SIZE = 20;
 
-    /** Language file key (see resources/language/*.txt) for the {@link Hero#generalScore()} row's label (see {@link #buildDetailPanel}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the {@link Hero#generalScore()} row's label (see {@link #buildDetailPanel}). */
     private static final String KEY_GENERAL_SCORE = "heroBuffFitScores.generalScore";
 
-    /** Language file key (see resources/language/*.txt) for the small header above the per-fortification rows (see {@link #buildDetailPanel}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the small header above the per-fortification rows (see {@link #buildDetailPanel}). */
     private static final String KEY_BUFF_FIT_SCORES_HEADER = "heroBuffFitScores.buffFitScoresHeader";
 
     /** Width reserved for a row's fortification-name label, so every combo box in the list lines up (see {@link #buildFortificationRow}). Also used for the {@link #KEY_GENERAL_SCORE} label so both combo boxes line up with each other. */
@@ -103,7 +103,7 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * selected in this dialog session therefore keeps its original map
      * completely untouched on {@link #onSaveScores()}.
      */
-    private final Map<String, Map<String, ScoreTier>> workingScores = new LinkedHashMap<>();
+    private final Map<String, Map<String, CowScoreTier>> workingScores = new LinkedHashMap<>();
 
     /**
      * In-progress {@link Hero#generalScore()} edits, keyed by hero id -
@@ -112,7 +112,7 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * selected in this dialog session keeps its original
      * {@link Hero#generalScore()} untouched on {@link #onSaveScores()}.
      */
-    private final Map<String, ScoreTier> workingGeneralScores = new LinkedHashMap<>();
+    private final Map<String, CowScoreTier> workingGeneralScores = new LinkedHashMap<>();
 
     private final DefaultListModel<Hero> heroListModel = new DefaultListModel<>();
     private final JList<Hero> heroList = new JList<>(heroListModel);
@@ -189,7 +189,7 @@ public final class HeroBuffFitScoresDialog extends JDialog {
     /**
      * Builds the given hero's {@link Hero#generalScore()} row (see
      * {@link #buildGeneralScoreRow}), a small header, and one row per
-     * {@link #buffedFortifications} entry, each with a {@link ScoreTier}
+     * {@link #buffedFortifications} entry, each with a {@link CowScoreTier}
      * combo box wired into {@link #workingScores} - see
      * {@link #buildFortificationRow}.
      */
@@ -214,7 +214,7 @@ public final class HeroBuffFitScoresDialog extends JDialog {
         panel.add(buffFitScoresHeader);
         panel.add(Box.createVerticalStrut(4));
 
-        Map<String, ScoreTier> heroScores = workingScores.computeIfAbsent(hero.id(),
+        Map<String, CowScoreTier> heroScores = workingScores.computeIfAbsent(hero.id(),
                 id -> new LinkedHashMap<>(hero.buffFitScores()));
 
         for (Fortification fortification : buffedFortifications) {
@@ -227,12 +227,12 @@ public final class HeroBuffFitScoresDialog extends JDialog {
 
     /**
      * The hero's {@link Hero#generalScore()} row: a label plus a
-     * {@link ScoreTier} combo box, pre-selected to
+     * {@link CowScoreTier} combo box, pre-selected to
      * {@link #workingGeneralScores}' current value for this hero (seeded
      * from {@link Hero#generalScore()} itself, which already defaults to
-     * {@link ScoreTier#STANDARD} - see that field's Javadoc). Unlike
+     * {@link CowScoreTier#GOOD} - see that field's Javadoc). Unlike
      * {@link #buildFortificationRow}, there is no sparse map entry to
-     * remove when {@link ScoreTier#STANDARD} is (re)selected - the value is
+     * remove when {@link CowScoreTier#GOOD} is (re)selected - the value is
      * simply stored as-is, since {@link HeroRepository} already omits a
      * {@code STANDARD} {@code generalScore} on save (see class Javadoc).
      */
@@ -243,12 +243,12 @@ public final class HeroBuffFitScoresDialog extends JDialog {
         label.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, label.getPreferredSize().height));
         row.add(label);
 
-        JComboBox<ScoreTier> combo = buildScoreTierCombo();
-        ScoreTier current = workingGeneralScores.computeIfAbsent(hero.id(), id -> hero.generalScore());
+        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
+        CowScoreTier current = workingGeneralScores.computeIfAbsent(hero.id(), id -> hero.generalScore());
         combo.setSelectedItem(current);
         combo.addActionListener(e -> {
-            ScoreTier selected = (ScoreTier) combo.getSelectedItem();
-            workingGeneralScores.put(hero.id(), selected == null ? ScoreTier.STANDARD : selected);
+            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
+            workingGeneralScores.put(hero.id(), selected == null ? CowScoreTier.GOOD : selected);
         });
         row.add(combo);
 
@@ -259,18 +259,18 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * One (hero, fortification) row: the fortification's display name,
      * whether the hero's own roles satisfy its {@link RoleBuff} (purely
      * informational - an override can still be set below
-     * {@link ScoreTier#STANDARD} even with a role match, see
-     * {@link Hero#buffFitScore}), and the {@link ScoreTier} combo box
+     * {@link CowScoreTier#GOOD} even with a role match, see
+     * {@link Hero#buffFitScore}), and the {@link CowScoreTier} combo box
      * itself, pre-selected to heroScores' current entry for this
-     * fortification (or {@link ScoreTier#STANDARD} if none - see class
+     * fortification (or {@link CowScoreTier#GOOD} if none - see class
      * Javadoc for why that is the right "no override" display value).
-     * Selecting {@link ScoreTier#STANDARD} again removes the entry from
+     * Selecting {@link CowScoreTier#GOOD} again removes the entry from
      * heroScores rather than storing it explicitly, keeping
      * {@link #onSaveScores()} sparse without needing its own filtering
      * (that final filter lives in {@code HeroRepository} regardless, as a
      * second line of defense - see its Javadoc).
      */
-    private JPanel buildFortificationRow(Hero hero, Fortification fortification, Map<String, ScoreTier> heroScores) {
+    private JPanel buildFortificationRow(Hero hero, Fortification fortification, Map<String, CowScoreTier> heroScores) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
 
         JLabel nameLabel = new JLabel(LanguageService.displayName(fortification.id()));
@@ -284,11 +284,11 @@ public final class HeroBuffFitScoresDialog extends JDialog {
         roleLabel.setPreferredSize(new Dimension(ROLE_LABEL_WIDTH, roleLabel.getPreferredSize().height));
         row.add(roleLabel);
 
-        JComboBox<ScoreTier> combo = buildScoreTierCombo();
-        combo.setSelectedItem(heroScores.getOrDefault(fortification.id(), ScoreTier.STANDARD));
+        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
+        combo.setSelectedItem(heroScores.getOrDefault(fortification.id(), CowScoreTier.GOOD));
         combo.addActionListener(e -> {
-            ScoreTier selected = (ScoreTier) combo.getSelectedItem();
-            if (selected == null || selected == ScoreTier.STANDARD) {
+            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
+            if (selected == null || selected == CowScoreTier.GOOD) {
                 heroScores.remove(fortification.id());
             } else {
                 heroScores.put(fortification.id(), selected);
@@ -299,21 +299,31 @@ public final class HeroBuffFitScoresDialog extends JDialog {
         return row;
     }
 
-    /** A {@link ScoreTier} combo box listing all 5 tiers, rendered as e.g. "STANDARD (1.0)". */
-    private static JComboBox<ScoreTier> buildScoreTierCombo() {
-        JComboBox<ScoreTier> combo = new JComboBox<>(ScoreTier.values());
+    /** A {@link CowScoreTier} combo box listing all 5 tiers, rendered via {@link #scoreTierLabel} (e.g. "Good (0.8)"). */
+    private static JComboBox<CowScoreTier> buildScoreTierCombo() {
+        JComboBox<CowScoreTier> combo = new JComboBox<>(CowScoreTier.values());
         combo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                            boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof ScoreTier tier) {
-                    setText(tier.name() + " (" + tier.value() + ")");
+                if (value instanceof CowScoreTier tier) {
+                    setText(scoreTierLabel(tier));
                 }
                 return this;
             }
         });
         return combo;
+    }
+
+    /**
+     * The localized display text for a {@link CowScoreTier} combo box entry,
+     * e.g. "Good (0.8)" - the tier's translated name (language file key
+     * {@code scoreTier.<NAME>}, see {@code resources/language/<name>/<name>.properties})
+     * followed by its numeric {@link CowScoreTier#value()} in parentheses.
+     */
+    private static String scoreTierLabel(CowScoreTier tier) {
+        return LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.value() + ")";
     }
 
     private static String heroLabel(Hero hero) {
@@ -330,15 +340,15 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * catalog via {@link HeroRepository#saveCowScores} - which only writes
      * {@code cowScore.json} (never {@code heroes.json}, see {@link
      * HeroRepository}'s class Javadoc) and is also where {@link
-     * ScoreTier#STANDARD} entries actually get dropped from the written
+     * CowScoreTier#GOOD} entries actually get dropped from the written
      * JSON (see class Javadoc), not here.
      */
     private void onSaveScores() {
         List<Hero> updatedCatalog = heroCatalog.stream()
                 .map(hero -> {
-                    Map<String, ScoreTier> scores = workingScores.get(hero.id());
-                    Map<String, ScoreTier> buffFitScores = scores == null ? hero.buffFitScores() : scores;
-                    ScoreTier generalScore = workingGeneralScores.getOrDefault(hero.id(), hero.generalScore());
+                    Map<String, CowScoreTier> scores = workingScores.get(hero.id());
+                    Map<String, CowScoreTier> buffFitScores = scores == null ? hero.buffFitScores() : scores;
+                    CowScoreTier generalScore = workingGeneralScores.getOrDefault(hero.id(), hero.generalScore());
                     return new Hero(hero.id(), hero.roles(), hero.imagePath(), new CowScore(generalScore, buffFitScores));
                 })
                 .toList();

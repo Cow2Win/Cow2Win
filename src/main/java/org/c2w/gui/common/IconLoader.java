@@ -17,6 +17,9 @@ public final class IconLoader {
     public static final Color PURPLE = new Color(96,72,120);
     public static final Color GRAY = new Color(50,50,50);
 
+
+    private static final String BACKGROUND_IMAGE = "/images/app/background2.png";
+
     private static final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();
 
     /** RGB mask (alpha channel excluded) of a fully black pixel - see {@link #iconFor(String, int, Color)}. */
@@ -101,5 +104,14 @@ public final class IconLoader {
             }
         }
         return new ImageIcon(buffered);
+    }
+
+    public static Image getBackgroundImage(){
+        URL resource = IconLoader.class.getResource(BACKGROUND_IMAGE);
+        if (resource == null) {
+            Logger.log("Image not found on classpath: " + BACKGROUND_IMAGE);
+            return null;
+        }
+        return  new ImageIcon(resource).getImage();
     }
 }

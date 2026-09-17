@@ -16,19 +16,26 @@ public class LineupSummaryPanel extends JPanel {
 
 
     private static final String KEY_HERO_POWER = "lineupSummary.heroPower";
-    private static final String KEY_HERO_BUFF_COUNT = "lineupSummary.heroBuffCount";
+    private static final String KEY_HERO_COW_SCORE = "lineupSummary.heroCowScore";
     private static final String KEY_TITAN_POWER = "lineupSummary.titanPower";
-    private static final String KEY_TITAN_BUFF_COUNT = "lineupSummary.titanBuffCount";
+    private static final String KEY_TITAN_COW_SCORE = "lineupSummary.titanCowScore";
 
     private static final String KEY_HERO_POWER_TOOLTIP = "lineupSummary.heroPowerTooltip";
 
     private static final String KEY_TITAN_POWER_TOOLTIP = "lineupSummary.titanPowerTooltip";
 
+    private static final String KEY_HERO_COW_SCORE_TOOLTIP = "lineupSummary.heroCowScoreTooltip";
+
+    private static final String KEY_TITAN_COW_SCORE_TOOLTIP = "lineupSummary.titanCowScoreTooltip";
+
     private static final String KEY_MILLIONS_SUFFIX = "lineupSummary.millionsSuffix";
 
     private static final int MILLIONS_THRESHOLD = 1_000_000;
 
-    private static final NumberFormat MILLIONS_FORMAT = buildMillionsFormat();
+    private static final NumberFormat MILLIONS_FORMAT = buildOneDecimalFormat();
+
+    /** Same one-decimal-digit, no-grouping shape as {@link #MILLIONS_FORMAT}, just for the CowScore totals (typically single/double digit) rather than power-in-millions. */
+    private static final NumberFormat COW_SCORE_FORMAT = buildOneDecimalFormat();
 
 
     private static final Color BACKGROUND_COLOR = Color.DARK_GRAY;
@@ -38,9 +45,9 @@ public class LineupSummaryPanel extends JPanel {
     private final Guild guild;
 
     private final JLabel heroPowerLbl = new JLabel();
-    private final JLabel heroBuffCountLbl = new JLabel();
+    private final JLabel heroCowScoreLbl = new JLabel();
     private final JLabel titanPowerLbl = new JLabel();
-    private final JLabel titanBuffCountLbl = new JLabel();
+    private final JLabel titanCowScoreLbl = new JLabel();
 
     public LineupSummaryPanel(Lineup lineup, Guild guild) {
         super(new GridLayout(4, 1, 0, 2));
@@ -56,22 +63,25 @@ public class LineupSummaryPanel extends JPanel {
         setOpaque(false);
 
         heroPowerLbl.setForeground(FortificationType.HERO.getColor());
-        heroBuffCountLbl.setForeground(FortificationType.HERO.getColor());
+        heroCowScoreLbl.setForeground(FortificationType.HERO.getColor());
         titanPowerLbl.setForeground(FortificationType.TITAN.getColor());
-        titanBuffCountLbl.setForeground(FortificationType.TITAN.getColor());
+        titanCowScoreLbl.setForeground(FortificationType.TITAN.getColor());
 
         // Tooltips added 2026-09-05 alongside shortening the hero/titan power
         // labels themselves (see class Javadoc) - static text, set once here
         // rather than in refresh(Lineup), since neither ever changes with the
-        // lineup. The buff-count labels got no tooltip - their own text was
-        // never shortened and stays self-descriptive without one.
+        // lineup. The CowScore labels got their own tooltip too (2026-09-15,
+        // replacing the former buff-count labels) since a summed CowScore
+        // total is not self-explanatory the way a power/count value is.
         heroPowerLbl.setToolTipText(LanguageService.displayName(KEY_HERO_POWER_TOOLTIP));
         titanPowerLbl.setToolTipText(LanguageService.displayName(KEY_TITAN_POWER_TOOLTIP));
+        heroCowScoreLbl.setToolTipText(LanguageService.displayName(KEY_HERO_COW_SCORE_TOOLTIP));
+        titanCowScoreLbl.setToolTipText(LanguageService.displayName(KEY_TITAN_COW_SCORE_TOOLTIP));
 
         add(heroPowerLbl);
-        add(heroBuffCountLbl);
+        add(heroCowScoreLbl);
         add(titanPowerLbl);
-        add(titanBuffCountLbl);
+        add(titanCowScoreLbl);
 
         refresh(lineup);
     }
@@ -82,12 +92,12 @@ public class LineupSummaryPanel extends JPanel {
         }
         heroPowerLbl.setText(LanguageService.displayName(KEY_HERO_POWER) + ": "
                 + formatPower(totalPower(lineup, Lineup.TeamType.HERO)));
-        heroBuffCountLbl.setText(LanguageService.displayName(KEY_HERO_BUFF_COUNT) + ": "
-                + GuiUtils.NUMBER_FORMAT.format(BuffCalculationService.countHeroesIncreasingBuff(lineup, guild)));
+        heroCowScoreLbl.setText(LanguageService.displayName(KEY_HERO_COW_SCORE) + ": "
+                + COW_SCORE_FORMAT.format(BuffCalculationService.sumHeroCowScore(lineup, guild)));
         titanPowerLbl.setText(LanguageService.displayName(KEY_TITAN_POWER) + ": "
                 + formatPower(totalPower(lineup, Lineup.TeamType.TITAN)));
-        titanBuffCountLbl.setText(LanguageService.displayName(KEY_TITAN_BUFF_COUNT) + ": "
-                + GuiUtils.NUMBER_FORMAT.format(BuffCalculationService.countTitansIncreasingBuff(lineup, guild)));
+        titanCowScoreLbl.setText(LanguageService.displayName(KEY_TITAN_COW_SCORE) + ": "
+                + COW_SCORE_FORMAT.format(BuffCalculationService.sumTitanCowScore(lineup, guild)));
     }
 
     /** Sums {@link Lineup.Entry#totalPower()} over every entry of the given team type. */
@@ -110,7 +120,7 @@ public class LineupSummaryPanel extends JPanel {
     }
 
   
-    private static NumberFormat buildMillionsFormat() {
+    private static NumberFormat buildOneDecimalFormat() {
         NumberFormat format = NumberFormat.getInstance(Locale.GERMANY);
         format.setGroupingUsed(false);
         format.setMinimumFractionDigits(0);

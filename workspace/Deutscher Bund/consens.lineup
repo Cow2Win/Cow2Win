@@ -1,0 +1,215 @@
+{
+  "guildId": "deutscher-bund",
+  "guildName": "Deutscher Bund",
+  "algorithmName": "Consensus picks",
+  "createdAt": "2026-09-16T09:38:36.254288500",
+  "entries": [
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Faern",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 925150,
+      "buffFitScore": 0,
+      "weightedScore": 12.9515
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1240112,
+      "buffFitScore": 0,
+      "weightedScore": 16.40112
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1390976,
+      "buffFitScore": 0,
+      "weightedScore": 17.90976
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "NeoSouls",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1199244,
+      "buffFitScore": 0,
+      "weightedScore": 15.99244
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Puschel",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 1070181,
+      "buffFitScore": 0,
+      "weightedScore": 14.30181
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Puschel",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1066834,
+      "buffFitScore": 0,
+      "weightedScore": 14.16834
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Jay",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1181131,
+      "buffFitScore": 0,
+      "weightedScore": 15.81131
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "remy",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 826260,
+      "buffFitScore": 0,
+      "weightedScore": 11.7626
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Trofik",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 928741,
+      "buffFitScore": 0,
+      "weightedScore": 13.28741
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "COCO",
+      "teamType": "HERO",
+      "teamIndex": 2,
+      "totalPower": 860162,
+      "buffFitScore": 0,
+      "weightedScore": 12.10162
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Puschel",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1030041,
+      "buffFitScore": 0,
+      "weightedScore": 14.30041
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Puschel",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 1381269,
+      "buffFitScore": 0,
+      "weightedScore": 17.81269
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Vivien",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1180176,
+      "buffFitScore": 0,
+      "weightedScore": 15.80176
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Haselnuss",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1233542,
+      "buffFitScore": 0,
+      "weightedScore": 16.33542
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Paradel",
+      "teamType": "TITAN",
+      "teamIndex": 0,
+      "totalPower": 927243,
+      "buffFitScore": 0,
+      "weightedScore": 13.27243
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Team JE",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 1294167,
+      "buffFitScore": 0,
+      "weightedScore": 16.941670000000002
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Team Gandagom",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1020380,
+      "buffFitScore": 0,
+      "weightedScore": 13.9038
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1165701,
+      "buffFitScore": 0,
+      "weightedScore": 15.65701
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "SpookeyWookie",
+      "teamType": "HERO",
+      "teamIndex": 0,
+      "totalPower": 1105423,
+      "buffFitScore": 0,
+      "weightedScore": 14.65423
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "lucky",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 804720,
+      "buffFitScore": 0,
+      "weightedScore": 12.0472
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Ordensritter",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1162375,
+      "buffFitScore": 0,
+      "weightedScore": 15.82375
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "NeoSouls",
+      "teamType": "HERO",
+      "teamIndex": 1,
+      "totalPower": 1180597,
+      "buffFitScore": 0,
+      "weightedScore": 16.00597
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Hero",
+      "teamType": "TITAN",
+      "teamIndex": 1,
+      "totalPower": 640747,
+      "buffFitScore": 0,
+      "weightedScore": 10.40747
+    }
+  ]
+}

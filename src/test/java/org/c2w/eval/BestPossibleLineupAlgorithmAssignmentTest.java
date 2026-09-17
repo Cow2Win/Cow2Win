@@ -52,11 +52,11 @@ class BestPossibleLineupAlgorithmAssignmentTest {
     }
 
     /** A hero with an explicit generalScore/roles, no avatar, and buffFitScores overrides left at their defaults (see {@link CowScore}). */
-    private static Hero hero(String id, ScoreTier generalScore, Role... roles) {
+    private static Hero hero(String id, CowScoreTier generalScore, Role... roles) {
         return new Hero(id, List.of(roles), null, new CowScore(generalScore, null));
     }
 
-    private static Titan titan(String id, ScoreTier generalScore, TitanElement element) {
+    private static Titan titan(String id, CowScoreTier generalScore, TitanElement element) {
         return new Titan(id, element, null, generalScore, null);
     }
 
@@ -79,10 +79,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         void fillsStrongestFirstTiesBrokenByMemberId() {
             Fortification bridge = fort("bridge", FortificationType.HERO, 2, null);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", ScoreTier.STANDARD, Role.TANK)), 500), 0),
-                    candidate("m2", new HeroTeam("m2", List.of(hero("h2", ScoreTier.STANDARD, Role.TANK)), 800), 0),
-                    candidate("m3", new HeroTeam("m3", List.of(hero("h3", ScoreTier.STANDARD, Role.TANK)), 800), 0),
-                    candidate("m4", new HeroTeam("m4", List.of(hero("h4", ScoreTier.STANDARD, Role.TANK)), 300), 0)
+                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
+                    candidate("m2", new HeroTeam("m2", List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 800), 0),
+                    candidate("m3", new HeroTeam("m3", List.of(hero("h3", CowScoreTier.GOOD, Role.TANK)), 800), 0),
+                    candidate("m4", new HeroTeam("m4", List.of(hero("h4", CowScoreTier.GOOD, Role.TANK)), 300), 0)
             ));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -113,8 +113,8 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             ));
             // Only 1 free slot left (capacity 3 - 2 existing entries).
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("weak", new HeroTeam("weak", List.of(hero("h1", ScoreTier.STANDARD, Role.TANK)), 500), 0),
-                    candidate("strong", new HeroTeam("strong", List.of(hero("h2", ScoreTier.STANDARD, Role.TANK)), 900), 0)
+                    candidate("weak", new HeroTeam("weak", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
+                    candidate("strong", new HeroTeam("strong", List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 900), 0)
             ));
 
             BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
@@ -133,7 +133,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     new Lineup.Entry("bridge", "existing", Lineup.TeamType.HERO, 0, 999, 0, 999)
             ));
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", ScoreTier.STANDARD, Role.TANK)), 500), 0)
+                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0)
             ));
 
             BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
@@ -155,10 +155,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff warriorBuff = new RoleBuff(Role.WARRIOR, BuffEffect.MAGIC_DEFENSE_INCREASE, 3.0);
             Fortification bastion = fort("bastion", FortificationType.HERO, 5, warriorBuff);
 
-            HeroTeam noWarriors = new HeroTeam("a", List.of(hero("h1", ScoreTier.STANDARD, Role.MAGE)), 1000);
+            HeroTeam noWarriors = new HeroTeam("a", List.of(hero("h1", CowScoreTier.GOOD, Role.MAGE)), 1000);
             HeroTeam twoWarriors = new HeroTeam("b", List.of(
-                    hero("h2", ScoreTier.STANDARD, Role.WARRIOR), hero("h3", ScoreTier.STANDARD, Role.WARRIOR)), 500);
-            HeroTeam oneWarrior = new HeroTeam("c", List.of(hero("h4", ScoreTier.STANDARD, Role.WARRIOR)), 200);
+                    hero("h2", CowScoreTier.GOOD, Role.WARRIOR), hero("h3", CowScoreTier.GOOD, Role.WARRIOR)), 500);
+            HeroTeam oneWarrior = new HeroTeam("c", List.of(hero("h4", CowScoreTier.GOOD, Role.WARRIOR)), 200);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
                     candidate("a", noWarriors, 0), candidate("b", twoWarriors, 0), candidate("c", oneWarrior, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
@@ -182,10 +182,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Fortification foundry = fort("foundry", FortificationType.HERO, 5, tankBuff);
 
             HeroTeam strongTie = new HeroTeam("x", List.of(
-                    hero("h1", ScoreTier.STANDARD, Role.TANK), hero("h2", ScoreTier.STANDARD, Role.TANK)), 900);
+                    hero("h1", CowScoreTier.GOOD, Role.TANK), hero("h2", CowScoreTier.GOOD, Role.TANK)), 900);
             HeroTeam weakTie = new HeroTeam("y", List.of(
-                    hero("h3", ScoreTier.STANDARD, Role.TANK), hero("h4", ScoreTier.STANDARD, Role.TANK)), 300);
-            HeroTeam worseFit = new HeroTeam("z", List.of(hero("h5", ScoreTier.STANDARD, Role.TANK)), 100);
+                    hero("h3", CowScoreTier.GOOD, Role.TANK), hero("h4", CowScoreTier.GOOD, Role.TANK)), 300);
+            HeroTeam worseFit = new HeroTeam("z", List.of(hero("h5", CowScoreTier.GOOD, Role.TANK)), 100);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
                     candidate("x", strongTie, 0), candidate("y", weakTie, 0), candidate("z", worseFit, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
@@ -203,9 +203,9 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff fireBuff = new ElementBuff(TitanElement.FIRE, BuffEffect.HEALTH_INCREASE, 8.0);
             Fortification bastionOfFire = fort("bastion-of-fire", FortificationType.TITAN, 4, fireBuff);
 
-            TitanTeam noFireTitans = new TitanTeam("p", List.of(titan("t1", ScoreTier.STANDARD, TitanElement.WATER)), 1000);
+            TitanTeam noFireTitans = new TitanTeam("p", List.of(titan("t1", CowScoreTier.GOOD, TitanElement.WATER)), 1000);
             TitanTeam twoFireTitans = new TitanTeam("q", List.of(
-                    titan("t2", ScoreTier.STANDARD, TitanElement.FIRE), titan("t3", ScoreTier.STANDARD, TitanElement.FIRE)), 400);
+                    titan("t2", CowScoreTier.GOOD, TitanElement.FIRE), titan("t3", CowScoreTier.GOOD, TitanElement.FIRE)), 400);
             List<Candidate<TitanTeam>> pool = new ArrayList<>(List.of(candidate("p", noFireTitans, 0), candidate("q", twoFireTitans, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -225,10 +225,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             // 4-hero team where only 1 hero happens to match too. Same buffFitScore (1) either
             // way, so the tie-break (lowest totalPower) must decide, proving the incomplete
             // team's score was computed from its ACTUAL roster (not padded/defaulted).
-            HeroTeam oneHealerOnly = new HeroTeam("single", List.of(hero("h1", ScoreTier.STANDARD, Role.HEALER)), 50);
+            HeroTeam oneHealerOnly = new HeroTeam("single", List.of(hero("h1", CowScoreTier.GOOD, Role.HEALER)), 50);
             HeroTeam fourHeroesOneHealer = new HeroTeam("full", List.of(
-                    hero("h2", ScoreTier.STANDARD, Role.HEALER), hero("h3", ScoreTier.STANDARD, Role.TANK),
-                    hero("h4", ScoreTier.STANDARD, Role.MAGE), hero("h5", ScoreTier.STANDARD, Role.WARRIOR)), 400);
+                    hero("h2", CowScoreTier.GOOD, Role.HEALER), hero("h3", CowScoreTier.GOOD, Role.TANK),
+                    hero("h4", CowScoreTier.GOOD, Role.MAGE), hero("h5", CowScoreTier.GOOD, Role.WARRIOR)), 400);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(candidate("single", oneHealerOnly, 0), candidate("full", fourHeroesOneHealer, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -251,15 +251,15 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             // Higher totalPower (120 000) but poor heroes (NEGATIVE=0.4 each):
             // sortScore = 5*0.4 + 120000/100000 = 2.0 + 1.2 = 3.2
             HeroTeam highPowerLowGeneralScore = new HeroTeam("strongButWeakHeroes", List.of(
-                    hero("h1", ScoreTier.NEGATIVE, Role.TANK), hero("h2", ScoreTier.NEGATIVE, Role.TANK),
-                    hero("h3", ScoreTier.NEGATIVE, Role.TANK), hero("h4", ScoreTier.NEGATIVE, Role.TANK),
-                    hero("h5", ScoreTier.NEGATIVE, Role.TANK)), 120_000);
+                    hero("h1", CowScoreTier.NEGATIVE, Role.TANK), hero("h2", CowScoreTier.NEGATIVE, Role.TANK),
+                    hero("h3", CowScoreTier.NEGATIVE, Role.TANK), hero("h4", CowScoreTier.NEGATIVE, Role.TANK),
+                    hero("h5", CowScoreTier.NEGATIVE, Role.TANK)), 120_000);
             // Lower totalPower (100 000) but excellent heroes (ELEVATED=0.9 each):
             // sortScore = 5*0.9 + 100000/100000 = 4.5 + 1.0 = 5.5
             HeroTeam lowPowerHighGeneralScore = new HeroTeam("weakerButEliteHeroes", List.of(
-                    hero("h6", ScoreTier.ELEVATED, Role.TANK), hero("h7", ScoreTier.ELEVATED, Role.TANK),
-                    hero("h8", ScoreTier.ELEVATED, Role.TANK), hero("h9", ScoreTier.ELEVATED, Role.TANK),
-                    hero("h10", ScoreTier.ELEVATED, Role.TANK)), 100_000);
+                    hero("h6", CowScoreTier.GREAT, Role.TANK), hero("h7", CowScoreTier.GREAT, Role.TANK),
+                    hero("h8", CowScoreTier.GREAT, Role.TANK), hero("h9", CowScoreTier.GREAT, Role.TANK),
+                    hero("h10", CowScoreTier.GREAT, Role.TANK)), 100_000);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
                     candidate("strongButWeakHeroes", highPowerLowGeneralScore, 0),
                     candidate("weakerButEliteHeroes", lowPowerHighGeneralScore, 0)));
@@ -280,12 +280,12 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Fortification mageAcademy = fort("mage-academy", FortificationType.HERO, 3, null);
 
             // 1 hero at STANDARD (0.8): sortScore = 0.8 + 10000/100000 = 0.8 + 0.1 = 0.9
-            HeroTeam oneHero = new HeroTeam("solo", List.of(hero("h1", ScoreTier.STANDARD, Role.TANK)), 10_000);
+            HeroTeam oneHero = new HeroTeam("solo", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 10_000);
             // 5 heroes at STANDARD (0.8) each: sortScore = 4.0 + 10000/100000 = 4.0 + 0.1 = 4.1
             HeroTeam fiveHeroes = new HeroTeam("full", List.of(
-                    hero("h2", ScoreTier.STANDARD, Role.TANK), hero("h3", ScoreTier.STANDARD, Role.TANK),
-                    hero("h4", ScoreTier.STANDARD, Role.TANK), hero("h5", ScoreTier.STANDARD, Role.TANK),
-                    hero("h6", ScoreTier.STANDARD, Role.TANK)), 10_000);
+                    hero("h2", CowScoreTier.GOOD, Role.TANK), hero("h3", CowScoreTier.GOOD, Role.TANK),
+                    hero("h4", CowScoreTier.GOOD, Role.TANK), hero("h5", CowScoreTier.GOOD, Role.TANK),
+                    hero("h6", CowScoreTier.GOOD, Role.TANK)), 10_000);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(candidate("solo", oneHero, 0), candidate("full", fiveHeroes, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -303,12 +303,12 @@ class BestPossibleLineupAlgorithmAssignmentTest {
     class FillFortificationsIntegrationTests {
 
         private static GuildMember heroMember(String id, int totalPower) {
-            HeroTeam team = new HeroTeam(id, List.of(hero(id + "-hero", ScoreTier.STANDARD, Role.MAGE)), totalPower);
+            HeroTeam team = new HeroTeam(id, List.of(hero(id + "-hero", CowScoreTier.GOOD, Role.MAGE)), totalPower);
             return new GuildMember(id, id, List.of(team), List.of());
         }
 
         private static GuildMember titanMember(String id, int totalPower) {
-            TitanTeam team = new TitanTeam(id, List.of(titan(id + "-titan", ScoreTier.STANDARD, TitanElement.WATER)), totalPower);
+            TitanTeam team = new TitanTeam(id, List.of(titan(id + "-titan", CowScoreTier.GOOD, TitanElement.WATER)), totalPower);
             return new GuildMember(id, id, List.of(), List.of(team));
         }
 

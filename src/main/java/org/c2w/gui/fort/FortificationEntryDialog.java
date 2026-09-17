@@ -25,10 +25,10 @@ public final class FortificationEntryDialog extends JDialog {
 
     private static final int ICON_SIZE = 32;
 
-    /** Language file key (see resources/language/*.txt) for an unselected member combo/team slot. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for an unselected member combo/team slot. */
     private static final String KEY_NO_SELECTION = "common.none";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "save" toolbar button. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button. */
     private static final String KEY_SAVE_TEAMS = "fortificationEntry.saveTeams";
 
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */

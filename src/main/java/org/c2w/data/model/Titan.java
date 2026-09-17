@@ -13,7 +13,7 @@ import java.util.Map;
  * the full reasoning, identical here.
  *
  * displayName is no longer stored in this class - that information now lives
- * in the properties files (deutsch.txt, english.txt, francais.txt). The
+ * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
  * displayName can be retrieved at runtime via the LanguageService.
  *
  * imagePath: classpath-absolute path (with leading "/") to this titan's
@@ -25,8 +25,8 @@ import java.util.Map;
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
  * generalScore: the TITAN-side counterpart of {@link Hero#generalScore()} -
- * same shared {@link ScoreTier} grid, same default ({@link
- * ScoreTier#STANDARD}) and same sparse-catalog intent (added 2026-09-11, see
+ * same shared {@link CowScoreTier} grid, same default ({@link
+ * CowScoreTier#GOOD}) and same sparse-catalog intent (added 2026-09-11, see
  * cow2win-verbesserungsvorschlaege.md, "gleiche Behandlung" as heroes per
  * the user's own words). Used by {@link TitanTeam#sortScore()} for
  * fortifications without a buff, exactly as {@link Hero#generalScore()} is
@@ -44,8 +44,8 @@ public record Titan(
         String id,
         TitanElement element,
         String imagePath,
-        ScoreTier generalScore,
-        Map<String, ScoreTier> buffFitScores
+        CowScoreTier generalScore,
+        Map<String, CowScoreTier> buffFitScores
 ) {
     /** Avatar for titans that don't have their own icon under images/titans yet. */
     public static final String PLACEHOLDER_IMAGE_PATH = "/images/titans/placeholder.png";
@@ -58,7 +58,7 @@ public record Titan(
             throw new IllegalArgumentException("Titan '" + id + "' needs an element");
         }
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
-        generalScore = generalScore == null ? ScoreTier.STANDARD : generalScore;
+        generalScore = generalScore == null ? CowScoreTier.GOOD : generalScore;
         buffFitScores = buffFitScores == null ? Map.of() : Map.copyOf(buffFitScores);
     }
 
@@ -76,11 +76,11 @@ public record Titan(
      * which resolves {@code elementMatches} against the fortification's
      * {@link ElementBuff#element()}.
      */
-    public ScoreTier buffFitScore(String fortificationId, boolean elementMatches) {
-        ScoreTier override = buffFitScores.get(fortificationId);
+    public CowScoreTier buffFitScore(String fortificationId, boolean elementMatches) {
+        CowScoreTier override = buffFitScores.get(fortificationId);
         if (override != null) {
             return override;
         }
-        return elementMatches ? ScoreTier.STANDARD : ScoreTier.NORMAL;
+        return elementMatches ? CowScoreTier.GOOD : CowScoreTier.AVERAGE;
     }
 }

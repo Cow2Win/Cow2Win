@@ -73,6 +73,42 @@ first-run demo guild are effectively IDE/dev-only features until those paths
 are changed to something that also makes sense for a packaged install (e.g.
 resolving against the new `resources/` folder next to the exe).
 
+## Releases & update check (GitHub)
+
+- `org.c2w.util.AppVersion` reads this build's own version at runtime from
+  `app-version.properties`, a classpath resource whose `${app.version}`
+  placeholder is filled in at build time by Maven resource filtering (see
+  `pom.xml`'s `<resources>` section) - kept as its own tiny sidecar file
+  (filtered) rather than turning on filtering for all of `src/main/resources`
+  (unfiltered for everything else, e.g. the JSON catalogs/language files, so
+  none of them can ever have a `${...}`-looking substring "resolved" away).
+- `org.c2w.util.UpdateChecker` compares that version against
+  `GET /repos/Cow2Win/Cow2Win/releases/latest` on GitHub's public REST API
+  and reports whether a newer release exists. `Cow2Frame` uses it twice: a
+  silent check once at startup (only ever shows a dialog when an update was
+  actually found - no popup for "up to date" or a failed/offline check), and
+  the "Settings" > "Check for Updates" menu item, which always reports back.
+  A found update offers to open the release's GitHub page in the system
+  browser.
+- **Requires the `Cow2Win/Cow2Win` repository - or at least its Releases -
+  to be public.** The check is a plain, unauthenticated HTTPS request (no
+  token shipped with the app, which would be extractable from a distributed
+  client and is not attempted here); GitHub's API returns 404 for a private
+  repository's releases to anyone without access, which `UpdateChecker`
+  treats the same as "no release yet"/a failed check (silently at startup,
+  reported as a failed check from the menu item) rather than surfacing a
+  wrong or confusing message.
+- `.github/workflows/release.yml` publishes the actual GitHub Release
+  `UpdateChecker` checks against: pushing a tag like `v1.0.0` builds the
+  Windows app-image (`mvn package`, same as the "Distribution package"
+  section above, on a `windows-latest` runner) and publishes it as a GitHub
+  Release with the resulting zip attached, using that tag to also set
+  `app.version` for the build (so the packaged app, the release tag, and
+  what `UpdateChecker` compares against always agree). Separate from
+  `ci.yml`'s `test`-only job (see its own comment) since this needs a
+  Windows runner and only ever runs for an actual release tag, not on every
+  push/PR.
+
 ## Data model overview
 
 - **Hero** (`id`, `roles[]`, `image`) - see `Role.java` for the valid roles;
@@ -120,9 +156,32 @@ resolving against the new `resources/` folder next to the exe).
   work through `PATCH-CHECKLIST.md`.
 - `src/main/resources/images/heroes/`, `images/titans/` hold the avatar
   icons (a missing icon falls back to `placeholder.png`, not an error).
-- `src/main/resources/language/{deutsch,english,francais}.txt` hold display
-  names and UI strings, looked up at runtime via `LanguageService` - they are
-  not stored on the `Hero`/`Titan` records themselves.
+- `src/main/resources/language/<name>/<name>.properties` (e.g.
+  `language/deutsch/deutsch.properties`) hold display names and UI strings,
+  looked up at runtime via `LanguageService` - they are not stored on the
+  `Hero`/`Titan` records themselves. One subdirectory per language (added
+  2026-09-16, replacing a flat `language/deutsch.txt` layout) so a language
+  can also carry longer, non-properties content later (HTML/XML help texts
+  etc.) alongside its `.properties` file. `LanguageService.availableLanguages()`
+  discovers the languages to offer by listing these subdirectories at
+  runtime (from the classpath - works both from an IDE run and from the
+  packaged jar) rather than a hardcoded list, and the directory name is
+  exactly what's shown in the language combo box - no separate display-name
+  mapping in code anymore.
+- Each language's `.properties` file also carries `algorithm.<key>.description`
+  entries (since 2026-09-16, one per `LineupAlgorithm` in `LineupAlgorithms.ALL`)
+  - a short prose explanation of how that algorithm works, read via
+  `org.c2w.eval.AlgorithmDescriptions#forAlgorithm`/`#forDisplayName`. Not
+  wired into any UI yet, ready to surface later (e.g. a tooltip next to the
+  algorithm dropdown in `SettingsDialog`, or a new section in
+  `ReportGenerator`'s HTML report). This used to be its own English-only
+  sidecar JSON under `data/` - moved here because the report is **not**
+  English-only throughout: fortification/hero/titan names in it already go
+  through `LanguageService.displayName`, so this text should too, the same
+  way. `AlgorithmDescriptions.KEY_BY_DISPLAY_NAME` maps each algorithm's
+  `displayName()` to its key suffix - update it (and add the matching
+  `algorithm.<key>.description` line to **all three** language files)
+  whenever a new `LineupAlgorithm` is added to `LineupAlgorithms.ALL`.
 - After any patch that could touch this data, work through
   [`PATCH-CHECKLIST.md`](./PATCH-CHECKLIST.md) in the repo root - it lists
   exactly which files/checks are affected per kind of change.
@@ -145,11 +204,12 @@ resolving against the new `resources/` folder next to the exe).
   catalog.
 - `FortificationRepositoryValidationTest` - the load-time data validation
   described above.
-- `LanguageFilesConsistencyTest` - fails the build if
-  `src/main/resources/language/{deutsch,english,francais}.txt` don't define
-  exactly the same set of keys (a key added to only one file after a patch
-  is otherwise a silent gap - `LanguageService` just falls back to the raw
-  id, see `PATCH-CHECKLIST.md`'s "all three language files" step).
+- `LanguageFilesConsistencyTest` - fails the build if the `deutsch`,
+  `english` and `francais` language directories under
+  `src/main/resources/language/` don't define exactly the same set of keys
+  in their `<name>.properties` file (a key added to only one language after
+  a patch is otherwise a silent gap - `LanguageService` just falls back to
+  the raw id, see `PATCH-CHECKLIST.md`'s "all three language files" step).
 - `BackupServiceTest` - the daily/weekly workspace backup logic in
   `BackupService` (first-run creation, same-day/same-ISO-week skip,
   recreation once stale, and not backing up a backup directory nested

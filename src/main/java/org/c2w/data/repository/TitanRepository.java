@@ -3,7 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.ScoreTier;
+import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.util.JsonSupport;
@@ -120,28 +120,28 @@ public class TitanRepository {
             return null;
         }
 
-        ScoreTier generalScore = parseGeneralScore(obj, id);
-        Map<String, ScoreTier> buffFitScores = parseBuffFitScores(obj, id);
+        CowScoreTier generalScore = parseGeneralScore(obj, id);
+        Map<String, CowScoreTier> buffFitScores = parseBuffFitScores(obj, id);
 
         return new Titan(id, element, image != null ? "/images/titans/" + image : null, generalScore, buffFitScores);
     }
 
     /**
-     * Parses the optional "generalScore" field (a {@link ScoreTier} name, e.g.
+     * Parses the optional "generalScore" field (a {@link CowScoreTier} name, e.g.
      * "ELEVATED") - analogous to {@code HeroRepository.parseGeneralScore},
      * same sparse-catalog reasoning: absent for most titans, in which case
      * {@link Titan}'s own compact constructor falls back to
-     * {@link ScoreTier#STANDARD}, so null is returned here both when the
+     * {@link CowScoreTier#GOOD}, so null is returned here both when the
      * field is missing and when it names an unknown tier (logged either way
      * is only the latter, since the former is the expected case).
      */
-    private static ScoreTier parseGeneralScore(JsonObject obj, String titanId) {
+    private static CowScoreTier parseGeneralScore(JsonObject obj, String titanId) {
         String name = JsonSupport.getStringOrNull(obj, "generalScore");
         if (name == null) {
             return null;
         }
         try {
-            return ScoreTier.valueOf(name.trim());
+            return CowScoreTier.valueOf(name.trim());
         } catch (IllegalArgumentException e) {
             Logger.log("titans.json: titan '" + titanId + "' has unknown generalScore '" + name + "', using the default");
             return null;
@@ -150,17 +150,17 @@ public class TitanRepository {
 
     /**
      * Parses the optional "buffFitScores" object (fortification id ->
-     * {@link ScoreTier} name) - analogous to
+     * {@link CowScoreTier} name) - analogous to
      * {@code HeroRepository.parseBuffFitScores}, see there for the full
      * reasoning.
      */
-    private static Map<String, ScoreTier> parseBuffFitScores(JsonObject obj, String titanId) {
-        Map<String, ScoreTier> result = new LinkedHashMap<>();
+    private static Map<String, CowScoreTier> parseBuffFitScores(JsonObject obj, String titanId) {
+        Map<String, CowScoreTier> result = new LinkedHashMap<>();
         for (var entry : JsonSupport.getStringMap(obj, "buffFitScores").entrySet()) {
             String fortificationId = entry.getKey();
             String tierName = entry.getValue();
             try {
-                result.put(fortificationId, ScoreTier.valueOf(tierName.trim()));
+                result.put(fortificationId, CowScoreTier.valueOf(tierName.trim()));
             } catch (IllegalArgumentException e) {
                 Logger.log("titans.json: titan '" + titanId + "' has unknown buffFitScores tier '" + tierName
                         + "' for fortification '" + fortificationId + "', ignoring it");

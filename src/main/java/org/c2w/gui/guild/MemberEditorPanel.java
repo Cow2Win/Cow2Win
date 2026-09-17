@@ -41,7 +41,7 @@ final class MemberEditorPanel extends JPanel {
     private static final int ICON_SIZE = 32;
 
     /**
-     * Language file key (see resources/language/*.txt) for the placeholder
+     * Language file key (see {@code resources/language/<name>/<name>.properties}) for the placeholder
      * text of an empty/unselected slot in a team row's combo boxes,
      * resolved via {@link LanguageService#displayName} - generic "nothing
      * selected here" key.

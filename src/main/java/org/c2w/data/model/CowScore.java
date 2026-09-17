@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  * The umbrella term (Thorsten's own naming, 2026-09-14) for a hero's (or,
- * later, titan's) two editable {@link ScoreTier}-based assessments -
+ * later, titan's) two editable {@link CowScoreTier}-based assessments -
  * {@link #generalScore()} and {@link #buffFitScores()} - as opposed to a
  * catalog entry's own objective master data (id/roles/image, see
  * {@link Hero}). Bundling both into one type is what makes it possible to
@@ -18,13 +18,13 @@ import java.util.Map;
  * data and scores are not split across two files the way heroes.json/
  * cowScore.json are) - nothing about this type is hero-specific, though, so
  * {@link Titan} could adopt it later without changing the underlying
- * {@link ScoreTier} grid or resolution logic.
+ * {@link CowScoreTier} grid or resolution logic.
  *
  * @param generalScore this entity's general quality/usefulness on {@link
- *         ScoreTier}'s shared grid, independent of any specific
+ *         CowScoreTier}'s shared grid, independent of any specific
  *         fortification/buff ("some heroes are simply better or worse than
  *         others") - used for fortifications WITHOUT a buff, where there is
- *         no role/element match to score against. {@link ScoreTier#STANDARD}
+ *         no role/element match to score against. {@link CowScoreTier#GOOD}
  *         is the default for an entity without an explicit, deliberate
  *         assessment - most heroes are expected to stay at the default; only
  *         deliberately better/worse heroes need an explicit entry in
@@ -39,13 +39,13 @@ import java.util.Map;
  *         addition to) {@link #generalScore()} for fortifications WITH a
  *         buff - see {@link HeroTeamBuffFitScore}.
  */
-public record CowScore(ScoreTier generalScore, Map<String, ScoreTier> buffFitScores) {
+public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buffFitScores) {
 
-    /** The all-default CowScore for an entity without any explicit assessment: {@link ScoreTier#STANDARD} general score, no buff-fit overrides. */
+    /** The all-default CowScore for an entity without any explicit assessment: {@link CowScoreTier#GOOD} general score, no buff-fit overrides. */
     public static final CowScore DEFAULT = new CowScore(null, null);
 
     public CowScore {
-        generalScore = generalScore == null ? ScoreTier.STANDARD : generalScore;
+        generalScore = generalScore == null ? CowScoreTier.GOOD : generalScore;
         buffFitScores = buffFitScores == null ? Map.of() : Map.copyOf(buffFitScores);
     }
 
@@ -59,29 +59,29 @@ public record CowScore(ScoreTier generalScore, Map<String, ScoreTier> buffFitSco
      *
      * Resolution order: (1) an explicit override in {@link #buffFitScores()}
      * for this fortification id, if present; (2) otherwise
-     * {@link ScoreTier#STANDARD} if {@code roleOrElementMatches}; (3)
-     * otherwise {@link ScoreTier#NORMAL} - a role/element match is only the
+     * {@link CowScoreTier#GOOD} if {@code roleOrElementMatches}; (3)
+     * otherwise {@link CowScoreTier#AVERAGE} - a role/element match is only the
      * DEFAULT floor, not a hard one: an explicit override for a
      * role/element-matching entity may still be set below STANDARD (per the
      * user's own decision, 2026-09-11).
      */
-    public ScoreTier buffFitScore(String fortificationId, boolean roleOrElementMatches) {
-        ScoreTier override = buffFitScores.get(fortificationId);
+    public CowScoreTier buffFitScore(String fortificationId, boolean roleOrElementMatches) {
+        CowScoreTier override = buffFitScores.get(fortificationId);
         if (override != null) {
             return override;
         }
-        return roleOrElementMatches ? ScoreTier.STANDARD : ScoreTier.NORMAL;
+        return roleOrElementMatches ? CowScoreTier.GOOD : CowScoreTier.AVERAGE;
     }
 
     /**
      * True if this is exactly the all-default CowScore ({@link
-     * ScoreTier#STANDARD} general score, no buff-fit overrides at all) - i.e.
+     * CowScoreTier#GOOD} general score, no buff-fit overrides at all) - i.e.
      * there is nothing here worth persisting explicitly. Used by {@code
      * HeroRepository#saveCowScores} to omit an entry from cowScore.json
      * entirely for a hero without any deliberate assessment, keeping that
      * file sparse.
      */
     public boolean isDefault() {
-        return generalScore == ScoreTier.STANDARD && buffFitScores.isEmpty();
+        return generalScore == CowScoreTier.GOOD && buffFitScores.isEmpty();
     }
 }

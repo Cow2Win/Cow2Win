@@ -30,10 +30,10 @@ import java.util.List;
 
 public class ToolbarPanel extends JPanel {
 
-    /** Language file key (see resources/language/*.txt) for the label in front of the guild combo box. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the guild combo box. */
     private static final String KEY_GUILD_LABEL = "toolbar.guild";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "new guild" button (see {@link #onNewGuild()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "new guild" button (see {@link #onNewGuild()}). */
     private static final String KEY_NEW_GUILD = "toolbar.newGuild";
 
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
@@ -47,15 +47,15 @@ public class ToolbarPanel extends JPanel {
     /** Characters not allowed in a Windows file name - rejected in {@link #onNewLineup()}. */
     private static final String ILLEGAL_FILENAME_CHARS = "<>:\"/\\|?*";
 
-    /** Language file key (see resources/language/*.txt) for the label in front of the lineup combo box. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the lineup combo box. */
     private static final String KEY_LINEUP_LABEL = "toolbar.lineup";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "save lineup" button (see {@link #onSaveLineup()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save lineup" button (see {@link #onSaveLineup()}). */
     private static final String KEY_SAVE_LINEUP = "toolbar.saveLineup";
 
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "new lineup" button (see {@link #onNewLineup()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "new lineup" button (see {@link #onNewLineup()}). */
     private static final String KEY_NEW_LINEUP = "toolbar.newLineup";
 
     private static final String ICON_NEW_LINEUP = "/images/app/lineup-new.png";
@@ -76,7 +76,7 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_ALL_TEAMS = "/images/app/hexagon.png";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "all team scores" button (see {@link #onOpenAllTeamScores()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "all team scores" button (see {@link #onOpenAllTeamScores()}). */
     private static final String KEY_ALL_TEAMS_SCORES = "toolbar.allTeamsScores";
 
     /** Same icon as {@link #ICON_ALL_TEAMS} - {@link AllTeamsScoreOverviewDialog} is the score-showing counterpart of {@link AllTeamsOverviewDialog}, told apart by color alone (see {@link IconLoader#PURPLE}). */
@@ -85,7 +85,7 @@ public class ToolbarPanel extends JPanel {
     private static final int TOOLBAR_ICON_SIZE = 20;
 
     /**
-     * Language file key (see resources/language/*.txt) for the tooltip of
+     * Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of
      * the "save guild" button (see {@link #onSaveGuild()}). Moved here
      * (2026-09-09) from {@code TeamsOverviewPanel} together with every other
      * toolbar control that used to live in that class's own toolbar - kept
@@ -96,22 +96,22 @@ public class ToolbarPanel extends JPanel {
     /** Classpath path of the "save guild" button's icon (see {@link IconLoader}). */
     private static final String ICON_SAVE_GUILD = "/images/app/save.png";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "open guild editor" button (see {@link #openGuildEditor}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild editor" button (see {@link #openGuildEditor}). */
     private static final String KEY_OPEN_GUILD_EDITOR = "teamsOverview.openGuildEditor";
 
     /** Classpath path of the "open guild editor" button's icon (see {@link IconLoader}). */
     private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
 
-    /** Language file key (see resources/language/*.txt) for the label in front of the algorithm combo box. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the algorithm combo box. */
     private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "run algorithm" button (see {@link #onRunAlgorithm()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "run algorithm" button (see {@link #onRunAlgorithm()}). */
     private static final String KEY_RUN_ALGORITHM = "teamsOverview.runAlgorithm";
 
     /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
 
-    /** Language file key (see resources/language/*.txt) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). Added 2026-09-13. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). Added 2026-09-13. */
     private static final String KEY_COMPARE_LINEUPS = "toolbar.compareLineups";
 
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_ALL_TEAMS}/{@link #ICON_ALL_TEAMS_SCORES}, told apart by shape (paired hexagons) instead of color. */
@@ -287,8 +287,22 @@ public class ToolbarPanel extends JPanel {
     }
 
 
+    /**
+     * Runs the algorithm configured as the default in the Settings dialog
+     * (see {@link Config#getDefaultAlgorithm()}/{@code SettingsDialog}, added
+     * 2026-09-15 - Cow2Win todos 3.4), matched against {@link
+     * LineupAlgorithms#ALL} by {@link LineupAlgorithm#displayName()}. Falls
+     * back to the first entry in {@link LineupAlgorithms#ALL} if nothing is
+     * configured yet, or if a previously configured algorithm no longer
+     * exists (e.g. renamed/removed) - same "just use the first one" behavior
+     * this method always had before this became configurable.
+     */
     private void onRunAlgorithm() {
-        LineupAlgorithm algorithm =  LineupAlgorithms.ALL.get(0);
+        String configuredAlgorithm = Config.getDefaultAlgorithm();
+        LineupAlgorithm algorithm = LineupAlgorithms.ALL.stream()
+                .filter(a -> a.displayName().equals(configuredAlgorithm))
+                .findFirst()
+                .orElseGet(() -> LineupAlgorithms.ALL.isEmpty() ? null : LineupAlgorithms.ALL.get(0));
         if (algorithm == null) {
             return;
         }
@@ -542,11 +556,17 @@ public class ToolbarPanel extends JPanel {
     }
 
     private void onNewLineup() {
-        String input = JOptionPane.showInputDialog(this, "Name of the new lineup:", "New lineup",
-                JOptionPane.PLAIN_MESSAGE);
-        if (input == null) {
+        // Pre-filled with today's date (2026-09-15) rather than left empty, per
+        // Thorsten's request - still a plain, freely editable text field though
+        // (selectionValues == null, see JOptionPane's 7-arg showInputDialog javadoc:
+        // a null selectionValues array with a non-null initialSelectionValue renders
+        // as a JTextField seeded with that value), same as before this default.
+        Object result = JOptionPane.showInputDialog(this, "Name of the new lineup:", "New lineup",
+                JOptionPane.PLAIN_MESSAGE, null, null, LocalDate.now().toString());
+        if (result == null) {
             return;
         }
+        String input = result.toString();
         String name = input.trim();
         if (name.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter a name.", "New lineup", JOptionPane.WARNING_MESSAGE);

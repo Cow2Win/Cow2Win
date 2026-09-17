@@ -26,7 +26,7 @@ import java.util.function.Function;
 public class TeamsOverviewPanel extends JPanel {
 
     /**
-     * Language file key (see resources/language/*.txt) for "no
+     * Language file key (see {@code resources/language/<name>/<name>.properties}) for "no
      * fortification assigned" - used both in the Fortification combo and in
      * the cell display, resolved via {@link LanguageService#displayName}
      * just like the column headers (see {@link #COLUMN_KEY_POWER} and

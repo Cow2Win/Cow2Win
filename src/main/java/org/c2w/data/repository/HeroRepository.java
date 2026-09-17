@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
-import org.c2w.data.model.ScoreTier;
+import org.c2w.data.model.CowScoreTier;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
@@ -206,26 +206,26 @@ public class HeroRepository {
      * fields).
      */
     private static CowScore parseCowScore(JsonObject obj, String heroId) {
-        ScoreTier generalScore = parseGeneralScore(obj, heroId);
-        Map<String, ScoreTier> buffFitScores = parseBuffFitScores(obj, heroId);
+        CowScoreTier generalScore = parseGeneralScore(obj, heroId);
+        Map<String, CowScoreTier> buffFitScores = parseBuffFitScores(obj, heroId);
         return new CowScore(generalScore, buffFitScores);
     }
 
     /**
-     * Parses the optional "generalScore" field (a {@link ScoreTier} name, e.g.
+     * Parses the optional "generalScore" field (a {@link CowScoreTier} name, e.g.
      * "ELEVATED") - absent for most heroes, in which case {@link CowScore}'s
-     * own compact constructor falls back to {@link ScoreTier#STANDARD}, so
+     * own compact constructor falls back to {@link CowScoreTier#GOOD}, so
      * null is returned here both when the field is missing and when it names
      * an unknown tier (logged either way is only the latter, since the former
      * is the expected, sparse-catalog case).
      */
-    private static ScoreTier parseGeneralScore(JsonObject obj, String heroId) {
+    private static CowScoreTier parseGeneralScore(JsonObject obj, String heroId) {
         String name = JsonSupport.getStringOrNull(obj, "generalScore");
         if (name == null) {
             return null;
         }
         try {
-            return ScoreTier.valueOf(name.trim());
+            return CowScoreTier.valueOf(name.trim());
         } catch (IllegalArgumentException e) {
             Logger.log("cowScore.json: hero '" + heroId + "' has unknown generalScore '" + name + "', using the default");
             return null;
@@ -234,19 +234,19 @@ public class HeroRepository {
 
     /**
      * Parses the optional "buffFitScores" object (fortification id ->
-     * {@link ScoreTier} name, e.g. {"bastion": "ELEVATED"}) - absent/empty
+     * {@link CowScoreTier} name, e.g. {"bastion": "ELEVATED"}) - absent/empty
      * for most heroes (sparse, per-fortification overrides only), in which
      * case {@link CowScore#buffFitScore(String, boolean)} falls back to its
      * role-match-based default. An entry with an unknown tier name is
      * skipped (logged) rather than failing the whole hero.
      */
-    private static Map<String, ScoreTier> parseBuffFitScores(JsonObject obj, String heroId) {
-        Map<String, ScoreTier> result = new LinkedHashMap<>();
+    private static Map<String, CowScoreTier> parseBuffFitScores(JsonObject obj, String heroId) {
+        Map<String, CowScoreTier> result = new LinkedHashMap<>();
         for (var entry : JsonSupport.getStringMap(obj, "buffFitScores").entrySet()) {
             String fortificationId = entry.getKey();
             String tierName = entry.getValue();
             try {
-                result.put(fortificationId, ScoreTier.valueOf(tierName.trim()));
+                result.put(fortificationId, CowScoreTier.valueOf(tierName.trim()));
             } catch (IllegalArgumentException e) {
                 Logger.log("cowScore.json: hero '" + heroId + "' has unknown buffFitScores tier '" + tierName
                         + "' for fortification '" + fortificationId + "', ignoring it");
@@ -291,7 +291,7 @@ public class HeroRepository {
     private static JsonObject cowScoreToTree(Hero hero) {
         JsonObject obj = new JsonObject();
         obj.addProperty("id", hero.id());
-        if (hero.generalScore() != ScoreTier.STANDARD) {
+        if (hero.generalScore() != CowScoreTier.GOOD) {
             obj.addProperty("generalScore", hero.generalScore().name());
         }
         JsonObject buffFitScores = buffFitScoresToTree(hero.buffFitScores());
@@ -303,7 +303,7 @@ public class HeroRepository {
 
     /**
      * Builds the "buffFitScores" JSON object for one hero, omitting any
-     * entry whose tier is {@link ScoreTier#STANDARD} - the same "sparse
+     * entry whose tier is {@link CowScoreTier#GOOD} - the same "sparse
      * file, STANDARD is the unwritten default" convention already used for
      * {@link Hero#generalScore()} (see {@link CowScore}'s Javadoc): a
      * missing entry already resolves to STANDARD (when the hero's role
@@ -315,10 +315,10 @@ public class HeroRepository {
      * left over from before this rule existed) without needing its own
      * filtering - {@link #saveCowScores} always drops them on the way out.
      */
-    private static JsonObject buffFitScoresToTree(Map<String, ScoreTier> buffFitScores) {
+    private static JsonObject buffFitScoresToTree(Map<String, CowScoreTier> buffFitScores) {
         JsonObject obj = new JsonObject();
         for (var entry : buffFitScores.entrySet()) {
-            if (entry.getValue() != ScoreTier.STANDARD) {
+            if (entry.getValue() != CowScoreTier.GOOD) {
                 obj.addProperty(entry.getKey(), entry.getValue().name());
             }
         }

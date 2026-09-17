@@ -152,6 +152,121 @@ public class BuffCalculationService {
     }
 
     /**
+     * Sums, across the WHOLE lineup, the CowScore strength of every hero
+     * team currently placed on a fortification - the CowScore-side
+     * counterpart of {@link #countHeroesIncreasingBuff} (which counts
+     * role/element MATCHES, not CowScore). Per team this is {@link
+     * TeamScoreCalculator}'s per-member score sum (buff-fit-score-based for
+     * a buffed fortification, general-score-based otherwise) -
+     * deliberately WITHOUT {@link TeamScoreCalculator}'s totalPower term,
+     * since {@code LineupSummaryPanel} already shows the hero power total
+     * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}
+     * (replacing its former use of {@link #countHeroesIncreasingBuff},
+     * 2026-09-15).
+     *
+     * @param lineup The lineup with team assignments
+     * @param guild The guild with the team data (Heroes and their CowScores)
+     * @return The summed CowScore strength of every hero team in the lineup
+     */
+    public static double sumHeroCowScore(Lineup lineup, Guild guild) {
+        double total = 0;
+        for (Lineup.Entry entry : lineup.entries()) {
+            if (entry.teamType() != Lineup.TeamType.HERO) {
+                continue;
+            }
+            Fortification fortification = FortificationRepository.findById(entry.fortificationId()).orElse(null);
+            if (fortification == null) {
+                continue;
+            }
+            GuildMember member = findMemberById(guild, entry.teamMemberId());
+            if (member == null || entry.teamIndex() >= member.heroTeams().size()) {
+                continue;
+            }
+            HeroTeam team = member.heroTeams().get(entry.teamIndex());
+            total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
+                    .mapToDouble(Double::doubleValue).sum();
+        }
+        return total;
+    }
+
+    /**
+     * The TITAN-side counterpart of {@link #sumHeroCowScore} - identical
+     * reasoning, {@link TitanTeam}/{@link
+     * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} instead of
+     * the hero side.
+     *
+     * @param lineup The lineup with team assignments
+     * @param guild The guild with the team data (Titans and their CowScores)
+     * @return The summed CowScore strength of every titan team in the lineup
+     */
+    public static double sumTitanCowScore(Lineup lineup, Guild guild) {
+        double total = 0;
+        for (Lineup.Entry entry : lineup.entries()) {
+            if (entry.teamType() != Lineup.TeamType.TITAN) {
+                continue;
+            }
+            Fortification fortification = FortificationRepository.findById(entry.fortificationId()).orElse(null);
+            if (fortification == null) {
+                continue;
+            }
+            GuildMember member = findMemberById(guild, entry.teamMemberId());
+            if (member == null || entry.teamIndex() >= member.titanTeams().size()) {
+                continue;
+            }
+            TitanTeam team = member.titanTeams().get(entry.teamIndex());
+            total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
+                    .mapToDouble(Double::doubleValue).sum();
+        }
+        return total;
+    }
+
+    /**
+     * Sums the CowScore strength of every hero/titan team currently assigned
+     * to ONE specific fortification (as opposed to {@link #sumHeroCowScore}/
+     * {@link #sumTitanCowScore}, which sum over the whole lineup). Used by
+     * {@code org.c2w.util.ReportGenerator}'s "Fortifications" table
+     * (2026-09-15).
+     *
+     * @param fortificationId The ID of the fortification
+     * @param lineup The lineup with team assignments
+     * @param guild The guild with the team data (Heroes/Titans and their CowScores)
+     * @param fortification The fortification the CowScore should be resolved against
+     * @return The summed CowScore strength of every team assigned to this fortification
+     */
+    public static double sumCowScoreForFortification(
+            String fortificationId,
+            Lineup lineup,
+            Guild guild,
+            Fortification fortification) {
+        double total = 0;
+        for (Lineup.Entry entry : lineup.entries()) {
+            if (!entry.fortificationId().equals(fortificationId)) {
+                continue;
+            }
+            GuildMember member = findMemberById(guild, entry.teamMemberId());
+            if (member == null) {
+                continue;
+            }
+            if (entry.teamType() == Lineup.TeamType.HERO) {
+                if (entry.teamIndex() >= member.heroTeams().size()) {
+                    continue;
+                }
+                HeroTeam team = member.heroTeams().get(entry.teamIndex());
+                total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
+                        .mapToDouble(Double::doubleValue).sum();
+            } else {
+                if (entry.teamIndex() >= member.titanTeams().size()) {
+                    continue;
+                }
+                TitanTeam team = member.titanTeams().get(entry.teamIndex());
+                total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
+                        .mapToDouble(Double::doubleValue).sum();
+            }
+        }
+        return total;
+    }
+
+    /**
      * Finds a guild member by their ID.
      */
     private static GuildMember findMemberById(Guild guild, String memberId) {

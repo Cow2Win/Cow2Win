@@ -7,6 +7,7 @@ import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
+import org.c2w.util.UpdateChecker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,7 @@ public class Cow2Frame extends JFrame {
     private final ToolbarPanel toolbarPanel;
     private final TeamsOverviewPanel teamsOverviewPanel;
     private final LogPanel logPanel;
+    private JDialog logDialog;
 
     public Cow2Frame(AppContext appContext) {
         super(BASE_TITLE);
@@ -76,10 +78,18 @@ public class Cow2Frame extends JFrame {
         // error there afterwards - guildWithCurrentSelection() indexes into the
         // stale rows by position).
         fortificationMapPanel.setOnGuildChangedElsewhere(teamsOverviewPanel::refreshFromContext);
+        // LogPanel is still created here (so it starts listening to Logger right
+        // away, see LogPanel's constructor / Logger#addListener), but - since
+        // 2026-09-16 - it is no longer permanently docked into the main window
+        // (it used to take up a fixed SOUTH strip here, which Thorsten found ate
+        // too much screen space for something rarely needed). It is shown
+        // on demand instead, in a lazily-created dialog - see #onShowLog.
+        // Logger#addListener replays the full in-memory history to a newly
+        // registered listener, so nothing is lost by not displaying it from the
+        // start; nothing here changes that registration.
         this.logPanel = new LogPanel();
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.add(new JScrollPane(teamsOverviewPanel), BorderLayout.CENTER);
-        rightPanel.add(logPanel, BorderLayout.SOUTH);
 
         JScrollPane leftScrollPane = new JScrollPane(fortificationMapPanel);
 
@@ -105,6 +115,8 @@ public class Cow2Frame extends JFrame {
         // right after setVisible(true) on every platform - so this is
         // deferred to the next event queue cycle.
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(LEFT_SPLIT_RATIO));
+
+        checkForUpdatesAtStartup();
     }
 
     /**
@@ -127,6 +139,10 @@ public class Cow2Frame extends JFrame {
         JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
         heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
         settingsMenu.add(heroBuffFitScoresItem);
+
+        JMenuItem checkForUpdatesItem = new JMenuItem(LanguageService.displayName("menu.checkForUpdates"));
+        checkForUpdatesItem.addActionListener(e -> onCheckForUpdates());
+        settingsMenu.add(checkForUpdatesItem);
         menuBar.add(settingsMenu);
 
         JMenu hwMenu = new JMenu("Hero wars");
@@ -145,6 +161,11 @@ public class Cow2Frame extends JFrame {
 
         menuBar.add(hwMenu);
 
+        JMenu viewMenu = new JMenu(LanguageService.displayName("menu.view"));
+        JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
+        showLogItem.addActionListener(e -> onShowLog());
+        viewMenu.add(showLogItem);
+        menuBar.add(viewMenu);
 
         return menuBar;
     }
@@ -161,6 +182,84 @@ public class Cow2Frame extends JFrame {
      */
     private void onOpenHeroBuffFitScores() {
         new HeroBuffFitScoresDialog(this).setVisible(true);
+    }
+
+    /**
+     * Silent, best-effort update check run once after the frame becomes
+     * visible (Cow2Win todos 1.1) - only ever surfaces a dialog when a
+     * newer release was actually found ({@link #handleUpdateCheckResult}),
+     * so a missing internet connection or an unreachable GitHub never
+     * bothers the user on every single startup. Every outcome is still
+     * logged (see {@link Logger}), so "did it even check" is visible in the
+     * log panel/file if needed.
+     */
+    private void checkForUpdatesAtStartup() {
+        UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, false));
+    }
+
+    /** "Settings" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup()}, always reports back, including "already up to date" and a failed check. */
+    private void onCheckForUpdates() {
+        UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, true));
+    }
+
+    /**
+     * Reports one {@link UpdateChecker.UpdateCheckResult} - always logs it,
+     * and shows a dialog for {@link UpdateChecker.UpdateCheckResult.Status#UPDATE_AVAILABLE}
+     * (offering to open the release page via {@link #onOpenWeb}) always, or
+     * for the other two outcomes only when {@code alwaysShowDialog} is true
+     * (i.e. only for the explicit, user-triggered check - see
+     * {@link #onCheckForUpdates()} vs. {@link #checkForUpdatesAtStartup()}).
+     */
+    private void handleUpdateCheckResult(UpdateChecker.UpdateCheckResult result, boolean alwaysShowDialog) {
+        switch (result.status()) {
+            case UPDATE_AVAILABLE -> {
+                Logger.log("Update available: " + result.latestVersion() + " (installed: " + result.currentVersion() + ")");
+                int choice = JOptionPane.showConfirmDialog(this,
+                        "A newer version of Cow2Win is available: " + result.latestVersion()
+                                + " (you have " + result.currentVersion() + ").\n\nOpen the release page?",
+                        "Update available", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+                if (choice == JOptionPane.YES_OPTION) {
+                    onOpenWeb(result.releaseUrl());
+                }
+            }
+            case UP_TO_DATE -> {
+                Logger.log("Update check: already up to date (" + result.currentVersion() + ")");
+                if (alwaysShowDialog) {
+                    JOptionPane.showMessageDialog(this,
+                            "Cow2Win is up to date (version " + result.currentVersion() + ").",
+                            "Check for Updates", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+            case CHECK_FAILED -> {
+                Logger.log("Update check failed or could not be evaluated (installed: " + result.currentVersion() + ")");
+                if (alwaysShowDialog) {
+                    JOptionPane.showMessageDialog(this,
+                            "Could not check for updates. Please check your internet connection and try again later.",
+                            "Check for Updates", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        }
+    }
+
+    /**
+     * Shows {@link #logPanel} in a small, non-modal, lazily-created dialog
+     * (created once, then just re-shown/raised on subsequent calls - see
+     * {@link #logDialog}) instead of it being permanently docked in the main
+     * window. HIDE_ON_CLOSE (not the default DISPOSE_ON_CLOSE) so closing the
+     * dialog only hides it - logPanel itself, and its Logger listener
+     * registration, are unaffected either way, but this also avoids
+     * recreating the native dialog peer on every open.
+     */
+    private void onShowLog() {
+        if (logDialog == null) {
+            logDialog = new JDialog(this, "Log", false);
+            logDialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
+            logDialog.getContentPane().add(logPanel);
+            logDialog.setSize(700, 400);
+            logDialog.setLocationRelativeTo(this);
+        }
+        logDialog.setVisible(true);
+        logDialog.toFront();
     }
 
     private void onOpenGuildEditor() {

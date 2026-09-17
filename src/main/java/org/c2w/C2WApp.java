@@ -5,7 +5,6 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.Cow2Frame;
-import org.c2w.gui.InitialSetupDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.BackupService;
 import org.c2w.util.CatalogVersion;
@@ -101,7 +100,7 @@ public class C2WApp {
         Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
         Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 
-        Config.setLanguage("english.txt");
+        Config.setLanguage("english");
         Config.setLastGuildPath(guildFilePath.toString());
         Config.setLastLineUpPath(lineupFilePath.toString());
         Config.save();

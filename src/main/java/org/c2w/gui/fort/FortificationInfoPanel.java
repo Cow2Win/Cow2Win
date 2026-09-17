@@ -14,10 +14,10 @@ import java.util.stream.Collectors;
 
 public class FortificationInfoPanel extends JPanel {
 
-    /** Language file key (see resources/language/*.txt) for the header above the {@link ScoreTier#NEGATIVE} hero group (see {@link #buildHeroScorePanel()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link CowScoreTier#NEGATIVE} hero group (see {@link #buildHeroScorePanel()}). */
     private static final String KEY_NEGATIVE_HEROES_HEADER = "fortificationDetail.negativeHeroesHeader";
 
-    /** Language file key (see resources/language/*.txt) for the header above the {@link ScoreTier#STANDARD}/{@link ScoreTier#ELEVATED} hero group (see {@link #buildHeroScorePanel()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link CowScoreTier#GOOD}/{@link CowScoreTier#GREAT} hero group (see {@link #buildHeroScorePanel()}). */
     private static final String KEY_GOOD_HEROES_HEADER = "fortificationDetail.goodHeroesHeader";
 
     /** Avatar size for the hero groups built by {@link #buildHeroScorePanel()} - smaller than the 32px used for editable hero pickers elsewhere (e.g. {@code MemberEditorPanel}), since these are purely informational thumbnails. */
@@ -112,8 +112,8 @@ public class FortificationInfoPanel extends JPanel {
     /**
      * Right of {@link #buildInfoPanel()} (see the constructor): two
      * read-only hero avatar groups for {@link #fortification} - heroes with
-     * {@link ScoreTier#NEGATIVE} on top ("rather avoid these"), heroes with
-     * {@link ScoreTier#STANDARD} or {@link ScoreTier#ELEVATED} below ("good
+     * {@link CowScoreTier#NEGATIVE} on top ("rather avoid these"), heroes with
+     * {@link CowScoreTier#GOOD} or {@link CowScoreTier#GREAT} below ("good
      * fits"), per {@link #scoreTierFor(Hero)}. Purely informational
      * (no editing hook, unlike {@link #applyEditsTo}) - rebuilt fresh from
      * the current hero catalog every time this panel is constructed.
@@ -124,11 +124,11 @@ public class FortificationInfoPanel extends JPanel {
 
         List<Hero> heroes = HeroRepository.findAll();
         List<Hero> negativeHeroes = heroes.stream()
-                .filter(hero -> scoreTierFor(hero) == ScoreTier.NEGATIVE)
+                .filter(hero -> scoreTierFor(hero) == CowScoreTier.NEGATIVE)
                 .sorted(Comparator.comparing(FortificationInfoPanel::heroLabel, String.CASE_INSENSITIVE_ORDER))
                 .toList();
         List<Hero> goodHeroes = heroes.stream()
-                .filter(hero -> scoreTierFor(hero) == ScoreTier.STANDARD || scoreTierFor(hero) == ScoreTier.ELEVATED)
+                .filter(hero -> scoreTierFor(hero) == CowScoreTier.GOOD || scoreTierFor(hero) == CowScoreTier.GREAT)
                 .sorted(Comparator.comparing(FortificationInfoPanel::heroLabel, String.CASE_INSENSITIVE_ORDER))
                 .toList();
 
@@ -144,7 +144,7 @@ public class FortificationInfoPanel extends JPanel {
     }
 
     /**
-     * This hero's {@link ScoreTier} for {@link #fortification}: when the
+     * This hero's {@link CowScoreTier} for {@link #fortification}: when the
      * fortification has a {@link RoleBuff}, its buff-specific
      * {@link Hero#buffFitScore(String, boolean)} (role match resolved
      * against {@link RoleBuff#role()}, mirroring
@@ -152,7 +152,7 @@ public class FortificationInfoPanel extends JPanel {
      * (no buff, or a titan {@link ElementBuff}, for which heroes have no
      * buff-specific score of their own) its {@link Hero#generalScore()}.
      */
-    private ScoreTier scoreTierFor(Hero hero) {
+    private CowScoreTier scoreTierFor(Hero hero) {
         if (fortification.buff() instanceof RoleBuff roleBuff) {
             boolean roleMatches = hero.roles().contains(roleBuff.role());
             return hero.buffFitScore(fortification.id(), roleMatches);
@@ -192,11 +192,23 @@ public class FortificationInfoPanel extends JPanel {
         return wrapper;
     }
 
-    /** One hero's avatar (see {@link IconLoader#iconFor(String, int)}), with its display name and {@link ScoreTier} as a tooltip. */
+    /** One hero's avatar (see {@link IconLoader#iconFor(String, int)}), with its display name and {@link CowScoreTier} as a tooltip. */
     private JLabel buildHeroIconLabel(Hero hero) {
         JLabel label = new JLabel(IconLoader.iconFor(hero.imagePath(), HERO_ICON_SIZE));
-        label.setToolTipText(heroLabel(hero) + " (" + scoreTierFor(hero).name() + ")");
+        label.setToolTipText(heroLabel(hero) + " (" + scoreTierLabel(scoreTierFor(hero)) + ")");
         return label;
+    }
+
+    /**
+     * The localized display name for a {@link CowScoreTier} (language file
+     * key {@code scoreTier.<NAME>}, see
+     * {@code resources/language/<name>/<name>.properties}) - used instead of
+     * {@link CowScoreTier#name()} so this tooltip stays consistent with the
+     * translated tier names shown in {@code HeroBuffFitScoresDialog}'s combo
+     * boxes.
+     */
+    private static String scoreTierLabel(CowScoreTier tier) {
+        return LanguageService.displayName("scoreTier." + tier.name());
     }
 
     private static String heroLabel(Hero hero) {

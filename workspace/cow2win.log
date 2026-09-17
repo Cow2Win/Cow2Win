@@ -220,3 +220,148 @@
 [18:25:53] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
 [18:25:53] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
 [18:25:53] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[18:31:31] Config changed: lastGuildPath = "workspace\ScoreTest\guild.json" (previously "workspace\Deutscher Bund\guild.json")
+[18:31:31] Config changed: lastLineUpPath = "workspace\ScoreTest\default.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[18:31:31] Switched to guild: workspace\ScoreTest\guild.json
+[18:49:29] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:49:29] Started: 
+[18:49:34] Config changed: lastGuildPath = "workspace\Deutscher Bund\guild.json" (previously "workspace\ScoreTest\guild.json")
+[18:49:34] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-04.lineup" (previously "workspace\ScoreTest\default.lineup")
+[18:49:34] Switched to guild: workspace\Deutscher Bund\guild.json
+[18:50:47] Config changed: lastLineUpPath = "workspace\Deutscher Bund\Test.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[18:50:52] Best possible lineup: 95 team(s) newly assigned.
+[18:51:37] Saved: workspace\Deutscher Bund\Test.lineup
+[18:51:41] Best possible lineup: 0 team(s) newly assigned.
+[18:53:58] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-04.lineup" (previously "workspace\Deutscher Bund\Test.lineup")
+[19:20:31] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[19:20:31] Started: 
+[19:20:45] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-15.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[19:20:45] Created: workspace\Deutscher Bund\2026-09-15.lineup
+[19:57:48] Report generated: workspace\Deutscher Bund\2026-09-15.html
+[19:58:15] Config changed: lastLineUpPath = "workspace\Deutscher Bund\2026-09-04.lineup" (previously "workspace\Deutscher Bund\2026-09-15.lineup")
+[19:58:17] Report generated: workspace\Deutscher Bund\2026-09-04.html
+[20:35:50] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:35:50] Started: 
+[20:35:54] Report generated: workspace\Deutscher Bund\2026-09-04.html
+[20:41:03] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[20:41:03] Started: 
+[20:41:07] Report generated: workspace\Deutscher Bund\2026-09-04.html
+[20:43:27] Heldenbrücke: Team 1 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[20:43:27] Heldenbrücke: Team 2 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[20:43:27] Heldenbrücke: Team 3 : 11.65 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.65
+[20:43:27] Heldenbrücke: Team 4 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[20:43:27] Heldenbrücke: Team 5 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[20:43:27] Heldenbrücke: Team 6 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[21:15:59] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:15:59] Started: 
+[06:52:42] Backup created: C:\Entwicklung\backup\workspace-daily.zip
+[06:52:42] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[06:52:42] Started: 
+[06:53:21] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BestAlg.lineup" (previously "workspace\Deutscher Bund\2026-09-04.lineup")
+[06:53:21] Created: workspace\Deutscher Bund\BestAlg.lineup
+[06:53:24] Best possible lineup: 95 team(s) newly assigned.
+[06:53:29] Saved: workspace\Deutscher Bund\BestAlg.lineup
+[06:53:32] Report generated: workspace\Deutscher Bund\BestAlg.html
+[06:53:51] Config changed: defaultAlgorithm = "Balanced defense"
+[06:54:08] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BalanceAlg.lineup" (previously "workspace\Deutscher Bund\BestAlg.lineup")
+[06:54:08] Created: workspace\Deutscher Bund\BalanceAlg.lineup
+[06:54:12] Balanced defense: 95 team(s) newly assigned.
+[06:54:14] Saved: workspace\Deutscher Bund\BalanceAlg.lineup
+[06:54:15] Report generated: workspace\Deutscher Bund\BalanceAlg.html
+[07:41:05] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[07:41:05] Started: 
+[07:41:14] Config changed: defaultAlgorithm = "Consensus picks" (previously "Balanced defense")
+[07:41:20] Cleared: workspace\Deutscher Bund\BalanceAlg.lineup
+[07:41:22] Consensus picks: 23 team(s) newly assigned.
+[09:06:53] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[09:06:53] Started: 
+[09:28:45] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[09:28:45] Started: 
+[09:29:01] Report generated: workspace\Deutscher Bund\BalanceAlg.html
+[09:29:14] Config changed: lastLineUpPath = "workspace\Deutscher Bund\Test.lineup" (previously "workspace\Deutscher Bund\BalanceAlg.lineup")
+[09:31:48] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[09:31:48] Started: 
+[09:31:53] Report generated: workspace\Deutscher Bund\Test.html
+[09:35:08] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[09:35:08] Started: 
+[09:35:12] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BestAlg.lineup" (previously "workspace\Deutscher Bund\Test.lineup")
+[09:35:14] Report generated: workspace\Deutscher Bund\BestAlg.html
+[09:36:06] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BalanceAlg.lineup" (previously "workspace\Deutscher Bund\BestAlg.lineup")
+[09:36:08] Report generated: workspace\Deutscher Bund\BalanceAlg.html
+[09:37:14] Config changed: lastLineUpPath = "workspace\Deutscher Bund\CowScore.lineup" (previously "workspace\Deutscher Bund\BalanceAlg.lineup")
+[09:37:14] Created: workspace\Deutscher Bund\CowScore.lineup
+[09:37:24] Config changed: language = "deutsch" (previously "deutsch.txt")
+[09:37:24] Config changed: defaultAlgorithm = "CowScore maximizer" (previously "Consensus picks")
+[09:37:26] CowScore maximizer: 95 team(s) newly assigned.
+[09:37:29] Saved: workspace\Deutscher Bund\CowScore.lineup
+[09:37:30] Report generated: workspace\Deutscher Bund\CowScore.html
+[09:38:36] Config changed: lastLineUpPath = "workspace\Deutscher Bund\consens.lineup" (previously "workspace\Deutscher Bund\CowScore.lineup")
+[09:38:36] Created: workspace\Deutscher Bund\consens.lineup
+[09:38:43] Config changed: defaultAlgorithm = "Consensus picks" (previously "CowScore maximizer")
+[09:38:46] Consensus picks: 23 team(s) newly assigned.
+[09:38:50] Saved: workspace\Deutscher Bund\consens.lineup
+[09:38:51] Report generated: workspace\Deutscher Bund\consens.html
+[18:03:41] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:03:41] Started: 
+[18:04:52] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:04:52] Started: 
+[18:19:57] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:19:57] Started: 
+[18:21:18] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:21:18] Started: 
+[18:24:08] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:24:08] Started: 
+[18:25:21] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:25:21] Started: 
+[18:26:00] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:26:00] Started: 
+[18:44:45] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:44:45] Started: 
+[18:45:45] Heldenbrücke: Team 1 : 11.81 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.81
+[18:45:45] Heldenbrücke: Team 2 : 11.80 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.80
+[18:45:45] Heldenbrücke: Team 3 : 11.66 + 0.80 + 0.80 + 0.80 + 0.80 + 0.80 = 15.66
+[18:45:45] Heldenbrücke: Team 4 : 11.62 + 0.90 + 0.90 + 0.80 + 0.80 + 0.80 = 15.82
+[18:45:45] Heldenbrücke: Team 5 : 11.81 + 0.90 + 0.80 + 0.90 + 0.80 + 0.80 = 16.01
+[18:46:16] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BestAlg.lineup" (previously "workspace\Deutscher Bund\consens.lineup")
+[18:46:18] Report generated: workspace\Deutscher Bund\BestAlg.html
+[18:46:43] Config changed: lastLineUpPath = "workspace\Deutscher Bund\BalanceAlg.lineup" (previously "workspace\Deutscher Bund\BestAlg.lineup")
+[18:46:47] Report generated: workspace\Deutscher Bund\BalanceAlg.html
+[18:47:10] Config changed: lastLineUpPath = "workspace\Deutscher Bund\CowScore.lineup" (previously "workspace\Deutscher Bund\BalanceAlg.lineup")
+[18:47:12] Report generated: workspace\Deutscher Bund\CowScore.html
+[18:47:27] Config changed: lastLineUpPath = "workspace\Deutscher Bund\consens.lineup" (previously "workspace\Deutscher Bund\CowScore.lineup")
+[18:47:31] Report generated: workspace\Deutscher Bund\consens.html
+[18:48:19] Consensus picks: 6 team(s) newly assigned.
+[18:50:44] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:50:44] Started: 
+[18:51:09] Config changed: lastGuildPath = "workspace\ScoreTest\guild.json" (previously "workspace\Deutscher Bund\guild.json")
+[18:51:09] Config changed: lastLineUpPath = "workspace\ScoreTest\default.lineup" (previously "workspace\Deutscher Bund\consens.lineup")
+[18:51:09] Switched to guild: workspace\ScoreTest\guild.json
+[18:51:11] Config changed: lastGuildPath = "workspace\Demo\guild.json" (previously "workspace\ScoreTest\guild.json")
+[18:51:11] Config changed: lastLineUpPath = "workspace\Demo\default.lineup" (previously "workspace\ScoreTest\default.lineup")
+[18:51:11] Switched to guild: workspace\Demo\guild.json
+[18:51:55] Config changed: language = "english" (previously "deutsch")
+[18:51:59] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[18:51:59] Started: 
+[21:53:34] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:53:34] cowScore.json: hero 'artemis' has unknown buffFitScores tier 'NORMAL' for fortification 'shooting-range', ignoring it
+[21:53:34] cowScore.json: hero 'augustus' has unknown generalScore 'ELEVATED', using the default
+[21:53:34] cowScore.json: hero 'corvus' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:34] cowScore.json: hero 'electra' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:34] cowScore.json: hero 'galahad' has unknown buffFitScores tier 'ELEVATED' for fortification 'bastion', ignoring it
+[21:53:34] cowScore.json: hero 'lyria' has unknown generalScore 'ELEVATED', using the default
+[21:53:34] cowScore.json: hero 'markus' has unknown buffFitScores tier 'ELEVATED' for fortification 'city-hall', ignoring it
+[21:53:34] cowScore.json: hero 'mushy-and-shroom' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:34] cowScore.json: hero 'nebula' has unknown generalScore 'ELEVATED', using the default
+[21:53:34] Started: 
+[21:53:49] Config changed: language = "deutsch" (previously "english")
+[21:53:55] Catalog data version: 2026-09-13 (heroes.json/titans.json/fortifications.json last checked against this Hero Wars: Dominion Era game/patch state. Update this file whenever one of those three catalog files is edited for a new patch - see PATCH-CHECKLIST.md.)
+[21:53:55] cowScore.json: hero 'artemis' has unknown buffFitScores tier 'NORMAL' for fortification 'shooting-range', ignoring it
+[21:53:55] cowScore.json: hero 'augustus' has unknown generalScore 'ELEVATED', using the default
+[21:53:55] cowScore.json: hero 'corvus' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:55] cowScore.json: hero 'electra' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:55] cowScore.json: hero 'galahad' has unknown buffFitScores tier 'ELEVATED' for fortification 'bastion', ignoring it
+[21:53:55] cowScore.json: hero 'lyria' has unknown generalScore 'ELEVATED', using the default
+[21:53:55] cowScore.json: hero 'markus' has unknown buffFitScores tier 'ELEVATED' for fortification 'city-hall', ignoring it
+[21:53:55] cowScore.json: hero 'mushy-and-shroom' has unknown buffFitScores tier 'ELEVATED' for fortification 'foundry', ignoring it
+[21:53:55] cowScore.json: hero 'nebula' has unknown generalScore 'ELEVATED', using the default
+[21:53:55] Started: 

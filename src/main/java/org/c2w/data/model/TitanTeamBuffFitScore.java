@@ -10,7 +10,7 @@ import java.util.Map;
 public record TitanTeamBuffFitScore(
         TitanTeam team,
         Fortification fortification,
-        Map<String, ScoreTier> memberScores,
+        Map<String, CowScoreTier> memberScores,
         double total
 ) {
     public TitanTeamBuffFitScore {
@@ -35,11 +35,11 @@ public record TitanTeamBuffFitScore(
             throw new IllegalArgumentException(
                     "TitanTeamBuffFitScore.of expects a fortification with an ElementBuff, was: " + fortification.buff());
         }
-        Map<String, ScoreTier> scores = new LinkedHashMap<>();
+        Map<String, CowScoreTier> scores = new LinkedHashMap<>();
         double total = 0;
         for (Titan titan : team.titans()) {
             boolean elementMatches = titan.element() == elementBuff.element();
-            ScoreTier tier = titan.buffFitScore(fortification.id(), elementMatches);
+            CowScoreTier tier = titan.buffFitScore(fortification.id(), elementMatches);
             scores.put(titan.id(), tier);
             total += tier.value();
         }

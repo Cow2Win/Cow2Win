@@ -13,7 +13,7 @@ package org.c2w.data.model;
  * Two intended uses (introduced incrementally - see
  * cow2win-verbesserungsvorschlaege.md):
  *  - {@link Hero#generalScore()} (added first): a hero's general quality,
- *    independent of any specific fortification/buff - {@link #STANDARD} is
+ *    independent of any specific fortification/buff - {@link #GOOD} is
  *    the default for heroes without an explicit assessment.
  *  - a later, per-buff hero/titan fit score on the fortification catalog,
  *    replacing the earlier, removed {@code buffProfits} list.
@@ -23,16 +23,16 @@ package org.c2w.data.model;
  * meaning per context - see the using field's own javadoc for what a given
  * tier means there.
  */
-public enum ScoreTier {
+public enum CowScoreTier {
     NEGATIVE(0.4),
-    NORMAL(0.6),
+    AVERAGE(0.6),
     MODERATE(0.7),
-    STANDARD(0.8),
-    ELEVATED(0.9);
+    GOOD(0.8),
+    GREAT(0.9);
 
     private final double value;
 
-    ScoreTier(double value) {
+    CowScoreTier(double value) {
         this.value = value;
     }
 
