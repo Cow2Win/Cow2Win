@@ -33,8 +33,8 @@
         <!-- jpackage's "app-version" option must be a clean digits-and-dots version (no
              "-SNAPSHOT"/qualifiers), so this is intentionally decoupled from
              ${project.version} rather than reused from it. Bump by hand for now. -->
-        <app.version>1.0.0</app.version>
-        <app.vendor>org.tdi</app.vendor>
+        <app.version>1.0.1</app.version>
+        <app.vendor>org.c2w</app.vendor>
         <!-- Set -Ddist.skip=true to skip the jpackage/zip steps below (e.g. for a
              quick "mvn clean test") without touching the rest of the build. -->
         <dist.skip>false</dist.skip>

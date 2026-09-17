@@ -1,4 +1,7 @@
 target/
+workspace/
+documents/
+backup/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -8,6 +11,7 @@ target/
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
+.idea/workspace.xml
 .idea/libraries/
 *.iws
 *.iml

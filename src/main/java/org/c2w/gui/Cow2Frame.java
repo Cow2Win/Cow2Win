@@ -5,6 +5,7 @@ import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroBuffFitScoresDialog;
 import org.c2w.util.AppContext;
+import org.c2w.util.AppVersion;
 import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
 import org.c2w.util.UpdateChecker;
@@ -296,7 +297,7 @@ public class Cow2Frame extends JFrame {
     private void updateTitle() {
         var guild = appContext.guild();
         String displayName = guild.name().isBlank() ? guild.id() : guild.name();
-        setTitle(BASE_TITLE + " - " + displayName );
+        setTitle(BASE_TITLE + " " + AppVersion.current() + " - " + displayName);
     }
 
 
