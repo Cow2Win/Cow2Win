@@ -7,7 +7,7 @@ import java.awt.*;
 /** Whether a fortification is defended by a hero team or a titan team. */
 public enum FortificationType {
     HERO("/images/app/square.png","/images/app/square-team.png", Color.WHITE),
-    TITAN("/images/app/hexagon.png","/images/app/hexagon-team.png", Color.LIGHT_GRAY);
+    TITAN("/images/app/hexagon.png","/images/app/hexagon-team.png", new Color(215,186,89));
 
     private String slot_open;
     private String slot_set;

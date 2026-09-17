@@ -1,6 +1,7 @@
 package org.c2w.gui;
 
 import org.c2w.gui.common.GuiUtils;
+import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroBuffFitScoresDialog;
@@ -34,6 +35,8 @@ public class Cow2Frame extends JFrame {
 
     private final JSplitPane splitPane;
     private final AppContext appContext;
+    /** Background image painted by {@link #getContentPane()} (a {@link BackgroundPanel}) - loaded once in the constructor, see {@link IconLoader#getBackgroundImage()}. */
+    private final Image background;
     private final FortificationMapPanel fortificationMapPanel;
     private final ToolbarPanel toolbarPanel;
     private final TeamsOverviewPanel teamsOverviewPanel;
@@ -50,6 +53,7 @@ public class Cow2Frame extends JFrame {
         // to the WindowAdapter below (see #onWindowClosing), which performs
         // the exit itself once it is safe to do so.
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        GuiUtils.setGUIConstants();
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -57,6 +61,7 @@ public class Cow2Frame extends JFrame {
             }
         });
         this.appContext = appContext;
+        this.background = IconLoader.getBackgroundImage();
         updateTitle();
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
         setJMenuBar(buildMenuBar());
@@ -90,15 +95,30 @@ public class Cow2Frame extends JFrame {
         // start; nothing here changes that registration.
         this.logPanel = new LogPanel();
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(new JScrollPane(teamsOverviewPanel), BorderLayout.CENTER);
+        // rightPanel/its scroll pane, leftScrollPane and splitPane are all kept
+        // non-opaque, like fortificationMapPanel/teamsOverviewPanel themselves
+        // (see those classes), so the background image painted by the content
+        // pane below (see #background/BackgroundPanel) is visible behind both
+        // halves of the split instead of being painted over by any of them.
+        rightPanel.setOpaque(false);
+        JScrollPane teamsScrollPane = new JScrollPane(teamsOverviewPanel);
+        teamsScrollPane.setOpaque(false);
+        teamsScrollPane.getViewport().setOpaque(false);
+        rightPanel.add(teamsScrollPane, BorderLayout.CENTER);
 
         JScrollPane leftScrollPane = new JScrollPane(fortificationMapPanel);
+        leftScrollPane.setOpaque(false);
+        leftScrollPane.getViewport().setOpaque(false);
 
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScrollPane, rightPanel);
         splitPane.setResizeWeight(LEFT_SPLIT_RATIO);
         splitPane.setOneTouchExpandable(true);
+        splitPane.setOpaque(false);
 
-        getContentPane().setLayout(new BorderLayout());
+        // Background now painted once here (moved up from FortificationMapPanel
+        // on 2026-09-17) via a custom content pane - see #background and
+        // BackgroundPanel's Javadoc below.
+        setContentPane(new BackgroundPanel(new BorderLayout(), background));
         getContentPane().add(toolbarPanel, BorderLayout.NORTH);
         getContentPane().add(splitPane, BorderLayout.CENTER);
 
@@ -146,6 +166,10 @@ public class Cow2Frame extends JFrame {
         settingsMenu.add(checkForUpdatesItem);
         menuBar.add(settingsMenu);
 
+        JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
+        showLogItem.addActionListener(e -> onShowLog());
+        settingsMenu.add(showLogItem);
+
         JMenu hwMenu = new JMenu("Hero wars");
         JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
         hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
@@ -162,11 +186,8 @@ public class Cow2Frame extends JFrame {
 
         menuBar.add(hwMenu);
 
-        JMenu viewMenu = new JMenu(LanguageService.displayName("menu.view"));
-        JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
-        showLogItem.addActionListener(e -> onShowLog());
-        viewMenu.add(showLogItem);
-        menuBar.add(viewMenu);
+
+
 
         return menuBar;
     }
@@ -310,6 +331,36 @@ public class Cow2Frame extends JFrame {
         return Optional.of(new ImageIcon(resource));
     }
 
+    /**
+     * The frame's content pane (installed in the constructor via
+     * {@code setContentPane}): paints {@link #background} scaled to its own
+     * current size, once, before any child is painted. Moved up here from
+     * FortificationMapPanel on 2026-09-17 so the same background shows behind
+     * the whole window (both halves of {@link #splitPane}) instead of just
+     * behind the fortification map - every panel/scroll pane in between (see
+     * the constructor, FortificationMapPanel and TeamsOverviewPanel) is kept
+     * non-opaque so it is actually visible through them, the same way
+     * FortificationMapPanel used to paint directly over its own opaque black
+     * background.
+     */
+    private static final class BackgroundPanel extends JPanel {
+
+        private final Image background;
+
+        BackgroundPanel(LayoutManager layout, Image background) {
+            super(layout);
+            this.background = background;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (background != null) {
+                g.drawImage(background, 0, 0, getWidth(), getHeight(), this);
+            }
+        }
+    }
+
     private void onOpenWeb(String url) {
         if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
             JOptionPane.showMessageDialog(this, "This system has no default browser Cow2 can open.",
@@ -323,5 +374,8 @@ public class Cow2Frame extends JFrame {
                     "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+
+
 }
 

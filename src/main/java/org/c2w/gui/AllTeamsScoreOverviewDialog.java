@@ -123,6 +123,10 @@ public class AllTeamsScoreOverviewDialog extends JDialog {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_HEROES), new JScrollPane(heroTable));
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_TITANS), new JScrollPane(titanTable));
+        // Tab label colors match FortificationType's own colors, same as e.g.
+        // the "show heroes"/"show titans" checkboxes in FortificationMapPanel.
+        tabs.setForegroundAt(0, FortificationType.HERO.getColor());
+        tabs.setForegroundAt(1, FortificationType.TITAN.getColor());
 
         JPanel content = new JPanel(new BorderLayout(8, 8));
         content.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));

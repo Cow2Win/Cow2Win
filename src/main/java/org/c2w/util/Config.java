@@ -10,14 +10,14 @@ import java.util.Properties;
 
 public final class Config {
 
-    private static final Path CONFIG_FILE_PATH = Paths.get("workspace", "config.properties");
+    private static final Path CONFIG_FILE_PATH = Workspace.DIR.resolve("config.properties");
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
-    /** Default backup directory: a "backup" folder on the same level as "workspace" (see {@link #CONFIG_FILE_PATH}). */
-    private static final String DEFAULT_BACKUP_DIR = "backup";
+    /** Default backup directory: {@link Workspace#DEFAULT_BACKUP_DIR}, a "backup" folder next to "workspace" under the same {@link Workspace#ROOT} umbrella. */
+    private static final String DEFAULT_BACKUP_DIR = Workspace.DEFAULT_BACKUP_DIR.toString();
 
     private static final Properties properties = new Properties();
 

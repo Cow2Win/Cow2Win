@@ -11,6 +11,7 @@ import org.c2w.util.CatalogVersion;
 import org.c2w.util.Config;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
+import org.c2w.util.Workspace;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class C2WApp {
         }
 
         Logger.log("Started: ");
+
         SwingUtilities.invokeLater(() -> new Cow2Frame(context));
     }
 
@@ -96,7 +98,7 @@ public class C2WApp {
      */
     private static void runInitialSetup()  {
 
-        Path guildDir = Paths.get("workspace", DEFAULT_GUILD_NAME);
+        Path guildDir = Workspace.DIR.resolve(DEFAULT_GUILD_NAME);
         Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
         Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 

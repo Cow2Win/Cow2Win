@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -319,7 +318,7 @@ public class ToolbarPanel extends JPanel {
     private Path workspaceDir() {
         Path guildDir = appContext.guildFilePath().getParent();
         Path workspace = guildDir == null ? null : guildDir.getParent();
-        return workspace == null ? Paths.get(".") : workspace;
+        return workspace == null ? Workspace.DIR : workspace;
     }
 
 

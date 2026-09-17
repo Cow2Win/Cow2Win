@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
@@ -27,8 +26,8 @@ import java.util.function.Consumer;
  * earlier sessions), without needing a separate mechanism to keep the two in
  * sync.
  *
- * <p>The log file lives directly in the "workspace" folder, analogous to
- * {@link Config}'s "workspace/config.properties" (see {@link #LOG_FILE_PATH}).
+ * <p>The log file lives directly in the workspace folder ({@link Workspace#DIR}),
+ * analogous to {@link Config}'s config.properties (see {@link #LOG_FILE_PATH}).
  * It is capped at {@link #MAX_FILE_SIZE_BYTES} (1 MB); once appending the
  * next entry would exceed that, the file is rotated into
  * {@link #ROTATED_LOG_FILE_PATH} (overwriting whatever was rotated out
@@ -50,9 +49,9 @@ public final class Logger {
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     /** Where the persistent log file lives - see class Javadoc. */
-    private static final Path LOG_FILE_PATH = Paths.get("workspace", "cow2win.log");
+    private static final Path LOG_FILE_PATH = Workspace.DIR.resolve("cow2win.log");
     /** The one rotated-out previous log file - see class Javadoc. Together with {@link #LOG_FILE_PATH}, at most two files ever exist. */
-    private static final Path ROTATED_LOG_FILE_PATH = Paths.get("workspace", "cow2win.log.1");
+    private static final Path ROTATED_LOG_FILE_PATH = Workspace.DIR.resolve("cow2win.log.1");
     /** Max size of {@link #LOG_FILE_PATH} before it is rotated - see class Javadoc. */
     private static final long MAX_FILE_SIZE_BYTES = 1024L * 1024L; // 1 MB
 
@@ -109,8 +108,8 @@ public final class Logger {
     }
 
     /**
-     * Appends entry to {@link #LOG_FILE_PATH} (creating the "workspace"
-     * folder if it does not exist yet), rotating first via
+     * Appends entry to {@link #LOG_FILE_PATH} (creating the workspace folder
+     * if it does not exist yet), rotating first via
      * {@link #rotateLogFile()} if appending would push the file past
      * {@link #MAX_FILE_SIZE_BYTES}. Never throws - see class Javadoc.
      */

@@ -6,7 +6,6 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.gui.common.GridPanel;
-import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
@@ -39,7 +38,6 @@ public class FortificationMapPanel extends GridPanel {
 
     /** True while the "Changes" checkbox (see {@link #buildTypeFilterPanel()}) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
     private boolean showChanges = false;
-    private Image background;
 
     public FortificationMapPanel(AppContext appContext){
         super(8,5);
@@ -82,10 +80,13 @@ public class FortificationMapPanel extends GridPanel {
 
 
     private void init(){
-        background = IconLoader.getBackgroundImage();
-
-        setBackground(Color.BLACK);//new Color(61,109,182).darker());
-        setOpaque(true);
+        // Transparent since 2026-09-17: the background image is now painted once,
+        // higher up in the component hierarchy, by Cow2Frame's content pane -
+        // see Cow2Frame.BackgroundPanel. Staying non-opaque here (and in every
+        // panel/scroll pane between this one and that content pane) is what lets
+        // it show through instead of being painted over by this panel's own
+        // background.
+        setOpaque(false);
         List<Fortification> fortificationCatalog = FortificationRepository.findAll();
         Map<String, Integer> filledSlotsMap = new HashMap<>();
         Map<String, Integer> totalPowerMap = new HashMap<>();
@@ -166,12 +167,5 @@ public class FortificationMapPanel extends GridPanel {
         return panel;
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-
-        super.paintComponent(g);
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        g.drawImage(background, 0, 0, (int) screenSize.getWidth(), (int) screenSize.getHeight(),null);
-    }
 }
 

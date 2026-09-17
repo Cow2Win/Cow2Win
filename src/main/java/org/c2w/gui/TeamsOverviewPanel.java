@@ -13,6 +13,7 @@ import org.c2w.util.Logger;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -71,35 +72,58 @@ public class TeamsOverviewPanel extends JPanel {
         this.appContext = appContext;
 
         this.fortificationMapPanel = fortificationMapPanel;
+        // Transparent since 2026-09-17, along with FortificationMapPanel, so the
+        // background image now painted by Cow2Frame's content pane shows through
+        // here too instead of being covered by this panel's own default (opaque)
+        // background - see Cow2Frame.BackgroundPanel.
+        setOpaque(false);
+        heroTable.setGridColor(Color.GRAY);
+        titanTable.setGridColor(Color.GRAY);
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         java.util.List<Fortification> fortificationCatalog = FortificationRepository.findAll();
         JComboBox<Fortification> heroFortificationCombo = buildFortificationCombo(fortificationCatalog, FortificationType.HERO);
         JComboBox<Fortification> titanFortificationCombo = buildFortificationCombo(fortificationCatalog, FortificationType.TITAN);
         this.<Hero>configureTable(heroTable, h -> IconLoader.iconFor(h.imagePath(), MEMBER_ICON_SIZE),
-                h -> LanguageService.displayName(h.id()), heroFortificationCombo);
+                h -> LanguageService.displayName(h.id()), heroFortificationCombo, FortificationType.HERO.getColor());
         this.<Titan>configureTable(titanTable, t -> IconLoader.iconFor(t.imagePath(), MEMBER_ICON_SIZE),
-                t -> LanguageService.displayName(t.id()), titanFortificationCombo);
+                t -> LanguageService.displayName(t.id()), titanFortificationCombo, FortificationType.TITAN.getColor());
 
-        JTabbedPane tabs = new JTabbedPane();
+        JTabbedPane tabs = new JTabbedPane() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                setBorder(BorderFactory.createEmptyBorder());
+            }
+        };
+
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_HEROES), new JScrollPane(heroTable));
         tabs.addTab(LanguageService.displayName(COLUMN_KEY_TITANS), new JScrollPane(titanTable));
+        // Tab label colors match FortificationType's own colors, same as e.g.
+        // the "show heroes"/"show titans" checkboxes in FortificationMapPanel.
+        tabs.setForegroundAt(0, FortificationType.HERO.getColor());
+        tabs.setForegroundAt(1, FortificationType.TITAN.getColor());
+        tabs.setBackgroundAt(0,Color.BLACK);
+        tabs.setBackgroundAt(1,Color.BLACK);
         add(tabs, BorderLayout.CENTER);
 
         refreshTables();
     }
 
     private static <T> void configureTable(JTable table, Function<T, Icon> iconResolver, Function<T, String> nameResolver,
-                                           JComboBox<Fortification> fortificationCombo) {
+                                           JComboBox<Fortification> fortificationCombo, Color foreground) {
         table.setRowHeight(ROW_HEIGHT);
+        // Column 1 (member name - see TeamOverviewTableModel#getColumnClass) has no
+        // per-column renderer below of its own - this is what colors it instead.
+        table.setDefaultRenderer(String.class, new PlainCellRenderer(foreground));
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
-        table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer());
+        table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer(foreground));
         table.getColumnModel().getColumn(1).setPreferredWidth(140);
         table.getColumnModel().getColumn(2).setPreferredWidth(260);
-        table.getColumnModel().getColumn(2).setCellRenderer(new MembersCellRenderer<>(iconResolver, nameResolver));
+        table.getColumnModel().getColumn(2).setCellRenderer(new MembersCellRenderer<>(iconResolver, nameResolver, foreground));
         table.getColumnModel().getColumn(3).setPreferredWidth(180);
-        table.getColumnModel().getColumn(3).setCellRenderer(new FortificationCellRenderer());
+        table.getColumnModel().getColumn(3).setCellRenderer(new FortificationCellRenderer(foreground));
         table.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(fortificationCombo));
 
         table.setAutoCreateRowSorter(true);
@@ -489,10 +513,12 @@ public class TeamsOverviewPanel extends JPanel {
 
         private final Function<T, Icon> iconResolver;
         private final Function<T, String> nameResolver;
+        private final Color foreground;
 
-        MembersCellRenderer(Function<T, Icon> iconResolver, Function<T, String> nameResolver) {
+        MembersCellRenderer(Function<T, Icon> iconResolver, Function<T, String> nameResolver, Color foreground) {
             this.iconResolver = iconResolver;
             this.nameResolver = nameResolver;
+            this.foreground = foreground;
         }
 
         @Override
@@ -500,7 +526,7 @@ public class TeamsOverviewPanel extends JPanel {
                                                        boolean hasFocus, int row, int column) {
             JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
             panel.setOpaque(true);
-            panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+            panel.setBackground(isSelected ? table.getSelectionBackground() : UIManager.getColor(GuiUtils.KEY_TEAM_TABLE_CELL_BACKGROUND));
 
             @SuppressWarnings("unchecked")
             java.util.List<T> members = (java.util.List<T>) value;
@@ -509,6 +535,7 @@ public class TeamsOverviewPanel extends JPanel {
                     Icon icon = iconResolver.apply(member);
                     JLabel label = icon != null ? new JLabel(icon) : new JLabel(nameResolver.apply(member));
                     label.setOpaque(false);
+                    label.setForeground(foreground);
                     if (icon != null) {
                         label.setToolTipText(nameResolver.apply(member));
                     }
@@ -521,17 +548,30 @@ public class TeamsOverviewPanel extends JPanel {
 
     static final class PowerCellRenderer implements TableCellRenderer {
 
+        private final Color foreground;
+
+        PowerCellRenderer(Color foreground) {
+            this.foreground = foreground;
+        }
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
             JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
-            label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+            label.setBackground(isSelected ? table.getSelectionBackground() : UIManager.getColor(GuiUtils.KEY_TEAM_TABLE_CELL_BACKGROUND));
+            label.setForeground(foreground);
             return label;
         }
     }
 
     static final class FortificationCellRenderer implements TableCellRenderer {
+
+        private final Color foreground;
+
+        FortificationCellRenderer(Color foreground) {
+            this.foreground = foreground;
+        }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -540,8 +580,37 @@ public class TeamsOverviewPanel extends JPanel {
             JLabel label = new JLabel(fortification == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
                     : LanguageService.displayName(fortification.id()));
             label.setOpaque(true);
-            label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+            label.setBackground(isSelected ? table.getSelectionBackground() : UIManager.getColor(GuiUtils.KEY_TEAM_TABLE_CELL_BACKGROUND));
+            label.setForeground(foreground);
             return label;
+        }
+    }
+
+    /**
+     * Renderer for every String-typed cell that has no per-column renderer of
+     * its own - currently just column 1, "Member" (see
+     * TeamOverviewTableModel#getColumnClass). Installed once per table via
+     * {@code table.setDefaultRenderer(String.class, ...)} in
+     * {@link #configureTable}, so it gets the same background/foreground
+     * treatment as {@link PowerCellRenderer}/{@link FortificationCellRenderer}/
+     * {@link MembersCellRenderer} instead of Swing's plain default look.
+     */
+    static final class PlainCellRenderer extends DefaultTableCellRenderer {
+
+        private final Color foreground;
+
+        PlainCellRenderer(Color foreground) {
+            this.foreground = foreground;
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                        boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setOpaque(true);
+            setBackground(isSelected ? table.getSelectionBackground() : UIManager.getColor(GuiUtils.KEY_TEAM_TABLE_CELL_BACKGROUND));
+            setForeground(foreground);
+            return this;
         }
     }
 }

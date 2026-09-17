@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
@@ -42,7 +41,7 @@ public class BackupService {
     public static final String DAILY_BACKUP_FILE_NAME = "workspace-daily.zip";
     public static final String WEEKLY_BACKUP_FILE_NAME = "workspace-weekly.zip";
 
-    private static final Path WORKSPACE_DIR = Paths.get("workspace");
+    private static final Path WORKSPACE_DIR = Workspace.DIR;
 
     private BackupService() {
     }
