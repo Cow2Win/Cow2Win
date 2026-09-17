@@ -1,0 +1,80 @@
+name: Release
+
+# Publishes a GitHub Release with the Windows app-image zip attached,
+# whenever a tag matching "v<major>.<minor>.<patch>" (e.g. v1.0.0) is
+# pushed - see org.c2w.util.UpdateChecker (Cow2Win todos 1.1), which reads
+# exactly this tag format (optionally without the "v") off the GitHub
+# "latest release" API to tell an installed Cow2Win whether a newer
+# version exists.
+#
+# Deliberately its own workflow rather than an extra job in ci.yml: ci.yml
+# runs on every push/PR on ubuntu-latest and only ever reaches `mvn test`
+# (see its own comment for why), while this needs a Windows runner (the
+# jpackage app-image build in pom.xml only ever targets the OS it runs on)
+# and only ever needs to run for an actual release tag.
+#
+# IMPORTANT (see Cow2Win todos 1.1 discussion): for UpdateChecker's plain,
+# unauthenticated GitHub API call to see this release at all, the
+# Cow2Win/Cow2Win repository (or at least its Releases) needs to be public.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+# Required for softprops/action-gh-release to create the release and
+# upload assets via the workflow's own GITHUB_TOKEN - the default
+# permissions for a workflow triggered by a tag push are read-only.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # Must match pom.xml's maven.compiler.source/target (24), and a
+          # full JDK (with jmods) is required - jpackage needs those to
+          # build the bundled runtime image (see pom.xml's jpackage-maven-plugin
+          # execution / README.md's "Distribution package" section).
+          java-version: '24'
+          cache: maven
+
+      # Keeps app.version (pom.xml) in sync with the git tag that triggered
+      # this workflow, so the jpackage-built app-image/zip and the GitHub
+      # Release it's attached to always agree on the version number -
+      # exactly what UpdateChecker compares against. "mvn versions:set"
+      # only touches the Maven <version>/-SNAPSHOT; app.version is a
+      # separate property (see pom.xml's comment on it) updated directly here.
+      - name: Set app version from tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "Building app.version=$VERSION (from tag $TAG)"
+          mvn -B -q org.codehaus.mojo:versions-maven-plugin:2.18.0:set-property \
+            -Dproperty=app.version -DnewVersion="$VERSION"
+
+      - name: Build Windows app-image (mvn package)
+        run: mvn -B package
+
+      - name: Locate the packaged zip
+        id: find_zip
+        shell: bash
+        run: |
+          ZIP_PATH=$(ls target/Cow2Win-*-windows-app.zip | head -n 1)
+          echo "zip_path=$ZIP_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Cow2Win ${{ github.ref_name }}
+          files: ${{ steps.find_zip.outputs.zip_path }}
+          # Draft/prerelease left at their defaults (false) - UpdateChecker
+          # queries the "latest release" API, which only ever returns a
+          # published, non-draft, non-prerelease release.

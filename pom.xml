@@ -57,6 +57,28 @@
         </dependency>
     </dependencies>
     <build>
+        <!-- Only app-version.properties needs Maven resource filtering (so its
+             "${app.version}" placeholder becomes the real, build-time value read
+             at runtime by org.c2w.util.AppVersion, in turn used by UpdateChecker
+             - Cow2Win todos 1.1) - every other resource (JSON catalogs, images,
+             language files) is copied through unfiltered, so none of them can
+             ever have a "${...}"-looking substring accidentally "resolved" away. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>app-version.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>app-version.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <!-- Explicit version so Maven's default (which may not understand the JUnit
                  Platform) doesn't silently skip the tests above. -->
