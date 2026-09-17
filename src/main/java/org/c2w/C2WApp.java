@@ -11,7 +11,6 @@ import org.c2w.util.CatalogVersion;
 import org.c2w.util.Config;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
-import org.c2w.util.Workspace;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -98,7 +97,7 @@ public class C2WApp {
      */
     private static void runInitialSetup()  {
 
-        Path guildDir = Workspace.DIR.resolve(DEFAULT_GUILD_NAME);
+        Path guildDir = Config.DIR.resolve(DEFAULT_GUILD_NAME);
         Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
         Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 

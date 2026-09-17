@@ -267,7 +267,7 @@ public class ToolbarPanel extends JPanel {
         add(allTeamsButton);
 
         FlatButton allTeamsScoresButton =
-                new FlatButton(IconLoader.iconFor(ICON_ALL_TEAMS_SCORES, TOOLBAR_ICON_SIZE, IconLoader.PURPLE));
+                new FlatButton(IconLoader.iconFor(ICON_ALL_TEAMS_SCORES, TOOLBAR_ICON_SIZE, Color.WHITE));
         allTeamsScoresButton.setToolTipText(LanguageService.displayName(KEY_ALL_TEAMS_SCORES));
         allTeamsScoresButton.addActionListener(e -> onOpenAllTeamScores());
         add(allTeamsScoresButton);
@@ -318,7 +318,7 @@ public class ToolbarPanel extends JPanel {
     private Path workspaceDir() {
         Path guildDir = appContext.guildFilePath().getParent();
         Path workspace = guildDir == null ? null : guildDir.getParent();
-        return workspace == null ? Workspace.DIR : workspace;
+        return workspace == null ? Config.DIR : workspace;
     }
 
 

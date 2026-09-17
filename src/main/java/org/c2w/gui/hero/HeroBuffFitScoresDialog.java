@@ -4,6 +4,7 @@ import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Hero;
+import org.c2w.data.model.Role;
 import org.c2w.data.model.RoleBuff;
 import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.repository.FortificationRepository;
@@ -279,10 +280,10 @@ public final class HeroBuffFitScoresDialog extends JDialog {
 
         RoleBuff roleBuff = fortification.buff() instanceof RoleBuff rb ? rb : null;
         boolean roleMatches = roleBuff != null && hero.roles().contains(roleBuff.role());
-        JLabel roleLabel = new JLabel(roleBuff == null ? "" : roleBuff.role().name() + (roleMatches ? " ✓" : ""));
-        roleLabel.setForeground(roleMatches ? IconLoader.GREEN : IconLoader.GRAY);
-        roleLabel.setPreferredSize(new Dimension(ROLE_LABEL_WIDTH, roleLabel.getPreferredSize().height));
-        row.add(roleLabel);
+        JLabel roleTextLabel = new JLabel(roleBuff == null ? "" : roleLabel(roleBuff.role()) + (roleMatches ? " ✓" : ""));
+        roleTextLabel.setForeground(roleMatches ? IconLoader.GREEN : IconLoader.GRAY);
+        roleTextLabel.setPreferredSize(new Dimension(ROLE_LABEL_WIDTH, roleTextLabel.getPreferredSize().height));
+        row.add(roleTextLabel);
 
         JComboBox<CowScoreTier> combo = buildScoreTierCombo();
         combo.setSelectedItem(heroScores.getOrDefault(fortification.id(), CowScoreTier.GOOD));
@@ -324,6 +325,16 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      */
     private static String scoreTierLabel(CowScoreTier tier) {
         return LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.value() + ")";
+    }
+
+    /**
+     * The localized display name for a {@link Role} (language file key
+     * {@code role.<NAME>}, see {@code resources/language/<name>/<name>.properties})
+     * - used instead of {@link Role#name()} so this role indicator is
+     * translated like every other UI string, mirroring {@link #scoreTierLabel}.
+     */
+    private static String roleLabel(Role role) {
+        return LanguageService.displayName("role." + role.name());
     }
 
     private static String heroLabel(Hero hero) {

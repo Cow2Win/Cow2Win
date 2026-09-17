@@ -28,18 +28,18 @@
   {
     "id": "artemis",
     "buffFitScores": {
-      "shooting-range": "NORMAL",
+      "shooting-range": "AVERAGE",
       "city-hall": "MODERATE"
     }
   },
   {
     "id": "augustus",
-    "generalScore": "ELEVATED"
+    "generalScore": "GREAT"
   },
   {
     "id": "corvus",
     "buffFitScores": {
-      "foundry": "ELEVATED"
+      "foundry": "GREAT"
     }
   },
   {
@@ -55,7 +55,7 @@
     "buffFitScores": {
       "alchemy-tower": "MODERATE",
       "city-hall": "MODERATE",
-      "foundry": "ELEVATED",
+      "foundry": "GREAT",
       "bastion": "MODERATE",
       "shooting-range": "MODERATE"
     }
@@ -80,7 +80,7 @@
   {
     "id": "galahad",
     "buffFitScores": {
-      "bastion": "ELEVATED",
+      "bastion": "GREAT",
       "city-hall": "MODERATE"
     }
   },
@@ -156,12 +156,12 @@
   },
   {
     "id": "lyria",
-    "generalScore": "ELEVATED"
+    "generalScore": "GREAT"
   },
   {
     "id": "markus",
     "buffFitScores": {
-      "city-hall": "ELEVATED"
+      "city-hall": "GREAT"
     }
   },
   {
@@ -173,13 +173,13 @@
   {
     "id": "mushy-and-shroom",
     "buffFitScores": {
-      "foundry": "ELEVATED",
+      "foundry": "GREAT",
       "city-hall": "MODERATE"
     }
   },
   {
     "id": "nebula",
-    "generalScore": "ELEVATED"
+    "generalScore": "GREAT"
   },
   {
     "id": "ninja-turtles",

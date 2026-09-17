@@ -10,14 +10,31 @@ import java.util.Properties;
 
 public final class Config {
 
-    private static final Path CONFIG_FILE_PATH = Workspace.DIR.resolve("config.properties");
+    /**
+     * {@code <user.home>/.cow2Win} - umbrella folder holding both {@link
+     * #DIR} and the default backup folder (see {@link #DEFAULT_BACKUP_DIR}).
+     * Anchored to the user's home directory (rather than the app's working
+     * directory) so every install/update on this machine automatically
+     * finds the same data, with nothing to recreate or copy by hand.
+     */
+    private static final Path ROOT = Paths.get(System.getProperty("user.home"), ".cow2Win");
+
+    /**
+     * {@code <user.home>/.cow2Win/workspace} - guilds, lineups, this
+     * class's config.properties, and {@link Logger}'s log file. Also used
+     * by {@link BackupService} (what gets backed up) and, as a fallback,
+     * {@code org.c2w.gui.ToolbarPanel}.
+     */
+    public static final Path DIR = ROOT.resolve("workspace");
+
+    private static final Path CONFIG_FILE_PATH = DIR.resolve("config.properties");
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
-    /** Default backup directory: {@link Workspace#DEFAULT_BACKUP_DIR}, a "backup" folder next to "workspace" under the same {@link Workspace#ROOT} umbrella. */
-    private static final String DEFAULT_BACKUP_DIR = Workspace.DEFAULT_BACKUP_DIR.toString();
+    /** Default backup directory: a "backup" folder next to {@link #DIR}, under the same {@link #ROOT} umbrella. */
+    private static final String DEFAULT_BACKUP_DIR = ROOT.resolve("backup").toString();
 
     private static final Properties properties = new Properties();
 

@@ -14,7 +14,6 @@ public final class IconLoader {
     public static final Color GREEN = new Color(78,133,66);
     public static final Color BLUE = new Color(27,88,124);
     public static final Color RED = new Color(159,41,54);
-    public static final Color PURPLE = new Color(96,72,120);
     public static final Color GRAY = new Color(50,50,50);
 
 

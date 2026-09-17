@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  * earlier sessions), without needing a separate mechanism to keep the two in
  * sync.
  *
- * <p>The log file lives directly in the workspace folder ({@link Workspace#DIR}),
+ * <p>The log file lives directly in the workspace folder ({@link Config#DIR}),
  * analogous to {@link Config}'s config.properties (see {@link #LOG_FILE_PATH}).
  * It is capped at {@link #MAX_FILE_SIZE_BYTES} (1 MB); once appending the
  * next entry would exceed that, the file is rotated into
@@ -49,9 +49,9 @@ public final class Logger {
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     /** Where the persistent log file lives - see class Javadoc. */
-    private static final Path LOG_FILE_PATH = Workspace.DIR.resolve("cow2win.log");
+    private static final Path LOG_FILE_PATH = Config.DIR.resolve("cow2win.log");
     /** The one rotated-out previous log file - see class Javadoc. Together with {@link #LOG_FILE_PATH}, at most two files ever exist. */
-    private static final Path ROTATED_LOG_FILE_PATH = Workspace.DIR.resolve("cow2win.log.1");
+    private static final Path ROTATED_LOG_FILE_PATH = Config.DIR.resolve("cow2win.log.1");
     /** Max size of {@link #LOG_FILE_PATH} before it is rotated - see class Javadoc. */
     private static final long MAX_FILE_SIZE_BYTES = 1024L * 1024L; // 1 MB
 

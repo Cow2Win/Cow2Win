@@ -41,7 +41,7 @@ public class BackupService {
     public static final String DAILY_BACKUP_FILE_NAME = "workspace-daily.zip";
     public static final String WEEKLY_BACKUP_FILE_NAME = "workspace-weekly.zip";
 
-    private static final Path WORKSPACE_DIR = Workspace.DIR;
+    private static final Path WORKSPACE_DIR = Config.DIR;
 
     private BackupService() {
     }
