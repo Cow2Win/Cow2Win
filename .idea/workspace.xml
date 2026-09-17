@@ -4,55 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="color experiments">
-      <change afterPath="$PROJECT_DIR$/documents/Festung.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/documents/TeamPanel.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PATCH-CHECKLIST.md" beforeDir="false" afterPath="$PROJECT_DIR$/PATCH-CHECKLIST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/C2WApp.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/CowScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/CowScore.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Hero.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Hero.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeamBuffFitScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/HeroTeamBuffFitScore.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/ScoreTier.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Titan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/Titan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/TitanTeamBuffFitScore.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/model/TitanTeamBuffFitScore.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/HeroRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/data/repository/TitanRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/BestPossibleLineupAlgorithm.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/eval/LineupAlgorithms.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/eval/LineupAlgorithms.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/AllTeamsOverviewDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/AllTeamsOverviewDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/AllTeamsScoreOverviewDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/AllTeamsScoreOverviewDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/Cow2Frame.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/InitialSetupDialog.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/SettingsDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/SettingsDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/TeamsOverviewPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/ToolbarPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/common/IconLoader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationEntryDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationInfoPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/FortificationMapPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/LineupSummaryPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/fort/LineupSummaryPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/guild/MemberEditorPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/gui/hero/HeroBuffFitScoresDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/gui/hero/HeroBuffFitScoresDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/BuffCalculationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/Config.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/LanguageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/LanguageService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/c2w/util/ReportGenerator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/images/app/buff1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/images/app/buff2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/deutsch.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/deutsch/deutsch.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/english.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/english/english.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language/francais.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language/francais/francais.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/org/c2w/eval/BestPossibleLineupAlgorithmAssignmentTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/c2w/eval/BestPossibleLineupAlgorithmAssignmentTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/org/c2w/util/BackupServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/c2w/util/BackupServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/org/c2w/util/LanguageFilesConsistencyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/c2w/util/LanguageFilesConsistencyTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/Deutscher Bund/Test.html" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/Deutscher Bund/Test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/Deutscher Bund/Test.lineup" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/Deutscher Bund/Test.lineup" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/config.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workspace/cow2win.log" beforeDir="false" afterPath="$PROJECT_DIR$/workspace/cow2win.log" afterDir="false" />
-    </list>
+    <list default="true" id="1ef71c6c-e1da-4a28-9ae1-333e21c5b4b4" name="Changes" comment="add checkup for new version" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -95,28 +47,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.C2WApp.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ClacTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BestPossibleLineupAlgorithmTest.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Cow2Win [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Cow2Win [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Cow2Win [deploy].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Cow2Win [package].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Cow2Win [test].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/tdiet/IdeaProjects/Cow2Win/documents&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.C2WApp.executor": "Run",
+    "Application.ClacTest.executor": "Run",
+    "JUnit.BestPossibleLineupAlgorithmTest.executor": "Run",
+    "Maven.Cow2Win [clean].executor": "Run",
+    "Maven.Cow2Win [compile].executor": "Run",
+    "Maven.Cow2Win [deploy].executor": "Run",
+    "Maven.Cow2Win [package].executor": "Run",
+    "Maven.Cow2Win [test].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/tdiet/IdeaProjects/Cow2Win/documents",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.keymap"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\tdiet\IdeaProjects\Cow2Win\documents" />
@@ -427,7 +380,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789489715671</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="add checkup for new version">
+      <option name="closed" value="true" />
+      <created>1789619661640</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1789619661640</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -442,6 +403,7 @@
     <MESSAGE value="add new Score-Mechanics" />
     <MESSAGE value="add CI&#10;add backup" />
     <MESSAGE value="color experiments" />
-    <option name="LAST_COMMIT_MESSAGE" value="color experiments" />
+    <MESSAGE value="add checkup for new version" />
+    <option name="LAST_COMMIT_MESSAGE" value="add checkup for new version" />
   </component>
 </project>
