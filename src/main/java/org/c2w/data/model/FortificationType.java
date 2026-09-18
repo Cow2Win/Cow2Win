@@ -1,7 +1,5 @@
 package org.c2w.data.model;
 
-import org.c2w.gui.common.IconLoader;
-
 import java.awt.*;
 
 /** Whether a fortification is defended by a hero team or a titan team. */

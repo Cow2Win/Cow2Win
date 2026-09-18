@@ -1,12 +1,6 @@
 package org.c2w.gui.hero;
 
-import org.c2w.data.model.CowScore;
-import org.c2w.data.model.Fortification;
-import org.c2w.data.model.FortificationType;
-import org.c2w.data.model.Hero;
-import org.c2w.data.model.Role;
-import org.c2w.data.model.RoleBuff;
-import org.c2w.data.model.CowScoreTier;
+import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.HeroRepository;
 import org.c2w.gui.common.FlatButton;
@@ -15,12 +9,14 @@ import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Dialog for maintaining a hero's {@link CowScore} - {@link
@@ -58,9 +54,9 @@ import java.util.Map;
  * HeroRepository}'s class Javadoc for why the two are separate files) only
  * ever grows an entry for a deliberately-set, non-default tier.
  */
-public final class HeroBuffFitScoresDialog extends JDialog {
+public final class HeroCoreScoreDialog extends JDialog {
 
-    private static final String BASE_TITLE = "Cow2 - Hero Buff Fit Scores";
+    private static final String BASE_TITLE = "CowScore";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button (see {@link #onSaveScores()}). */
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
@@ -68,6 +64,9 @@ public final class HeroBuffFitScoresDialog extends JDialog {
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
 
     private static final int TOOLBAR_ICON_SIZE = 20;
+
+    /** Avatar size for the {@link #buildDetailPanel}'s {@code heroNameLabel} icon. */
+    private static final int HERO_ICON_SIZE = 32;
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the {@link Hero#generalScore()} row's label (see {@link #buildDetailPanel}). */
     private static final String KEY_GENERAL_SCORE = "heroBuffFitScores.generalScore";
@@ -88,7 +87,7 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      * rather than refreshed.
      */
     private final List<Hero> heroCatalog = HeroRepository.findAll().stream()
-            .sorted(Comparator.comparing(HeroBuffFitScoresDialog::heroLabel, String.CASE_INSENSITIVE_ORDER))
+            .sorted(Comparator.comparing(HeroCoreScoreDialog::heroLabel, String.CASE_INSENSITIVE_ORDER))
             .toList();
 
     /** Every fortification a hero's {@link Hero#buffFitScores()} can meaningfully apply to - see class Javadoc. */
@@ -119,16 +118,18 @@ public final class HeroBuffFitScoresDialog extends JDialog {
     private final JList<Hero> heroList = new JList<>(heroListModel);
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
-    public HeroBuffFitScoresDialog(Frame owner) {
+    public HeroCoreScoreDialog(Frame owner) {
         super(owner, BASE_TITLE, false);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(Color.GRAY.darker());
+
+        setBackground(Color.GRAY.darker());
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(buildMainSplit(), BorderLayout.CENTER);
-        showEmptyDetail("No hero selected.");
-
-        setSize(720, 520);
+        heroList.setSelectedIndex(0);
+        setSize(740, 520);
         setLocationRelativeTo(owner);
     }
 
@@ -170,40 +171,35 @@ public final class HeroBuffFitScoresDialog extends JDialog {
     }
 
     private void onHeroSelected(Hero hero) {
-        if (hero == null) {
-            showEmptyDetail("No hero selected.");
-            return;
-        }
         detailContainer.removeAll();
         detailContainer.add(buildDetailPanel(hero), BorderLayout.CENTER);
         detailContainer.revalidate();
         detailContainer.repaint();
     }
 
-    private void showEmptyDetail(String message) {
-        detailContainer.removeAll();
-        detailContainer.add(new JLabel(message, JLabel.CENTER), BorderLayout.CENTER);
-        detailContainer.revalidate();
-        detailContainer.repaint();
-    }
-
     /**
-     * Builds the given hero's {@link Hero#generalScore()} row (see
-     * {@link #buildGeneralScoreRow}), a small header, and one row per
+     * Builds the given hero's header - {@code heroNameLabel} (its
+     * {@link IconLoader#iconFor(String, int)} avatar plus
+     * {@link #heroLabel(Hero)}) followed by a comma-separated
+     * {@code heroRolesLabel} of its {@link Hero#roles()} (via
+     * {@link #roleLabel(Role)}) - then the {@link Hero#generalScore()} row
+     * (see {@link #buildGeneralScoreRow}), a small header, and one row per
      * {@link #buffedFortifications} entry, each with a {@link CowScoreTier}
      * combo box wired into {@link #workingScores} - see
      * {@link #buildFortificationRow}.
      */
     private JPanel buildDetailPanel(Hero hero) {
         JPanel panel = new JPanel();
+        panel.setBackground(Color.GRAY.darker());
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        JLabel heroNameLabel = new JLabel(heroLabel(hero));
+        JLabel heroNameLabel = new JLabel(heroLabel(hero), IconLoader.iconFor(hero.imagePath(), HERO_ICON_SIZE), JLabel.LEFT);
+        heroNameLabel.setForeground(Color.WHITE);
         heroNameLabel.setFont(heroNameLabel.getFont().deriveFont(Font.BOLD, 14f));
+        heroNameLabel.setIconTextGap(8);
         heroNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(heroNameLabel);
-        panel.add(Box.createVerticalStrut(8));
 
         JPanel generalScoreRow = buildGeneralScoreRow(hero);
         generalScoreRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -211,6 +207,8 @@ public final class HeroBuffFitScoresDialog extends JDialog {
         panel.add(Box.createVerticalStrut(12));
 
         JLabel buffFitScoresHeader = new JLabel(LanguageService.displayName(KEY_BUFF_FIT_SCORES_HEADER));
+        buffFitScoresHeader.setForeground(Color.WHITE);
+        buffFitScoresHeader.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
         buffFitScoresHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(buffFitScoresHeader);
         panel.add(Box.createVerticalStrut(4));
@@ -239,10 +237,15 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      */
     private JPanel buildGeneralScoreRow(Hero hero) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-
+        row.setOpaque(false);
         JLabel label = new JLabel(LanguageService.displayName(KEY_GENERAL_SCORE));
+        label.setForeground(Color.WHITE);
         label.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, label.getPreferredSize().height));
         row.add(label);
+
+        JLabel dummyLabel = new JLabel("");
+        dummyLabel.setPreferredSize(new Dimension(ROLE_LABEL_WIDTH, dummyLabel.getPreferredSize().height));
+        row.add(dummyLabel);
 
         JComboBox<CowScoreTier> combo = buildScoreTierCombo();
         CowScoreTier current = workingGeneralScores.computeIfAbsent(hero.id(), id -> hero.generalScore());
@@ -273,15 +276,17 @@ public final class HeroBuffFitScoresDialog extends JDialog {
      */
     private JPanel buildFortificationRow(Hero hero, Fortification fortification, Map<String, CowScoreTier> heroScores) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        row.setOpaque(false);
 
         JLabel nameLabel = new JLabel(LanguageService.displayName(fortification.id()));
+        nameLabel.setForeground(Color.WHITE);
         nameLabel.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, nameLabel.getPreferredSize().height));
         row.add(nameLabel);
 
         RoleBuff roleBuff = fortification.buff() instanceof RoleBuff rb ? rb : null;
         boolean roleMatches = roleBuff != null && hero.roles().contains(roleBuff.role());
         JLabel roleTextLabel = new JLabel(roleBuff == null ? "" : roleLabel(roleBuff.role()) + (roleMatches ? " ✓" : ""));
-        roleTextLabel.setForeground(roleMatches ? IconLoader.GREEN : IconLoader.GRAY);
+        roleTextLabel.setForeground(roleMatches ? IconLoader.GREEN : Color.WHITE);
         roleTextLabel.setPreferredSize(new Dimension(ROLE_LABEL_WIDTH, roleTextLabel.getPreferredSize().height));
         row.add(roleTextLabel);
 

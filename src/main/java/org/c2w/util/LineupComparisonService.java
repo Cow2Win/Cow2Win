@@ -6,13 +6,7 @@ import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Compares two {@link Lineup}s of the SAME guild - either two lineups loaded

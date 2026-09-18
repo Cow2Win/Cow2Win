@@ -16,8 +16,6 @@ import org.c2w.util.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,8 +32,10 @@ public class ToolbarPanel extends JPanel {
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "new guild" button (see {@link #onNewGuild()}). */
     private static final String KEY_NEW_GUILD = "toolbar.newGuild";
+    private static final String KEY_REMOVE_GUILD = "toolbar.removeGuild";
 
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
+    private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
 
     /** Glob pattern (see {@link Files#newDirectoryStream(Path, String)}) matching lineup files in the guild folder. */
     private static final String LINEUP_FILE_GLOB = "*.lineup";
@@ -203,14 +203,16 @@ public class ToolbarPanel extends JPanel {
         newGuildButton.addActionListener(e -> onNewGuild());
         add(newGuildButton);
 
-
-
         FlatButton openGuildEditorButton =
                 new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_EDITOR, TOOLBAR_ICON_SIZE));
         openGuildEditorButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
         openGuildEditorButton.addActionListener(e -> openGuildEditor.run());
         add(openGuildEditorButton);
 
+        FlatButton removeGuildButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_GUILD, TOOLBAR_ICON_SIZE,IconLoader.RED));
+        removeGuildButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_GUILD));
+        removeGuildButton.addActionListener(e -> onRemoveGuild());
+        add(removeGuildButton);
 
         JSeparator guildLineupSeparator = new JSeparator(SwingConstants.VERTICAL);
         guildLineupSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -430,7 +432,9 @@ public class ToolbarPanel extends JPanel {
             Logger.log("Switched to guild: " + guildFilePath);
         }
     }
+    private void onRemoveGuild(){
 
+    }
 
     private void onNewGuild() {
         String input = JOptionPane.showInputDialog(this, "Name of the new guild:", "New guild",

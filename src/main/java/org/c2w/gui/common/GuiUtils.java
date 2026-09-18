@@ -27,6 +27,12 @@ public class GuiUtils {
         UIManager.put("TabbedPane.focus", Color.BLACK);
         UIManager.put("TabbedPane.selectHighlight", Color.GRAY);
         UIManager.put("Table.selectionBackground",Color.BLACK);
+        UIManager.put("TextArea.background",Color.GRAY.darker());
+        UIManager.put("TextArea.foreground",Color.WHITE);
+        UIManager.put("List.background",Color.GRAY.darker());
+        UIManager.put("List.foreground",Color.WHITE);
+        UIManager.put("List.selectionBackground",Color.BLACK);
+        UIManager.put("List.selectionForeground",Color.WHITE);
 
     }
 }

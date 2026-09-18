@@ -4,12 +4,8 @@ import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
-import org.c2w.gui.hero.HeroBuffFitScoresDialog;
-import org.c2w.util.AppContext;
-import org.c2w.util.AppVersion;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
-import org.c2w.util.UpdateChecker;
+import org.c2w.gui.hero.HeroCoreScoreDialog;
+import org.c2w.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -141,7 +137,7 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Builds the frame's menu bar: "Settings" > "Configs" (see
+     * Builds the frame's menu bar: "File" > "Settings" (see
      * {@link #onOpenSettings()}) and "Tools" > "Hero Buff Fit Scores" (see
      * {@link #onOpenHeroBuffFitScores()} - moved here 2026-09-11 from a
      * {@code ToolbarPanel} toolbar button, since maintaining the hero
@@ -151,24 +147,24 @@ public class Cow2Frame extends JFrame {
     private JMenuBar buildMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        JMenu settingsMenu = new JMenu(LanguageService.displayName("menu.settings"));
-        JMenuItem configsItem = new JMenuItem(LanguageService.displayName("menu.configuration"));
-        configsItem.addActionListener(e -> onOpenSettings());
-        settingsMenu.add(configsItem);
+        JMenu fileMenu = new JMenu(LanguageService.displayName("menu.file"));
+        JMenuItem settingsItem = new JMenuItem(LanguageService.displayName("menu.settings"));
+        settingsItem.addActionListener(e -> onOpenSettings());
+        fileMenu.add(settingsItem);
 
 
         JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
         heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
-        settingsMenu.add(heroBuffFitScoresItem);
+        fileMenu.add(heroBuffFitScoresItem);
 
         JMenuItem checkForUpdatesItem = new JMenuItem(LanguageService.displayName("menu.checkForUpdates"));
         checkForUpdatesItem.addActionListener(e -> onCheckForUpdates());
-        settingsMenu.add(checkForUpdatesItem);
-        menuBar.add(settingsMenu);
+        fileMenu.add(checkForUpdatesItem);
+        menuBar.add(fileMenu);
 
         JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
         showLogItem.addActionListener(e -> onShowLog());
-        settingsMenu.add(showLogItem);
+        fileMenu.add(showLogItem);
 
         JMenu hwMenu = new JMenu("Hero wars");
         JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
@@ -198,12 +194,12 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Opens {@link HeroBuffFitScoresDialog} - independent of the currently
+     * Opens {@link HeroCoreScoreDialog} - independent of the currently
      * open guild/lineup (see that dialog's class Javadoc), so this only
      * needs the frame itself as owner.
      */
     private void onOpenHeroBuffFitScores() {
-        new HeroBuffFitScoresDialog(this).setVisible(true);
+        new HeroCoreScoreDialog(this).setVisible(true);
     }
 
     /**
@@ -219,7 +215,7 @@ public class Cow2Frame extends JFrame {
         UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, false));
     }
 
-    /** "Settings" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup()}, always reports back, including "already up to date" and a failed check. */
+    /** "File" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup()}, always reports back, including "already up to date" and a failed check. */
     private void onCheckForUpdates() {
         UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, true));
     }

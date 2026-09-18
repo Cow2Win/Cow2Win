@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
+import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
-import org.c2w.data.model.CowScoreTier;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  *     it yet (see the planned GitHub-based master-data download workflow).</li>
  *     <li>{@code cowScore.json} - Thorsten's manually curated {@link
  *     CowScore} per hero (see that type's Javadoc), edited exclusively via
- *     {@code HeroBuffFitScoresDialog} and persisted through {@link
+ *     {@code HeroCoreScoreDialog} and persisted through {@link
  *     #saveCowScores}.</li>
  * </ul>
  * Keeping these in two files means a future wholesale refresh of {@code
@@ -98,7 +98,7 @@ public class HeroRepository {
      * this enforces on the way out: a hero whose {@link Hero#cowScore()} is
      * {@link CowScore#isDefault()} gets no entry at all in {@code
      * cowScore.json}, keeping it sparse regardless of what a caller (e.g.
-     * {@code HeroBuffFitScoresDialog}) passes in.
+     * {@code HeroCoreScoreDialog}) passes in.
      */
     public static synchronized void saveCowScores(List<Hero> catalog) throws IOException {
         if (catalog == null) {
@@ -310,7 +310,7 @@ public class HeroRepository {
      * matches the fortification's buff) via {@link Hero#buffFitScore}, so
      * persisting it explicitly would only add dead weight to cowScore.json.
      * This is the single place that enforces the rule, so a caller (e.g.
-     * {@code HeroBuffFitScoresDialog}) can hand {@link #saveCowScores} a
+     * {@code HeroCoreScoreDialog}) can hand {@link #saveCowScores} a
      * {@link Hero#buffFitScores()} map with STANDARD entries in it (e.g. one
      * left over from before this rule existed) without needing its own
      * filtering - {@link #saveCowScores} always drops them on the way out.

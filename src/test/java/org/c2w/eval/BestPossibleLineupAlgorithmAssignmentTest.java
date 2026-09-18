@@ -3,15 +3,16 @@ package org.c2w.eval;
 import org.c2w.data.model.*;
 import org.c2w.eval.BestPossibleLineupAlgorithm.Candidate;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Second unit test class for this project (see {@link BestPossibleLineupAlgorithmTest}, the

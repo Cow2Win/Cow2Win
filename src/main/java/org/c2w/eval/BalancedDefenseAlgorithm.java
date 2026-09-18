@@ -4,16 +4,8 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.util.TeamScoreCalculator;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.ToDoubleBiFunction;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntBiFunction;
-import java.util.function.ToIntFunction;
+import java.util.*;
+import java.util.function.*;
 
 /**
  * Second lineup algorithm (added 2026-09-15 on Thorsten's request, see

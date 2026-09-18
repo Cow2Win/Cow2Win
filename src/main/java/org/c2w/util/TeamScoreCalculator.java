@@ -1,12 +1,6 @@
 package org.c2w.util;
 
-import org.c2w.data.model.Fortification;
-import org.c2w.data.model.HeroTeam;
-import org.c2w.data.model.HeroTeamBuffFitScore;
-import org.c2w.data.model.Hero;
-import org.c2w.data.model.Titan;
-import org.c2w.data.model.TitanTeam;
-import org.c2w.data.model.TitanTeamBuffFitScore;
+import org.c2w.data.model.*;
 
 import java.util.List;
 

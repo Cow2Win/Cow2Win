@@ -3,12 +3,7 @@ package org.c2w.eval;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Fourth lineup algorithm (added 2026-09-16 on Thorsten's request, see

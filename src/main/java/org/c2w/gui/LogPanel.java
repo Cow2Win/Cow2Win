@@ -21,8 +21,6 @@ public class LogPanel extends JPanel {
         scrollPane.setPreferredSize(new Dimension(0, PREFERRED_HEIGHT));
         add(scrollPane, BorderLayout.CENTER);
 
-        setBorder(BorderFactory.createTitledBorder("Log"));
-
         Logger.addListener(this::append);
     }
 

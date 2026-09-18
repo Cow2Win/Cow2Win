@@ -3,7 +3,7 @@ package org.c2w.util;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;

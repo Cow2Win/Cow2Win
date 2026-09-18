@@ -204,7 +204,7 @@ public class FortificationInfoPanel extends JPanel {
      * key {@code scoreTier.<NAME>}, see
      * {@code resources/language/<name>/<name>.properties}) - used instead of
      * {@link CowScoreTier#name()} so this tooltip stays consistent with the
-     * translated tier names shown in {@code HeroBuffFitScoresDialog}'s combo
+     * translated tier names shown in {@code HeroCoreScoreDialog}'s combo
      * boxes.
      */
     private static String scoreTierLabel(CowScoreTier tier) {

@@ -2,6 +2,8 @@ package org.c2w.gui;
 
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.IconLoader;
 import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 
@@ -10,7 +12,7 @@ import java.awt.*;
 import java.io.File;
 
 /**
- * Dialog opened from Cow2Frame's "Settings" > "Configs" menu item (see
+ * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * Cow2Frame#buildMenuBar). Lets the user change the display language, the
  * default lineup algorithm (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
  * and the backup directory (see org.c2w.util.BackupService); named
@@ -18,6 +20,24 @@ import java.io.File;
  * here later.
  */
 public class SettingsDialog extends JDialog {
+
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button (see {@link #onOk()}). */
+    private static final String KEY_SAVE_SETTINGS = "settingsDialog.saveSettings";
+
+    /** Language file key for the language combo box's label (see {@link #buildUi()}). */
+    private static final String KEY_LANGUAGE = "settingsDialog.language";
+
+    /** Language file key for the algorithm combo box's label (see {@link #buildUi()}). */
+    private static final String KEY_DEFAULT_ALGORITHM = "settingsDialog.defaultAlgorithm";
+
+    /** Language file key for the backup directory field's label (see {@link #buildUi()}). */
+    private static final String KEY_BACKUP_DIRECTORY = "settingsDialog.backupDirectory";
+
+    /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
+    private static final String ICON_SAVE_SETTINGS = "/images/app/save.png";
+
+    /** Target size of the toolbar icon. */
+    private static final int TOOLBAR_ICON_SIZE = 20;
 
     private final JComboBox<String> languageComboBox = new JComboBox<>();
 
@@ -34,18 +54,29 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<String> algorithmComboBox = new JComboBox<>();
     private final JTextField backupDirField = new JTextField(20);
     private final JButton browseBackupDirButton = new JButton("...");
-    private final JButton okButton = new JButton("OK");
-    private final JButton cancelButton = new JButton("Cancel");
 
     private boolean confirmed = false;
 
     public SettingsDialog(Frame owner) {
-        super(owner, LanguageService.displayTitle("menu.configuration"), true);
+        super(owner, LanguageService.displayName("menu.settings"), true);
+        setLayout(new BorderLayout());
+        add(buildToolbarPanel(), BorderLayout.NORTH);
         buildUi();
         preselectCurrentValues();
         pack();
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    }
+
+    private JPanel buildToolbarPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 0));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SETTINGS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_SETTINGS));
+        saveButton.addActionListener(e -> onOk());
+        buttons.add(saveButton);
+        panel.add(buttons, BorderLayout.WEST);
+        return panel;
     }
 
     private void buildUi() {
@@ -64,7 +95,7 @@ public class SettingsDialog extends JDialog {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        formPanel.add(new JLabel("Language:"), gbc);
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_LANGUAGE)), gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(languageComboBox, gbc);
@@ -72,7 +103,7 @@ public class SettingsDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Default algorithm:"), gbc);
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_ALGORITHM)), gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(algorithmComboBox, gbc);
@@ -80,7 +111,7 @@ public class SettingsDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Backup directory:"), gbc);
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_BACKUP_DIRECTORY)), gbc);
 
         JPanel backupDirPanel = new JPanel(new BorderLayout(4, 0));
         backupDirPanel.add(backupDirField, BorderLayout.CENTER);
@@ -89,16 +120,8 @@ public class SettingsDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(backupDirPanel, gbc);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(okButton);
+        add(formPanel, BorderLayout.CENTER);
 
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(formPanel, BorderLayout.CENTER);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-        okButton.addActionListener(e -> onOk());
-        cancelButton.addActionListener(e -> onCancel());
         browseBackupDirButton.addActionListener(e -> onBrowseBackupDir());
     }
 
@@ -180,13 +203,7 @@ public class SettingsDialog extends JDialog {
         }
     }
 
-    private void onCancel() {
-        confirmed = false;
-        setVisible(false);
-        dispose();
-    }
-
-    /** True if the dialog was confirmed via the OK button (rather than Cancel or the window close button). */
+    /** True if the dialog was confirmed via the save button (rather than the window close button). */
     public boolean isConfirmed() {
         return confirmed;
     }

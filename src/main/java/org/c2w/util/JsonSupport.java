@@ -1,11 +1,6 @@
 package org.c2w.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +56,7 @@ public final class JsonSupport {
      * Resolves the on-disk location of a writable catalog/demo data file - used where a real
      * {@link Path} is needed (via {@link Files}/{@link #writeJsonFile}), not just a classpath
      * resource: {@code HeroRepository}/{@code FortificationRepository}'s {@code save(...)}
-     * (the catalog-editing dialogs, e.g. {@code HeroBuffFitScoresDialog}) and {@code C2WApp}'s
+     * (the catalog-editing dialogs, e.g. {@code HeroCoreScoreDialog}) and {@code C2WApp}'s
      * first-run demo guild/lineup.
      *
      * <p>Always a path relative to the current working directory, never absolute or tied to

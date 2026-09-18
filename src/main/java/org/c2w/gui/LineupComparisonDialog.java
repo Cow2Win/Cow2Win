@@ -1,6 +1,8 @@
 package org.c2w.gui;
 
-import org.c2w.data.model.*;
+import org.c2w.data.model.Guild;
+import org.c2w.data.model.GuildMember;
+import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.LineupAlgorithm;
