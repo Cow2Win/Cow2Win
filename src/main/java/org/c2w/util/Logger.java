@@ -21,14 +21,16 @@ import java.util.function.Consumer;
  * newly registered {@link #addListener}, e.g. {@code org.c2w.gui.LogPanel}),
  * it is passed live to every already-registered listener, and - added for
  * the persistent log file - it is appended to a log file on disk (see
- * {@link #LOG_FILE_PATH}). This means the file always contains exactly what
+ * {@link #logFilePath()}). This means the file always contains exactly what
  * the running app's {@code LogPanel} shows (plus everything logged in
  * earlier sessions), without needing a separate mechanism to keep the two in
  * sync.
  *
- * <p>The log file lives directly in the workspace folder ({@link Config#DIR}),
- * analogous to {@link Config}'s config.properties (see {@link #LOG_FILE_PATH}).
- * It is capped at {@link #MAX_FILE_SIZE_BYTES} (1 MB); once appending the
+ * <p>The log file lives directly in the workspace folder ({@link
+ * Config#getWorkspaceDir()}), resolved fresh on every write (rather than
+ * cached in a {@code static final} field) since that folder can be
+ * reconfigured via {@link Config#setWorkspacePath}. It is capped at {@link
+ * #MAX_FILE_SIZE_BYTES} (1 MB); once appending the
  * next entry would exceed that, the file is rotated into
  * {@link #ROTATED_LOG_FILE_PATH} (overwriting whatever was rotated out
  * before) and a fresh, empty file is started - so at most two log files
@@ -48,11 +50,7 @@ public final class Logger {
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    /** Where the persistent log file lives - see class Javadoc. */
-    private static final Path LOG_FILE_PATH = Config.DIR.resolve("cow2win.log");
-    /** The one rotated-out previous log file - see class Javadoc. Together with {@link #LOG_FILE_PATH}, at most two files ever exist. */
-    private static final Path ROTATED_LOG_FILE_PATH = Config.DIR.resolve("cow2win.log.1");
-    /** Max size of {@link #LOG_FILE_PATH} before it is rotated - see class Javadoc. */
+    /** Max size of the persistent log file before it is rotated - see class Javadoc. */
     private static final long MAX_FILE_SIZE_BYTES = 1024L * 1024L; // 1 MB
 
     private static final List<String> history = new ArrayList<>();
@@ -114,23 +112,34 @@ public final class Logger {
      * {@link #MAX_FILE_SIZE_BYTES}. Never throws - see class Javadoc.
      */
     private static void appendToLogFile(String entry) {
+        Path logFilePath = logFilePath();
         try {
             byte[] line = (entry + System.lineSeparator()).getBytes();
-            if (LOG_FILE_PATH.getParent() != null) {
-                Files.createDirectories(LOG_FILE_PATH.getParent());
+            if (logFilePath.getParent() != null) {
+                Files.createDirectories(logFilePath.getParent());
             }
-            long currentSize = Files.isRegularFile(LOG_FILE_PATH) ? Files.size(LOG_FILE_PATH) : 0L;
+            long currentSize = Files.isRegularFile(logFilePath) ? Files.size(logFilePath) : 0L;
             if (currentSize + line.length > MAX_FILE_SIZE_BYTES) {
                 rotateLogFile();
             }
-            Files.write(LOG_FILE_PATH, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(logFilePath, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
-            System.err.println("Could not write " + LOG_FILE_PATH + ": " + e.getMessage());
+            System.err.println("Could not write " + logFilePath + ": " + e.getMessage());
         }
     }
 
-    /** Moves the current log file to {@link #ROTATED_LOG_FILE_PATH}, overwriting whatever was rotated out before - see class Javadoc. */
+    /** Moves the current log file to {@link #rotatedLogFilePath()}, overwriting whatever was rotated out before - see class Javadoc. */
     private static void rotateLogFile() throws IOException {
-        Files.move(LOG_FILE_PATH, ROTATED_LOG_FILE_PATH, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(logFilePath(), rotatedLogFilePath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    /** Where the persistent log file lives - see class Javadoc. Resolved fresh every time rather than cached, since {@link Config#getWorkspaceDir()} can change at runtime. */
+    private static Path logFilePath() {
+        return Config.getWorkspaceDir().resolve("cow2win.log");
+    }
+
+    /** The one rotated-out previous log file - see class Javadoc. Together with {@link #logFilePath()}, at most two files ever exist. */
+    private static Path rotatedLogFilePath() {
+        return Config.getWorkspaceDir().resolve("cow2win.log.1");
     }
 }

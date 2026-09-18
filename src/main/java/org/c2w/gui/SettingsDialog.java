@@ -10,14 +10,16 @@ import org.c2w.util.LanguageService;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * Cow2Frame#buildMenuBar). Lets the user change the display language, the
  * default lineup algorithm (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
- * and the backup directory (see org.c2w.util.BackupService); named
- * generically since more application-wide settings are expected to move in
- * here later.
+ * the backup directory (see org.c2w.util.BackupService) and the workspace
+ * directory (see {@link Config#getWorkspaceDir()}); named generically since
+ * more application-wide settings are expected to move in here later.
  */
 public class SettingsDialog extends JDialog {
 
@@ -32,6 +34,9 @@ public class SettingsDialog extends JDialog {
 
     /** Language file key for the backup directory field's label (see {@link #buildUi()}). */
     private static final String KEY_BACKUP_DIRECTORY = "settingsDialog.backupDirectory";
+
+    /** Language file key for the workspace directory field's label (see {@link #buildUi()}). */
+    private static final String KEY_WORKSPACE_DIRECTORY = "settingsDialog.workspaceDirectory";
 
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
     private static final String ICON_SAVE_SETTINGS = "/images/app/save.png";
@@ -54,6 +59,8 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<String> algorithmComboBox = new JComboBox<>();
     private final JTextField backupDirField = new JTextField(20);
     private final JButton browseBackupDirButton = new JButton("...");
+    private final JTextField workspaceDirField = new JTextField(20);
+    private final JButton browseWorkspaceDirButton = new JButton("...");
 
     private boolean confirmed = false;
 
@@ -120,9 +127,22 @@ public class SettingsDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(backupDirPanel, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_WORKSPACE_DIRECTORY)), gbc);
+
+        JPanel workspaceDirPanel = new JPanel(new BorderLayout(4, 0));
+        workspaceDirPanel.add(workspaceDirField, BorderLayout.CENTER);
+        workspaceDirPanel.add(browseWorkspaceDirButton, BorderLayout.EAST);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(workspaceDirPanel, gbc);
+
         add(formPanel, BorderLayout.CENTER);
 
         browseBackupDirButton.addActionListener(e -> onBrowseBackupDir());
+        browseWorkspaceDirButton.addActionListener(e -> onBrowseWorkspaceDir());
     }
 
     /**
@@ -133,7 +153,8 @@ public class SettingsDialog extends JDialog {
      * if none matches (e.g. no config saved yet); selects whichever {@link
      * LineupAlgorithms#ALL} entry matches {@link Config#getDefaultAlgorithm()}
      * the same way (added 2026-09-15, see Cow2Win todos 3.4); and fills in
-     * the currently configured backup directory (see {@link Config#getBackupDir()}).
+     * the currently configured backup directory (see {@link Config#getBackupDir()})
+     * and workspace directory (see {@link Config#getWorkspacePath()}).
      */
     private void preselectCurrentValues() {
         String configured = LanguageService.configuredLanguage();
@@ -160,32 +181,56 @@ public class SettingsDialog extends JDialog {
         }
 
         backupDirField.setText(Config.getBackupDir());
+        workspaceDirField.setText(Config.getWorkspacePath());
     }
 
     private void onBrowseBackupDir() {
+        String chosen = browseForDirectory(backupDirField.getText(), "Select backup directory");
+        if (chosen != null) {
+            backupDirField.setText(chosen);
+        }
+    }
+
+    private void onBrowseWorkspaceDir() {
+        String chosen = browseForDirectory(workspaceDirField.getText(), "Select workspace directory");
+        if (chosen != null) {
+            workspaceDirField.setText(chosen);
+        }
+    }
+
+    /**
+     * Shared by {@link #onBrowseBackupDir()} and {@link #onBrowseWorkspaceDir()}:
+     * opens a directory-only chooser starting at {@code currentPath} (falling
+     * back to sensibly wherever that resolves, even if it doesn't exist yet -
+     * see {@code getAbsoluteFile()} below - since both fields' defaults are
+     * relative paths), and returns the chosen path, or {@code null} if the
+     * dialog was cancelled.
+     */
+    private String browseForDirectory(String currentPath, String dialogTitle) {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Select backup directory");
-        String currentPath = backupDirField.getText().trim();
-        if (!currentPath.isEmpty()) {
-            File currentDir = new File(currentPath);
-            // getAbsoluteFile() so a relative path (e.g. the default "backup")
-            // still resolves to somewhere sensible even if it doesn't exist yet.
+        chooser.setDialogTitle(dialogTitle);
+        String trimmedPath = currentPath.trim();
+        if (!trimmedPath.isEmpty()) {
+            File currentDir = new File(trimmedPath);
             chooser.setCurrentDirectory(currentDir.getAbsoluteFile());
         }
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            backupDirField.setText(chooser.getSelectedFile().getPath());
+            return chooser.getSelectedFile().getPath();
         }
+        return null;
     }
 
     private void onOk() {
         String selectedLanguage = (String) languageComboBox.getSelectedItem();
         boolean languageChanged = !selectedLanguage.equals(LanguageService.configuredLanguage());
+        boolean workspaceChanged = !workspaceDirField.getText().trim().equals(Config.getWorkspacePath());
         Config.setLanguage(selectedLanguage);
         if (algorithmComboBox.getSelectedItem() != null) {
             Config.setDefaultAlgorithm((String) algorithmComboBox.getSelectedItem());
         }
         Config.setBackupDir(backupDirField.getText().trim());
+        Config.setWorkspacePath(workspaceDirField.getText().trim());
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built
@@ -196,9 +241,22 @@ public class SettingsDialog extends JDialog {
         Frame owner = getOwner() instanceof Frame ? (Frame) getOwner() : null;
         setVisible(false);
         dispose();
+        // Both the loaded guild/lineup (see AppContext, built once at
+        // startup from the *old* workspace) and the just-run BackupService
+        // check only reflect a workspace change after a restart, so a
+        // changed workspace gets the same kind of notice as a changed
+        // language rather than looking like it silently took effect.
+        List<String> restartNotices = new ArrayList<>();
         if (languageChanged) {
+            restartNotices.add("Language changed.");
+        }
+        if (workspaceChanged) {
+            restartNotices.add("Workspace directory changed.");
+        }
+        if (!restartNotices.isEmpty()) {
+            restartNotices.add("Restart Cow2Win for the change to take full effect.");
             JOptionPane.showMessageDialog(owner,
-                    "Language changed. Restart Cow2Win for the change to take full effect.",
+                    String.join(" ", restartNotices),
                     "Settings", JOptionPane.INFORMATION_MESSAGE);
         }
     }

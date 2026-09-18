@@ -25,7 +25,6 @@
     "captureBonus": 175,
     "row": 3,
     "column": 0,
-    "buff": null,
     "prerequisites": [
       "bastion-of-fire",
       "gates-of-nature",
@@ -40,7 +39,6 @@
     "captureBonus": 105,
     "row": 7,
     "column": 0,
-    "buff": null,
     "prerequisites": [],
     "strategicImportance": 4
   },
@@ -110,7 +108,6 @@
     "captureBonus": 210,
     "row": 6,
     "column": 2,
-    "buff": null,
     "prerequisites": [],
     "strategicImportance": 10
   },
@@ -121,7 +118,6 @@
     "captureBonus": 410,
     "row": 0,
     "column": 2,
-    "buff": null,
     "prerequisites": [
       "sun-temple",
       "moon-temple"
@@ -173,7 +169,6 @@
     "captureBonus": 175,
     "row": 3,
     "column": 4,
-    "buff": null,
     "prerequisites": [
       "bastion-of-fire",
       "gates-of-nature",
@@ -226,7 +221,6 @@
     "captureBonus": 210,
     "row": 2,
     "column": 2,
-    "buff": null,
     "prerequisites": [
       "bastion-of-fire",
       "gates-of-nature",
@@ -241,7 +235,6 @@
     "captureBonus": 235,
     "row": 7,
     "column": 2,
-    "buff": null,
     "prerequisites": [],
     "strategicImportance": 4
   },
@@ -252,7 +245,6 @@
     "captureBonus": 105,
     "row": 7,
     "column": 4,
-    "buff": null,
     "prerequisites": [],
     "strategicImportance": 4
   },
@@ -303,7 +295,6 @@
     "captureBonus": 140,
     "row": 5,
     "column": 2,
-    "buff": null,
     "prerequisites": [
       "bridge"
     ],

@@ -4,6 +4,7 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.eval.LineupAlgorithm;
+import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
@@ -78,8 +79,8 @@ public class TeamsOverviewPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         java.util.List<Fortification> fortificationCatalog = FortificationRepository.findAll();
-        JComboBox<Fortification> heroFortificationCombo = buildFortificationCombo(fortificationCatalog, FortificationType.HERO);
-        JComboBox<Fortification> titanFortificationCombo = buildFortificationCombo(fortificationCatalog, FortificationType.TITAN);
+        FortComboBox heroFortificationCombo = new FortComboBox(fortificationCatalog, FortificationType.HERO);
+        FortComboBox titanFortificationCombo = new FortComboBox(fortificationCatalog, FortificationType.TITAN);
         this.<Hero>configureTable(heroTable, h -> IconLoader.iconFor(h.imagePath(), MEMBER_ICON_SIZE),
                 h -> LanguageService.displayName(h.id()), heroFortificationCombo, FortificationType.HERO.getColor());
         this.<Titan>configureTable(titanTable, t -> IconLoader.iconFor(t.imagePath(), MEMBER_ICON_SIZE),
@@ -131,31 +132,6 @@ public class TeamsOverviewPanel extends JPanel {
                     String.CASE_INSENSITIVE_ORDER));
         }
     }
-
-    private static JComboBox<Fortification> buildFortificationCombo(java.util.List<Fortification> fortificationCatalog, FortificationType type) {
-        java.util.List<Fortification> sorted = fortificationCatalog.stream()
-                .filter(f -> f.type() == type)
-                .sorted(Comparator.comparing(f -> LanguageService.displayName(f.id())))
-                .toList();
-
-        DefaultComboBoxModel<Fortification> model = new DefaultComboBoxModel<>();
-        model.addElement(null);
-        sorted.forEach(model::addElement);
-
-        JComboBox<Fortification> combo = new JComboBox<>(model);
-        combo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                setText(value == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
-                        : LanguageService.displayName(((Fortification) value).id()));
-                return this;
-            }
-        });
-        return combo;
-    }
-
 
     /**
      * Runs the given algorithm against the current lineup/guild and

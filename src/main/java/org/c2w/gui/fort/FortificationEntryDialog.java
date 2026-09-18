@@ -205,9 +205,22 @@ public final class FortificationEntryDialog extends JDialog {
 
             int rowNumber = i + 1;
             JLabel buffCountLabel = buildBuffCountLabel();
-            JPanel teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
+            TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
                     () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber));
             updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
+            // Picking "- none -" (null, see KEY_NO_SELECTION) here means this
+            // slot's team should lose its assignment to this fortification -
+            // clear the team built for this row so the slot visually empties
+            // out too; performSave then drops the row entirely (totalPower
+            // == 0) instead of re-creating its Lineup.Entry, so the member's
+            // team loses its tie to this fortification once "save" is
+            // clicked (which also refreshes TeamsOverviewPanel and friends
+            // via onSaved, same as any other save from this dialog).
+            combo.addActionListener(e -> {
+                if (combo.getSelectedItem() == null) {
+                    teamEditor.clear();
+                }
+            });
             rowStates.add(new RowState<>(rowDraft, combo, originalMember, originalTeamIndex));
             rowsPanel.add(buildRowPanel(i, combo, teamEditor, buffCountLabel));
         }
@@ -316,6 +329,15 @@ public final class FortificationEntryDialog extends JDialog {
         Logger.logToFile(message.toString());
     }
 
+    /**
+     * Builds one row's member combo (which guild member this row's team
+     * belongs to) - {@link #KEY_NO_SELECTION} ("- none -") for "no member
+     * assigned yet". Selecting it back to {@code null} once a member was
+     * chosen is how this dialog lets a team give up its assignment to
+     * {@link #fortification} - see the caller in {@link #buildRowsGeneric}
+     * for the listener that clears this row's {@link TeamEditorPanel} (and
+     * so its {@link TeamDraft}) when that happens.
+     */
     private JComboBox<MemberDraft> buildMemberCombo() {
         DefaultComboBoxModel<MemberDraft> model = new DefaultComboBoxModel<>();
         model.addElement(null);
@@ -377,7 +399,7 @@ public final class FortificationEntryDialog extends JDialog {
         };
     }
 
-    private <T> JPanel buildTeamEditorPanel(TeamDraft<T> teamDraft, List<T> catalog, Function<T, String> label,
+    private <T> TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, List<T> catalog, Function<T, String> label,
                                             Function<T, Icon> icon, Comparator<T> catalogOrder, Runnable onChanged) {
         return new TeamEditorPanel<>(catalog, label, icon, null, teamDraft,
                 LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged);

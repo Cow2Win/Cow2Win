@@ -34,6 +34,21 @@ public class ToolbarPanel extends JPanel {
     private static final String KEY_NEW_GUILD = "toolbar.newGuild";
     private static final String KEY_REMOVE_GUILD = "toolbar.removeGuild";
 
+    /** Language file key for the (shared) title of every {@link #onRemoveGuild()} dialog - the confirmation and the "only guild left" warning alike, mirroring how {@link #onRemoveLineup()} reuses one plain "Remove lineup" title for both. */
+    private static final String KEY_REMOVE_GUILD_DIALOG_TITLE = "toolbar.removeGuild.dialogTitle";
+
+    /** Language file key for {@link #onRemoveGuild()}'s confirmation question - contains a literal {@code "{0}"} placeholder for the guild folder name, replaced in {@link #onRemoveGuild()} itself (no {@link java.text.MessageFormat} elsewhere in this codebase, so kept consistent with a plain {@link String#replace}). */
+    private static final String KEY_REMOVE_GUILD_CONFIRM_MESSAGE = "toolbar.removeGuild.confirmMessage";
+
+    /** Language file key for the message shown instead of the confirmation when the selected guild is the only one left (see {@link #onRemoveGuild()}). */
+    private static final String KEY_REMOVE_GUILD_LAST_MESSAGE = "toolbar.removeGuild.lastMessage";
+
+    /** Language file key for the title of the error dialog shown when {@link GuildRepository#delete} fails in {@link #onRemoveGuild()}. */
+    private static final String KEY_REMOVE_GUILD_ERROR_TITLE = "toolbar.removeGuild.errorTitle";
+
+    /** Language file key for the message prefix (followed by the exception's own message) of that same error dialog. */
+    private static final String KEY_REMOVE_GUILD_ERROR = "toolbar.removeGuild.error";
+
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
 
@@ -78,7 +93,6 @@ public class ToolbarPanel extends JPanel {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "all team scores" button (see {@link #onOpenAllTeamScores()}). */
     private static final String KEY_ALL_TEAMS_SCORES = "toolbar.allTeamsScores";
 
-    /** Same icon as {@link #ICON_ALL_TEAMS} - {@link AllTeamsScoreOverviewDialog} is the score-showing counterpart of {@link AllTeamsOverviewDialog}, told apart by color alone (see {@link IconLoader#PURPLE}). */
     private static final String ICON_ALL_TEAMS_SCORES = ICON_ALL_TEAMS;
 
     private static final int TOOLBAR_ICON_SIZE = 20;
@@ -320,7 +334,7 @@ public class ToolbarPanel extends JPanel {
     private Path workspaceDir() {
         Path guildDir = appContext.guildFilePath().getParent();
         Path workspace = guildDir == null ? null : guildDir.getParent();
-        return workspace == null ? Config.DIR : workspace;
+        return workspace == null ? Config.getWorkspaceDir() : workspace;
     }
 
 
@@ -432,8 +446,64 @@ public class ToolbarPanel extends JPanel {
             Logger.log("Switched to guild: " + guildFilePath);
         }
     }
-    private void onRemoveGuild(){
+    /**
+     * Deletes the currently selected guild folder from disk (see
+     * {@link GuildRepository#delete}, added 2026-09-18) and switches to
+     * whichever guild takes its place in {@link #guildCombo} - mirrors
+     * {@link #onRemoveLineup()}: a confirmation dialog and a guard against
+     * removing the last guild left in the workspace, except both dialogs
+     * here are localized (see {@link #KEY_REMOVE_GUILD_CONFIRM_MESSAGE}/
+     * {@link #KEY_REMOVE_GUILD_LAST_MESSAGE}), per Thorsten's request -
+     * unlike most of this class's other (still hardcoded English) dialogs.
+     *
+     * <p>{@link #guildCombo}'s selection always mirrors the currently open
+     * guild by the time this runs (picking a different entry already
+     * triggers an immediate {@link #onGuildSelected()} switch or reverts
+     * the selection), so - just like {@link #onRemoveLineup()} does for
+     * {@link #lineupCombo} - the selected item can be deleted without first
+     * checking it against {@link #appContext}.
+     */
+    private void onRemoveGuild() {
+        String folderName = (String) guildCombo.getSelectedItem();
+        if (folderName == null) {
+            return;
+        }
+        List<String> folderNames = listGuildFolderNames();
+        int index = folderNames.indexOf(folderName);
+        if (folderNames.size() <= 1) {
+            JOptionPane.showMessageDialog(this,
+                    LanguageService.displayName(KEY_REMOVE_GUILD_LAST_MESSAGE),
+                    LanguageService.displayName(KEY_REMOVE_GUILD_DIALOG_TITLE), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
+        String confirmMessage = LanguageService.displayName(KEY_REMOVE_GUILD_CONFIRM_MESSAGE)
+                .replace("{0}", folderName);
+        int confirm = JOptionPane.showConfirmDialog(null, confirmMessage,
+                LanguageService.displayName(KEY_REMOVE_GUILD_DIALOG_TITLE), JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        Path guildDir = workspaceDir().resolve(folderName);
+        try {
+            GuildRepository.delete(guildDir);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this,
+                    LanguageService.displayName(KEY_REMOVE_GUILD_ERROR) + "\n" + e.getMessage(),
+                    LanguageService.displayName(KEY_REMOVE_GUILD_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Logger.log("Removed guild: " + guildDir);
+
+        List<String> remaining = listGuildFolderNames();
+        int nextIndex = Math.min(index, remaining.size() - 1);
+        String nextFolderName = remaining.get(nextIndex);
+        Path nextGuildDir = workspaceDir().resolve(nextFolderName);
+        Path nextGuildFilePath = nextGuildDir.resolve(C2WApp.GUILD_FILE_NAME);
+        if (switchToGuild(nextGuildDir, nextGuildFilePath)) {
+            Logger.log("Switched to guild: " + nextGuildFilePath);
+        }
     }
 
     private void onNewGuild() {

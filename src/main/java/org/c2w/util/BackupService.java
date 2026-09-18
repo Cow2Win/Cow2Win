@@ -41,14 +41,12 @@ public class BackupService {
     public static final String DAILY_BACKUP_FILE_NAME = "workspace-daily.zip";
     public static final String WEEKLY_BACKUP_FILE_NAME = "workspace-weekly.zip";
 
-    private static final Path WORKSPACE_DIR = Config.DIR;
-
     private BackupService() {
     }
 
-    /** Checks/creates both backups for the real "workspace" folder and the configured backup directory (see {@link Config#getBackupDirPath()}). */
+    /** Checks/creates both backups for the configured workspace folder (see {@link Config#getWorkspaceDir()}) and the configured backup directory (see {@link Config#getBackupDirPath()}). */
     public static void checkAndCreateBackups() {
-        checkAndCreateBackups(WORKSPACE_DIR, Config.getBackupDirPath());
+        checkAndCreateBackups(Config.getWorkspaceDir(), Config.getBackupDirPath());
     }
 
     /** Package-private overload taking explicit paths so tests don't have to touch the real "workspace" folder or {@link Config}. */

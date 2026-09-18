@@ -43,6 +43,8 @@ public final class TeamEditorPanel<T> extends JPanel {
     private final TeamDraft<T> teamDraft;
     private final List<JComboBox<T>> combos = new ArrayList<>(SLOT_COUNT);
     private final List<JLabel> roleLabels = new ArrayList<>(SLOT_COUNT);
+    private final Runnable onChanged;
+    private JTextField powerField;
     private boolean refreshing;
     private boolean formattingPowerField;
 
@@ -74,11 +76,12 @@ public final class TeamEditorPanel<T> extends JPanel {
         this.roleDescriber = roleDescriber;
         this.emptyLabel = emptyLabel;
         this.teamDraft = teamDraft;
+        this.onChanged = onChanged;
         this.sortedCatalog = catalog.stream()
                 .sorted(catalogOrder)
                 .toList();
 
-        JTextField powerField = buildPowerField(teamDraft);
+        this.powerField = buildPowerField(teamDraft);
         add(powerField);
 
         for (int i = 0; i < SLOT_COUNT; i++) {
@@ -311,6 +314,41 @@ public final class TeamEditorPanel<T> extends JPanel {
                 digitsOnly = digitsOnly.substring(0, Math.max(0, digitsOnly.length() - (resultLength - maxDigits)));
             }
             super.replace(fb, offset, length, digitsOnly, attrs);
+        }
+    }
+
+    /**
+     * Resets this team back to empty: every slot combo goes back to
+     * "- none -" and the power field back to 0, exactly as if each slot had
+     * been cleared out by hand one at a time. Added 2026-09-18 for
+     * {@code org.c2w.gui.fort.FortificationEntryDialog}, which calls this
+     * when its own member combo (a different combo - which guild member
+     * this row belongs to, not a team slot) is reset to "no selection", so
+     * the team built here is discarded along with that row's fortification
+     * assignment. Fires {@code onChanged} exactly like an ordinary slot
+     * change (see the per-combo {@code addActionListener} above), so
+     * anything mirroring this team's state (e.g. a buff-member count label)
+     * stays in sync; a no-op {@code onChanged} (null) is fine, same as
+     * everywhere else it's used.
+     */
+    public void clear() {
+        refreshing = true;
+        try {
+            for (JComboBox<T> combo : combos) {
+                combo.setSelectedItem(null);
+            }
+        } finally {
+            refreshing = false;
+        }
+        setPowerFieldText(powerField, GuiUtils.NUMBER_FORMAT.format(0));
+        teamDraft.totalPower = 0;
+        syncDraftFromCombos();
+        refreshComboOptions();
+        updateRoleLabels();
+        updateComboTooltips();
+        touchLastModified();
+        if (onChanged != null) {
+            onChanged.run();
         }
     }
 

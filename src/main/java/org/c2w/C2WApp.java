@@ -92,7 +92,7 @@ public class C2WApp {
      */
     private static void runInitialSetup()  {
 
-        Path guildDir = Config.DIR.resolve(DEFAULT_GUILD_NAME);
+        Path guildDir = Config.getWorkspaceDir().resolve(DEFAULT_GUILD_NAME);
         Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
         Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 

@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class GuildRepository {
@@ -57,6 +58,30 @@ public class GuildRepository {
             throw new IllegalArgumentException("path must not be null");
         }
         JsonSupport.writeJsonFile(guildToTree(guild), path);
+    }
+
+    /**
+     * Deletes the given guild folder and everything in it (see
+     * {@code org.c2w.gui.ToolbarPanel#onRemoveGuild}, added 2026-09-18) -
+     * recursive, unlike {@link LineupRepository#delete}, since a guild
+     * folder holds more than just the guild file itself (its
+     * {@code *.lineup} files, generated reports, etc.).
+     *
+     * @throws IOException if the given path is not a directory, or any
+     *                      file/subfolder in it cannot be deleted
+     */
+    public static void delete(Path guildDir) throws IOException {
+        if (guildDir == null) {
+            throw new IllegalArgumentException("guildDir must not be null");
+        }
+        if (!Files.isDirectory(guildDir)) {
+            throw new IOException("Not a directory: " + guildDir);
+        }
+        try (var paths = Files.walk(guildDir)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.delete(path);
+            }
+        }
     }
 
     // ---- Guild <-> JSON tree ----

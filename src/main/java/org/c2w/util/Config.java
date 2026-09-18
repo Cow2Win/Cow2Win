@@ -11,34 +11,70 @@ import java.util.Properties;
 public final class Config {
 
     /**
-     * {@code <user.home>/.cow2Win} - umbrella folder holding both {@link
-     * #DIR} and the default backup folder (see {@link #DEFAULT_BACKUP_DIR}).
-     * Anchored to the user's home directory (rather than the app's working
-     * directory) so every install/update on this machine automatically
-     * finds the same data, with nothing to recreate or copy by hand.
+     * {@code <user.home>/.cow2Win} - umbrella folder holding both the
+     * default workspace folder ({@link #DEFAULT_WORKSPACE_DIR}) and the
+     * default backup folder ({@link #DEFAULT_BACKUP_DIR}). Anchored to the
+     * user's home directory (rather than the app's working directory) so
+     * every install/update on this machine automatically finds the same
+     * data, with nothing to recreate or copy by hand.
      */
     private static final Path ROOT = Paths.get(System.getProperty("user.home"), ".cow2Win");
 
     /**
-     * {@code <user.home>/.cow2Win/workspace} - guilds, lineups, this
-     * class's config.properties, and {@link Logger}'s log file. Also used
-     * by {@link BackupService} (what gets backed up) and, as a fallback,
-     * {@code org.c2w.gui.ToolbarPanel}.
+     * {@code <user.home>/.cow2Win/workspace} - guilds, lineups and {@link
+     * Logger}'s log file, unless {@link #KEY_WORKSPACE_PATH} points
+     * elsewhere (see {@link #getWorkspaceDir()}). Also used by {@link
+     * BackupService} (what gets backed up) and, as a fallback, {@code
+     * org.c2w.gui.ToolbarPanel}.
      */
-    public static final Path DIR = ROOT.resolve("workspace");
+    private static final Path DEFAULT_WORKSPACE_DIR = ROOT.resolve("workspace");
 
-    private static final Path CONFIG_FILE_PATH = DIR.resolve("config.properties");
+    /**
+     * This class's own config.properties - deliberately NOT under {@link
+     * #getWorkspaceDir()}: {@link #KEY_WORKSPACE_PATH} is exactly what
+     * points at the workspace to use, and a config file living inside the
+     * workspace it names could never point at a *different* one (there
+     * would be nowhere to read {@link #KEY_WORKSPACE_PATH} from before
+     * knowing which workspace's config file to read it from). Living at
+     * the app level instead is what makes several Cow2Win
+     * installations/copies on the same machine able to use different
+     * workspace folders.
+     *
+     * <p>Resolved the same way as {@link JsonSupport#resolveDataFile} -
+     * the packaged app's on-disk "resources" folder (shipped right next to
+     * {@code Cow2Win.exe} via jpackage's {@code appContentPaths}) when
+     * running the installed app-image, falling back to the project root
+     * when run from the IDE/source checkout (see {@link
+     * #resolveConfigFilePath()}).
+     */
+    private static final Path CONFIG_FILE_PATH = resolveConfigFilePath();
+
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
-    /** Default backup directory: a "backup" folder next to {@link #DIR}, under the same {@link #ROOT} umbrella. */
+    private static final String KEY_WORKSPACE_PATH = "workspacePath";
+    /** Default backup directory: a "backup" folder next to {@link #DEFAULT_WORKSPACE_DIR}, under the same {@link #ROOT} umbrella. */
     private static final String DEFAULT_BACKUP_DIR = ROOT.resolve("backup").toString();
 
     private static final Properties properties = new Properties();
 
     private Config() {
+    }
+
+    /**
+     * Where {@link #CONFIG_FILE_PATH} lives: the packaged app-image's
+     * on-disk {@code resources} folder (a sibling of {@code Cow2Win.exe},
+     * present whenever running as the installed app rather than from
+     * source - see {@code JsonSupport}'s class Javadoc) if that folder
+     * exists, otherwise the current working directory, which is the
+     * project root when run from the IDE/source checkout.
+     */
+    private static Path resolveConfigFilePath() {
+        Path packagedResources = Paths.get("resources");
+        Path base = Files.isDirectory(packagedResources) ? packagedResources : Paths.get("");
+        return base.resolve("config.properties");
     }
 
     public static boolean exists() {
@@ -151,5 +187,35 @@ public final class Config {
     /** {@link #getBackupDir()} as a {@link Path}, for callers (e.g. {@link BackupService}) that need to use it directly. */
     public static Path getBackupDirPath() {
         return Paths.get(getBackupDir());
+    }
+
+    // --- workspacePath ---
+
+    /**
+     * Configured workspace directory (guilds, lineups, {@link Logger}'s log
+     * file), or {@link #DEFAULT_WORKSPACE_DIR} if none was ever saved. See
+     * {@link #getWorkspaceDir()} for the resolved {@link Path} - callers
+     * throughout the app (e.g. {@code C2WApp}, {@code ToolbarPanel}, {@link
+     * BackupService}, {@link Logger}) should go through that rather than
+     * this raw getter, so a configured workspace actually takes effect
+     * everywhere.
+     */
+    public static String getWorkspacePath() {
+        return properties.getProperty(KEY_WORKSPACE_PATH, DEFAULT_WORKSPACE_DIR.toString());
+    }
+
+    public static void setWorkspacePath(String workspacePath) {
+        setProperty(KEY_WORKSPACE_PATH, (workspacePath == null || workspacePath.isBlank())
+                ? DEFAULT_WORKSPACE_DIR.toString() : workspacePath);
+    }
+
+    /**
+     * {@link #getWorkspacePath()} as a {@link Path} - this is the one to
+     * use wherever the old {@code Config.DIR} field used to be read, since
+     * unlike that field this reflects {@link #KEY_WORKSPACE_PATH} and can
+     * therefore only be trusted after {@link #load()} has run.
+     */
+    public static Path getWorkspaceDir() {
+        return Paths.get(getWorkspacePath());
     }
 }
