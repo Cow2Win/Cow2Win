@@ -11,6 +11,7 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.guild.GuildEntryDialog;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -19,47 +20,35 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 public class ToolbarPanel extends JPanel {
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the guild combo box. */
     private static final String KEY_GUILD_LABEL = "toolbar.guild";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "new guild" button (see {@link #onNewGuild()}). */
-    private static final String KEY_NEW_GUILD = "toolbar.newGuild";
-    private static final String KEY_REMOVE_GUILD = "toolbar.removeGuild";
-
-    /** Language file key for the (shared) title of every {@link #onRemoveGuild()} dialog - the confirmation and the "only guild left" warning alike, mirroring how {@link #onRemoveLineup()} reuses one plain "Remove lineup" title for both. */
-    private static final String KEY_REMOVE_GUILD_DIALOG_TITLE = "toolbar.removeGuild.dialogTitle";
-
-    /** Language file key for {@link #onRemoveGuild()}'s confirmation question - contains a literal {@code "{0}"} placeholder for the guild folder name, replaced in {@link #onRemoveGuild()} itself (no {@link java.text.MessageFormat} elsewhere in this codebase, so kept consistent with a plain {@link String#replace}). */
-    private static final String KEY_REMOVE_GUILD_CONFIRM_MESSAGE = "toolbar.removeGuild.confirmMessage";
-
-    /** Language file key for the message shown instead of the confirmation when the selected guild is the only one left (see {@link #onRemoveGuild()}). */
-    private static final String KEY_REMOVE_GUILD_LAST_MESSAGE = "toolbar.removeGuild.lastMessage";
-
-    /** Language file key for the title of the error dialog shown when {@link GuildRepository#delete} fails in {@link #onRemoveGuild()}. */
-    private static final String KEY_REMOVE_GUILD_ERROR_TITLE = "toolbar.removeGuild.errorTitle";
-
-    /** Language file key for the message prefix (followed by the exception's own message) of that same error dialog. */
-    private static final String KEY_REMOVE_GUILD_ERROR = "toolbar.removeGuild.error";
-
-    private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
-    private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
-
     /** Glob pattern (see {@link Files#newDirectoryStream(Path, String)}) matching lineup files in the guild folder. */
     private static final String LINEUP_FILE_GLOB = "*.lineup";
 
-    /** File name suffix of a lineup file - stripped for display in the combo box (see {@link #stripLineupSuffix}) and appended when creating one (see {@link #onNewLineup()}). */
-    private static final String LINEUP_FILE_SUFFIX = ".lineup";
+    /**
+     * File name suffix of a lineup file - stripped for display in the combo
+     * box (see {@link #stripLineupSuffix}) and appended when creating one
+     * (see {@code Cow2Frame#onNewLineup()}). Package-visible (not
+     * {@code private}) so {@code Cow2Frame} can reuse it there, since the
+     * "new/remove/clear lineup" logic moved to that class's own "Lineup"
+     * menu (see {@link #stripLineupSuffix}).
+     */
+    static final String LINEUP_FILE_SUFFIX = ".lineup";
 
-    /** Characters not allowed in a Windows file name - rejected in {@link #onNewLineup()}. */
-    private static final String ILLEGAL_FILENAME_CHARS = "<>:\"/\\|?*";
+    /**
+     * Characters not allowed in a Windows file name - rejected in
+     * {@link #onNewLineup()} and {@code Cow2Frame#onNewGuild()}. Package-visible
+     * (not {@code private}) so {@code Cow2Frame} can reuse it there instead of
+     * duplicating it, since the "new guild" logic moved to that class's own
+     * "Guild" menu (see {@link #containsIllegalFilenameChar}).
+     */
+    static final String ILLEGAL_FILENAME_CHARS = "<>:\"/\\|?*";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the lineup combo box. */
     private static final String KEY_LINEUP_LABEL = "toolbar.lineup";
@@ -68,19 +57,6 @@ public class ToolbarPanel extends JPanel {
     private static final String KEY_SAVE_LINEUP = "toolbar.saveLineup";
 
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "new lineup" button (see {@link #onNewLineup()}). */
-    private static final String KEY_NEW_LINEUP = "toolbar.newLineup";
-
-    private static final String ICON_NEW_LINEUP = "/images/app/lineup-new.png";
-
-    private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
-
-    private static final String ICON_REMOVE_LINEUP = "/images/app/lineup-remove.png";
-
-    private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
-
-    private static final String ICON_CLEAR_LINEUP = "/images/app/lineup-clean.png";
 
     private static final String KEY_GENERATE_REPORT = "toolbar.generateReport";
 
@@ -95,7 +71,8 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_ALL_TEAMS_SCORES = ICON_ALL_TEAMS;
 
-    private static final int TOOLBAR_ICON_SIZE = 20;
+    /** Package-visible (not {@code private}) so {@code Cow2Frame} can size its "Guild" menu item icons to match (see class Javadoc on the removed guild buttons). */
+    static final int TOOLBAR_ICON_SIZE = 20;
 
     /**
      * Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of
@@ -108,12 +85,6 @@ public class ToolbarPanel extends JPanel {
 
     /** Classpath path of the "save guild" button's icon (see {@link IconLoader}). */
     private static final String ICON_SAVE_GUILD = "/images/app/save.png";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild editor" button (see {@link #openGuildEditor}). */
-    private static final String KEY_OPEN_GUILD_EDITOR = "teamsOverview.openGuildEditor";
-
-    /** Classpath path of the "open guild editor" button's icon (see {@link IconLoader}). */
-    private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the algorithm combo box. */
     private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
@@ -130,14 +101,17 @@ public class ToolbarPanel extends JPanel {
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_ALL_TEAMS}/{@link #ICON_ALL_TEAMS_SCORES}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide team assignment" button (see {@link #onOpenGuildEntry()}). */
+    private static final String KEY_OPEN_GUILD_ENTRY = "toolbar.openGuildEntry";
+
+    /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon {@link org.c2w.data.model.FortificationType#HERO} itself uses, since this button opens the guild-wide counterpart of a single fortification's own team-entry dialog. */
+    private static final String ICON_OPEN_GUILD_ENTRY = "/images/app/square.png";
+
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
 
-    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@link #onNewGuild()}) - passed in from the outside since this panel has no reference to {@code TeamsOverviewPanel}'s window title, which also needs refreshing. */
+    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@code Cow2Frame#onNewGuild()}) - passed in from the outside since this panel has no reference to {@code TeamsOverviewPanel}'s window title, which also needs refreshing. */
     private final Runnable onGuildSwitched;
-
-    /** Opens the guild editor dialog (see {@code Cow2Frame#onOpenGuildEditor}) - passed in from the outside for the same reason as {@link #onGuildSwitched}. */
-    private final Runnable openGuildEditor;
 
     /**
      * The panel whose "save guild"/"run algorithm" actions the
@@ -174,7 +148,7 @@ public class ToolbarPanel extends JPanel {
     private boolean populatingGuildCombo = false;
 
     public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel,
-                        TeamsOverviewPanel teamsOverviewPanel, Runnable openGuildEditor, Runnable onGuildSwitched) {
+                        TeamsOverviewPanel teamsOverviewPanel, Runnable onGuildSwitched) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 4));
         if (appContext == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a guildContext");
@@ -185,16 +159,12 @@ public class ToolbarPanel extends JPanel {
         if (teamsOverviewPanel == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a teamsOverviewPanel");
         }
-        if (openGuildEditor == null) {
-            throw new IllegalArgumentException("ToolbarPanel needs an openGuildEditor callback");
-        }
         if (onGuildSwitched == null) {
             throw new IllegalArgumentException("ToolbarPanel needs an onGuildSwitched callback");
         }
         this.appContext = appContext;
         this.fortificationMapPanel = fortificationMapPanel;
         this.teamsOverviewPanel = teamsOverviewPanel;
-        this.openGuildEditor = openGuildEditor;
         this.onGuildSwitched = onGuildSwitched;
 
         add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
@@ -211,22 +181,6 @@ public class ToolbarPanel extends JPanel {
         saveGuildButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
         saveGuildButton.addActionListener(e -> onSaveGuild());
         add(saveGuildButton);
-
-        FlatButton newGuildButton = new FlatButton(IconLoader.iconFor(ICON_NEW_GUILD, TOOLBAR_ICON_SIZE,IconLoader.GREEN));
-        newGuildButton.setToolTipText(LanguageService.displayName(KEY_NEW_GUILD));
-        newGuildButton.addActionListener(e -> onNewGuild());
-        add(newGuildButton);
-
-        FlatButton openGuildEditorButton =
-                new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_EDITOR, TOOLBAR_ICON_SIZE));
-        openGuildEditorButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
-        openGuildEditorButton.addActionListener(e -> openGuildEditor.run());
-        add(openGuildEditorButton);
-
-        FlatButton removeGuildButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_GUILD, TOOLBAR_ICON_SIZE,IconLoader.RED));
-        removeGuildButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_GUILD));
-        removeGuildButton.addActionListener(e -> onRemoveGuild());
-        add(removeGuildButton);
 
         JSeparator guildLineupSeparator = new JSeparator(SwingConstants.VERTICAL);
         guildLineupSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -257,21 +211,6 @@ public class ToolbarPanel extends JPanel {
         saveLineupButton.addActionListener(e -> onSaveLineup());
         add(saveLineupButton);
 
-        FlatButton newLineupButton = new FlatButton(IconLoader.iconFor(ICON_NEW_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.GREEN));
-        newLineupButton.setToolTipText(LanguageService.displayName(KEY_NEW_LINEUP));
-        newLineupButton.addActionListener(e -> onNewLineup());
-        add(newLineupButton);
-
-        FlatButton removeLineupButton = new FlatButton(IconLoader.iconFor(ICON_REMOVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.RED));
-        removeLineupButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_LINEUP));
-        removeLineupButton.addActionListener(e -> onRemoveLineup());
-        add(removeLineupButton);
-
-        FlatButton clearLineupButton = new FlatButton(IconLoader.iconFor(ICON_CLEAR_LINEUP, TOOLBAR_ICON_SIZE));
-        clearLineupButton.setToolTipText(LanguageService.displayName(KEY_CLEAR_LINEUP));
-        clearLineupButton.addActionListener(e -> onClearLineup());
-        add(clearLineupButton);
-
         FlatButton generateReportButton = new FlatButton(IconLoader.iconFor(ICON_GENERATE_REPORT, TOOLBAR_ICON_SIZE));
         generateReportButton.setToolTipText(LanguageService.displayName(KEY_GENERATE_REPORT));
         generateReportButton.addActionListener(e -> onGenerateReport());
@@ -297,6 +236,11 @@ public class ToolbarPanel extends JPanel {
         compareLineupsButton.setToolTipText(LanguageService.displayName(KEY_COMPARE_LINEUPS));
         compareLineupsButton.addActionListener(e -> onOpenLineupComparison());
         add(compareLineupsButton);
+
+        FlatButton openGuildEntryButton = new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_ENTRY, TOOLBAR_ICON_SIZE));
+        openGuildEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_ENTRY));
+        openGuildEntryButton.addActionListener(e -> onOpenGuildEntry());
+        add(openGuildEntryButton);
 
         add(statusLabel);
     }
@@ -331,14 +275,16 @@ public class ToolbarPanel extends JPanel {
     }
 
 
-    private Path workspaceDir() {
+    /** Package-visible (not {@code private}) so {@code Cow2Frame#onNewGuild()}/{@code onRemoveGuild()} can reuse it - see the class-level note on the removed guild buttons. */
+    Path workspaceDir() {
         Path guildDir = appContext.guildFilePath().getParent();
         Path workspace = guildDir == null ? null : guildDir.getParent();
         return workspace == null ? Config.getWorkspaceDir() : workspace;
     }
 
 
-    private java.util.List<String> listGuildFolderNames() {
+    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
+    java.util.List<String> listGuildFolderNames() {
         java.util.List<String> result = new ArrayList<>();
         Path workspaceDir = workspaceDir();
         if (!Files.isDirectory(workspaceDir)) {
@@ -376,7 +322,8 @@ public class ToolbarPanel extends JPanel {
     }
 
 
-    private boolean confirmDiscardUnsavedChanges() {
+    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
+    boolean confirmDiscardUnsavedChanges() {
         if (!GuiUtils.editedGuild && !GuiUtils.editedLineup) {
             return true;
         }
@@ -388,7 +335,8 @@ public class ToolbarPanel extends JPanel {
         return choice == JOptionPane.YES_OPTION;
     }
 
-     private boolean switchToGuild(Path guildDir, Path guildFilePath) {
+    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
+    boolean switchToGuild(Path guildDir, Path guildFilePath) {
         Guild guild;
         try {
             guild = GuildRepository.load(guildFilePath);
@@ -446,102 +394,30 @@ public class ToolbarPanel extends JPanel {
             Logger.log("Switched to guild: " + guildFilePath);
         }
     }
+
     /**
-     * Deletes the currently selected guild folder from disk (see
-     * {@link GuildRepository#delete}, added 2026-09-18) and switches to
-     * whichever guild takes its place in {@link #guildCombo} - mirrors
-     * {@link #onRemoveLineup()}: a confirmation dialog and a guard against
-     * removing the last guild left in the workspace, except both dialogs
-     * here are localized (see {@link #KEY_REMOVE_GUILD_CONFIRM_MESSAGE}/
-     * {@link #KEY_REMOVE_GUILD_LAST_MESSAGE}), per Thorsten's request -
-     * unlike most of this class's other (still hardcoded English) dialogs.
-     *
-     * <p>{@link #guildCombo}'s selection always mirrors the currently open
-     * guild by the time this runs (picking a different entry already
-     * triggers an immediate {@link #onGuildSelected()} switch or reverts
-     * the selection), so - just like {@link #onRemoveLineup()} does for
-     * {@link #lineupCombo} - the selected item can be deleted without first
-     * checking it against {@link #appContext}.
+     * The folder name currently selected in {@link #guildCombo} (or
+     * {@code null} if nothing is selected) - package-visible (not
+     * {@code private}) so {@code Cow2Frame#onRemoveGuild()} can read it now
+     * that the "remove guild" logic (and the "new guild" logic alongside it)
+     * moved there into the new "Guild" menu, taking the {@code FlatButton}s
+     * that used to trigger them with it. {@link #guildCombo}'s selection
+     * always mirrors the currently open guild (picking a different entry
+     * already triggers an immediate {@link #onGuildSelected()} switch or
+     * reverts the selection), so the selected item can be removed without
+     * first checking it against {@link #appContext}.
      */
-    private void onRemoveGuild() {
-        String folderName = (String) guildCombo.getSelectedItem();
-        if (folderName == null) {
-            return;
-        }
-        List<String> folderNames = listGuildFolderNames();
-        int index = folderNames.indexOf(folderName);
-        if (folderNames.size() <= 1) {
-            JOptionPane.showMessageDialog(this,
-                    LanguageService.displayName(KEY_REMOVE_GUILD_LAST_MESSAGE),
-                    LanguageService.displayName(KEY_REMOVE_GUILD_DIALOG_TITLE), JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String confirmMessage = LanguageService.displayName(KEY_REMOVE_GUILD_CONFIRM_MESSAGE)
-                .replace("{0}", folderName);
-        int confirm = JOptionPane.showConfirmDialog(null, confirmMessage,
-                LanguageService.displayName(KEY_REMOVE_GUILD_DIALOG_TITLE), JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        Path guildDir = workspaceDir().resolve(folderName);
-        try {
-            GuildRepository.delete(guildDir);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,
-                    LanguageService.displayName(KEY_REMOVE_GUILD_ERROR) + "\n" + e.getMessage(),
-                    LanguageService.displayName(KEY_REMOVE_GUILD_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        Logger.log("Removed guild: " + guildDir);
-
-        List<String> remaining = listGuildFolderNames();
-        int nextIndex = Math.min(index, remaining.size() - 1);
-        String nextFolderName = remaining.get(nextIndex);
-        Path nextGuildDir = workspaceDir().resolve(nextFolderName);
-        Path nextGuildFilePath = nextGuildDir.resolve(C2WApp.GUILD_FILE_NAME);
-        if (switchToGuild(nextGuildDir, nextGuildFilePath)) {
-            Logger.log("Switched to guild: " + nextGuildFilePath);
-        }
+    String selectedGuildFolderName() {
+        return (String) guildCombo.getSelectedItem();
     }
 
-    private void onNewGuild() {
-        String input = JOptionPane.showInputDialog(this, "Name of the new guild:", "New guild",
-                JOptionPane.PLAIN_MESSAGE);
-        if (input == null) {
-            return;
-        }
-        String name = input.trim();
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a name.", "New guild", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (containsIllegalFilenameChar(name)) {
-            JOptionPane.showMessageDialog(this,
-                    "The name must not contain any of these characters: " + ILLEGAL_FILENAME_CHARS,
-                    "New guild", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Path guildDir = workspaceDir().resolve(name);
-        if (Files.exists(guildDir)) {
-            JOptionPane.showMessageDialog(this, "A guild folder named \"" + name + "\" already exists.",
-                    "New guild", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (!confirmDiscardUnsavedChanges()) {
-            return;
-        }
-
-        Path guildFilePath = C2WApp.createInitialGuildFile(name, guildDir);
-        C2WApp.createInitialLineupFile(name, guildDir);
-        if (switchToGuild(guildDir, guildFilePath)) {
-            Logger.log("Created guild: " + guildFilePath);
-        }
-    }
-
-    private void populateLineupCombo() {
+    /**
+     * Package-visible (not {@code private}) so {@code Cow2Frame#onNewLineup()}/
+     * {@code onRemoveLineup()} can refresh {@link #lineupCombo} after
+     * changing which ".lineup" files exist, now that logic moved there into
+     * the new "Lineup" menu, see {@link #selectedLineupFileName()}.
+     */
+    void populateLineupCombo() {
         populatingCombo = true;
         try {
             java.util.List<String> fileNames = listLineupFileNames();
@@ -558,8 +434,19 @@ public class ToolbarPanel extends JPanel {
         }
     }
 
-    private java.util.List<String> listLineupFileNames() {
+    /** Package-visible (not {@code private}) - see {@link #populateLineupCombo()}. */
+    java.util.List<String> listLineupFileNames() {
         return listLineupFileNames(appContext.guildFilePath().getParent());
+    }
+
+    /**
+     * The file name currently selected in {@link #lineupCombo} (or
+     * {@code null} if nothing is selected) - package-visible (not
+     * {@code private}) so {@code Cow2Frame#onRemoveLineup()} can read it,
+     * see {@link #populateLineupCombo()}. Mirrors {@link #selectedGuildFolderName()}.
+     */
+    String selectedLineupFileName() {
+        return (String) lineupCombo.getSelectedItem();
     }
 
     /**
@@ -621,140 +508,17 @@ public class ToolbarPanel extends JPanel {
         }
     }
 
-    /** Display text for a lineup file name in the combo box - the file name without its {@value #LINEUP_FILE_SUFFIX} suffix (purely cosmetic, see class Javadoc). */
-    private static String stripLineupSuffix(String fileName) {
+    /**
+     * Display text for a lineup file name in the combo box - the file name
+     * without its {@value #LINEUP_FILE_SUFFIX} suffix (purely cosmetic, see
+     * class Javadoc). Package-visible (not {@code private}) so {@code
+     * Cow2Frame#onRemoveLineup()} can reuse it in its confirmation dialog,
+     * see {@link #populateLineupCombo()}.
+     */
+    static String stripLineupSuffix(String fileName) {
         return fileName.endsWith(LINEUP_FILE_SUFFIX)
                 ? fileName.substring(0, fileName.length() - LINEUP_FILE_SUFFIX.length())
                 : fileName;
-    }
-
-    private void onNewLineup() {
-        // Pre-filled with today's date (2026-09-15) rather than left empty, per
-        // Thorsten's request - still a plain, freely editable text field though
-        // (selectionValues == null, see JOptionPane's 7-arg showInputDialog javadoc:
-        // a null selectionValues array with a non-null initialSelectionValue renders
-        // as a JTextField seeded with that value), same as before this default.
-        Object result = JOptionPane.showInputDialog(this, "Name of the new lineup:", "New lineup",
-                JOptionPane.PLAIN_MESSAGE, null, null, LocalDate.now().toString());
-        if (result == null) {
-            return;
-        }
-        String input = result.toString();
-        String name = input.trim();
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a name.", "New lineup", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (containsIllegalFilenameChar(name)) {
-            JOptionPane.showMessageDialog(this,
-                    "The name must not contain any of these characters: " + ILLEGAL_FILENAME_CHARS,
-                    "New lineup", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String fileName = name.endsWith(LINEUP_FILE_SUFFIX) ? name : name + LINEUP_FILE_SUFFIX;
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path lineupPath = guildDir.resolve(fileName);
-        if (Files.exists(lineupPath)) {
-            JOptionPane.showMessageDialog(this, "A lineup file named \"" + fileName + "\" already exists.",
-                    "New lineup", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Guild currentGuild = appContext.guild();
-        Lineup lineup = new Lineup(currentGuild.id(), currentGuild.name(), "", LocalDateTime.now(), java.util.List.of());
-        try {
-            LineupRepository.save(lineup, lineupPath);
-            appContext.set(lineup, lineupPath);
-            Config.setLastLineUpPath(lineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
-            fortificationMapPanel.refresh(lineup);
-            populateLineupCombo();
-            Logger.log("Created: " + lineupPath);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not create lineup:\n" + e.getMessage(),
-                    "Error while creating lineup", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    /**
-     * Deletes the currently selected ".lineup" file from disk (see
-     * {@link LineupRepository#delete}) and loads whichever file takes its
-     * place in the combo box - see class Javadoc for the full behavior,
-     * the confirmation dialog, and the guard against removing the last
-     * lineup left in the guild folder.
-     */
-    private void onRemoveLineup() {
-        String fileName = (String) lineupCombo.getSelectedItem();
-        if (fileName == null) {
-            return;
-        }
-        java.util.List<String> fileNames = listLineupFileNames();
-        int index = fileNames.indexOf(fileName);
-        if (fileNames.size() <= 1) {
-            JOptionPane.showMessageDialog(this, "This is the only lineup left and cannot be removed.",
-                    "Remove lineup", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Really remove lineup \"" + stripLineupSuffix(fileName) + "\"? This also deletes the file.",
-                "Remove lineup", JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path lineupPath = guildDir.resolve(fileName);
-        try {
-            LineupRepository.delete(lineupPath);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not delete lineup:\n" + e.getMessage(),
-                    "Error while removing lineup", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        java.util.List<String> remaining = listLineupFileNames();
-        int nextIndex = Math.min(index, remaining.size() - 1);
-        String nextFileName = remaining.get(nextIndex);
-        Path nextLineupPath = guildDir.resolve(nextFileName);
-        try {
-            Lineup lineup = LineupRepository.load(nextLineupPath);
-            appContext.set(lineup, nextLineupPath);
-            Config.setLastLineUpPath(nextLineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
-            fortificationMapPanel.refresh(lineup);
-            populateLineupCombo();
-            Logger.log("Removed: " + fileName);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Lineup deleted, but could not load \"" + nextFileName + "\":\n" + e.getMessage(),
-                    "Error while loading lineup", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void onClearLineup() {
-        Lineup currentLineup = appContext.lineup();
-        if (currentLineup.entries().isEmpty()) {
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Really clear the current lineup? This removes all " + currentLineup.entries().size()
-                        + " team assignment(s) (not saved to disk until you save the lineup).",
-                "Clear lineup", JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        Lineup clearedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
-                currentLineup.algorithmName(), currentLineup.createdAt(), List.of());
-        appContext.setLineup(clearedLineup);
-        GuiUtils.editedLineup = true;
-        fortificationMapPanel.refresh(clearedLineup);
-        Logger.log("Cleared: " + appContext.lineupFilePath());
     }
 
     private void onGenerateReport() {
@@ -792,8 +556,22 @@ public class ToolbarPanel extends JPanel {
         new LineupComparisonDialog(owner, appContext).setVisible(true);
     }
 
-    /** True if name contains any character listed in {@link #ILLEGAL_FILENAME_CHARS}. */
-    private static boolean containsIllegalFilenameChar(String name) {
+    /**
+     * Opens {@link GuildEntryDialog} - the guild-wide counterpart of
+     * {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog},
+     * refreshed the same way on save via {@link FortificationMapPanel#refreshAfterExternalSave()}.
+     */
+    private void onOpenGuildEntry() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new GuildEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
+    }
+
+    /**
+     * True if name contains any character listed in {@link #ILLEGAL_FILENAME_CHARS}.
+     * Package-visible (not {@code private}) so {@code Cow2Frame#onNewGuild()}
+     * can reuse it - see {@link #ILLEGAL_FILENAME_CHARS}.
+     */
+    static boolean containsIllegalFilenameChar(String name) {
         for (int i = 0; i < ILLEGAL_FILENAME_CHARS.length(); i++) {
             if (name.indexOf(ILLEGAL_FILENAME_CHARS.charAt(i)) >= 0) {
                 return true;
