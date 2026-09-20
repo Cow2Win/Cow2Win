@@ -9,7 +9,7 @@ import java.util.List;
  * shared by every place that needs to rank/display a team's fit for a
  * fortification, e.g. {@code org.c2w.gui.fort.FortificationEntryDialog}
  * (per-row buff-count label and debug log) and
- * {@code org.c2w.gui.AllTeamsScoreOverviewDialog} (one cell per
+ * {@code org.c2w.gui.HeroValueOverviewDialog}/{@code org.c2w.gui.TitanValueOverviewDialog} (one cell per
  * team/fortification combination) - added 2026-09-11 to give both a single,
  * shared implementation instead of two independently-maintained copies of
  * the same formula (see git history: the two had briefly diverged on

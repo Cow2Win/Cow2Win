@@ -13,7 +13,7 @@ public class FortificationDisplayLabel extends JLabel {
         super(LanguageService.displayName(fortification.id()),JLabel.CENTER);
        // setBackground(fortification.type().getColor());
         setForeground(fortification.type().getColor());
-        setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
+        setBorder(new MatteBorder(0, 0, 2, 0, getForeground()));
         //displayLbl.setOpaque(true);
         setPreferredSize(new Dimension(160,20));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

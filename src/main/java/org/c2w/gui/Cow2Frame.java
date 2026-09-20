@@ -34,9 +34,6 @@ public class Cow2Frame extends JFrame {
    /** Classpath-absolute path to the frame icon (see {@link #loadFrameIcon()}). */
     private static final String FRAME_ICON_PATH = "/images/app/cow.png";
 
-    /** Fraction of the window width given to the left side of the split pane by default. */
-    private static final double LEFT_SPLIT_RATIO = 2.0 / 3.0;
-
     private static final String HERO_WARS_URL = "https://www.hero-wars.com/";
 
     /**
@@ -68,19 +65,11 @@ public class Cow2Frame extends JFrame {
     /** Language file key for the message prefix (followed by the exception's own message) of that same error dialog. */
     private static final String KEY_REMOVE_GUILD_ERROR = "toolbar.removeGuild.error";
 
+    private static final String ICON_HERO_WARS = "/images/app/herowars32.png";
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
     private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
 
-    /**
-     * Language file keys and icon paths for the "Lineup" menu (see
-     * {@link #buildLineupMenu()}) - moved here 2026-09-19 from {@code
-     * ToolbarPanel}'s {@code newLineupButton}/{@code removeLineupButton}/
-     * {@code clearLineupButton} {@link org.c2w.gui.common.FlatButton}s,
-     * together with the logic behind them ({@link #onNewLineup()}/
-     * {@link #onRemoveLineup()}/{@link #onClearLineup()}), mirroring how the
-     * "Guild" menu above was moved.
-     */
     private static final String KEY_NEW_LINEUP = "toolbar.newLineup";
     private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
     private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
@@ -89,13 +78,11 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_REMOVE_LINEUP = "/images/app/lineup-remove.png";
     private static final String ICON_CLEAR_LINEUP = "/images/app/lineup-clean.png";
 
-    private final JSplitPane splitPane;
     private final AppContext appContext;
     /** Background image painted by {@link #getContentPane()} (a {@link BackgroundPanel}) - loaded once in the constructor, see {@link IconLoader#getBackgroundImage()}. */
     private final Image background;
     private final FortificationMapPanel fortificationMapPanel;
     private final ToolbarPanel toolbarPanel;
-    private final TeamsOverviewPanel teamsOverviewPanel;
     private final LogPanel logPanel;
     private JDialog logDialog;
 
@@ -123,23 +110,7 @@ public class Cow2Frame extends JFrame {
         setJMenuBar(buildMenuBar());
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
-
-        // teamsOverviewPanel is built before toolbarPanel (unlike before
-        // 2026-09-09) since toolbarPanel now needs a direct reference to it
-        // for the "save guild"/"run algorithm" controls moved into it from
-        // teamsOverviewPanel's own (now removed) toolbar - see ToolbarPanel's
-        // class-level KEY_SAVE_GUILD Javadoc.
-        this.teamsOverviewPanel = new TeamsOverviewPanel(appContext, fortificationMapPanel);
-        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, teamsOverviewPanel,
-                this::onGuildSwitched);
-        // FortificationMapPanel is built before teamsOverviewPanel exists (see
-        // above), so it cannot take this as a constructor argument - wired up
-        // via a setter instead, so a FortificationEntryDialog save (see
-        // FortificationPanel#openEntryDialog) also refreshes teamsOverviewPanel's
-        // own tables instead of leaving them stale (which used to cause a save
-        // error there afterwards - guildWithCurrentSelection() indexes into the
-        // stale rows by position).
-        fortificationMapPanel.setOnGuildChangedElsewhere(teamsOverviewPanel::refreshFromContext);
+        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, this::onGuildSwitched);
         // LogPanel is still created here (so it starts listening to Logger right
         // away, see LogPanel's constructor / Logger#addListener), but - since
         // 2026-09-16 - it is no longer permanently docked into the main window
@@ -150,33 +121,20 @@ public class Cow2Frame extends JFrame {
         // registered listener, so nothing is lost by not displaying it from the
         // start; nothing here changes that registration.
         this.logPanel = new LogPanel();
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        // rightPanel/its scroll pane, leftScrollPane and splitPane are all kept
-        // non-opaque, like fortificationMapPanel/teamsOverviewPanel themselves
-        // (see those classes), so the background image painted by the content
-        // pane below (see #background/BackgroundPanel) is visible behind both
-        // halves of the split instead of being painted over by any of them.
-        rightPanel.setOpaque(false);
-        JScrollPane teamsScrollPane = new JScrollPane(teamsOverviewPanel);
-        teamsScrollPane.setOpaque(false);
-        teamsScrollPane.getViewport().setOpaque(false);
-        rightPanel.add(teamsScrollPane, BorderLayout.CENTER);
-
-        JScrollPane leftScrollPane = new JScrollPane(fortificationMapPanel);
-        leftScrollPane.setOpaque(false);
-        leftScrollPane.getViewport().setOpaque(false);
-
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScrollPane, rightPanel);
-        splitPane.setResizeWeight(LEFT_SPLIT_RATIO);
-        splitPane.setOneTouchExpandable(true);
-        splitPane.setOpaque(false);
+        // fortificationScrollPane is kept non-opaque, like fortificationMapPanel
+        // itself (see that class), so the background image painted by the
+        // content pane below (see #background/BackgroundPanel) is visible
+        // behind it instead of being painted over.
+        JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
+        fortificationScrollPane.setOpaque(false);
+        fortificationScrollPane.getViewport().setOpaque(false);
 
         // Background now painted once here (moved up from FortificationMapPanel
         // on 2026-09-17) via a custom content pane - see #background and
         // BackgroundPanel's Javadoc below.
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
         getContentPane().add(toolbarPanel, BorderLayout.NORTH);
-        getContentPane().add(splitPane, BorderLayout.CENTER);
+        getContentPane().add(fortificationScrollPane, BorderLayout.CENTER);
 
         // Fallback bounds in case the platform/window manager does not honor
         // MAXIMIZED_BOTH (some Linux window managers don't) - without this,
@@ -186,12 +144,6 @@ public class Cow2Frame extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         setVisible(true);
-
-        // The divider location must be set once the frame has its real,
-        // maximized size, which is not yet reliably available synchronously
-        // right after setVisible(true) on every platform - so this is
-        // deferred to the next event queue cycle.
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(LEFT_SPLIT_RATIO));
 
         checkForUpdatesAtStartup();
     }
@@ -212,43 +164,31 @@ public class Cow2Frame extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu(LanguageService.displayName("menu.file"));
-        JMenuItem settingsItem = new JMenuItem(LanguageService.displayName("menu.settings"));
-        settingsItem.addActionListener(e -> onOpenSettings());
-        fileMenu.add(settingsItem);
-
-
-        JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
-        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
-        fileMenu.add(heroBuffFitScoresItem);
 
         JMenuItem checkForUpdatesItem = new JMenuItem(LanguageService.displayName("menu.checkForUpdates"));
         checkForUpdatesItem.addActionListener(e -> onCheckForUpdates());
         fileMenu.add(checkForUpdatesItem);
         menuBar.add(fileMenu);
 
+        JMenuItem settingsItem = new JMenuItem(LanguageService.displayName("menu.settings"));
+        settingsItem.addActionListener(e -> onOpenSettings());
+        fileMenu.add(settingsItem);
+
+        JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
+        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
+        fileMenu.add(heroBuffFitScoresItem);
+
         JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
         showLogItem.addActionListener(e -> onShowLog());
         fileMenu.add(showLogItem);
 
+        JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
+        hwWebItem.setIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE));
+        hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
+        fileMenu.add(hwWebItem);
+
         menuBar.add(buildGuildMenu());
         menuBar.add(buildLineupMenu());
-
-        JMenu hwMenu = new JMenu("Hero wars");
-        JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
-        hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
-        hwMenu.add(hwWebItem);
-
-        JMenuItem hwFandomItem = new JMenuItem("Hero wars Fandom");
-        hwFandomItem.addActionListener(e -> onOpenWeb("https://hero-wars.fandom.com/wiki/Guild/Clash_of_Worlds"));
-        hwMenu.add(hwFandomItem);
-
-        JMenuItem hwNexterItem = new JMenuItem("Nexters");
-        hwNexterItem.addActionListener(e -> onOpenWeb("https://support-hwde.nexters.com/hc/en-us/articles/7829409962386-Clash-of-Worlds"));
-        hwMenu.add(hwNexterItem);
-
-
-        menuBar.add(hwMenu);
-
 
 
 
@@ -660,12 +600,10 @@ public class Cow2Frame extends JFrame {
 
     /** Called after {@link GuildEditorDialog} saves a change to the current guild. */
     private void onGuildSaved() {
-        teamsOverviewPanel.refreshFromContext();
         updateTitle();
     }
 
     private void onGuildSwitched() {
-        teamsOverviewPanel.refreshFromContext();
         updateTitle();
     }
 
@@ -705,12 +643,11 @@ public class Cow2Frame extends JFrame {
      * {@code setContentPane}): paints {@link #background} scaled to its own
      * current size, once, before any child is painted. Moved up here from
      * FortificationMapPanel on 2026-09-17 so the same background shows behind
-     * the whole window (both halves of {@link #splitPane}) instead of just
-     * behind the fortification map - every panel/scroll pane in between (see
-     * the constructor, FortificationMapPanel and TeamsOverviewPanel) is kept
-     * non-opaque so it is actually visible through them, the same way
-     * FortificationMapPanel used to paint directly over its own opaque black
-     * background.
+     * the whole window instead of just behind the fortification map - every
+     * panel/scroll pane in between (see the constructor and
+     * FortificationMapPanel) is kept non-opaque so it is actually visible
+     * through them, the same way FortificationMapPanel used to paint
+     * directly over its own opaque black background.
      */
     private static final class BackgroundPanel extends JPanel {
 

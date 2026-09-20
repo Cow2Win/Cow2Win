@@ -41,13 +41,6 @@ public class ToolbarPanel extends JPanel {
      */
     static final String LINEUP_FILE_SUFFIX = ".lineup";
 
-    /**
-     * Characters not allowed in a Windows file name - rejected in
-     * {@link #onNewLineup()} and {@code Cow2Frame#onNewGuild()}. Package-visible
-     * (not {@code private}) so {@code Cow2Frame} can reuse it there instead of
-     * duplicating it, since the "new guild" logic moved to that class's own
-     * "Guild" menu (see {@link #containsIllegalFilenameChar}).
-     */
     static final String ILLEGAL_FILENAME_CHARS = "<>:\"/\\|?*";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the lineup combo box. */
@@ -62,14 +55,14 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_GENERATE_REPORT = "/images/app/lineup-report.png";
 
-    private static final String KEY_ALL_TEAMS = "toolbar.allTeams";
+    private static final String KEY_HERO_TEAMS = "toolbar.heroTeams";
 
-    private static final String ICON_ALL_TEAMS = "/images/app/hexagon.png";
+    private static final String ICON_HERO_TEAMS = "/images/app/square.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "all team scores" button (see {@link #onOpenAllTeamScores()}). */
-    private static final String KEY_ALL_TEAMS_SCORES = "toolbar.allTeamsScores";
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "titan teams" button (see {@link #onOpenTitanTeams()}). */
+    private static final String KEY_TITAN_TEAMS = "toolbar.titanTeams";
 
-    private static final String ICON_ALL_TEAMS_SCORES = ICON_ALL_TEAMS;
+    private static final String ICON_TITAN_TEAMS = "/images/app/hexagon.png";
 
     /** Package-visible (not {@code private}) so {@code Cow2Frame} can size its "Guild" menu item icons to match (see class Javadoc on the removed guild buttons). */
     static final int TOOLBAR_ICON_SIZE = 20;
@@ -98,40 +91,30 @@ public class ToolbarPanel extends JPanel {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). Added 2026-09-13. */
     private static final String KEY_COMPARE_LINEUPS = "toolbar.compareLineups";
 
-    /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_ALL_TEAMS}/{@link #ICON_ALL_TEAMS_SCORES}, told apart by shape (paired hexagons) instead of color. */
+    /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_HERO_TEAMS}/{@link #ICON_TITAN_TEAMS}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide team assignment" button (see {@link #onOpenGuildEntry()}). */
     private static final String KEY_OPEN_GUILD_ENTRY = "toolbar.openGuildEntry";
 
     /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon {@link org.c2w.data.model.FortificationType#HERO} itself uses, since this button opens the guild-wide counterpart of a single fortification's own team-entry dialog. */
-    private static final String ICON_OPEN_GUILD_ENTRY = "/images/app/square.png";
+    private static final String ICON_OPEN_GUILD_ENTRY = "/images/app/add.png";
 
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
 
-    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@code Cow2Frame#onNewGuild()}) - passed in from the outside since this panel has no reference to {@code TeamsOverviewPanel}'s window title, which also needs refreshing. */
+    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@code Cow2Frame#onNewGuild()}) - passed in from the outside since this panel has no reference to the frame's window title, which also needs refreshing. */
     private final Runnable onGuildSwitched;
-
-    /**
-     * The panel whose "save guild"/"run algorithm" actions the
-     * corresponding buttons below trigger - this panel owns the guild/team
-     * data those actions work on (see {@link TeamsOverviewPanel#saveGuild()}/
-     * {@link TeamsOverviewPanel#runAlgorithm}), so unlike every other
-     * control in this toolbar, those two need a direct reference to it
-     * rather than just a callback.
-     */
-    private final TeamsOverviewPanel teamsOverviewPanel;
 
     private final JComboBox<String> lineupCombo = new JComboBox<>();
 
     /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - added 2026-09-05, sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
 
-    /** Lists the available lineup algorithms (see {@link #onRunAlgorithm()}) - moved here 2026-09-09 from {@code TeamsOverviewPanel}, see {@link #KEY_SAVE_GUILD}. */
+    /** Lists the available lineup algorithms (see {@link #onRunAlgorithm()}). */
     private final JComboBox<LineupAlgorithm> algorithmCombo = new JComboBox<>();
 
-    /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}) - moved here 2026-09-09, see {@link #KEY_SAVE_GUILD}. */
+    /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}). */
     private final JLabel statusLabel = new JLabel(" ");
 
     /**
@@ -148,7 +131,7 @@ public class ToolbarPanel extends JPanel {
     private boolean populatingGuildCombo = false;
 
     public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel,
-                        TeamsOverviewPanel teamsOverviewPanel, Runnable onGuildSwitched) {
+                        Runnable onGuildSwitched) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 4));
         if (appContext == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a guildContext");
@@ -156,15 +139,11 @@ public class ToolbarPanel extends JPanel {
         if (fortificationMapPanel == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a fortificationMapPanel");
         }
-        if (teamsOverviewPanel == null) {
-            throw new IllegalArgumentException("ToolbarPanel needs a teamsOverviewPanel");
-        }
         if (onGuildSwitched == null) {
             throw new IllegalArgumentException("ToolbarPanel needs an onGuildSwitched callback");
         }
         this.appContext = appContext;
         this.fortificationMapPanel = fortificationMapPanel;
-        this.teamsOverviewPanel = teamsOverviewPanel;
         this.onGuildSwitched = onGuildSwitched;
 
         add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
@@ -216,16 +195,15 @@ public class ToolbarPanel extends JPanel {
         generateReportButton.addActionListener(e -> onGenerateReport());
         add(generateReportButton);
 
-        FlatButton allTeamsButton = new FlatButton(IconLoader.iconFor(ICON_ALL_TEAMS, TOOLBAR_ICON_SIZE));
-        allTeamsButton.setToolTipText(LanguageService.displayName(KEY_ALL_TEAMS));
-        allTeamsButton.addActionListener(e -> onOpenAllTeams());
-        add(allTeamsButton);
+        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconFor(ICON_HERO_TEAMS, TOOLBAR_ICON_SIZE));
+        heroTeamsButton.setToolTipText(LanguageService.displayName(KEY_HERO_TEAMS));
+        heroTeamsButton.addActionListener(e -> onOpenHeroTeams());
+        add(heroTeamsButton);
 
-        FlatButton allTeamsScoresButton =
-                new FlatButton(IconLoader.iconFor(ICON_ALL_TEAMS_SCORES, TOOLBAR_ICON_SIZE, Color.WHITE));
-        allTeamsScoresButton.setToolTipText(LanguageService.displayName(KEY_ALL_TEAMS_SCORES));
-        allTeamsScoresButton.addActionListener(e -> onOpenAllTeamScores());
-        add(allTeamsScoresButton);
+        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE));
+        titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
+        titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
+        add(titanTeamsButton);
 
         FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE));
         runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
@@ -265,13 +243,35 @@ public class ToolbarPanel extends JPanel {
         if (algorithm == null) {
             return;
         }
-        int assigned = teamsOverviewPanel.runAlgorithm(algorithm);
+        Lineup currentLineup = appContext.lineup();
+        Lineup updatedLineup = algorithm.run(currentLineup, appContext.guild());
+        int assigned = updatedLineup.entries().size() - currentLineup.entries().size();
+        appContext.setLineup(updatedLineup);
+        if (assigned > 0) {
+            GuiUtils.editedLineup = true;
+        }
+        fortificationMapPanel.refresh(updatedLineup);
         Logger.log(algorithm.displayName() + ": " + assigned + " team(s) newly assigned.");
     }
 
 
+    /**
+     * Saves the current guild to disk as-is - since the per-team "Power"
+     * table this used to delegate to (the removed {@code TeamsOverviewPanel})
+     * is gone, {@code appContext.guild()} already reflects every edit made
+     * via {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}
+     * (each of which updates it on its own save), so there is nothing left
+     * to merge in here.
+     */
     private void onSaveGuild() {
-        teamsOverviewPanel.saveGuild();
+        try {
+            GuildRepository.save(appContext.guild(), appContext.guildFilePath());
+            GuiUtils.editedGuild = false;
+            Logger.log("Saved: " + appContext.guildFilePath());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Could not save guild:\n" + ex.getMessage(),
+                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
 
@@ -535,19 +535,21 @@ public class ToolbarPanel extends JPanel {
     }
 
 
-    private void onOpenAllTeams() {
+    /** Opens {@link HeroValueOverviewDialog} - one row per hero team, with a combo box to switch which value the per-fortification columns show. */
+    private void onOpenHeroTeams() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new AllTeamsOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+        new HeroValueOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
     }
 
-    private void onOpenAllTeamScores() {
+    /** Opens {@link TitanValueOverviewDialog} - the TITAN counterpart of {@link #onOpenHeroTeams()}. */
+    private void onOpenTitanTeams() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new AllTeamsScoreOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+        new TitanValueOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
     }
 
     /**
      * Opens {@link LineupComparisonDialog} (added 2026-09-13) - purely a
-     * read-only preview/comparison, so unlike {@link #onOpenAllTeamScores()}
+     * read-only preview/comparison, so unlike {@link #onOpenHeroTeams()}/{@link #onOpenTitanTeams()}
      * it needs no {@link #fortificationMapPanel} reference (nothing here
      * ever changes {@link #appContext}'s lineup).
      */

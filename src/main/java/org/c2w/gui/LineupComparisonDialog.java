@@ -40,11 +40,11 @@ import java.util.Locale;
  * "Lineup-Vergleich"). The actual diff computation lives in
  * {@link LineupComparisonService}; this class is purely the Swing wiring
  * around it, following the same non-modal, disposable-on-close pattern as
- * {@link AllTeamsScoreOverviewDialog}.
+ * {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}.
  */
 public class LineupComparisonDialog extends JDialog {
 
-    /** Dialog title - hardcoded, not localized (matches {@link AllTeamsScoreOverviewDialog}/{@link ReportViewerDialog}). */
+    /** Dialog title - hardcoded, not localized (matches {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}/{@link ReportViewerDialog}). */
     private static final String BASE_TITLE = "Cow2 - Lineup Comparison";
 
     private static final String KEY_MODE_SAVED_LINEUPS = "lineupComparison.modeSavedLineups";
@@ -65,7 +65,7 @@ public class LineupComparisonDialog extends JDialog {
     /**
      * Glob pattern for lineup files - same as {@code ToolbarPanel}'s own
      * private constant, deliberately duplicated here rather than exposing
-     * it (see class Javadoc / {@link AllTeamsScoreOverviewDialog}'s own
+     * it (see class Javadoc / {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}'s own
      * "redundant copy" convention). {@link LineupRepository#findAll()} is
      * NOT used for this - it always returns an empty map (its backing
      * loader is a stub), so listing a guild's lineup files has to go
