@@ -69,12 +69,6 @@ public class TitanValueOverviewDialog extends JDialog {
     /** Size of {@link #buildSaveButton()}'s icon - matches {@code ToolbarPanel}'s own TOOLBAR_ICON_SIZE. */
     private static final int SAVE_ICON_SIZE = 20;
 
-    /**
-     * Language file keys (see {@code resources/language/<name>/<name>.properties}) for the table
-     * column headers - the SAME keys {@link TeamsOverviewPanel}
-     * uses (the German/English/French text is identical, only the Java
-     * constants/classes here are a redundant copy, not the resource keys).
-     */
     private static final String COLUMN_KEY_POWER = "teamsOverview.power";
     private static final String COLUMN_KEY_MEMBER = "teamsOverview.member";
     private static final String COLUMN_KEY_TITANS = "teamsOverview.titans";
@@ -238,6 +232,9 @@ public class TitanValueOverviewDialog extends JDialog {
     private static void configureTable(JTable table, Function<Titan, Icon> iconResolver, Function<Titan, String> nameResolver,
                                        JComboBox<Fortification> fortificationCombo) {
         table.setRowHeight(ROW_HEIGHT);
+        table.setForeground(FortificationType.TITAN.getColor());
+        table.setSelectionForeground(table.getForeground());
+        table.setGridColor(Color.BLACK);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer());
@@ -729,6 +726,7 @@ public class TitanValueOverviewDialog extends JDialog {
                                                        boolean hasFocus, int row, int column) {
             JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
+            label.setForeground(FortificationType.TITAN.getColor());
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -743,6 +741,7 @@ public class TitanValueOverviewDialog extends JDialog {
             JLabel label = new JLabel(fortification == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
                     : LanguageService.displayName(fortification.id()));
             label.setOpaque(true);
+            label.setForeground(FortificationType.TITAN.getColor());
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -770,6 +769,7 @@ public class TitanValueOverviewDialog extends JDialog {
                     : String.valueOf(Math.round(numericValue));
             JLabel label = new JLabel(text, JLabel.CENTER);
             label.setOpaque(true);
+            label.setForeground(FortificationType.TITAN.getColor());
             label.setBackground(backgroundFor(table, isSelected, row, column));
             return label;
         }
@@ -783,7 +783,7 @@ public class TitanValueOverviewDialog extends JDialog {
             int modelColumn = table.convertColumnIndexToModel(column);
             ValueColumn valueColumn = model.valueColumns().get(modelColumn - TitanValueTableModel.FIXED_COLUMN_COUNT);
             Fortification assignedFortification = model.rows().get(modelRow).assignedFortification;
-            return valueColumn.matchesAssignment(assignedFortification) ? VALUE_HIGHLIGHT_BACKGROUND : table.getBackground();
+            return valueColumn.matchesAssignment(assignedFortification) ? GuiUtils.VALUE_HIGHLIGHT_BACKGROUND : table.getBackground();
         }
     }
 

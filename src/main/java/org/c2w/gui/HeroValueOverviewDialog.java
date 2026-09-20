@@ -238,6 +238,9 @@ public class HeroValueOverviewDialog extends JDialog {
     private static void configureTable(JTable table, Function<Hero, Icon> iconResolver, Function<Hero, String> nameResolver,
                                        JComboBox<Fortification> fortificationCombo) {
         table.setRowHeight(ROW_HEIGHT);
+        table.setForeground(FortificationType.HERO.getColor());
+        table.setSelectionForeground(table.getForeground());
+        table.setGridColor(Color.BLACK);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer());
@@ -729,6 +732,7 @@ public class HeroValueOverviewDialog extends JDialog {
                                                        boolean hasFocus, int row, int column) {
             JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
+            label.setForeground(FortificationType.HERO.getColor());
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -743,6 +747,7 @@ public class HeroValueOverviewDialog extends JDialog {
             JLabel label = new JLabel(fortification == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
                     : LanguageService.displayName(fortification.id()));
             label.setOpaque(true);
+            label.setForeground(FortificationType.HERO.getColor());
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -758,8 +763,6 @@ public class HeroValueOverviewDialog extends JDialog {
      */
     static final class ValueCellRenderer implements TableCellRenderer {
 
-        private static final Color VALUE_HIGHLIGHT_BACKGROUND = new Color(224, 247, 224);
-
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
@@ -770,6 +773,7 @@ public class HeroValueOverviewDialog extends JDialog {
                     : String.valueOf(Math.round(numericValue));
             JLabel label = new JLabel(text, JLabel.CENTER);
             label.setOpaque(true);
+            label.setForeground(FortificationType.HERO.getColor());
             label.setBackground(backgroundFor(table, isSelected, row, column));
             return label;
         }
@@ -783,7 +787,7 @@ public class HeroValueOverviewDialog extends JDialog {
             int modelColumn = table.convertColumnIndexToModel(column);
             ValueColumn valueColumn = model.valueColumns().get(modelColumn - HeroValueTableModel.FIXED_COLUMN_COUNT);
             Fortification assignedFortification = model.rows().get(modelRow).assignedFortification;
-            return valueColumn.matchesAssignment(assignedFortification) ? VALUE_HIGHLIGHT_BACKGROUND : table.getBackground();
+            return valueColumn.matchesAssignment(assignedFortification) ? GuiUtils.VALUE_HIGHLIGHT_BACKGROUND : table.getBackground();
         }
     }
 

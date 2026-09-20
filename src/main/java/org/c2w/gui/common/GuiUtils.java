@@ -10,6 +10,8 @@ public class GuiUtils {
     public static boolean editedGuild = false;
     public static boolean editedLineup = false;
 
+    public static final Color VALUE_HIGHLIGHT_BACKGROUND = IconLoader.GREEN;
+
     /**
      * Custom UIManager key - not a built-in Swing/L&amp;F key, namespaced with
      * "Cow2Win." so it can never collide with one - for the background color
@@ -26,6 +28,7 @@ public class GuiUtils {
         UIManager.put(KEY_TEAM_TABLE_CELL_BACKGROUND, Color.GRAY.darker());
         UIManager.put("TabbedPane.focus", Color.BLACK);
         UIManager.put("TabbedPane.selectHighlight", Color.GRAY);
+        UIManager.put("Table.background",Color.GRAY.darker());
         UIManager.put("Table.selectionBackground",Color.BLACK);
         UIManager.put("TextArea.background",Color.GRAY.darker());
         UIManager.put("TextArea.foreground",Color.WHITE);
