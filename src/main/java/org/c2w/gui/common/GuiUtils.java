@@ -24,18 +24,18 @@ public class GuiUtils {
     public static final String KEY_TEAM_TABLE_CELL_BACKGROUND = "Cow2Win.teamTableCellBackground";
 
     public static final void setGUIConstants(){
-        UIManager.put("TabbedPane.selected", Color.GRAY.darker());
-        UIManager.put(KEY_TEAM_TABLE_CELL_BACKGROUND, Color.GRAY.darker());
-        UIManager.put("TabbedPane.focus", Color.BLACK);
-        UIManager.put("TabbedPane.selectHighlight", Color.GRAY);
-        UIManager.put("Table.background",Color.GRAY.darker());
-        UIManager.put("Table.selectionBackground",Color.BLACK);
-        UIManager.put("TextArea.background",Color.GRAY.darker());
-        UIManager.put("TextArea.foreground",Color.WHITE);
-        UIManager.put("List.background",Color.GRAY.darker());
-        UIManager.put("List.foreground",Color.WHITE);
-        UIManager.put("List.selectionBackground",Color.BLACK);
-        UIManager.put("List.selectionForeground",Color.WHITE);
+        //UIManager.put("TabbedPane.selected", Color.GRAY.darker());
+        //UIManager.put(KEY_TEAM_TABLE_CELL_BACKGROUND, Color.GRAY.darker());
+        //UIManager.put("TabbedPane.focus", Color.BLACK);
+        //UIManager.put("TabbedPane.selectHighlight", Color.GRAY);
+        //UIManager.put("Table.background",Color.GRAY.darker());
+       // UIManager.put("Table.selectionBackground",Color.BLACK);
+        //UIManager.put("TextArea.background",Color.GRAY.darker());
+        //UIManager.put("TextArea.foreground",Color.WHITE);
+        //UIManager.put("List.background",Color.GRAY.darker());
+        //UIManager.put("List.foreground",Color.WHITE);
+        //UIManager.put("List.selectionBackground",Color.BLACK);
+        //UIManager.put("List.selectionForeground",Color.WHITE);
 
     }
 }

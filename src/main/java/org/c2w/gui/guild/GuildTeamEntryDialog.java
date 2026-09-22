@@ -156,7 +156,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         rowsPanel.setLayout(new BoxLayout(rowsPanel, BoxLayout.Y_AXIS));
         rowsPanel.setOpaque(false);
         JPanel sectionPanel = new JPanel();
-        sectionPanel.setBackground(Color.GRAY.darker());
         sectionPanel.setLayout(new BoxLayout(sectionPanel, BoxLayout.Y_AXIS));
         sectionPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -175,7 +174,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         buildSection();
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setOpaque(true);
         centerPanel.add(new JScrollPane(sectionPanel), BorderLayout.CENTER);
 
         add(buildToolbarPanel(), BorderLayout.NORTH);
@@ -193,12 +191,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     private static JPanel alignLeft(JComponent component) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
-        panel.setOpaque(false);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(component);
-        // FlowLayout isn't a LayoutManager2, so this panel would otherwise
-        // report an unbounded maximum size too - see the trailing glue added
-        // where this is used.
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
         return panel;
     }
@@ -353,12 +347,10 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     private JPanel buildRowPanel(FortComboBox fortCombo, JComboBox<MemberDraft> memberCombo, JPanel teamEditor, JLabel buffCountLabel) {
         JPanel row = new JPanel(new GridBagLayout());
-        row.setOpaque(false);
         row.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        left.setOpaque(false);
         left.setBorder(BorderFactory.createEmptyBorder(MEMBER_COMBO_TOP_OFFSET, 0, 0, 0));
         left.add(fortCombo);
         left.add(memberCombo);

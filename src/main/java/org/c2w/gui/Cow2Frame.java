@@ -111,35 +111,16 @@ public class Cow2Frame extends JFrame {
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
         this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, this::onGuildSwitched);
-        // LogPanel is still created here (so it starts listening to Logger right
-        // away, see LogPanel's constructor / Logger#addListener), but - since
-        // 2026-09-16 - it is no longer permanently docked into the main window
-        // (it used to take up a fixed SOUTH strip here, which Thorsten found ate
-        // too much screen space for something rarely needed). It is shown
-        // on demand instead, in a lazily-created dialog - see #onShowLog.
-        // Logger#addListener replays the full in-memory history to a newly
-        // registered listener, so nothing is lost by not displaying it from the
-        // start; nothing here changes that registration.
         this.logPanel = new LogPanel();
-        // fortificationScrollPane is kept non-opaque, like fortificationMapPanel
-        // itself (see that class), so the background image painted by the
-        // content pane below (see #background/BackgroundPanel) is visible
-        // behind it instead of being painted over.
+
         JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
         fortificationScrollPane.setOpaque(false);
         fortificationScrollPane.getViewport().setOpaque(false);
 
-        // Background now painted once here (moved up from FortificationMapPanel
-        // on 2026-09-17) via a custom content pane - see #background and
-        // BackgroundPanel's Javadoc below.
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
         getContentPane().add(toolbarPanel, BorderLayout.NORTH);
         getContentPane().add(fortificationScrollPane, BorderLayout.CENTER);
 
-        // Fallback bounds in case the platform/window manager does not honor
-        // MAXIMIZED_BOTH (some Linux window managers don't) - without this,
-        // the frame would otherwise fall back to its (tiny) preferred size.
-        // getMaximumWindowBounds() already excludes taskbars/docks.
         setBounds(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds());
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
@@ -148,18 +129,6 @@ public class Cow2Frame extends JFrame {
         checkForUpdatesAtStartup();
     }
 
-    /**
-     * Builds the frame's menu bar: "File" > "Settings" (see
-     * {@link #onOpenSettings()}), "Guild" (see {@link #buildGuildMenu()} -
-     * added 2026-09-19, moved from {@code ToolbarPanel}'s guild
-     * {@link org.c2w.gui.common.FlatButton}s), "Lineup" (see
-     * {@link #buildLineupMenu()} - added 2026-09-19 the same way), and
-     * "Tools" > "Hero Buff Fit Scores" (see {@link #onOpenHeroBuffFitScores()}
-     * - moved here 2026-09-11 from a {@code ToolbarPanel} toolbar button,
-     * since maintaining the hero catalog's buff fit scores is an infrequent,
-     * guild-independent task that doesn't need a permanently visible
-     * button).
-     */
     private JMenuBar buildMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -214,7 +183,7 @@ public class Cow2Frame extends JFrame {
         guildMenu.add(newGuildItem);
 
         JMenuItem openGuildEditorItem = new JMenuItem(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
-        openGuildEditorItem.setIcon(IconLoader.iconFor(ICON_OPEN_GUILD_EDITOR, ToolbarPanel.TOOLBAR_ICON_SIZE));
+        openGuildEditorItem.setIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_EDITOR));
         openGuildEditorItem.addActionListener(e -> onOpenGuildEditor());
         guildMenu.add(openGuildEditorItem);
 
@@ -345,7 +314,7 @@ public class Cow2Frame extends JFrame {
         lineupMenu.add(removeLineupItem);
 
         JMenuItem clearLineupItem = new JMenuItem(LanguageService.displayName(KEY_CLEAR_LINEUP));
-        clearLineupItem.setIcon(IconLoader.iconFor(ICON_CLEAR_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE));
+        clearLineupItem.setIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP));
         clearLineupItem.addActionListener(e -> onClearLineup());
         lineupMenu.add(clearLineupItem);
 
