@@ -1,7 +1,9 @@
 package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
-import org.c2w.data.repository.*;
+import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.GuildRepository;
+import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.IconLoader;
@@ -12,7 +14,10 @@ import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -20,9 +25,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Guild-wide counterpart of {@link org.c2w.gui.fort.FortificationEntryDialog}:
- * lets the player build/edit hero and titan teams for the whole guild in one
- * place, instead of one fortification at a time.
+ * Guild-wide counterpart of {@link org.c2w.gui.fort.FortificationEntryDialog},
+ * for exactly ONE team type (hero or titan - see {@link GuildHeroEntryDialog}/
+ * {@link GuildTitanEntryDialog}, the only two subclasses): lets the player
+ * build/edit that type's teams for the whole guild in one place, instead of
+ * one fortification at a time. Used to be a single dialog covering both
+ * types side by side (see git history); split into one focused dialog per
+ * type per the player's request, sharing everything type-agnostic here.
  *
  * <p>Differences from {@link org.c2w.gui.fort.FortificationEntryDialog}:
  * <ul>
@@ -34,37 +43,32 @@ import java.util.function.Function;
  *     (the team is then just saved into the member's draft without a
  *     {@link Lineup.Entry}, same as editing a team via
  *     {@link GuildEditorDialog}/{@link MemberEditorPanel}).</li>
- *     <li>Rows aren't capped by a fortification's capacity - a "+" button per
- *     section (hero/titan) appends a fresh, empty row for a brand new team at
- *     any time (see {@link #addRow}).</li>
+ *     <li>Rows aren't capped by a fortification's capacity - the "+" button
+ *     appends a fresh, empty row for a brand new team at any time (see
+ *     {@link #addRow}).</li>
  * </ul>
  *
- * <p>On save, every row of a section (hero or titan) is resolved to a
- * (member, teamIndex) slot exactly like {@code FortificationEntryDialog}
- * does, and the resulting {@link Lineup.Entry} list for that
- * {@link Lineup.TeamType} is rebuilt from scratch from the current rows -
- * this is safe (unlike a per-fortification dialog) because every row already
- * covers either a pre-existing entry of that type or a brand new team, so the
- * full set of rows is always a complete picture of that type's assignments.
+ * <p>On save, every row is resolved to a (member, teamIndex) slot exactly
+ * like {@code FortificationEntryDialog} does, and the resulting
+ * {@link Lineup.Entry} list for {@link #spec}'s {@link Lineup.TeamType} is
+ * rebuilt from scratch from the current rows - this is safe (unlike a
+ * per-fortification dialog) because every row already covers either a
+ * pre-existing entry of that type or a brand new team, so the full set of
+ * rows is always a complete picture of that type's assignments. Entries of
+ * the OTHER team type (which this dialog has no rows for at all) are simply
+ * carried over unchanged from the current {@link Lineup} - see
+ * {@link #performSave}.
  */
-public final class GuildEntryDialog extends JDialog {
-
-    private static final int MAX_HERO_TEAMS = 3;
-    private static final int MAX_TITAN_TEAMS = 2;
+abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     /** Mirrors {@code GuildEditorDialog#MAX_MEMBERS} - enforced the same way here when {@link MemberComboEditor} creates a new member inline (see {@link #buildMemberCombo}). */
     private static final int MAX_MEMBERS = 30;
 
-    private static final int ICON_SIZE = 32;
-
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for an unselected member/fortification combo slot. */
     private static final String KEY_NO_SELECTION = "common.none";
 
-    private static final String KEY_TITLE = "guildEntry.title";
     private static final String KEY_SAVE_TEAMS = "guildEntry.saveTeams";
     private static final String KEY_ADD_ROW = "guildEntry.addRow";
-    private static final String KEY_HERO_TEAMS = "guildEntry.heroTeams";
-    private static final String KEY_TITAN_TEAMS = "guildEntry.titanTeams";
 
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
     private static final String ICON_SAVE_TEAMS = "/images/app/save.png";
@@ -95,19 +99,23 @@ public final class GuildEntryDialog extends JDialog {
     private static final Fortification UNASSIGNED_FORTIFICATION =
             new Fortification("__unassigned__", FortificationType.HERO, 1, 0, 0, 0, null, List.of(), 0);
 
-    private final AppContext appContext;
+    protected final AppContext appContext;
     private final Runnable onSaved;
 
-    private final GuildDraft draft;
+    protected final GuildDraft draft;
 
     /** Fetched once and reused for every row's {@link FortComboBox} and for looking up a row's preset fortification, so {@link FortComboBox#setSelectedItem} always matches an item that is actually in that combo's model. */
     private final List<Fortification> fortificationCatalog = FortificationRepository.findAll();
 
-    private final JPanel heroRowsPanel = new JPanel();
-    private final JPanel titanRowsPanel = new JPanel();
+    /** This dialog's one and only type - which catalog/repository, team list, {@link FortificationType} and {@link Lineup.TeamType} it edits (see the two subclasses' {@code buildSpec}). */
+    private final SectionSpec<T> spec;
 
-    private final List<RowState<Hero>> heroRowStates = new ArrayList<>();
-    private final List<RowState<Titan>> titanRowStates = new ArrayList<>();
+    /** Cap on how many teams of {@link #spec}'s type a member can have - {@code GuildHeroEntryDialog.MAX_HERO_TEAMS}/{@code GuildTitanEntryDialog.MAX_TITAN_TEAMS}, passed in by the subclass. */
+    private final int maxTeams;
+
+    private final JPanel rowsPanel = new JPanel();
+
+    private final List<RowState<T>> rowStates = new ArrayList<>();
 
     /**
      * Every member combo built so far (see {@link #buildMemberCombo}), so a
@@ -118,46 +126,57 @@ public final class GuildEntryDialog extends JDialog {
      */
     private final List<JComboBox<MemberDraft>> memberCombos = new ArrayList<>();
 
-    public GuildEntryDialog(Frame owner, AppContext appContext, Runnable onSaved) {
-        super(owner, LanguageService.displayName(KEY_TITLE), false);
+    /**
+     * Last fortification picked (non-null) in any row's {@link FortComboBox} -
+     * used by {@link #addRow} to prefill a brand new row's fortification
+     * combo (see {@link #preselectFortificationFor}), so the player doesn't
+     * have to re-pick the same fortification for every new row.
+     */
+    private Fortification lastSelectedFortification;
+
+    protected GuildTeamEntryDialog(Frame owner, AppContext appContext, Runnable onSaved,
+                                   String titleKey, SectionSpec<T> spec, int maxTeams) {
+        super(owner, LanguageService.displayName(titleKey), false);
         if (appContext == null) {
-            throw new IllegalArgumentException("GuildEntryDialog needs a appContext");
+            throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
         }
         this.appContext = appContext;
         this.onSaved = onSaved;
+        this.spec = spec;
+        this.maxTeams = maxTeams;
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
         for (MemberDraft member : draft.members) {
-            ensureTeamCount(member.heroTeams, MAX_HERO_TEAMS);
-            ensureTeamCount(member.titanTeams, MAX_TITAN_TEAMS);
+            ensureTeamCount(spec.teamsOf().apply(member), maxTeams);
         }
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        heroRowsPanel.setLayout(new BoxLayout(heroRowsPanel, BoxLayout.Y_AXIS));
-        titanRowsPanel.setLayout(new BoxLayout(titanRowsPanel, BoxLayout.Y_AXIS));
+        rowsPanel.setLayout(new BoxLayout(rowsPanel, BoxLayout.Y_AXIS));
+        rowsPanel.setOpaque(false);
+        JPanel sectionPanel = new JPanel();
+        sectionPanel.setBackground(Color.GRAY.darker());
+        sectionPanel.setLayout(new BoxLayout(sectionPanel, BoxLayout.Y_AXIS));
+        sectionPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        JPanel sectionsPanel = new JPanel();
-        sectionsPanel.setLayout(new BoxLayout(sectionsPanel, BoxLayout.Y_AXIS));
-        sectionsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        sectionPanel.add(rowsPanel);
+        sectionPanel.add(alignLeft(buildAddRowButton()));
+        // Without this, the BoxLayout above stretches its children to fill
+        // whatever extra height the JScrollPane's viewport has to offer
+        // (rowsPanel's rows use GridBagLayout, which reports an unbounded
+        // maximum size) - the rows end up spread out across the whole
+        // dialog instead of stacking tightly from the top. Glue soaks up
+        // that leftover space instead, so the rows/button stay anchored at
+        // the top like a vertical FlowLayout (see also buildRowPanel/alignLeft,
+        // which cap their own component's maximum height for the same reason).
+        sectionPanel.add(Box.createVerticalGlue());
 
-        SectionSpec<Hero> heroSpec = buildHeroSpec();
-        SectionSpec<Titan> titanSpec = buildTitanSpec();
-
-        sectionsPanel.add(buildSectionHeader(KEY_HERO_TEAMS));
-        sectionsPanel.add(heroRowsPanel);
-        sectionsPanel.add(alignLeft(buildAddRowButton(heroRowsPanel, heroRowStates, heroSpec)));
-        sectionsPanel.add(Box.createVerticalStrut(16));
-        sectionsPanel.add(buildSectionHeader(KEY_TITAN_TEAMS));
-        sectionsPanel.add(titanRowsPanel);
-        sectionsPanel.add(alignLeft(buildAddRowButton(titanRowsPanel, titanRowStates, titanSpec)));
-
-        buildSection(heroRowsPanel, heroRowStates, heroSpec);
-        buildSection(titanRowsPanel, titanRowStates, titanSpec);
+        buildSection();
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(new JScrollPane(sectionsPanel), BorderLayout.CENTER);
+        centerPanel.setOpaque(true);
+        centerPanel.add(new JScrollPane(sectionPanel), BorderLayout.CENTER);
 
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
@@ -172,71 +191,25 @@ public final class GuildEntryDialog extends JDialog {
         }
     }
 
-    private static JLabel buildSectionHeader(String key) {
-        JLabel header = new JLabel(LanguageService.displayName(key));
-        header.setFont(header.getFont().deriveFont(Font.BOLD, 14f));
-        header.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
-        header.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return header;
-    }
-
     private static JPanel alignLeft(JComponent component) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
+        panel.setOpaque(false);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(component);
+        // FlowLayout isn't a LayoutManager2, so this panel would otherwise
+        // report an unbounded maximum size too - see the trailing glue added
+        // where this is used.
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
         return panel;
     }
 
-    private SectionSpec<Hero> buildHeroSpec() {
-        return new SectionSpec<>(HeroRepository.findAll(), GuildEntryDialog::heroLabel,
-                h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), Comparator.comparing(GuildEntryDialog::heroLabel),
-                m -> m.heroTeams, FortificationType.HERO, Lineup.TeamType.HERO,
-                GuildEntryDialog::heroMatchesBuff, GuildEntryDialog::heroScoreBreakdown);
-    }
-
-    private SectionSpec<Titan> buildTitanSpec() {
-        return new SectionSpec<>(TitanRepository.findAll(), GuildEntryDialog::titanLabel,
-                t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildEntryDialog::titanLabel),
-                m -> m.titanTeams, FortificationType.TITAN, Lineup.TeamType.TITAN,
-                GuildEntryDialog::titanMatchesBuff, GuildEntryDialog::titanScoreBreakdown);
-    }
-
-    private static String heroLabel(Hero hero) {
-        return LanguageService.displayName(hero.id());
-    }
-
-    private static String titanLabel(Titan titan) {
-        return LanguageService.displayName(titan.id());
-    }
-
-    private static boolean heroMatchesBuff(Fortification fortification, Hero hero) {
-        return fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role());
-    }
-
-    private static boolean titanMatchesBuff(Fortification fortification, Titan titan) {
-        return fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element();
-    }
-
-    /** Mirrors {@code FortificationEntryDialog#heroScoreBreakdown} - see {@link TeamScoreCalculator#scoreFor(HeroTeam, Fortification)}. */
-    private static TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft, Fortification fortification) {
-        HeroTeam heroTeam = new HeroTeam(null, teamDraft.members, teamDraft.totalPower);
-        return TeamScoreCalculator.scoreFor(heroTeam, fortification);
-    }
-
-    /** The TITAN-side counterpart of {@link #heroScoreBreakdown} - see {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)}. */
-    private static TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft, Fortification fortification) {
-        TitanTeam titanTeam = new TitanTeam(null, teamDraft.members, teamDraft.totalPower);
-        return TeamScoreCalculator.scoreFor(titanTeam, fortification);
-    }
-
     /**
-     * Builds one section's (hero or titan) initial rows, one per existing
-     * {@link Lineup.Entry} of {@code spec.teamType()} across every
-     * fortification (not just one) - each becomes an editable row via
-     * {@link #addRow}. Further rows can be appended later through the
-     * section's "+" button (see {@link #buildAddRowButton}).
+     * Builds this dialog's initial rows, one per existing {@link Lineup.Entry}
+     * of {@link #spec}'s type across every fortification (not just one) -
+     * each becomes an editable row via {@link #addRow}. Further rows can be
+     * appended later through the "+" button (see {@link #buildAddRowButton}).
      */
-    private <T> void buildSection(JPanel sectionRowsPanel, List<RowState<T>> rowStates, SectionSpec<T> spec) {
+    private void buildSection() {
         List<Lineup.Entry> existingEntries = appContext.lineup().entries().stream()
                 .filter(e -> e.teamType() == spec.teamType())
                 .toList();
@@ -251,21 +224,20 @@ public final class GuildEntryDialog extends JDialog {
             Fortification fortification = fortificationCatalog.stream()
                     .filter(f -> f.id().equals(entry.fortificationId()))
                     .findFirst().orElse(null);
-            addRow(sectionRowsPanel, rowStates, spec, teams.get(entry.teamIndex()), member, entry.teamIndex(), fortification);
+            addRow(teams.get(entry.teamIndex()), member, entry.teamIndex(), fortification);
         }
     }
 
     /**
-     * Appends one new row to {@code sectionRowsPanel} - either restoring an
+     * Appends one new row to {@link #rowsPanel} - either restoring an
      * existing team ({@code existingDraft}/{@code originalMember}/
      * {@code originalTeamIndex}/{@code presetFortification} all non-null, from
      * {@link #buildSection}) or starting a brand new, empty one (all four
-     * {@code null}/{@code -1}, from the section's "+" button - see
+     * {@code null}/{@code -1}, from the "+" button - see
      * {@link #buildAddRowButton}).
      */
-    private <T> void addRow(JPanel sectionRowsPanel, List<RowState<T>> rowStates, SectionSpec<T> spec,
-                             TeamDraft<T> existingDraft, MemberDraft originalMember, int originalTeamIndex,
-                             Fortification presetFortification) {
+    private void addRow(TeamDraft<T> existingDraft, MemberDraft originalMember, int originalTeamIndex,
+                        Fortification presetFortification) {
         TeamDraft<T> rowDraft = new TeamDraft<>();
         if (existingDraft != null) {
             rowDraft.members.addAll(existingDraft.members);
@@ -275,8 +247,10 @@ public final class GuildEntryDialog extends JDialog {
 
         FortComboBox fortCombo = new FortComboBox(fortificationCatalog, spec.fortificationType());
         fortCombo.setPreferredSize(new Dimension(COMBO_WIDTH, MEMBER_COMBO_HEIGHT));
-        if (presetFortification != null) {
-            fortCombo.setSelectedItem(presetFortification);
+        Fortification fortificationToSelect = presetFortification != null
+                ? presetFortification : preselectFortificationFor(existingDraft);
+        if (fortificationToSelect != null) {
+            fortCombo.setSelectedItem(fortificationToSelect);
         }
 
         JComboBox<MemberDraft> memberCombo = buildMemberCombo();
@@ -287,9 +261,9 @@ public final class GuildEntryDialog extends JDialog {
 
         int rowNumber = rowStates.size() + 1;
         JLabel buffCountLabel = buildBuffCountLabel(spec.fortificationType());
-        TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, spec,
-                () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), spec, rowNumber));
-        updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), spec, rowNumber);
+        TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft,
+                () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber));
+        updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber);
 
         // Same convention as FortificationEntryDialog: picking "- none -" as
         // the member clears this row's team, so an unwanted row is simply
@@ -299,29 +273,92 @@ public final class GuildEntryDialog extends JDialog {
                 teamEditor.clear();
             }
         });
-        fortCombo.addActionListener(e -> updateBuffCountLabel(buffCountLabel, rowDraft,
-                (Fortification) fortCombo.getSelectedItem(), spec, rowNumber));
+        fortCombo.addActionListener(e -> {
+            Fortification selected = (Fortification) fortCombo.getSelectedItem();
+            if (selected != null) {
+                lastSelectedFortification = selected;
+            }
+            updateBuffCountLabel(buffCountLabel, rowDraft, selected, rowNumber);
+        });
 
-        rowStates.add(new RowState<>(rowDraft, memberCombo, fortCombo, originalMember, originalTeamIndex, spec));
-        sectionRowsPanel.add(buildRowPanel(fortCombo, memberCombo, teamEditor, buffCountLabel));
-        sectionRowsPanel.revalidate();
-        sectionRowsPanel.repaint();
+        rowStates.add(new RowState<>(rowDraft, memberCombo, fortCombo, originalMember, originalTeamIndex));
+        rowsPanel.add(buildRowPanel(fortCombo, memberCombo, teamEditor, buffCountLabel));
+        rowsPanel.revalidate();
+        rowsPanel.repaint();
     }
 
-    /** The section's "+" button - appends one fresh, empty row for a new team (see {@link #addRow}). */
-    private <T> FlatButton buildAddRowButton(JPanel sectionRowsPanel, List<RowState<T>> rowStates, SectionSpec<T> spec) {
-        FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD_ROW, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    /**
+     * The fortification to preselect for a brand new (non-restored) row -
+     * {@link #lastSelectedFortification}, unless that fortification is
+     * already full (see {@link #isFortificationFull}), or there simply isn't
+     * one yet. Restored rows ({@code existingDraft != null}, from
+     * {@link #buildSection}) are left untouched - they already carry their
+     * own {@code presetFortification} - so this only ever runs for the "+"
+     * button / add-row shortcut.
+     */
+    private Fortification preselectFortificationFor(TeamDraft<T> existingDraft) {
+        if (existingDraft != null) {
+            return null;
+        }
+        return lastSelectedFortification != null && !isFortificationFull(lastSelectedFortification)
+                ? lastSelectedFortification : null;
+    }
+
+    private boolean isFortificationFull(Fortification fortification) {
+        long assignedRows = rowStates.stream()
+                .filter(row -> row.fortCombo.getSelectedItem() == fortification)
+                .count();
+        return assignedRows >= fortification.capacity();
+    }
+
+    /** The "+" button - appends one fresh, empty row for a new team (see {@link #addRow}). */
+    private FlatButton buildAddRowButton() {
+        FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD_ROW, TOOLBAR_ICON_SIZE, Color.WHITE));
         addButton.setToolTipText(LanguageService.displayName(KEY_ADD_ROW));
-        addButton.addActionListener(e -> addRow(sectionRowsPanel, rowStates, spec, null, null, -1, null));
+        addButton.addActionListener(e -> {
+            // Requirement: auto-save whatever is already filled in before a
+            // fresh row is appended, so it's never lost even if the player
+            // forgets to hit "save" themselves before adding more rows.
+            performSave();
+            addRow(null, null, -1, null);
+        });
+        bindAddRowShortcut(addButton);
         return addButton;
+    }
+
+    /**
+     * Lets Strg+Plus (main keyboard, e.g. the dedicated "+" key on a German
+     * layout) or Strg+Numpad-Plus trigger {@code addButton} - i.e. add a new,
+     * empty row - without reaching for the mouse. Bound with
+     * {@code WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} on {@link #rowsPanel}
+     * itself, so the shortcut fires whenever the focus is anywhere among
+     * this dialog's rows.
+     */
+    private void bindAddRowShortcut(FlatButton addButton) {
+        KeyStroke plus = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke numpadPlus = KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK);
+
+        InputMap inputMap = rowsPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = rowsPanel.getActionMap();
+        Object actionKey = "addRow";
+        inputMap.put(plus, actionKey);
+        inputMap.put(numpadPlus, actionKey);
+        actionMap.put(actionKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addButton.doClick();
+            }
+        });
     }
 
     private JPanel buildRowPanel(FortComboBox fortCombo, JComboBox<MemberDraft> memberCombo, JPanel teamEditor, JLabel buffCountLabel) {
         JPanel row = new JPanel(new GridBagLayout());
+        row.setOpaque(false);
         row.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        left.setOpaque(false);
         left.setBorder(BorderFactory.createEmptyBorder(MEMBER_COMBO_TOP_OFFSET, 0, 0, 0));
         left.add(fortCombo);
         left.add(memberCombo);
@@ -349,6 +386,12 @@ public final class GuildEntryDialog extends JDialog {
         buffCountConstraints.insets = new Insets(MEMBER_COMBO_TOP_OFFSET, 8, 0, 0);
         row.add(buffCountLabel, buffCountConstraints);
 
+        // GridBagLayout reports an unbounded maximum size by default, which
+        // would let rowsPanel's BoxLayout stretch every row to fill leftover
+        // vertical space instead of stacking them tightly from the top (see
+        // the vertical glue added where rowsPanel is built).
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+
         return row;
     }
 
@@ -368,8 +411,8 @@ public final class GuildEntryDialog extends JDialog {
      * per-fortification version of this. Also logs the breakdown to
      * {@link Logger} for debugging.
      */
-    private static <T> void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft, Fortification selectedFortification,
-                                                 SectionSpec<T> spec, int rowNumber) {
+    private void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft, Fortification selectedFortification,
+                                      int rowNumber) {
         long count = selectedFortification == null ? 0
                 : teamDraft.members.stream().filter(member -> spec.matchesBuff().apply(selectedFortification, member)).count();
 
@@ -446,7 +489,7 @@ public final class GuildEntryDialog extends JDialog {
     /** {@link #draft}'s members, sorted the same way every member-picking UI in this app sorts them (display name, case-insensitive). */
     private List<MemberDraft> sortedMembers() {
         return draft.members.stream()
-                .sorted(Comparator.comparing(GuildEntryDialog::memberDisplayName, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing(GuildTeamEntryDialog::memberDisplayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
@@ -462,7 +505,9 @@ public final class GuildEntryDialog extends JDialog {
      * {@link #sortedMembers()} (preserving each combo's current selection) -
      * called (deferred via {@link SwingUtilities#invokeLater}) after
      * {@link MemberComboEditor} creates a new member, so it becomes pickable
-     * from every row, not just the one it was typed into.
+     * from every row, not just the one it was typed into; also called after
+     * every successful {@link #performSave}, so every row stays in sync with
+     * the freshly saved draft.
      */
     private void refreshAllMemberCombos() {
         List<MemberDraft> sorted = sortedMembers();
@@ -517,21 +562,20 @@ public final class GuildEntryDialog extends JDialog {
                 return existing;
             }
             if (draft.members.size() >= MAX_MEMBERS) {
-                JOptionPane.showMessageDialog(GuildEntryDialog.this,
+                JOptionPane.showMessageDialog(GuildTeamEntryDialog.this,
                         "A guild has at most " + MAX_MEMBERS + " members.", "Not possible",
                         JOptionPane.WARNING_MESSAGE);
                 return combo.getSelectedItem();
             }
             MemberDraft created = new MemberDraft(typed, typed);
-            ensureTeamCount(created.heroTeams, MAX_HERO_TEAMS);
-            ensureTeamCount(created.titanTeams, MAX_TITAN_TEAMS);
+            ensureTeamCount(spec.teamsOf().apply(created), maxTeams);
             draft.members.add(created);
             Logger.log("Created guild member: " + typed);
             // Deferred: this combo's own model/selection is still mid-update
             // by JComboBox at this point (it called getItem() to find out
             // what to select next) - rebuilding models now, including this
             // one, would step on that. Runs right after, on the same EDT turn.
-            SwingUtilities.invokeLater(GuildEntryDialog.this::refreshAllMemberCombos);
+            SwingUtilities.invokeLater(GuildTeamEntryDialog.this::refreshAllMemberCombos);
             return created;
         }
 
@@ -551,7 +595,7 @@ public final class GuildEntryDialog extends JDialog {
         }
     }
 
-    private <T> TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, SectionSpec<T> spec, Runnable onChanged) {
+    private TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, Runnable onChanged) {
         return new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, teamDraft,
                 LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), onChanged);
     }
@@ -595,13 +639,13 @@ public final class GuildEntryDialog extends JDialog {
     }
 
     /**
-     * Resolves every row of {@code rowStates} to a (member, teamIndex) slot,
+     * Resolves every row of {@link #rowStates} to a (member, teamIndex) slot,
      * exactly like {@code FortificationEntryDialog#performSave} does for its
      * own rows - empty rows (totalPower == 0) are simply skipped, a filled-in
      * row with no member selected or with no free slot left for its member
      * aborts the whole save with a warning dialog (returning {@code null}).
      */
-    private <T> List<RowResolution<T>> resolveResolutions(List<RowState<T>> rowStates) {
+    private List<RowResolution<T>> resolveResolutions() {
         Set<String> boundKeys = new HashSet<>();
         List<RowResolution<T>> resolutions = new ArrayList<>();
 
@@ -616,7 +660,7 @@ public final class GuildEntryDialog extends JDialog {
                         "Could not save", JOptionPane.WARNING_MESSAGE);
                 return null;
             }
-            List<TeamDraft<T>> teams = row.spec.teamsOf().apply(selectedMember);
+            List<TeamDraft<T>> teams = spec.teamsOf().apply(selectedMember);
             int preferredIndex = selectedMember == row.originalMember ? row.originalTeamIndex : -1;
             int idx = resolveTeamIndex(teams, boundKeys, selectedMember.id, preferredIndex);
             if (idx < 0) {
@@ -633,9 +677,9 @@ public final class GuildEntryDialog extends JDialog {
         return resolutions;
     }
 
-    private <T> void applyResolutions(List<RowResolution<T>> resolutions, Function<MemberDraft, List<TeamDraft<T>>> teamsOf) {
+    private void applyResolutions(List<RowResolution<T>> resolutions) {
         for (RowResolution<T> resolution : resolutions) {
-            TeamDraft<T> target = teamsOf.apply(resolution.member()).get(resolution.teamIndex());
+            TeamDraft<T> target = spec.teamsOf().apply(resolution.member()).get(resolution.teamIndex());
             target.members.clear();
             target.members.addAll(resolution.sourceDraft().members);
             target.totalPower = resolution.sourceDraft().totalPower;
@@ -644,42 +688,42 @@ public final class GuildEntryDialog extends JDialog {
     }
 
     /** One resolution per fortification-assigned, non-empty row - a row left on "- none -" for its fortification saves its team without deploying it anywhere. */
-    private <T> List<Lineup.Entry> buildEntries(List<RowResolution<T>> resolutions, Lineup.TeamType teamType) {
+    private List<Lineup.Entry> buildEntries(List<RowResolution<T>> resolutions) {
         List<Lineup.Entry> entries = new ArrayList<>();
         for (RowResolution<T> resolution : resolutions) {
             if (resolution.fortification() == null) {
                 continue;
             }
-            entries.add(new Lineup.Entry(resolution.fortification().id(), resolution.member().id, teamType,
-                    resolution.teamIndex(), resolution.sourceDraft().totalPower, 0, 0));
+            entries.add(new Lineup.Entry(resolution.fortification().id(), resolution.member().id, spec.teamType(),
+                    resolution.teamIndex()));
         }
         return entries;
     }
 
     private void performSave() {
-        List<RowResolution<Hero>> heroResolutions = resolveResolutions(heroRowStates);
-        if (heroResolutions == null) {
-            return;
-        }
-        List<RowResolution<Titan>> titanResolutions = resolveResolutions(titanRowStates);
-        if (titanResolutions == null) {
+        List<RowResolution<T>> resolutions = resolveResolutions();
+        if (resolutions == null) {
             return;
         }
 
-        applyResolutions(heroResolutions, m -> m.heroTeams);
-        applyResolutions(titanResolutions, m -> m.titanTeams);
+        applyResolutions(resolutions);
 
-        // Every HERO/TITAN entry is regenerated wholesale from the current
-        // rows (rather than diffed against the previous lineup) - safe here
-        // because buildSection seeded one row per pre-existing entry of that
-        // type across every fortification, so the rows are always a complete
-        // picture of that type's assignments, unlike FortificationEntryDialog
-        // whose rows only ever covered one fortification's slots.
-        List<Lineup.Entry> updatedEntries = new ArrayList<>();
-        updatedEntries.addAll(buildEntries(heroResolutions, Lineup.TeamType.HERO));
-        updatedEntries.addAll(buildEntries(titanResolutions, Lineup.TeamType.TITAN));
-
+        // This dialog's own type's entries are regenerated wholesale from the
+        // current rows (rather than diffed against the previous lineup) -
+        // safe here because buildSection seeded one row per pre-existing
+        // entry of that type across every fortification, so the rows are
+        // always a complete picture of that type's assignments, unlike
+        // FortificationEntryDialog whose rows only ever covered one
+        // fortification's slots. The OTHER type's entries have no row
+        // representation in this dialog at all, so they are simply carried
+        // over unchanged instead of being dropped.
         Lineup currentLineup = appContext.lineup();
+        List<Lineup.Entry> updatedEntries = new ArrayList<>();
+        updatedEntries.addAll(currentLineup.entries().stream()
+                .filter(e -> e.teamType() != spec.teamType())
+                .toList());
+        updatedEntries.addAll(buildEntries(resolutions));
+
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
         Guild updatedGuild = GuildDraftConverter.toGuild(draft);
@@ -689,7 +733,13 @@ public final class GuildEntryDialog extends JDialog {
             LineupRepository.save(updatedLineup, appContext.lineupFilePath());
             appContext.setGuild(updatedGuild);
             appContext.setLineup(updatedLineup);
-            Logger.log("Saved guild teams");
+            Logger.log("Saved guild " + spec.teamType() + " teams");
+            // Keep every row's member combo (not just the one that triggered
+            // this save) in sync with the freshly saved draft - e.g. an
+            // inline-created member (see MemberComboEditor) that a
+            // WHEN_ANCESTOR-scoped refresh may have missed while this save
+            // was still pending.
+            refreshAllMemberCombos();
             if (onSaved != null) {
                 onSaved.run();
             }
@@ -703,17 +753,19 @@ public final class GuildEntryDialog extends JDialog {
     }
 
     /**
-     * Bundles everything specific to one type (Hero or Titan) that both
-     * {@link #buildSection} and {@link #addRow} need - the generic
+     * Bundles everything specific to this dialog's one type (Hero or Titan)
+     * that both {@link #buildSection} and {@link #addRow} need - the generic
      * counterpart of the separate lambdas
      * {@code FortificationEntryDialog#buildRows} passes into
-     * {@code buildRowsGeneric} for its two branches.
+     * {@code buildRowsGeneric} for its two branches. Built once by the
+     * subclass (see {@code GuildHeroEntryDialog}/{@code GuildTitanEntryDialog})
+     * and passed into the superclass constructor.
      */
-    private record SectionSpec<T>(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
-                                  Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
-                                  FortificationType fortificationType, Lineup.TeamType teamType,
-                                  BiFunction<Fortification, T, Boolean> matchesBuff,
-                                  BiFunction<TeamDraft<T>, Fortification, TeamScoreCalculator.Breakdown> scoreBreakdownOf) {
+    protected record SectionSpec<T>(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
+                                    Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
+                                    FortificationType fortificationType, Lineup.TeamType teamType,
+                                    BiFunction<Fortification, T, Boolean> matchesBuff,
+                                    BiFunction<TeamDraft<T>, Fortification, TeamScoreCalculator.Breakdown> scoreBreakdownOf) {
     }
 
     private static final class RowState<T> {
@@ -722,16 +774,14 @@ public final class GuildEntryDialog extends JDialog {
         final FortComboBox fortCombo;
         final MemberDraft originalMember;
         final int originalTeamIndex;
-        final SectionSpec<T> spec;
 
         RowState(TeamDraft<T> teamDraft, JComboBox<MemberDraft> memberCombo, FortComboBox fortCombo,
-                 MemberDraft originalMember, int originalTeamIndex, SectionSpec<T> spec) {
+                 MemberDraft originalMember, int originalTeamIndex) {
             this.teamDraft = teamDraft;
             this.memberCombo = memberCombo;
             this.fortCombo = fortCombo;
             this.originalMember = originalMember;
             this.originalTeamIndex = originalTeamIndex;
-            this.spec = spec;
         }
     }
 

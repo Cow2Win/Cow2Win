@@ -9,6 +9,8 @@ import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.hero.HeroValueOverviewDialog;
+import org.c2w.gui.titan.TitanValueOverviewDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.LanguageService;
 import org.c2w.util.LineupComparisonService;
@@ -439,8 +441,7 @@ public class LineupComparisonDialog extends JDialog {
         private final String[] columnKeys = {
                 "lineupComparison.columnStatus", "teamsOverview.member", "lineupComparison.columnTeam",
                 "lineupComparison.columnFortificationBefore", "lineupComparison.columnFortificationAfter",
-                "lineupComparison.columnPowerRange", "lineupComparison.columnPowerDiff",
-                "lineupComparison.columnScoreDiff"
+                "lineupComparison.columnPowerRange", "lineupComparison.columnPowerDiff"
         };
         private List<TeamDiff> rows = List.of();
 
@@ -469,9 +470,6 @@ public class LineupComparisonDialog extends JDialog {
             if (columnIndex == 6) {
                 return Integer.class;
             }
-            if (columnIndex == 7) {
-                return Double.class;
-            }
             return String.class;
         }
 
@@ -487,7 +485,6 @@ public class LineupComparisonDialog extends JDialog {
                 case 5 -> GuiUtils.NUMBER_FORMAT.format(diff.powerBefore()) + " → "
                         + GuiUtils.NUMBER_FORMAT.format(diff.powerAfter());
                 case 6 -> diff.powerDiff();
-                case 7 -> diff.weightedScoreDiff();
                 default -> "";
             };
         }

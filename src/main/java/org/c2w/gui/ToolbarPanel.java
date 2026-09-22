@@ -11,7 +11,10 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
-import org.c2w.gui.guild.GuildEntryDialog;
+import org.c2w.gui.guild.GuildHeroEntryDialog;
+import org.c2w.gui.guild.GuildTitanEntryDialog;
+import org.c2w.gui.hero.HeroValueOverviewDialog;
+import org.c2w.gui.titan.TitanValueOverviewDialog;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -94,11 +97,17 @@ public class ToolbarPanel extends JPanel {
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_HERO_TEAMS}/{@link #ICON_TITAN_TEAMS}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide team assignment" button (see {@link #onOpenGuildEntry()}). */
-    private static final String KEY_OPEN_GUILD_ENTRY = "toolbar.openGuildEntry";
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide hero team assignment" button (see {@link #onOpenGuildHeroEntry()}). */
+    private static final String KEY_OPEN_GUILD_HERO_ENTRY = "toolbar.openGuildHeroEntry";
 
-    /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon {@link org.c2w.data.model.FortificationType#HERO} itself uses, since this button opens the guild-wide counterpart of a single fortification's own team-entry dialog. */
-    private static final String ICON_OPEN_GUILD_ENTRY = "/images/app/add.png";
+    /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon as {@link #ICON_HERO_TEAMS}, since this button opens the guild-wide hero counterpart of a single fortification's own team-entry dialog. */
+    private static final String ICON_OPEN_GUILD_HERO_ENTRY = ICON_HERO_TEAMS;
+
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide titan team assignment" button (see {@link #onOpenGuildTitanEntry()}). */
+    private static final String KEY_OPEN_GUILD_TITAN_ENTRY = "toolbar.openGuildTitanEntry";
+
+    /** Reused rather than a dedicated icon - same "hexagon" (TITAN fortification) icon as {@link #ICON_TITAN_TEAMS}, since this button opens the guild-wide titan counterpart of a single fortification's own team-entry dialog. */
+    private static final String ICON_OPEN_GUILD_TITAN_ENTRY = ICON_TITAN_TEAMS;
 
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
@@ -190,35 +199,40 @@ public class ToolbarPanel extends JPanel {
         saveLineupButton.addActionListener(e -> onSaveLineup());
         add(saveLineupButton);
 
-        FlatButton generateReportButton = new FlatButton(IconLoader.iconFor(ICON_GENERATE_REPORT, TOOLBAR_ICON_SIZE));
+        FlatButton generateReportButton = new FlatButton(IconLoader.iconForButton(ICON_GENERATE_REPORT));
         generateReportButton.setToolTipText(LanguageService.displayName(KEY_GENERATE_REPORT));
         generateReportButton.addActionListener(e -> onGenerateReport());
         add(generateReportButton);
 
-        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconFor(ICON_HERO_TEAMS, TOOLBAR_ICON_SIZE));
+        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_HERO_TEAMS));
         heroTeamsButton.setToolTipText(LanguageService.displayName(KEY_HERO_TEAMS));
         heroTeamsButton.addActionListener(e -> onOpenHeroTeams());
         add(heroTeamsButton);
 
-        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE));
+        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_TITAN_TEAMS));
         titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
         titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
         add(titanTeamsButton);
 
-        FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE));
+        FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconForButton(ICON_RUN_ALGORITHM));
         runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
         runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
         add(runAlgorithmButton);
 
-        FlatButton compareLineupsButton = new FlatButton(IconLoader.iconFor(ICON_COMPARE_LINEUPS, TOOLBAR_ICON_SIZE));
+        FlatButton compareLineupsButton = new FlatButton(IconLoader.iconForButton(ICON_COMPARE_LINEUPS));
         compareLineupsButton.setToolTipText(LanguageService.displayName(KEY_COMPARE_LINEUPS));
         compareLineupsButton.addActionListener(e -> onOpenLineupComparison());
         add(compareLineupsButton);
 
-        FlatButton openGuildEntryButton = new FlatButton(IconLoader.iconFor(ICON_OPEN_GUILD_ENTRY, TOOLBAR_ICON_SIZE));
-        openGuildEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_ENTRY));
-        openGuildEntryButton.addActionListener(e -> onOpenGuildEntry());
-        add(openGuildEntryButton);
+        FlatButton openGuildHeroEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY));
+        openGuildHeroEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_HERO_ENTRY));
+        openGuildHeroEntryButton.addActionListener(e -> onOpenGuildHeroEntry());
+        add(openGuildHeroEntryButton);
+
+        FlatButton openGuildTitanEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY));
+        openGuildTitanEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_TITAN_ENTRY));
+        openGuildTitanEntryButton.addActionListener(e -> onOpenGuildTitanEntry());
+        add(openGuildTitanEntryButton);
 
         add(statusLabel);
     }
@@ -559,13 +573,19 @@ public class ToolbarPanel extends JPanel {
     }
 
     /**
-     * Opens {@link GuildEntryDialog} - the guild-wide counterpart of
+     * Opens {@link GuildHeroEntryDialog} - the guild-wide hero counterpart of
      * {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog},
      * refreshed the same way on save via {@link FortificationMapPanel#refreshAfterExternalSave()}.
      */
-    private void onOpenGuildEntry() {
+    private void onOpenGuildHeroEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new GuildEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
+        new GuildHeroEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
+    }
+
+    /** The TITAN-side counterpart of {@link #onOpenGuildHeroEntry()} - opens {@link GuildTitanEntryDialog}. */
+    private void onOpenGuildTitanEntry() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new GuildTitanEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
     }
 
     /**

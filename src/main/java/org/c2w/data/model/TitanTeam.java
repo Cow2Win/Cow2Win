@@ -9,11 +9,16 @@ import java.util.List;
  * older community sources, which state 1-4 titans. totalPower, as with
  * HeroTeam, is the team's total strength.
  *
+ * index: see {@link HeroTeam#index()} - identical concept, here for titan
+ * teams (0..{@link #MAX_TEAMS_PER_MEMBER} - 1, up to 2 titan teams per
+ * member, see {@link GuildMember}).
+ *
  * lastModified: see {@link HeroTeam#lastModified()} - identical concept,
  * here for titan teams.
  */
 public record TitanTeam(
         String memberId,
+        int index,
         List<Titan> titans,
         int totalPower,
         LocalDate lastModified
@@ -21,21 +26,28 @@ public record TitanTeam(
     /** Base weight per titan whose element matches the ElementBuff's element. */
     public static final int ELEMENT_MATCH_WEIGHT = 1;
 
+    /** Per Clash of Worlds rules, at most 2 titan teams per member (see {@link GuildMember}) - so {@link #index} must be 0 or 1. */
+    public static final int MAX_TEAMS_PER_MEMBER = 2;
+
     public TitanTeam {
         if (totalPower < 0) {
             throw new IllegalArgumentException("totalPower must not be negative");
+        }
+        if (index < 0 || index >= MAX_TEAMS_PER_MEMBER) {
+            throw new IllegalArgumentException(
+                    "index must be between 0 and " + (MAX_TEAMS_PER_MEMBER - 1) + ", was: " + index);
         }
         titans = List.copyOf(titans);
     }
 
     /** Convenience constructor for titan teams without lastModified. */
-    public TitanTeam(String memberId, List<Titan> titans, int totalPower) {
-        this(memberId, titans, totalPower, null);
+    public TitanTeam(String memberId, int index, List<Titan> titans, int totalPower) {
+        this(memberId, index, titans, totalPower, null);
     }
 
-    /** Convenience constructor for titan teams without lastModified. */
+    /** Convenience constructor for an empty titan team at slot 0, without lastModified. */
     public TitanTeam() {
-        this(null, null, 0, null);
+        this(null, 0, null, 0, null);
     }
     /**
      * Second comparison value besides totalPower: how much the given

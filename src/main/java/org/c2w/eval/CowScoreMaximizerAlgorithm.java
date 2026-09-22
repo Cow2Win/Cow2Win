@@ -173,20 +173,10 @@ public class CowScoreMaximizerAlgorithm implements LineupAlgorithm {
      * {@link BestPossibleLineupAlgorithm#assignOne}'s Criterion 3), then
      * memberId/teamIndex for a fully deterministic result.
      *
-     * <p>Sets the resulting {@link Lineup.Entry#buffFitScore()} to 0 -
-     * unlike {@link BestPossibleLineupAlgorithm#assignOne}, this algorithm
-     * never reasons in role/element MATCH COUNT units at any point, so there
-     * is no meaningful count to store there; {@link
-     * Lineup.Entry#weightedScore()} is set to the actual {@code cowScoreOf}
-     * value that decided this pick - for EVERY fortification, bridge
-     * included, unlike {@link BestPossibleLineupAlgorithm}, where the
-     * bridge's {@code weightedScore} is raw totalPower (a much larger,
-     * differently-scaled number than every other entry's). That makes every
-     * entry's {@code weightedScore} genuinely comparable to every other one
-     * in a lineup produced by this algorithm - useful for {@code
-     * LineupComparisonService}, which reads {@code weightedScore} to decide
-     * whether a team's assignment to the same fortification counts as
-     * "UPDATED" between two lineups.
+     * <p>The resulting {@link Lineup.Entry} only ever carries the winning
+     * team's identity (memberId/teamIndex) - see the class Javadoc; the
+     * {@code cowScoreOf} value that decided this pick is not persisted, but
+     * can always be recomputed fresh from the referenced team/fortification.
      */
     private static <T> void assignBestByScore(Fortification fortification, List<BestPossibleLineupAlgorithm.Candidate<T>> pool,
                                                List<Lineup.Entry> updatedEntries, Lineup.TeamType teamType,
@@ -201,9 +191,7 @@ public class CowScoreMaximizerAlgorithm implements LineupAlgorithm {
                 .findFirst()
                 .orElseThrow();
 
-        double score = cowScoreOf.applyAsDouble(chosen.team(), fortification);
         pool.remove(chosen);
-        updatedEntries.add(new Lineup.Entry(fortification.id(), chosen.memberId(), teamType, chosen.teamIndex(),
-                chosen.totalPower(), 0, score));
+        updatedEntries.add(new Lineup.Entry(fortification.id(), chosen.memberId(), teamType, chosen.teamIndex()));
     }
 }

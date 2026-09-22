@@ -8,6 +8,8 @@ import org.c2w.gui.Cow2Frame;
 import org.c2w.util.*;
 
 import javax.swing.*;
+import mdlaf.MaterialLookAndFeel;
+import mdlaf.themes.MaterialOceanicTheme;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +27,7 @@ public class C2WApp {
     public static final String BASE_TITLE = "Cow2Win";
 
     public static void main(String[] args) {
+        installLookAndFeel();
         installUncaughtExceptionLogging();
 
         boolean first = false;
@@ -46,6 +49,24 @@ public class C2WApp {
         Logger.log("Started: ");
 
         SwingUtilities.invokeLater(() -> new Cow2Frame(context));
+    }
+
+    /**
+     * Installs the Material Design "Oceanic" look and feel (material-ui-swing)
+     * for the whole application. This must run before any Swing component is
+     * created, so it is the very first thing {@link #main} does - that way even
+     * the first-run setup dialogs already use the theme.
+     *
+     * <p>A failure here must never prevent startup: if the look and feel cannot
+     * be installed, the exception is logged and the application simply falls back
+     * to the default (cross-platform) Swing look and feel.
+     */
+    private static void installLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(new MaterialLookAndFeel(new MaterialOceanicTheme()));
+        } catch (UnsupportedLookAndFeelException e) {
+            Logger.logException("Could not install the MaterialOceanicTheme look and feel", e);
+        }
     }
 
     /**

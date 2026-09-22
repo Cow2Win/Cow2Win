@@ -2,7 +2,6 @@ package org.c2w.gui.common;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
-import org.c2w.data.repository.FortificationRepository;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
@@ -54,7 +53,7 @@ public class FortComboBox extends JComboBox<Fortification> {
      * first entry whose DISPLAY name (via {@link LanguageService#displayName},
      * e.g. "Wachturm") - not {@link Object#toString()} - starts with what
      * was typed, mirroring the manager used by the hero/member combo boxes
-     * (see {@code GuildEntryDialog#buildMemberKeySelectionManager} and
+     * (see {@code GuildTeamEntryDialog#buildMemberCombo} and
      * {@code TeamEditorPanel#buildLabelKeySelectionManager}). Consecutive
      * keystrokes within {@value #TYPEAHEAD_TIMEOUT_MS}ms accumulate into
      * one search (typing "wa" narrows further among names starting with

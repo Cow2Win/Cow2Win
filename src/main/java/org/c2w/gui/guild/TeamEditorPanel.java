@@ -70,7 +70,7 @@ public final class TeamEditorPanel<T> extends JPanel {
                     Comparator<T> catalogOrder, Runnable onChanged) {
         super(new FlowLayout(FlowLayout.LEFT, 6, 4));
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-
+        setOpaque(false);
         this.label = label;
         this.icon = icon;
         this.roleDescriber = roleDescriber;

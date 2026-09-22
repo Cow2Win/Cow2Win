@@ -121,13 +121,15 @@ public class GuildRepository {
         String name = JsonSupport.getString(obj, "name", "");
 
         List<HeroTeam> heroTeams = new ArrayList<>();
-        for (JsonElement teamEl : JsonSupport.getArray(obj, "heroTeams")) {
-            heroTeams.add(heroTeamFromJson(teamEl.getAsJsonObject(), id));
+        JsonArray heroTeamsArr = JsonSupport.getArray(obj, "heroTeams");
+        for (int i = 0; i < heroTeamsArr.size(); i++) {
+            heroTeams.add(heroTeamFromJson(heroTeamsArr.get(i).getAsJsonObject(), id, i));
         }
 
         List<TitanTeam> titanTeams = new ArrayList<>();
-        for (JsonElement teamEl : JsonSupport.getArray(obj, "titanTeams")) {
-            titanTeams.add(titanTeamFromJson(teamEl.getAsJsonObject(), id));
+        JsonArray titanTeamsArr = JsonSupport.getArray(obj, "titanTeams");
+        for (int i = 0; i < titanTeamsArr.size(); i++) {
+            titanTeams.add(titanTeamFromJson(titanTeamsArr.get(i).getAsJsonObject(), id, i));
         }
 
         return new GuildMember(id, name, heroTeams, titanTeams);
@@ -153,7 +155,7 @@ public class GuildRepository {
         return obj;
     }
 
-    private static HeroTeam heroTeamFromJson(JsonObject obj, String memberId) {
+    private static HeroTeam heroTeamFromJson(JsonObject obj, String memberId, int index) {
         List<Hero> heroes = new ArrayList<>();
         for (String heroId : JsonSupport.getStringList(obj, "heroIds")) {
             HeroRepository.findById(heroId).ifPresentOrElse(heroes::add,
@@ -163,7 +165,7 @@ public class GuildRepository {
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);
         LocalDate lastModified = JsonSupport.getLocalDate(obj, "lastModified");
 
-        return new HeroTeam(memberId, heroes, totalPower, lastModified);
+        return new HeroTeam(memberId, index, heroes, totalPower, lastModified);
     }
 
     private static JsonObject heroTeamToTree(HeroTeam team) {
@@ -181,7 +183,7 @@ public class GuildRepository {
         return obj;
     }
 
-    private static TitanTeam titanTeamFromJson(JsonObject obj, String memberId) {
+    private static TitanTeam titanTeamFromJson(JsonObject obj, String memberId, int index) {
         List<Titan> titans = new ArrayList<>();
         for (String titanId : JsonSupport.getStringList(obj, "titanIds")) {
             TitanRepository.findById(titanId).ifPresentOrElse(titans::add,
@@ -191,7 +193,7 @@ public class GuildRepository {
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);
         LocalDate lastModified = JsonSupport.getLocalDate(obj, "lastModified");
 
-        return new TitanTeam(memberId, titans, totalPower, lastModified);
+        return new TitanTeam(memberId, index, titans, totalPower, lastModified);
     }
 
     private static JsonObject titanTeamToTree(TitanTeam team) {

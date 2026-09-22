@@ -69,17 +69,17 @@
     ]
   },
   {
-    "id": "aurora",
-    "image": "Aurora.png",
-    "roles": [
-      "TANK"
-    ]
-  },
-  {
     "id": "augustus",
     "image": "Augustus.png",
     "roles": [
       "MAGE"
+    ]
+  },
+  {
+    "id": "aurora",
+    "image": "Aurora.png",
+    "roles": [
+      "TANK"
     ]
   },
   {
@@ -176,6 +176,14 @@
     "image": "Elmir.png",
     "roles": [
       "WARRIOR"
+    ]
+  },
+  {
+    "id": "eva",
+    "image": "placeholder",
+    "roles": [
+      "MARKSMAN",
+      "SUPPORT"
     ]
   },
   {
@@ -322,6 +330,13 @@
     ]
   },
   {
+    "id": "karkh",
+    "image": "Karkh.png",
+    "roles": [
+      "WARRIOR"
+    ]
+  },
+  {
     "id": "kayla",
     "image": "Kayla.png",
     "roles": [
@@ -340,13 +355,6 @@
     "image": "Krista.png",
     "roles": [
       "MAGE"
-    ]
-  },
-  {
-    "id": "karkh",
-    "image": "Karkh.png",
-    "roles": [
-      "WARRIOR"
     ]
   },
   {
@@ -511,6 +519,13 @@
     "image": "Sebastian.png",
     "roles": [
       "SUPPORT"
+    ]
+  },
+  {
+    "id": "somna",
+    "image": "placeholder",
+    "roles": [
+      "CONTROL"
     ]
   },
   {

@@ -1,12 +1,14 @@
-package org.c2w.gui;
+package org.c2w.gui.titan;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.hero.HeroValueOverviewDialog;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
@@ -309,8 +311,7 @@ public class TitanValueOverviewDialog extends JDialog {
 
         List<Lineup.Entry> updatedEntries = new ArrayList<>(otherEntries);
         if (fortification != null) {
-            updatedEntries.add(new Lineup.Entry(fortification.id(), row.teamMemberId, row.teamType, row.teamIndex,
-                    row.totalPower, 0, 0));
+            updatedEntries.add(new Lineup.Entry(fortification.id(), row.teamMemberId, row.teamType, row.teamIndex));
         }
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
@@ -339,8 +340,8 @@ public class TitanValueOverviewDialog extends JDialog {
         Guild currentGuild = appContext.guild();
         Lineup currentLineup = appContext.lineup();
         row.matchCounts = matchCountsFor(titanValueColumns, row.teamMemberId, row.teamType, row.teamIndex,
-                newPower, currentGuild, currentLineup);
-        TitanTeam syntheticTeam = new TitanTeam(row.teamMemberId, row.members, newPower, LocalDate.now());
+                currentGuild, currentLineup);
+        TitanTeam syntheticTeam = new TitanTeam(row.teamMemberId, row.teamIndex, row.members, newPower, LocalDate.now());
         row.scores = scoresFor(syntheticTeam, titanValueColumns);
         GuiUtils.editedGuild = true;
         return true;
@@ -382,7 +383,7 @@ public class TitanValueOverviewDialog extends JDialog {
             for (TitanTeam team : member.titanTeams()) {
                 TitanValueTableModel.Row row = titanRows.get(titanIndex);
                 LocalDate lastModified = row.totalPower != team.totalPower() ? LocalDate.now() : team.lastModified();
-                updatedTitanTeams.add(new TitanTeam(team.memberId(), team.titans(), row.totalPower, lastModified));
+                updatedTitanTeams.add(new TitanTeam(team.memberId(), team.index(), team.titans(), row.totalPower, lastModified));
                 titanIndex++;
             }
             updatedMembers.add(new GuildMember(member.id(), member.name(), member.heroTeams(), updatedTitanTeams));
@@ -403,7 +404,7 @@ public class TitanValueOverviewDialog extends JDialog {
                 TitanTeam team = titanTeams.get(i);
                 Fortification assigned = findAssignedFortification(currentLineup, member.id(), Lineup.TeamType.TITAN, i);
                 int[] matchCounts = matchCountsFor(titanValueColumns, member.id(), Lineup.TeamType.TITAN, i,
-                        team.totalPower(), currentGuild, currentLineup);
+                        currentGuild, currentLineup);
                 double[] scores = scoresFor(team, titanValueColumns);
                 titanRows.add(new TitanValueTableModel.Row(memberLabel, team.titans(), team.totalPower(),
                         member.id(), Lineup.TeamType.TITAN, i, assigned, matchCounts, scores));
@@ -422,12 +423,11 @@ public class TitanValueOverviewDialog extends JDialog {
      * match" value.
      */
     private static int[] matchCountsFor(List<ValueColumn> valueColumns, String teamMemberId, Lineup.TeamType teamType,
-                                        int teamIndex, int totalPower, Guild guild, Lineup currentLineup) {
+                                        int teamIndex, Guild guild, Lineup currentLineup) {
         int[] counts = new int[valueColumns.size()];
         for (int i = 0; i < valueColumns.size(); i++) {
             Fortification fortification = valueColumns.get(i).representative();
-            Lineup.Entry syntheticEntry = new Lineup.Entry(fortification.id(), teamMemberId, teamType, teamIndex,
-                    totalPower, 0, 0);
+            Lineup.Entry syntheticEntry = new Lineup.Entry(fortification.id(), teamMemberId, teamType, teamIndex);
             Lineup syntheticLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
                     currentLineup.algorithmName(), currentLineup.createdAt(), List.of(syntheticEntry));
             counts[i] = BuffCalculationService.countMatchingMembersForFortification(

@@ -69,7 +69,7 @@ public final class LineupComparisonService {
 
         List<TeamDiff> teamDiffs = new ArrayList<>();
         for (TeamKey key : allTeamKeys) {
-            teamDiffs.add(TeamDiff.of(key, beforeByTeam.get(key), afterByTeam.get(key)));
+            teamDiffs.add(TeamDiff.of(key, beforeByTeam.get(key), afterByTeam.get(key), guild));
         }
         teamDiffs.sort(Comparator
                 .comparing((TeamDiff d) -> d.status() == TeamDiff.Status.UNCHANGED)
@@ -100,8 +100,8 @@ public final class LineupComparisonService {
         List<FortificationDiff> result = new ArrayList<>();
         for (String fortificationId : fortificationIds) {
             Fortification fortification = FortificationRepository.findById(fortificationId).orElse(null);
-            int powerBefore = totalPower(before, fortificationId);
-            int powerAfter = totalPower(after, fortificationId);
+            int powerBefore = totalPower(before, guild, fortificationId);
+            int powerAfter = totalPower(after, guild, fortificationId);
             int slotsBefore = countEntries(before, fortificationId);
             int slotsAfter = countEntries(after, fortificationId);
             int buffPercentBefore = fortification == null ? 0
@@ -115,11 +115,11 @@ public final class LineupComparisonService {
         return result;
     }
 
-    private static int totalPower(Lineup lineup, String fortificationId) {
+    private static int totalPower(Lineup lineup, Guild guild, String fortificationId) {
         int total = 0;
         for (Lineup.Entry entry : lineup.entries()) {
             if (entry.fortificationId().equals(fortificationId)) {
-                total += entry.totalPower();
+                total += BuffCalculationService.totalPowerOf(entry, guild);
             }
         }
         return total;
@@ -163,12 +163,22 @@ public final class LineupComparisonService {
      * One team's assignment before/after. Exactly one of {@link #before()}/
      * {@link #after()} is null for {@link Status#ADDED}/{@link Status#REMOVED}
      * respectively; both are non-null for {@link Status#MOVED}/
-     * {@link Status#UPDATED}/{@link Status#UNCHANGED} (see {@link #of} for
-     * how those three are told apart).
+     * {@link Status#UNCHANGED} (see {@link #of} for how those are told
+     * apart). powerBefore/powerAfter are resolved fresh against the single
+     * {@code guild} passed to {@link #compare} (see {@link
+     * BuffCalculationService#totalPowerOf}) rather than read from the entry
+     * itself (an {@link Lineup.Entry} is just a memberId+index reference,
+     * see its class Javadoc) - note this means the same team's power is
+     * necessarily identical on both sides, since both are resolved against
+     * the same guild snapshot; there is no more "team's power changed
+     * between the two lineups" case to detect (that used to be
+     * {@link Status#UPDATED}, now unreachable, kept only so existing
+     * switches over {@link Status} stay exhaustive).
      */
-    public record TeamDiff(TeamKey teamKey, Lineup.Entry before, Lineup.Entry after, Status status) {
+    public record TeamDiff(TeamKey teamKey, Lineup.Entry before, Lineup.Entry after, Status status,
+                            int powerBefore, int powerAfter) {
 
-        private static TeamDiff of(TeamKey key, Lineup.Entry before, Lineup.Entry after) {
+        private static TeamDiff of(TeamKey key, Lineup.Entry before, Lineup.Entry after, Guild guild) {
             Status status;
             if (before == null) {
                 status = Status.ADDED;
@@ -176,17 +186,12 @@ public final class LineupComparisonService {
                 status = Status.REMOVED;
             } else if (!before.fortificationId().equals(after.fortificationId())) {
                 status = Status.MOVED;
-            } else if (before.totalPower() != after.totalPower() || before.weightedScore() != after.weightedScore()) {
-                // Same fortification both times, but the entry itself changed - e.g. the
-                // team's own composition/power was edited between the two lineups. Kept
-                // distinct from MOVED (still "changed", so still surfaced when the GUI's
-                // "only changes" filter is on - see LineupComparisonDialog#refreshTables)
-                // but distinct from UNCHANGED, which a byte-for-byte identical entry stays.
-                status = Status.UPDATED;
             } else {
                 status = Status.UNCHANGED;
             }
-            return new TeamDiff(key, before, after, status);
+            int powerBefore = before == null ? 0 : BuffCalculationService.totalPowerOf(before, guild);
+            int powerAfter = after == null ? 0 : BuffCalculationService.totalPowerOf(after, guild);
+            return new TeamDiff(key, before, after, status, powerBefore, powerAfter);
         }
 
         /** Fortification id this team is assigned to in {@code after}, or (for {@link Status#REMOVED}) the one it was removed from in {@code before} - whichever side is non-null. */
@@ -202,28 +207,8 @@ public final class LineupComparisonService {
             return after == null ? null : after.fortificationId();
         }
 
-        public int powerBefore() {
-            return before == null ? 0 : before.totalPower();
-        }
-
-        public int powerAfter() {
-            return after == null ? 0 : after.totalPower();
-        }
-
         public int powerDiff() {
-            return powerAfter() - powerBefore();
-        }
-
-        public double weightedScoreBefore() {
-            return before == null ? 0 : before.weightedScore();
-        }
-
-        public double weightedScoreAfter() {
-            return after == null ? 0 : after.weightedScore();
-        }
-
-        public double weightedScoreDiff() {
-            return weightedScoreAfter() - weightedScoreBefore();
+            return powerAfter - powerBefore;
         }
 
         public enum Status { UNCHANGED, UPDATED, MOVED, ADDED, REMOVED }

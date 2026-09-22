@@ -156,13 +156,13 @@ public final class FortificationEntryDialog extends JDialog {
      * totalPower term either way).
      */
     private TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft) {
-        HeroTeam heroTeam = new HeroTeam(null, teamDraft.members, teamDraft.totalPower);
+        HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.totalPower);
         return TeamScoreCalculator.scoreFor(heroTeam, fortification);
     }
 
     /** The TITAN-side counterpart of {@link #heroScoreBreakdown} - delegates to {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)}. */
     private TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft) {
-        TitanTeam titanTeam = new TitanTeam(null, teamDraft.members, teamDraft.totalPower);
+        TitanTeam titanTeam = new TitanTeam(null, 0, teamDraft.members, teamDraft.totalPower);
         return TeamScoreCalculator.scoreFor(titanTeam, fortification);
     }
 
@@ -501,8 +501,7 @@ public final class FortificationEntryDialog extends JDialog {
             }
         }
         for (RowResolution<T> resolution : resolutions) {
-            updatedEntries.add(new Lineup.Entry(fortification.id(), resolution.member().id, teamType, resolution.teamIndex(),
-                    resolution.sourceDraft().totalPower, 0, 0));
+            updatedEntries.add(new Lineup.Entry(fortification.id(), resolution.member().id, teamType, resolution.teamIndex()));
         }
 
         Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),

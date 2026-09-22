@@ -172,7 +172,7 @@ public final class ReportGenerator {
             sb.append("<td>").append(escape(fortificationDisplayName(entry.fortificationId()))).append("</td>");
             sb.append("<td>").append(escape(memberName(guild, entry.teamMemberId()))).append("</td>");
             sb.append("<td>").append(escape(teamCompositionOf(guild, entry))).append("</td>");
-            sb.append("<td class=\"number\">").append(entry.totalPower()).append("</td>");
+            sb.append("<td class=\"number\">").append(BuffCalculationService.totalPowerOf(entry, guild)).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");
@@ -264,8 +264,8 @@ public final class ReportGenerator {
     }
 
     private static String statisticsTableHtml(Lineup lineup, Guild guild) {
-        int heroPower = totalPower(lineup, Lineup.TeamType.HERO);
-        int titanPower = totalPower(lineup, Lineup.TeamType.TITAN);
+        int heroPower = totalPower(lineup, guild, Lineup.TeamType.HERO);
+        int titanPower = totalPower(lineup, guild, Lineup.TeamType.TITAN);
         int heroBuffCount = BuffCalculationService.countHeroesIncreasingBuff(lineup, guild);
         int titanBuffCount = BuffCalculationService.countTitansIncreasingBuff(lineup, guild);
         double heroCowScore = BuffCalculationService.sumHeroCowScore(lineup, guild);
@@ -386,12 +386,12 @@ public final class ReportGenerator {
         }
     }
 
-    /** Sums {@link Lineup.Entry#totalPower()} over every entry of the given team type - same helper {@code LineupSummaryPanel} keeps privately. */
-    private static int totalPower(Lineup lineup, Lineup.TeamType teamType) {
+    /** Sums every entry's current team totalPower (see {@link BuffCalculationService#totalPowerOf}) over every entry of the given team type - same helper {@code LineupSummaryPanel} keeps privately. */
+    private static int totalPower(Lineup lineup, Guild guild, Lineup.TeamType teamType) {
         int total = 0;
         for (Lineup.Entry entry : lineup.entries()) {
             if (entry.teamType() == teamType) {
-                total += entry.totalPower();
+                total += BuffCalculationService.totalPowerOf(entry, guild);
             }
         }
         return total;

@@ -91,21 +91,21 @@ public class LineupSummaryPanel extends JPanel {
             throw new IllegalArgumentException("lineup must not be null");
         }
         heroPowerLbl.setText(LanguageService.displayName(KEY_HERO_POWER) + ": "
-                + formatPower(totalPower(lineup, Lineup.TeamType.HERO)));
+                + formatPower(totalPower(lineup, guild, Lineup.TeamType.HERO)));
         heroCowScoreLbl.setText(LanguageService.displayName(KEY_HERO_COW_SCORE) + ": "
                 + COW_SCORE_FORMAT.format(BuffCalculationService.sumHeroCowScore(lineup, guild)));
         titanPowerLbl.setText(LanguageService.displayName(KEY_TITAN_POWER) + ": "
-                + formatPower(totalPower(lineup, Lineup.TeamType.TITAN)));
+                + formatPower(totalPower(lineup, guild, Lineup.TeamType.TITAN)));
         titanCowScoreLbl.setText(LanguageService.displayName(KEY_TITAN_COW_SCORE) + ": "
                 + COW_SCORE_FORMAT.format(BuffCalculationService.sumTitanCowScore(lineup, guild)));
     }
 
-    /** Sums {@link Lineup.Entry#totalPower()} over every entry of the given team type. */
-    private static int totalPower(Lineup lineup, Lineup.TeamType teamType) {
+    /** Sums every entry's current team totalPower (see {@link BuffCalculationService#totalPowerOf}) over every entry of the given team type. */
+    private static int totalPower(Lineup lineup, Guild guild, Lineup.TeamType teamType) {
         int total = 0;
         for (Lineup.Entry entry : lineup.entries()) {
             if (entry.teamType() == teamType) {
-                total += entry.totalPower();
+                total += BuffCalculationService.totalPowerOf(entry, guild);
             }
         }
         return total;

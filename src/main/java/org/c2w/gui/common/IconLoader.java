@@ -14,10 +14,10 @@ public final class IconLoader {
     public static final Color GREEN = new Color(78,133,66);
     public static final Color BLUE = new Color(27,88,124);
     public static final Color RED = new Color(159,41,54);
-    public static final Color GRAY = new Color(50,50,50);
 
+    static final int TOOLBAR_ICON_SIZE = 20;
 
-    private static final String BACKGROUND_IMAGE = "/images/app/background2.png";
+    private static final String BACKGROUND_IMAGE = "/images/app/background.png";
 
     private static final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();
 
@@ -72,6 +72,10 @@ public final class IconLoader {
         return recolored;
     }
 
+    public static ImageIcon iconForButton(String imagePath){
+        Color c = UIManager.getColor("Label.foreground");
+        return iconFor(imagePath,TOOLBAR_ICON_SIZE,c);
+    }
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
         URL resource = IconLoader.class.getResource(imagePath);
         if (resource == null) {

@@ -19,8 +19,9 @@ import org.c2w.data.model.Lineup;
  * re-reading/re-parsing the file. Not yet surfaced in the GUI; that is
  * planned for later.
  *
- * totalPower is the sum of {@link Lineup.Entry#totalPower()} across every
- * entry currently assigned to this ONE fortification - a fortification can
+ * totalPower is the sum of every entry's current team totalPower (see
+ * {@link BuffCalculationService#totalPowerOf}) across every entry currently
+ * assigned to this ONE fortification - a fortification can
  * host several teams at once (see {@link Fortification#capacity()}).
  *
  * buffMemberCount is {@link BuffCalculationService#countMatchingMembersForFortification}
@@ -47,7 +48,7 @@ public record LineupBaseline(int totalPower, int buffMemberCount) {
         int totalPower = 0;
         for (Lineup.Entry entry : lineup.entries()) {
             if (entry.fortificationId().equals(fortification.id())) {
-                totalPower += entry.totalPower();
+                totalPower += BuffCalculationService.totalPowerOf(entry, guild);
             }
         }
         int buffMemberCount = BuffCalculationService.countMatchingMembersForFortification(

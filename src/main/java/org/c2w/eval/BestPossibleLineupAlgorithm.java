@@ -228,10 +228,9 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * ties broken by memberId/teamIndex purely for a deterministic result -
      * the catalog has no other ordering for equal-power teams either).
      * Assigned candidates are removed from {@code pool} so no later pass can
-     * pick them again. New entries get buffFitScore=0 (the bridge never has
-     * a buff in this catalog - both {@link #HERO_BRIDGE_ID} and
-     * {@link #TITAN_BRIDGE_ID} have {@code buff() == null}) and
-     * weightedScore = totalPower (the value this pick was actually made on).
+     * pick them again. The resulting {@link Lineup.Entry} only ever carries
+     * the winning team's identity (memberId/teamIndex) - see the class
+     * Javadoc.
      *
      * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
      * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
@@ -252,8 +251,7 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
             if (free <= 0) {
                 break;
             }
-            updatedEntries.add(new Lineup.Entry(bridge.id(), candidate.memberId(), teamType, candidate.teamIndex(),
-                    candidate.totalPower(), 0, candidate.totalPower()));
+            updatedEntries.add(new Lineup.Entry(bridge.id(), candidate.memberId(), teamType, candidate.teamIndex()));
             pool.remove(candidate);
             free--;
         }
@@ -272,10 +270,9 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
      * picked outright, so the ordinary, unbuffed fortifications are the ones
      * that end up with whatever teams are weakest/least valuable. Either
      * way, the chosen candidate is removed from {@code pool} and a new
-     * {@link Lineup.Entry} is appended to {@code updatedEntries} with a real
-     * buffFitScore (0 when there is no buff to fit) and weightedScore set to
-     * whichever value the pick was actually made on (buffFitScore for a
-     * buff-driven pick, sortScore for an unbuffed one).
+     * {@link Lineup.Entry} is appended to {@code updatedEntries} carrying
+     * only the winning team's identity (memberId/teamIndex) - see the class
+     * Javadoc.
      *
      * Package-private (not private) so {@code BestPossibleLineupAlgorithmAssignmentTest}
      * can exercise it directly (with a synthetic {@link Fortification}/pool) instead of only
@@ -321,9 +318,7 @@ public class BestPossibleLineupAlgorithm implements LineupAlgorithm {
         }
 
         pool.remove(chosen);
-        double weightedScore = buff != null ? buffFitScore : chosen.sortScore();
-        updatedEntries.add(new Lineup.Entry(fortification.id(), chosen.memberId(), teamType, chosen.teamIndex(),
-                chosen.totalPower(), buffFitScore, weightedScore));
+        updatedEntries.add(new Lineup.Entry(fortification.id(), chosen.memberId(), teamType, chosen.teamIndex()));
     }
 
     /**

@@ -12,10 +12,16 @@ import java.util.List;
  * instance in memory and can later be read back in by other modules (see
  * org.tdi.cow2.repository.LineupRepository).
  *
- * A team is identified via teamMemberId + teamType + teamIndex - per the
- * user's requirements (see {@link GuildMember}), teams have no name of their
- * own; their position in the member's respective list (heroTeams/titanTeams)
- * is enough (see {@link GuildMember#teamLabel(int)}).
+ * A team is identified via teamMemberId + teamType + teamIndex alone - per
+ * the user's explicit request (2026-09-20), an {@link Entry} is a pure
+ * reference/primary key into the guild, not a snapshot of the team's values
+ * (totalPower etc. used to be cached here "at the time of assignment", which
+ * could go stale the moment the team itself changed afterwards). Anything
+ * about the team itself (totalPower, buff fit, score, ...) is looked up
+ * fresh from the current {@link Guild} whenever it is needed (see e.g.
+ * {@link org.c2w.util.BuffCalculationService#totalPowerOf}) - teams have no
+ * name of their own; their position in the member's respective list
+ * (heroTeams/titanTeams) is enough (see {@link GuildMember#teamLabel(int)}).
  *
  * algorithmName is the displayName() of the algorithm that produced this
  * result (see org.tdi.cow2.eval.LineupAlgorithm#displayName()) - additionally
@@ -56,20 +62,18 @@ public record Lineup(
      * A single team-to-fortification assignment (see
      * org.tdi.cow2.eval.LineupAssigner.Assignment, but referenced here only
      * via ids/index instead of object references - see the class comment).
-     * totalPower/buffFitScore/weightedScore are the values computed at the
-     * time of assignment (see org.tdi.cow2.eval.FortificationFitScore/
-     * org.tdi.cow2.eval.LineupAssigner.Assignment#weightedScore()), carried
-     * over unchanged - purely informational, no recomputation needed when
-     * reading this back in.
+     * teamMemberId + teamType + teamIndex is the assigned team's primary key
+     * (see {@link HeroTeam#index()}/{@link TitanTeam#index()}) - deliberately
+     * nothing else: no totalPower/buffFitScore/weightedScore snapshot, so an
+     * Entry can never go stale relative to the guild it references. Look up
+     * the actual team via the current {@link Guild} whenever its values
+     * (power, buff fit, score, ...) are needed.
      */
     public record Entry(
             String fortificationId,
             String teamMemberId,
             TeamType teamType,
-            int teamIndex,
-            int totalPower,
-            int buffFitScore,
-            double weightedScore
+            int teamIndex
     ) {
     }
 }

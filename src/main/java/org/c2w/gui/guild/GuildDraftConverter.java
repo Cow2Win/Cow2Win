@@ -55,7 +55,7 @@ public final class GuildDraftConverter {
                 if (teamDraft.totalPower == 0) {
                     continue;
                 }
-                heroTeams.add(new HeroTeam(memberDraft.id, teamDraft.members, teamDraft.totalPower,
+                heroTeams.add(new HeroTeam(memberDraft.id, heroTeams.size(), teamDraft.members, teamDraft.totalPower,
                         teamDraft.lastModified));
             }
             List<TitanTeam> titanTeams = new ArrayList<>();
@@ -63,7 +63,7 @@ public final class GuildDraftConverter {
                 if (teamDraft.totalPower == 0) {
                     continue;
                 }
-                titanTeams.add(new TitanTeam(memberDraft.id, teamDraft.members, teamDraft.totalPower,
+                titanTeams.add(new TitanTeam(memberDraft.id, titanTeams.size(), teamDraft.members, teamDraft.totalPower,
                         teamDraft.lastModified));
             }
             members.add(new GuildMember(memberDraft.id, memberDraft.name, heroTeams, titanTeams));

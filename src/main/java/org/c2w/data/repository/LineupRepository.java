@@ -203,12 +203,8 @@ public class LineupRepository {
         String teamMemberId = JsonSupport.getStringOrNull(obj, "teamMemberId");
         String teamTypeStr = JsonSupport.getStringOrNull(obj, "teamType");
         Integer teamIndex = JsonSupport.getInteger(obj, "teamIndex");
-        Integer totalPower = JsonSupport.getInteger(obj, "totalPower");
-        Integer buffFitScore = JsonSupport.getInteger(obj, "buffFitScore");
-        Double weightedScore = JsonSupport.getDouble(obj, "weightedScore");
 
-        if (fortificationId == null || teamMemberId == null || teamTypeStr == null ||
-            teamIndex == null || totalPower == null || buffFitScore == null || weightedScore == null) {
+        if (fortificationId == null || teamMemberId == null || teamTypeStr == null || teamIndex == null) {
             return null;
         }
 
@@ -223,10 +219,7 @@ public class LineupRepository {
                 fortificationId,
                 teamMemberId,
                 teamType,
-                teamIndex,
-                totalPower,
-                buffFitScore,
-                weightedScore
+                teamIndex
         );
     }
 
@@ -254,9 +247,6 @@ public class LineupRepository {
         obj.addProperty("teamMemberId", entry.teamMemberId());
         obj.addProperty("teamType", entry.teamType().name());
         obj.addProperty("teamIndex", entry.teamIndex());
-        obj.addProperty("totalPower", entry.totalPower());
-        obj.addProperty("buffFitScore", entry.buffFitScore());
-        JsonSupport.addNumber(obj, "weightedScore", entry.weightedScore());
         return obj;
     }
 }

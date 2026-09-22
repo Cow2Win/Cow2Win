@@ -3,10 +3,51 @@ package org.c2w.util;
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 
+import java.util.Optional;
+
 public class BuffCalculationService {
 
     private BuffCalculationService() {
         // Utility class, no instantiation
+    }
+
+    /**
+     * Resolves the {@link HeroTeam} a HERO-type entry refers to (see
+     * {@link Lineup.Entry#teamMemberId()}/{@link Lineup.Entry#teamIndex()}),
+     * against the given {@link Guild} - empty if the member or that specific
+     * team slot no longer exists there (e.g. removed from the guild after
+     * this lineup was created/saved). See class Javadoc: an {@link
+     * Lineup.Entry} is just a reference, so every value of the team it
+     * points at is always looked up fresh like this, never cached.
+     */
+    public static Optional<HeroTeam> resolveHeroTeam(Lineup.Entry entry, Guild guild) {
+        GuildMember member = findMemberById(guild, entry.teamMemberId());
+        if (member == null || entry.teamIndex() < 0 || entry.teamIndex() >= member.heroTeams().size()) {
+            return Optional.empty();
+        }
+        return Optional.of(member.heroTeams().get(entry.teamIndex()));
+    }
+
+    /** The TITAN-side counterpart of {@link #resolveHeroTeam} - identical reasoning, {@link TitanTeam} instead. */
+    public static Optional<TitanTeam> resolveTitanTeam(Lineup.Entry entry, Guild guild) {
+        GuildMember member = findMemberById(guild, entry.teamMemberId());
+        if (member == null || entry.teamIndex() < 0 || entry.teamIndex() >= member.titanTeams().size()) {
+            return Optional.empty();
+        }
+        return Optional.of(member.titanTeams().get(entry.teamIndex()));
+    }
+
+    /**
+     * {@code entry}'s current {@link HeroTeam#totalPower()}/{@link
+     * TitanTeam#totalPower()} (depending on {@link Lineup.Entry#teamType()}),
+     * looked up fresh via {@link #resolveHeroTeam}/{@link #resolveTitanTeam} -
+     * 0 if the team can no longer be resolved (see there).
+     */
+    public static int totalPowerOf(Lineup.Entry entry, Guild guild) {
+        if (entry.teamType() == Lineup.TeamType.HERO) {
+            return resolveHeroTeam(entry, guild).map(HeroTeam::totalPower).orElse(0);
+        }
+        return resolveTitanTeam(entry, guild).map(TitanTeam::totalPower).orElse(0);
     }
 
     /**

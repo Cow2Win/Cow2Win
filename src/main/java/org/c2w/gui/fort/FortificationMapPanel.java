@@ -95,7 +95,7 @@ public class FortificationMapPanel extends GridPanel {
         for (Lineup.Entry entry : lineup.entries()) {
             String fortId = entry.fortificationId();
             filledSlotsMap.put(fortId, filledSlotsMap.getOrDefault(fortId, 0) + 1);
-            totalPowerMap.put(fortId, totalPowerMap.getOrDefault(fortId, 0) + entry.totalPower());
+            totalPowerMap.put(fortId, totalPowerMap.getOrDefault(fortId, 0) + BuffCalculationService.totalPowerOf(entry, guild));
         }
 
         for (Fortification fort : fortificationCatalog) {

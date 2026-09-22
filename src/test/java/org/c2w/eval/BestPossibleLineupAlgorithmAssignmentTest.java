@@ -2,6 +2,7 @@ package org.c2w.eval;
 
 import org.c2w.data.model.*;
 import org.c2w.eval.BestPossibleLineupAlgorithm.Candidate;
+import org.c2w.util.BuffCalculationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -80,10 +81,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         void fillsStrongestFirstTiesBrokenByMemberId() {
             Fortification bridge = fort("bridge", FortificationType.HERO, 2, null);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
-                    candidate("m2", new HeroTeam("m2", List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 800), 0),
-                    candidate("m3", new HeroTeam("m3", List.of(hero("h3", CowScoreTier.GOOD, Role.TANK)), 800), 0),
-                    candidate("m4", new HeroTeam("m4", List.of(hero("h4", CowScoreTier.GOOD, Role.TANK)), 300), 0)
+                    candidate("m1", new HeroTeam("m1", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
+                    candidate("m2", new HeroTeam("m2", 0, List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 800), 0),
+                    candidate("m3", new HeroTeam("m3", 0, List.of(hero("h3", CowScoreTier.GOOD, Role.TANK)), 800), 0),
+                    candidate("m4", new HeroTeam("m4", 0, List.of(hero("h4", CowScoreTier.GOOD, Role.TANK)), 300), 0)
             ));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -96,9 +97,6 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             assertEquals("m3", updatedEntries.get(1).teamMemberId());
             for (Lineup.Entry entry : updatedEntries) {
                 assertEquals("bridge", entry.fortificationId());
-                assertEquals(800, entry.totalPower());
-                assertEquals(0, entry.buffFitScore(), "the bridge never has a buff, so buffFitScore must be 0");
-                assertEquals(800.0, entry.weightedScore(), "weightedScore must be the value the pick was made on (totalPower)");
             }
             assertEquals(2, pool.size(), "the two assigned candidates must be removed from the pool");
             assertTrue(pool.stream().noneMatch(c -> c.memberId().equals("m2") || c.memberId().equals("m3")));
@@ -109,13 +107,13 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         void onlyFillsFreeCapacity() {
             Fortification bridge = fort("bridge", FortificationType.HERO, 3, null);
             List<Lineup.Entry> updatedEntries = new ArrayList<>(List.of(
-                    new Lineup.Entry("bridge", "existing1", Lineup.TeamType.HERO, 0, 999, 0, 999),
-                    new Lineup.Entry("bridge", "existing2", Lineup.TeamType.HERO, 0, 999, 0, 999)
+                    new Lineup.Entry("bridge", "existing1", Lineup.TeamType.HERO, 0),
+                    new Lineup.Entry("bridge", "existing2", Lineup.TeamType.HERO, 0)
             ));
             // Only 1 free slot left (capacity 3 - 2 existing entries).
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("weak", new HeroTeam("weak", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
-                    candidate("strong", new HeroTeam("strong", List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 900), 0)
+                    candidate("weak", new HeroTeam("weak", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0),
+                    candidate("strong", new HeroTeam("strong", 0, List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 900), 0)
             ));
 
             BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
@@ -131,10 +129,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         void doesNothingWhenFull() {
             Fortification bridge = fort("bridge", FortificationType.HERO, 1, null);
             List<Lineup.Entry> updatedEntries = new ArrayList<>(List.of(
-                    new Lineup.Entry("bridge", "existing", Lineup.TeamType.HERO, 0, 999, 0, 999)
+                    new Lineup.Entry("bridge", "existing", Lineup.TeamType.HERO, 0)
             ));
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
-                    candidate("m1", new HeroTeam("m1", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0)
+                    candidate("m1", new HeroTeam("m1", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0)
             ));
 
             BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
@@ -156,10 +154,10 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff warriorBuff = new RoleBuff(Role.WARRIOR, BuffEffect.MAGIC_DEFENSE_INCREASE, 3.0);
             Fortification bastion = fort("bastion", FortificationType.HERO, 5, warriorBuff);
 
-            HeroTeam noWarriors = new HeroTeam("a", List.of(hero("h1", CowScoreTier.GOOD, Role.MAGE)), 1000);
-            HeroTeam twoWarriors = new HeroTeam("b", List.of(
+            HeroTeam noWarriors = new HeroTeam("a", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.MAGE)), 1000);
+            HeroTeam twoWarriors = new HeroTeam("b", 0, List.of(
                     hero("h2", CowScoreTier.GOOD, Role.WARRIOR), hero("h3", CowScoreTier.GOOD, Role.WARRIOR)), 500);
-            HeroTeam oneWarrior = new HeroTeam("c", List.of(hero("h4", CowScoreTier.GOOD, Role.WARRIOR)), 200);
+            HeroTeam oneWarrior = new HeroTeam("c", 0, List.of(hero("h4", CowScoreTier.GOOD, Role.WARRIOR)), 200);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
                     candidate("a", noWarriors, 0), candidate("b", twoWarriors, 0), candidate("c", oneWarrior, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
@@ -169,9 +167,6 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             assertEquals(1, updatedEntries.size());
             Lineup.Entry entry = updatedEntries.get(0);
             assertEquals("b", entry.teamMemberId(), "team 'b' has the best buff fit (2 warriors) despite the lowest totalPower");
-            assertEquals(2, entry.buffFitScore());
-            assertEquals(500, entry.totalPower());
-            assertEquals(2.0, entry.weightedScore(), "weightedScore for a buffed pick must be the buffFitScore");
             assertEquals(2, pool.size(), "only the chosen candidate is removed from the pool");
             assertTrue(pool.stream().noneMatch(c -> c.memberId().equals("b")));
         }
@@ -182,11 +177,11 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff tankBuff = new RoleBuff(Role.TANK, BuffEffect.HEALTH_INCREASE, 10.0);
             Fortification foundry = fort("foundry", FortificationType.HERO, 5, tankBuff);
 
-            HeroTeam strongTie = new HeroTeam("x", List.of(
+            HeroTeam strongTie = new HeroTeam("x", 0, List.of(
                     hero("h1", CowScoreTier.GOOD, Role.TANK), hero("h2", CowScoreTier.GOOD, Role.TANK)), 900);
-            HeroTeam weakTie = new HeroTeam("y", List.of(
+            HeroTeam weakTie = new HeroTeam("y", 0, List.of(
                     hero("h3", CowScoreTier.GOOD, Role.TANK), hero("h4", CowScoreTier.GOOD, Role.TANK)), 300);
-            HeroTeam worseFit = new HeroTeam("z", List.of(hero("h5", CowScoreTier.GOOD, Role.TANK)), 100);
+            HeroTeam worseFit = new HeroTeam("z", 0, List.of(hero("h5", CowScoreTier.GOOD, Role.TANK)), 100);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(
                     candidate("x", strongTie, 0), candidate("y", weakTie, 0), candidate("z", worseFit, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
@@ -204,8 +199,8 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff fireBuff = new ElementBuff(TitanElement.FIRE, BuffEffect.HEALTH_INCREASE, 8.0);
             Fortification bastionOfFire = fort("bastion-of-fire", FortificationType.TITAN, 4, fireBuff);
 
-            TitanTeam noFireTitans = new TitanTeam("p", List.of(titan("t1", CowScoreTier.GOOD, TitanElement.WATER)), 1000);
-            TitanTeam twoFireTitans = new TitanTeam("q", List.of(
+            TitanTeam noFireTitans = new TitanTeam("p", 0, List.of(titan("t1", CowScoreTier.GOOD, TitanElement.WATER)), 1000);
+            TitanTeam twoFireTitans = new TitanTeam("q", 0, List.of(
                     titan("t2", CowScoreTier.GOOD, TitanElement.FIRE), titan("t3", CowScoreTier.GOOD, TitanElement.FIRE)), 400);
             List<Candidate<TitanTeam>> pool = new ArrayList<>(List.of(candidate("p", noFireTitans, 0), candidate("q", twoFireTitans, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
@@ -213,7 +208,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             BestPossibleLineupAlgorithm.assignOne(bastionOfFire, pool, updatedEntries, Lineup.TeamType.TITAN, TitanTeam::buffFitScore);
 
             assertEquals("q", updatedEntries.get(0).teamMemberId());
-            assertEquals(2, updatedEntries.get(0).buffFitScore());
+            assertEquals(2, twoFireTitans.buffFitScore(fireBuff), "the winning team ('q') has 2 fire titans");
         }
 
         @Test
@@ -226,8 +221,8 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             // 4-hero team where only 1 hero happens to match too. Same buffFitScore (1) either
             // way, so the tie-break (lowest totalPower) must decide, proving the incomplete
             // team's score was computed from its ACTUAL roster (not padded/defaulted).
-            HeroTeam oneHealerOnly = new HeroTeam("single", List.of(hero("h1", CowScoreTier.GOOD, Role.HEALER)), 50);
-            HeroTeam fourHeroesOneHealer = new HeroTeam("full", List.of(
+            HeroTeam oneHealerOnly = new HeroTeam("single", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.HEALER)), 50);
+            HeroTeam fourHeroesOneHealer = new HeroTeam("full", 0, List.of(
                     hero("h2", CowScoreTier.GOOD, Role.HEALER), hero("h3", CowScoreTier.GOOD, Role.TANK),
                     hero("h4", CowScoreTier.GOOD, Role.MAGE), hero("h5", CowScoreTier.GOOD, Role.WARRIOR)), 400);
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(candidate("single", oneHealerOnly, 0), candidate("full", fourHeroesOneHealer, 0)));
@@ -235,7 +230,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
 
             BestPossibleLineupAlgorithm.assignOne(cityHall, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
-            assertEquals(1, updatedEntries.get(0).buffFitScore(), "the 1-hero team's single healer must still count as a match");
+            assertEquals(1, oneHealerOnly.buffFitScore(healerBuff), "the 1-hero team's single healer must still count as a match");
             assertEquals("single", updatedEntries.get(0).teamMemberId(), "equal buffFitScore (1) - tie-break must pick the lower totalPower");
         }
     }
@@ -251,13 +246,13 @@ class BestPossibleLineupAlgorithmAssignmentTest {
 
             // Higher totalPower (120 000) but poor heroes (NEGATIVE=0.4 each):
             // sortScore = 5*0.4 + 120000/100000 = 2.0 + 1.2 = 3.2
-            HeroTeam highPowerLowGeneralScore = new HeroTeam("strongButWeakHeroes", List.of(
+            HeroTeam highPowerLowGeneralScore = new HeroTeam("strongButWeakHeroes", 0, List.of(
                     hero("h1", CowScoreTier.NEGATIVE, Role.TANK), hero("h2", CowScoreTier.NEGATIVE, Role.TANK),
                     hero("h3", CowScoreTier.NEGATIVE, Role.TANK), hero("h4", CowScoreTier.NEGATIVE, Role.TANK),
                     hero("h5", CowScoreTier.NEGATIVE, Role.TANK)), 120_000);
             // Lower totalPower (100 000) but excellent heroes (ELEVATED=0.9 each):
             // sortScore = 5*0.9 + 100000/100000 = 4.5 + 1.0 = 5.5
-            HeroTeam lowPowerHighGeneralScore = new HeroTeam("weakerButEliteHeroes", List.of(
+            HeroTeam lowPowerHighGeneralScore = new HeroTeam("weakerButEliteHeroes", 0, List.of(
                     hero("h6", CowScoreTier.GREAT, Role.TANK), hero("h7", CowScoreTier.GREAT, Role.TANK),
                     hero("h8", CowScoreTier.GREAT, Role.TANK), hero("h9", CowScoreTier.GREAT, Role.TANK),
                     hero("h10", CowScoreTier.GREAT, Role.TANK)), 100_000);
@@ -271,8 +266,6 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Lineup.Entry entry = updatedEntries.get(0);
             assertEquals("strongButWeakHeroes", entry.teamMemberId(),
                     "sortScore (3.2) must decide, even though this team has MORE totalPower than the other candidate (sortScore 5.5)");
-            assertEquals(0, entry.buffFitScore(), "no buff to fit, so buffFitScore must be 0");
-            assertEquals(3.2, entry.weightedScore(), 1e-9, "weightedScore for an unbuffed pick must be the chosen candidate's sortScore");
         }
 
         @Test
@@ -281,9 +274,9 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Fortification mageAcademy = fort("mage-academy", FortificationType.HERO, 3, null);
 
             // 1 hero at STANDARD (0.8): sortScore = 0.8 + 10000/100000 = 0.8 + 0.1 = 0.9
-            HeroTeam oneHero = new HeroTeam("solo", List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 10_000);
+            HeroTeam oneHero = new HeroTeam("solo", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 10_000);
             // 5 heroes at STANDARD (0.8) each: sortScore = 4.0 + 10000/100000 = 4.0 + 0.1 = 4.1
-            HeroTeam fiveHeroes = new HeroTeam("full", List.of(
+            HeroTeam fiveHeroes = new HeroTeam("full", 0, List.of(
                     hero("h2", CowScoreTier.GOOD, Role.TANK), hero("h3", CowScoreTier.GOOD, Role.TANK),
                     hero("h4", CowScoreTier.GOOD, Role.TANK), hero("h5", CowScoreTier.GOOD, Role.TANK),
                     hero("h6", CowScoreTier.GOOD, Role.TANK)), 10_000);
@@ -304,12 +297,12 @@ class BestPossibleLineupAlgorithmAssignmentTest {
     class FillFortificationsIntegrationTests {
 
         private static GuildMember heroMember(String id, int totalPower) {
-            HeroTeam team = new HeroTeam(id, List.of(hero(id + "-hero", CowScoreTier.GOOD, Role.MAGE)), totalPower);
+            HeroTeam team = new HeroTeam(id, 0, List.of(hero(id + "-hero", CowScoreTier.GOOD, Role.MAGE)), totalPower);
             return new GuildMember(id, id, List.of(team), List.of());
         }
 
         private static GuildMember titanMember(String id, int totalPower) {
-            TitanTeam team = new TitanTeam(id, List.of(titan(id + "-titan", CowScoreTier.GOOD, TitanElement.WATER)), totalPower);
+            TitanTeam team = new TitanTeam(id, 0, List.of(titan(id + "-titan", CowScoreTier.GOOD, TitanElement.WATER)), totalPower);
             return new GuildMember(id, id, List.of(), List.of(team));
         }
 
@@ -332,7 +325,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             List<Lineup.Entry> bridgeEntries = entriesFor(result, "heros-bridge");
             assertEquals(6, bridgeEntries.size(), "bridge capacity is 6");
             assertEquals(Map.of("m700", 700, "m650", 650, "m600", 600, "m550", 550, "m500", 500, "m450", 450),
-                    bridgeEntries.stream().collect(Collectors.toMap(Lineup.Entry::teamMemberId, Lineup.Entry::totalPower)),
+                    bridgeEntries.stream().collect(Collectors.toMap(Lineup.Entry::teamMemberId, e -> BuffCalculationService.totalPowerOf(e, guild))),
                     "the 6 STRONGEST teams must be the ones on the bridge");
 
             List<Lineup.Entry> barracksEntries = entriesFor(result, "barracks");
@@ -382,7 +375,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             GuildMember others = heroMember("other", 100);
             Guild guild = new Guild("g3", "Guild", List.of(manuallyPlaced, others));
 
-            Lineup.Entry manualEntry = new Lineup.Entry("citadel", "manual", Lineup.TeamType.HERO, 0, 999_999, 0, 999_999);
+            Lineup.Entry manualEntry = new Lineup.Entry("citadel", "manual", Lineup.TeamType.HERO, 0);
             Lineup lineupWithManualPick = new Lineup(guild.id(), guild.name(), "", null, List.of(manualEntry));
 
             Lineup result = new BestPossibleLineupAlgorithm().run(lineupWithManualPick, guild);

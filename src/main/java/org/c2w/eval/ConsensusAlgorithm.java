@@ -80,15 +80,12 @@ public class ConsensusAlgorithm implements LineupAlgorithm {
                 // see class javadoc.
                 continue;
             }
-            // Which of the three Entry objects to keep: totalPower/fortificationId/teamIndex are
-            // guaranteed identical across all three (that's what "agree" means above) - only
-            // buffFitScore/weightedScore can differ, since each sub-algorithm computes those from
-            // its own metric. CowScoreMaximizerAlgorithm's is the only one of the three that
-            // already stores a single, genuinely comparable score for EVERY entry (bridge
-            // included, see its own class Javadoc/todos Abschnitt 14) rather than a raw power
-            // number or a role/element match count - so its Entry is reused here, not because its
-            // strategy "won", but because its weightedScore is the only one that stays meaningful
-            // across a consensus lineup mixing bridge and non-bridge picks.
+            // Which of the three Entry objects to keep: since a Lineup.Entry is nothing but
+            // fortificationId/teamMemberId/teamType/teamIndex (see its class Javadoc), and those
+            // are guaranteed identical across all three here (that's what "agree" means above),
+            // any of the three sub-algorithms' entries for this key is equivalent - the
+            // CowScoreMaximizerAlgorithm one is picked arbitrarily, purely for a deterministic,
+            // easy-to-follow choice.
             updatedEntries.add(cowScoreMaximizerEntries.get(key));
         }
 
