@@ -7,8 +7,11 @@ import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.util.AppContext;
+import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
+import org.c2w.util.LineupFiles;
 import org.c2w.util.Logger;
 import org.c2w.util.TeamScoreCalculator;
 
@@ -16,9 +19,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -102,6 +107,18 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     protected final AppContext appContext;
     private final Runnable onSaved;
 
+    /** File the {@link #originalLineup} is loaded from / saved to - the reserved per-guild "Original" lineup (see {@link LineupFiles}). */
+    private final Path originalLineupPath;
+
+    /**
+     * The lineup this dialog edits: the guild's fixed "Original" baseline
+     * (the actual in-game deployment), NOT whatever lineup is currently
+     * selected in the toolbar. Seeded on first use from the currently open
+     * lineup (see {@link #loadOrSeedOriginalLineup()}) and rewritten on every
+     * save (see {@link #performSave()}).
+     */
+    private Lineup originalLineup;
+
     protected final GuildDraft draft;
 
     /** Fetched once and reused for every row's {@link FortComboBox} and for looking up a row's preset fortification, so {@link FortComboBox#setSelectedItem} always matches an item that is actually in that combo's model. */
@@ -150,6 +167,10 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             ensureTeamCount(spec.teamsOf().apply(member), maxTeams);
         }
 
+        Path guildDir = appContext.guildFilePath().getParent();
+        this.originalLineupPath = LineupFiles.originalPathFor(guildDir);
+        this.originalLineup = loadOrSeedOriginalLineup();
+
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -172,6 +193,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         sectionPanel.add(Box.createVerticalGlue());
 
         buildSection();
+        bindDeleteRowShortcut();
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(new JScrollPane(sectionPanel), BorderLayout.CENTER);
@@ -189,6 +211,29 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         }
     }
 
+    /**
+     * Loads the guild's fixed "Original" lineup (see {@link LineupFiles}) if
+     * it already exists on disk, or seeds a fresh one from the currently open
+     * lineup otherwise. Seeding from the current lineup (rather than starting
+     * empty) means the player's existing in-game deployment isn't lost and
+     * only needs adjusting to match reality on the first pass, instead of
+     * being re-entered from scratch; it is written out as the Original
+     * baseline on the first {@link #performSave()}. An unreadable Original
+     * file is treated the same way (logged, then re-seeded).
+     */
+    private Lineup loadOrSeedOriginalLineup() {
+        if (Files.exists(originalLineupPath)) {
+            try {
+                return LineupRepository.load(originalLineupPath);
+            } catch (IOException e) {
+                Logger.logException("Could not load the Original lineup " + originalLineupPath
+                        + " - seeding it from the currently open lineup instead", e);
+            }
+        }
+        Lineup current = appContext.lineup();
+        return new Lineup(current.guildId(), current.guildName(), "", LocalDateTime.now(), current.entries());
+    }
+
     private static JPanel alignLeft(JComponent component) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -204,7 +249,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
      * appended later through the "+" button (see {@link #buildAddRowButton}).
      */
     private void buildSection() {
-        List<Lineup.Entry> existingEntries = appContext.lineup().entries().stream()
+        List<Lineup.Entry> existingEntries = originalLineup.entries().stream()
                 .filter(e -> e.teamType() == spec.teamType())
                 .toList();
 
@@ -275,10 +320,33 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             updateBuffCountLabel(buffCountLabel, rowDraft, selected, rowNumber);
         });
 
-        rowStates.add(new RowState<>(rowDraft, memberCombo, fortCombo, originalMember, originalTeamIndex));
-        rowsPanel.add(buildRowPanel(fortCombo, memberCombo, teamEditor, buffCountLabel));
+        JPanel rowPanel = buildRowPanel(fortCombo, memberCombo, teamEditor, buffCountLabel);
+        rowStates.add(new RowState<>(rowDraft, memberCombo, fortCombo, originalMember, originalTeamIndex, rowPanel));
+        rowsPanel.add(rowPanel);
         rowsPanel.revalidate();
         rowsPanel.repaint();
+
+        // A brand new row (from the "+" button - existingDraft == null) is
+        // appended at the very bottom, so scroll the enclosing JScrollPane all
+        // the way down to reveal it in full. Restored rows (existingDraft !=
+        // null, from buildSection) are skipped so the view stays at the top
+        // when the dialog first opens.
+        //
+        // Two-stage invokeLater on purpose: a single one fires before the
+        // scroll pane has recomputed its scroll range for the now-taller
+        // content, so the vertical scrollbar's maximum is still the OLD value
+        // and scrolling to it stops short of the new row. The first stage runs
+        // after the revalidate above lays the row out; the second, after the
+        // scroll pane has updated its range - only then is getMaximum() final.
+        if (existingDraft == null) {
+            SwingUtilities.invokeLater(() -> SwingUtilities.invokeLater(() -> {
+                JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, rowPanel);
+                if (scrollPane != null) {
+                    JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
+                    verticalBar.setValue(verticalBar.getMaximum());
+                }
+            }));
+        }
     }
 
     /**
@@ -321,16 +389,16 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     }
 
     /**
-     * Lets Strg+Plus (main keyboard, e.g. the dedicated "+" key on a German
-     * layout) or Strg+Numpad-Plus trigger {@code addButton} - i.e. add a new,
+     * Lets the "+" key (main keyboard, e.g. the dedicated "+" key on a German
+     * layout) or Numpad-Plus trigger {@code addButton} - i.e. add a new,
      * empty row - without reaching for the mouse. Bound with
      * {@code WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} on {@link #rowsPanel}
      * itself, so the shortcut fires whenever the focus is anywhere among
      * this dialog's rows.
      */
     private void bindAddRowShortcut(FlatButton addButton) {
-        KeyStroke plus = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK);
-        KeyStroke numpadPlus = KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke plus = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0);
+        KeyStroke numpadPlus = KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0);
 
         InputMap inputMap = rowsPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = rowsPanel.getActionMap();
@@ -343,6 +411,109 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 addButton.doClick();
             }
         });
+    }
+
+    /**
+     * Lets the "-" key or Numpad-Minus delete the row the focus is currently
+     * in (see {@link #deleteFocusedRow}) - the destructive counterpart of the
+     * "+" add-row shortcut (see {@link #bindAddRowShortcut}). Bound the same
+     * way, with {@code WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} on {@link #rowsPanel}.
+     */
+    private void bindDeleteRowShortcut() {
+        KeyStroke minus = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0);
+        KeyStroke numpadMinus = KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0);
+
+        InputMap inputMap = rowsPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = rowsPanel.getActionMap();
+        Object actionKey = "deleteRow";
+        inputMap.put(minus, actionKey);
+        inputMap.put(numpadMinus, actionKey);
+        actionMap.put(actionKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteFocusedRow();
+            }
+        });
+    }
+
+    /**
+     * Deletes the row the keyboard focus is currently in - and, unlike merely
+     * clearing it, removes its team from the guild too (the {@code (memberId,
+     * teamIndex)} slot it is bound to, see {@link RowState#boundMember}), then
+     * re-saves. Confirmed first, since this is persistent and cannot be undone.
+     * A brand new row that was never saved (no bound slot yet) simply
+     * disappears. Does nothing when the focus is outside every row.
+     */
+    private void deleteFocusedRow() {
+        RowState<T> row = focusedRow();
+        if (row == null) {
+            return;
+        }
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Delete this team and remove it from the guild? This cannot be undone.",
+                "Delete team", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // Drop the team from the guild draft if this row was ever bound to a
+        // real slot (a never-saved row has boundMember == null and just
+        // vanishes), compacting the member's remaining teams so their list
+        // positions stay dense - i.e. keep matching their HeroTeam/TitanTeam
+        // index, which GuildMember enforces and toGuild relies on.
+        if (row.boundMember != null) {
+            deleteBoundTeam(row.boundMember, row.boundTeamIndex);
+        }
+
+        rowStates.remove(row);
+        rowsPanel.remove(row.panel);
+        rowsPanel.revalidate();
+        rowsPanel.repaint();
+
+        // performSave rebuilds this type's teams and lineup entries from the
+        // remaining rows, so the deleted team is gone from both the guild file
+        // and the Original lineup.
+        performSave();
+    }
+
+    /**
+     * The {@link RowState} whose row panel currently contains the keyboard
+     * focus, or {@code null} if the focus is outside every row (see
+     * {@link #deleteFocusedRow}).
+     */
+    private RowState<T> focusedRow() {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (focusOwner == null) {
+            return null;
+        }
+        for (RowState<T> row : rowStates) {
+            if (row.panel == focusOwner || row.panel.isAncestorOf(focusOwner)) {
+                return row;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Removes the team at {@code teamIndex} from {@code member}'s team list of
+     * this dialog's type and re-pads the list back to {@link #maxTeams} empty
+     * trailing slots, so it keeps its fixed length while its non-empty entries
+     * stay contiguous from index 0. Every other row bound to a LATER slot of
+     * the same member is shifted down by one to follow its team (see
+     * {@link RowState#boundTeamIndex}).
+     */
+    private void deleteBoundTeam(MemberDraft member, int teamIndex) {
+        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
+        if (teamIndex < 0 || teamIndex >= teams.size()) {
+            return;
+        }
+        teams.remove(teamIndex);
+        ensureTeamCount(teams, maxTeams);
+        for (RowState<T> other : rowStates) {
+            if (other.boundMember == member && other.boundTeamIndex > teamIndex) {
+                other.boundTeamIndex--;
+            }
+        }
     }
 
     private JPanel buildRowPanel(FortComboBox fortCombo, JComboBox<MemberDraft> memberCombo, JPanel teamEditor, JLabel buffCountLabel) {
@@ -653,7 +824,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 return null;
             }
             List<TeamDraft<T>> teams = spec.teamsOf().apply(selectedMember);
-            int preferredIndex = selectedMember == row.originalMember ? row.originalTeamIndex : -1;
+            int preferredIndex = selectedMember == row.boundMember ? row.boundTeamIndex : -1;
             int idx = resolveTeamIndex(teams, boundKeys, selectedMember.id, preferredIndex);
             if (idx < 0) {
                 JOptionPane.showMessageDialog(this,
@@ -664,7 +835,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             }
             boundKeys.add(rowKey(selectedMember.id, idx));
             Fortification selectedFortification = (Fortification) row.fortCombo.getSelectedItem();
-            resolutions.add(new RowResolution<>(selectedMember, idx, row.teamDraft, selectedFortification));
+            resolutions.add(new RowResolution<>(row, selectedMember, idx, row.teamDraft, selectedFortification));
         }
         return resolutions;
     }
@@ -676,6 +847,13 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             target.members.addAll(resolution.sourceDraft().members);
             target.totalPower = resolution.sourceDraft().totalPower;
             target.lastModified = resolution.sourceDraft().lastModified;
+            // Re-point this row at the (member, teamIndex) slot it was just
+            // written into - see RowState#boundMember. Without this, a row not
+            // restored from a lineup entry keeps boundMember == null, so the
+            // NEXT save (e.g. the auto-save behind every "+") resolves it to a
+            // fresh free slot and duplicates the team instead of updating it.
+            resolution.row().boundMember = resolution.member();
+            resolution.row().boundTeamIndex = resolution.teamIndex();
         }
     }
 
@@ -709,23 +887,36 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         // fortification's slots. The OTHER type's entries have no row
         // representation in this dialog at all, so they are simply carried
         // over unchanged instead of being dropped.
-        Lineup currentLineup = appContext.lineup();
+        //
+        // Base is the guild's fixed "Original" lineup (see loadOrSeedOriginalLineup),
+        // NOT whatever lineup happens to be selected in the toolbar - so an
+        // optimized lineup that is currently open is never touched here.
         List<Lineup.Entry> updatedEntries = new ArrayList<>();
-        updatedEntries.addAll(currentLineup.entries().stream()
+        updatedEntries.addAll(originalLineup.entries().stream()
                 .filter(e -> e.teamType() != spec.teamType())
                 .toList());
         updatedEntries.addAll(buildEntries(resolutions));
 
-        Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
-                currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
+        // algorithmName stays empty: the Original lineup is hand-maintained
+        // here, never produced by a LineupAlgorithm.
+        Lineup updatedOriginal = new Lineup(originalLineup.guildId(), originalLineup.guildName(),
+                "", originalLineup.createdAt(), updatedEntries);
         Guild updatedGuild = GuildDraftConverter.toGuild(draft);
 
         try {
             GuildRepository.save(updatedGuild, appContext.guildFilePath());
-            LineupRepository.save(updatedLineup, appContext.lineupFilePath());
+            LineupRepository.save(updatedOriginal, originalLineupPath);
+            this.originalLineup = updatedOriginal;
             appContext.setGuild(updatedGuild);
-            appContext.setLineup(updatedLineup);
-            Logger.log("Saved guild " + spec.teamType() + " teams");
+            // Switch the app over to the freshly saved Original lineup, so the
+            // toolbar lineup combo box and the fortification map immediately
+            // show the in-game deployment that was just entered (the onSaved
+            // callback repopulates the combo box and refreshes the map).
+            appContext.set(updatedOriginal, originalLineupPath);
+            Config.setLastLineUpPath(originalLineupPath.toString());
+            Config.save();
+            GuiUtils.editedLineup = false;
+            Logger.log("Saved guild " + spec.teamType() + " teams into the Original lineup");
             // Keep every row's member combo (not just the one that triggered
             // this save) in sync with the freshly saved draft - e.g. an
             // inline-created member (see MemberComboEditor) that a
@@ -764,20 +955,40 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         final TeamDraft<T> teamDraft;
         final JComboBox<MemberDraft> memberCombo;
         final FortComboBox fortCombo;
-        final MemberDraft originalMember;
-        final int originalTeamIndex;
+
+        /**
+         * The team slot this row is currently bound to - the {@code (memberId,
+         * teamIndex)} primary key of the {@link HeroTeam}/{@link TitanTeam} it
+         * edits IN PLACE (see {@link HeroTeam#index()}). Seeded from the lineup
+         * entry's slot for a row restored by {@link #buildSection} and left
+         * {@code null}/{@code -1} for a brand new row (from the "+" button)
+         * that isn't tied to an existing team yet. Crucially, it is re-pointed
+         * to whatever slot the row was written into after every
+         * {@link #performSave} (see {@link #applyResolutions}), so a subsequent
+         * save UPDATES that same team instead of resolving to the next free
+         * slot and INSERTING a duplicate - the latter is what made repeated
+         * saves (and every "+" click, which auto-saves first) pile up new
+         * teams for rows that weren't restored from a lineup entry.
+         */
+        MemberDraft boundMember;
+        int boundTeamIndex;
+
+        /** This row's panel in {@link #rowsPanel} - kept so the delete shortcut can map the focused component back to its row (see {@link #focusedRow}). */
+        final JPanel panel;
 
         RowState(TeamDraft<T> teamDraft, JComboBox<MemberDraft> memberCombo, FortComboBox fortCombo,
-                 MemberDraft originalMember, int originalTeamIndex) {
+                 MemberDraft boundMember, int boundTeamIndex, JPanel panel) {
             this.teamDraft = teamDraft;
             this.memberCombo = memberCombo;
             this.fortCombo = fortCombo;
-            this.originalMember = originalMember;
-            this.originalTeamIndex = originalTeamIndex;
+            this.boundMember = boundMember;
+            this.boundTeamIndex = boundTeamIndex;
+            this.panel = panel;
         }
     }
 
     /** One row's save-time resolution to a real (member, teamIndex) slot, plus which fortification (if any) it should be deployed to. */
-    private record RowResolution<T>(MemberDraft member, int teamIndex, TeamDraft<T> sourceDraft, Fortification fortification) {
+    private record RowResolution<T>(RowState<T> row, MemberDraft member, int teamIndex, TeamDraft<T> sourceDraft,
+                                    Fortification fortification) {
     }
 }

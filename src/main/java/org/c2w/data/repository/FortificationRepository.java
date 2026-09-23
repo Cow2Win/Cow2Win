@@ -2,6 +2,7 @@ package org.c2w.data.repository;
 
 import com.google.gson.*;
 import org.c2w.data.model.*;
+import org.c2w.eval.BestPossibleLineupAlgorithm;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
@@ -97,7 +98,7 @@ public class FortificationRepository {
      * looks like a data-entry mistake in {@code fortifications.json} rather than failing
      * silently - specifically: prerequisites referencing a fortification id that doesn't
      * exist in the catalog, and cycles in the prerequisite graph. Neither of these crashes
-     * the app on its own (see {@link org.c2w.eval.BestPossibleLineupAlgorithm#computeUnlockDepths},
+     * the app on its own (see {@link BestPossibleLineupAlgorithm#computeUnlockDepths},
      * which already degrades gracefully for both cases), so this is purely about making a
      * likely typo visible instead of it silently producing a slightly-wrong "optimal" lineup.
      *

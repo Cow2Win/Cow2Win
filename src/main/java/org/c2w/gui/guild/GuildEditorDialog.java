@@ -87,7 +87,7 @@ public final class GuildEditorDialog extends JDialog {
             }
         });
 
-        setSize(750, 500);
+        setSize(900, 500);
         setResizable(false);
         setLocationRelativeTo(owner);
     }

@@ -4,9 +4,6 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.eval.AlgorithmDescriptions;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -19,38 +16,77 @@ public final class ReportGenerator {
     /** File name suffix of a generated report. */
     private static final String REPORT_FILE_SUFFIX = ".html";
 
+    /**
+     * Cap on how many rows the "Used heroes"/"Used titans" tables show - per
+     * the user's explicit request (added 2026-09-23): only the most-used 15
+     * units, so a large guild's report does not grow an overlong tail. Rows
+     * are already sorted most-used first (see {@link #usedUnitsTableHtml}),
+     * so this simply keeps the top of that list; a note under the table says
+     * how many further units were omitted.
+     */
+    private static final int MAX_USED_UNITS_ROWS = 15;
+
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    // --- Colors ---
+    // Report colors are written directly onto the elements (an explicit hex
+    // rule in the style block, or an inline style on the cell) instead of
+    // being left to the renderer's defaults, and the old CSS3
+    // "tr:nth-child(even)" zebra rule is emitted per row (see #tdOpen) rather
+    // than as a selector - added 2026-09-23 at the user's request so the
+    // report looks the same in a web browser and in the app's Swing preview.
+    // Swing's JEditorPane HTML engine supports only a limited CSS subset and
+    // ignores nth-child, so leaving these to CSS made the two diverge.
+    private static final String COLOR_TEXT = "#000000";
+    private static final String COLOR_PAGE_BG = "#ffffff";
+    private static final String COLOR_HEADER_BG = "#dddddd";
+    private static final String COLOR_ALT_ROW_BG = "#f5f5f5";
+    private static final String COLOR_BORDER = "#bbbbbb";
+    private static final String COLOR_RULE = "#999999";
+
+    /** Inline background style for a header cell - see the Colors section. */
+    private static final String TH_BG_STYLE = " style=\"background-color:" + COLOR_HEADER_BG + ";\"";
 
     private ReportGenerator() {
         // Utility class, no instantiation
     }
 
     /**
-     * Builds the report HTML for the given lineup/guild and saves it next to
-     * {@code lineupFilePath} (see {@link #reportPathFor(Path)}), overwriting
-     * any previous report for the same lineup file.
-     *
-     * @return the path the report was saved to, so the caller (see
-     *         {@code ToolbarPanel#onGenerateReport()}) can show it in a
-     *         dialog right away
-     * @throws IOException if the file cannot be written
+     * Builds and returns the report HTML for the given lineup/guild WITHOUT
+     * writing it anywhere - added 2026-09-23 when report generation stopped
+     * auto-saving per the user's explicit request. {@code
+     * ToolbarPanel#onGenerateReport()} now hands this HTML straight to
+     * {@code ReportViewerDialog}, whose "Save report..." toolbar button lets
+     * the user pick a directory and write it there. {@code reportFileName}
+     * only feeds the report's "Lineup" meta row (see {@link
+     * #metaTableHtml}); pass {@link #suggestedReportFileName(Path)}.
      */
-    public static Path generate(Lineup lineup, Guild guild, Path lineupFilePath) throws IOException {
+    public static String buildReportHtml(Lineup lineup, Guild guild, String reportFileName) {
         if (lineup == null) {
             throw new IllegalArgumentException("lineup must not be null");
         }
         if (guild == null) {
             throw new IllegalArgumentException("guild must not be null");
         }
+        if (reportFileName == null || reportFileName.isBlank()) {
+            throw new IllegalArgumentException("reportFileName must not be null or blank");
+        }
+        return buildHtml(lineup, guild, reportFileName);
+    }
+
+    /**
+     * The default file name the report viewer's Save button offers for this
+     * lineup: its file name with the {@value #LINEUP_FILE_SUFFIX} suffix (if
+     * any) swapped for {@value #REPORT_FILE_SUFFIX}, i.e. the very name the
+     * old auto-saving {@code generate} used to write - just the file name,
+     * not a full path, since the directory is now the user's choice (see
+     * {@link #buildReportHtml} and {@code ReportViewerDialog}).
+     */
+    public static String suggestedReportFileName(Path lineupFilePath) {
         if (lineupFilePath == null) {
             throw new IllegalArgumentException("lineupFilePath must not be null");
         }
-        Path reportPath = reportPathFor(lineupFilePath);
-
-        String html = buildHtml(lineup, guild,reportPath.getFileName().toString());
-
-        Files.writeString(reportPath, html, StandardCharsets.UTF_8);
-        return reportPath;
+        return reportPathFor(lineupFilePath).getFileName().toString();
     }
 
     /** See class Javadoc for the naming rule and the reasoning behind it. */
@@ -82,6 +118,12 @@ public final class ReportGenerator {
         html.append("<h2>Fortifications</h2>\n");
         html.append(fortificationsTableHtml(lineup, guild));
 
+        html.append("<h2>Top used heroes</h2>\n");
+        html.append(usedUnitsTableHtml(lineup, guild, Lineup.TeamType.HERO));
+
+        html.append("<h2>Top used titans</h2>\n");
+        html.append(usedUnitsTableHtml(lineup, guild, Lineup.TeamType.TITAN));
+
         html.append("<h2>Lineup data</h2>\n");
         html.append(entriesTableHtml(lineup, guild));
 
@@ -90,27 +132,47 @@ public final class ReportGenerator {
     }
 
     private static String styleBlock() {
+        // Structural rules (fonts, borders, spacing) stay in the style block;
+        // the color-critical backgrounds (header cells, zebra rows) are set
+        // inline on the cells instead - see the Colors section for why.
         return "<style>\n"
-                + "body { font-family: Arial, Helvetica, sans-serif; margin: 24px; }\n"
+                + "body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: " + COLOR_TEXT
+                + "; background-color: " + COLOR_PAGE_BG + "; }\n"
                 + "h1 { margin-bottom: 4px; }\n"
-                + "h2 { margin-top: 32px; border-bottom: 1px solid #999999; padding-bottom: 4px; }\n"
+                + "h2 { margin-top: 32px; border-bottom: 1px solid " + COLOR_RULE + "; padding-bottom: 4px; }\n"
                 + "table { border-collapse: collapse; margin-top: 12px; width: 100%; }\n"
-                + "th, td { border: 1px solid #bbbbbb; padding: 6px 10px; text-align: left; }\n"
-                + "th { background-color: #dddddd; }\n"
-                + "tr:nth-child(even) { background-color: #f5f5f5; }\n"
+                + "th, td { border: 1px solid " + COLOR_BORDER + "; padding: 6px 10px; text-align: left; }\n"
                 + ".meta-table, .stats-table { width: auto; }\n"
                 + ".number { text-align: right; }\n"
                 + "</style>\n";
     }
 
+    /** Opening &lt;th&gt; tag with the header background anchored inline (see Colors); {@code number} adds the right-align class. */
+    private static String thOpen(boolean number) {
+        return "<th" + (number ? " class=\"number\"" : "") + TH_BG_STYLE + ">";
+    }
+
+    /**
+     * Opening &lt;td&gt; tag for a data cell, carrying the zebra background
+     * inline on even rows (1-based {@code rowPosition}) so the striping shows
+     * identically in a browser and in Swing's JEditorPane - the
+     * element-anchored replacement for the old {@code tr:nth-child(even)}
+     * rule (see Colors). {@code number} adds the right-align class.
+     */
+    private static String tdOpen(boolean number, int rowPosition) {
+        String bg = rowPosition % 2 == 0 ? " style=\"background-color:" + COLOR_ALT_ROW_BG + ";\"" : "";
+        return "<td" + (number ? " class=\"number\"" : "") + bg + ">";
+    }
+
     private static String metaTableHtml(Lineup lineup, String lineupName) {
         StringBuilder sb = new StringBuilder();
         sb.append("<table class=\"meta-table\">\n");
-        appendMetaRow(sb, "Guild", lineup.guildName());
-        appendMetaRow(sb, "Lineup", lineupName);
-        appendMetaRow(sb, "Lineup created at", lineup.createdAt().format(TIMESTAMP_FORMAT));
-        appendMetaRow(sb, "Report generated at", java.time.LocalDateTime.now().format(TIMESTAMP_FORMAT));
-        appendAlgorithmRowsIfPresent(sb, lineup);
+        int pos = 0;
+        appendMetaRow(sb, ++pos, "Guild", lineup.guildName());
+        appendMetaRow(sb, ++pos, "Lineup", lineupName);
+        appendMetaRow(sb, ++pos, "Lineup created at", lineup.createdAt().format(TIMESTAMP_FORMAT));
+        appendMetaRow(sb, ++pos, "Report generated at", java.time.LocalDateTime.now().format(TIMESTAMP_FORMAT));
+        appendAlgorithmRowsIfPresent(sb, pos, lineup);
         sb.append("</table>\n");
         return sb.toString();
     }
@@ -127,20 +189,22 @@ public final class ReportGenerator {
      * brand-new lineup or one built purely from manual picks - since there
      * is nothing to report here in that case.
      */
-    private static void appendAlgorithmRowsIfPresent(StringBuilder sb, Lineup lineup) {
+    private static void appendAlgorithmRowsIfPresent(StringBuilder sb, int startPosition, Lineup lineup) {
         String algorithmName = lineup.algorithmName();
         if (algorithmName == null || algorithmName.isBlank()) {
             return;
         }
-        appendMetaRow(sb, "Algorithm", algorithmName);
+        int pos = startPosition;
+        appendMetaRow(sb, ++pos, "Algorithm", algorithmName);
         String description = AlgorithmDescriptions.forDisplayName(algorithmName);
         if (!description.isBlank()) {
-            appendMetaRow(sb, "Algorithm description", description);
+            appendMetaRow(sb, ++pos, "Algorithm description", description);
         }
     }
 
-    private static void appendMetaRow(StringBuilder sb, String label, String value) {
-        sb.append("<tr><th>").append(escape(label)).append("</th><td>").append(escape(value)).append("</td></tr>\n");
+    private static void appendMetaRow(StringBuilder sb, int rowPosition, String label, String value) {
+        sb.append("<tr>").append(thOpen(false)).append(escape(label)).append("</th>")
+                .append(tdOpen(false, rowPosition)).append(escape(value)).append("</td></tr>\n");
     }
 
     /**
@@ -161,18 +225,20 @@ public final class ReportGenerator {
         }
 
         sb.append("<table>\n<tr>")
-                .append("<th>Fortification</th>")
-                .append("<th>Team member</th>")
-                .append("<th>Team composition</th>")
-                .append("<th class=\"number\">Power</th>")
+                .append(thOpen(false)).append("Fortification</th>")
+                .append(thOpen(false)).append("Team member</th>")
+                .append(thOpen(false)).append("Team composition</th>")
+                .append(thOpen(true)).append("Power</th>")
                 .append("</tr>\n");
 
+        int pos = 1; // header is child 1; data rows start at child 2 (matches the old nth-child zebra)
         for (Lineup.Entry entry : entries) {
+            pos++;
             sb.append("<tr>");
-            sb.append("<td>").append(escape(fortificationDisplayName(entry.fortificationId()))).append("</td>");
-            sb.append("<td>").append(escape(memberName(guild, entry.teamMemberId()))).append("</td>");
-            sb.append("<td>").append(escape(teamCompositionOf(guild, entry))).append("</td>");
-            sb.append("<td class=\"number\">").append(BuffCalculationService.totalPowerOf(entry, guild)).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(fortificationDisplayName(entry.fortificationId()))).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(memberName(guild, entry.teamMemberId()))).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(teamCompositionOf(guild, entry))).append("</td>");
+            sb.append(tdOpen(true, pos)).append(BuffCalculationService.totalPowerOf(entry, guild)).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");
@@ -209,14 +275,16 @@ public final class ReportGenerator {
         }
 
         sb.append("<table>\n<tr>")
-                .append("<th>Fortification</th>")
-                .append("<th>Buff</th>")
-                .append("<th class=\"number\">Buff %</th>")
-                .append("<th class=\"number\">Matching role/element</th>")
-                .append("<th class=\"number\">CowScore</th>")
+                .append(thOpen(false)).append("Fortification</th>")
+                .append(thOpen(false)).append("Buff</th>")
+                .append(thOpen(true)).append("Buff %</th>")
+                .append(thOpen(true)).append("Matching role/element</th>")
+                .append(thOpen(true)).append("CowScore</th>")
                 .append("</tr>\n");
 
+        int pos = 1; // header is child 1; data rows start at child 2 (matches the old nth-child zebra)
         for (String fortificationId : fortificationIds) {
+            pos++;
             Fortification fortification = FortificationRepository.findById(fortificationId).orElseThrow();
             Buff buff = fortification.buff();
             int buffPercent = BuffCalculationService.calculateBuffForFortification(
@@ -227,11 +295,11 @@ public final class ReportGenerator {
                     fortificationId, lineup, guild, fortification);
 
             sb.append("<tr>");
-            sb.append("<td>").append(escape(fortificationDisplayName(fortificationId))).append("</td>");
-            sb.append("<td>").append(escape(buffDisplayText(buff))).append("</td>");
-            sb.append("<td class=\"number\">").append(buffPercent).append("%</td>");
-            sb.append("<td class=\"number\">").append(matchingCount).append("</td>");
-            sb.append("<td class=\"number\">").append(formatCowScore(cowScore)).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(fortificationDisplayName(fortificationId))).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(buffDisplayText(buff))).append("</td>");
+            sb.append(tdOpen(true, pos)).append(buffPercent).append("%</td>");
+            sb.append(tdOpen(true, pos)).append(matchingCount).append("</td>");
+            sb.append(tdOpen(true, pos)).append(formatCowScore(cowScore)).append("</td>");
             sb.append("</tr>\n");
         }
         sb.append("</table>\n");
@@ -263,6 +331,95 @@ public final class ReportGenerator {
         return String.format(Locale.ROOT, "%.1f", bonusPercent);
     }
 
+    /**
+     * One row per distinct hero (for {@code teamType} HERO) or titan (TITAN)
+     * that appears in at least one team deployed by this lineup, with how
+     * many teams across the whole lineup it shows up in - per the user's
+     * explicit request (added 2026-09-23): a "used heroes"/"used titans"
+     * breakdown that makes it easy to see e.g. that Galahad is fielded 5
+     * times overall, regardless of which member or fortification the team
+     * sits at. Rows are sorted by that count (most-used first), then by
+     * display name for a stable order among ties. A unit counts once per
+     * team it belongs to (so a hero fielded in three different teams counts
+     * 3); teams that can no longer be resolved are skipped via the same
+     * defensive bounds checks as {@link #teamCompositionOf(Guild, Lineup.Entry)}
+     * - see {@link #unitIdsOf(Guild, Lineup.Entry)}.
+     */
+    private static String usedUnitsTableHtml(Lineup lineup, Guild guild, Lineup.TeamType teamType) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Lineup.Entry entry : lineup.entries()) {
+            if (entry.teamType() != teamType) {
+                continue;
+            }
+            for (String unitId : unitIdsOf(guild, entry)) {
+                counts.merge(unitId, 1, Integer::sum);
+            }
+        }
+
+        String unitLabel = teamType == Lineup.TeamType.HERO ? "hero" : "titan";
+        StringBuilder sb = new StringBuilder();
+        if (counts.isEmpty()) {
+            sb.append("<p>No ").append(unitLabel).append(" is used in this lineup.</p>\n");
+            return sb.toString();
+        }
+
+        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(counts.entrySet());
+        sorted.sort(Comparator
+                .comparing(Map.Entry<String, Integer>::getValue).reversed()
+                .thenComparing(e -> LanguageService.displayName(e.getKey())));
+
+        sb.append("<table>\n<tr>")
+                .append(thOpen(false)).append(teamType == Lineup.TeamType.HERO ? "Hero" : "Titan").append("</th>")
+                .append(thOpen(true)).append("Count</th>")
+                .append("</tr>\n");
+
+        List<Map.Entry<String, Integer>> shown = sorted.subList(0, Math.min(sorted.size(), MAX_USED_UNITS_ROWS));
+        int pos = 1; // header is child 1; data rows start at child 2 (matches the old nth-child zebra)
+        for (Map.Entry<String, Integer> countEntry : shown) {
+            pos++;
+            sb.append("<tr>");
+            sb.append(tdOpen(false, pos)).append(escape(LanguageService.displayName(countEntry.getKey()))).append("</td>");
+            sb.append(tdOpen(true, pos)).append(countEntry.getValue()).append("</td>");
+            sb.append("</tr>\n");
+        }
+        sb.append("</table>\n");
+
+        int omitted = sorted.size() - shown.size();
+        if (omitted > 0) {
+            sb.append("<p>... and ").append(omitted).append(" more ").append(unitLabel)
+                    .append(omitted == 1 ? "" : "s").append(" (showing the top ").append(MAX_USED_UNITS_ROWS)
+                    .append(").</p>\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * The hero/titan ids in the team this entry points at, or an empty list
+     * if the member or team can no longer be resolved (e.g. it was removed
+     * from the guild after this entry was created) - the id-only counterpart
+     * of {@link #teamCompositionOf(Guild, Lineup.Entry)}, sharing its
+     * defensive bounds checks. Used by {@link #usedUnitsTableHtml}.
+     */
+    private static List<String> unitIdsOf(Guild guild, Lineup.Entry entry) {
+        Optional<GuildMember> member = findMember(guild, entry.teamMemberId());
+        if (member.isEmpty()) {
+            return List.of();
+        }
+        if (entry.teamType() == Lineup.TeamType.HERO) {
+            if (entry.teamIndex() >= member.get().heroTeams().size()) {
+                return List.of();
+            }
+            return member.get().heroTeams().get(entry.teamIndex()).heroes().stream()
+                    .map(Hero::id).toList();
+        } else {
+            if (entry.teamIndex() >= member.get().titanTeams().size()) {
+                return List.of();
+            }
+            return member.get().titanTeams().get(entry.teamIndex()).titans().stream()
+                    .map(Titan::id).toList();
+        }
+    }
+
     private static String statisticsTableHtml(Lineup lineup, Guild guild) {
         int heroPower = totalPower(lineup, guild, Lineup.TeamType.HERO);
         int titanPower = totalPower(lineup, guild, Lineup.TeamType.TITAN);
@@ -275,20 +432,21 @@ public final class ReportGenerator {
 
         StringBuilder sb = new StringBuilder();
         sb.append("<table class=\"stats-table\">\n");
-        appendStatRow(sb, "Total hero power (deployed)", heroPower);
-        appendStatRow(sb, "Total hero power (guild)", guildHeroPower);
-        appendStatRow(sb, "Hero power deployed", percentText(heroPower, guildHeroPower));
-        appendStatRow(sb, "Heroes increasing a buff", heroBuffCount);
-        appendStatRow(sb, "Hero CowScore", formatCowScore(heroCowScore));
-        appendStatRow(sb, "Total titan power (deployed)", titanPower);
-        appendStatRow(sb, "Total titan power (guild)", guildTitanPower);
-        appendStatRow(sb, "Titan power deployed", percentText(titanPower, guildTitanPower));
-        appendStatRow(sb, "Titans increasing a buff", titanBuffCount);
-        appendStatRow(sb, "Titan CowScore", formatCowScore(titanCowScore));
-        appendStatRow(sb, "Total power (heroes + titans, deployed)", heroPower + titanPower);
-        appendStatRow(sb, "Total power (heroes + titans, guild)", guildHeroPower + guildTitanPower);
-        appendStatRow(sb, "Total power deployed", percentText(heroPower + titanPower, guildHeroPower + guildTitanPower));
-        appendStatRow(sb, "Total team assignments", lineup.entries().size());
+        int pos = 0;
+        appendStatRow(sb, ++pos, "Total hero power (deployed)", heroPower);
+        appendStatRow(sb, ++pos, "Total hero power (guild)", guildHeroPower);
+        appendStatRow(sb, ++pos, "Hero power deployed", percentText(heroPower, guildHeroPower));
+        appendStatRow(sb, ++pos, "Heroes increasing a buff", heroBuffCount);
+        appendStatRow(sb, ++pos, "Hero CowScore", formatCowScore(heroCowScore));
+        appendStatRow(sb, ++pos, "Total titan power (deployed)", titanPower);
+        appendStatRow(sb, ++pos, "Total titan power (guild)", guildTitanPower);
+        appendStatRow(sb, ++pos, "Titan power deployed", percentText(titanPower, guildTitanPower));
+        appendStatRow(sb, ++pos, "Titans increasing a buff", titanBuffCount);
+        appendStatRow(sb, ++pos, "Titan CowScore", formatCowScore(titanCowScore));
+        appendStatRow(sb, ++pos, "Total power (heroes + titans, deployed)", heroPower + titanPower);
+        appendStatRow(sb, ++pos, "Total power (heroes + titans, guild)", guildHeroPower + guildTitanPower);
+        appendStatRow(sb, ++pos, "Total power deployed", percentText(heroPower + titanPower, guildHeroPower + guildTitanPower));
+        appendStatRow(sb, ++pos, "Total team assignments", lineup.entries().size());
         sb.append("</table>\n");
         return sb.toString();
     }
@@ -298,13 +456,13 @@ public final class ReportGenerator {
         return String.format(Locale.ROOT, "%.1f", cowScore);
     }
 
-    private static void appendStatRow(StringBuilder sb, String label, int value) {
-        appendStatRow(sb, label, String.valueOf(value));
+    private static void appendStatRow(StringBuilder sb, int rowPosition, String label, int value) {
+        appendStatRow(sb, rowPosition, label, String.valueOf(value));
     }
 
-    private static void appendStatRow(StringBuilder sb, String label, String value) {
-        sb.append("<tr><th>").append(escape(label)).append("</th><td class=\"number\">").append(escape(value))
-                .append("</td></tr>\n");
+    private static void appendStatRow(StringBuilder sb, int rowPosition, String label, String value) {
+        sb.append("<tr>").append(thOpen(false)).append(escape(label)).append("</th>")
+                .append(tdOpen(true, rowPosition)).append(escape(value)).append("</td></tr>\n");
     }
 
     /** Sums {@link HeroTeam#totalPower()} over EVERY hero team in the guild, deployed or not - see class Javadoc's "guild total" figures. */

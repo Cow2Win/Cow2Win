@@ -356,6 +356,13 @@ public class Cow2Frame extends JFrame {
         }
 
         String fileName = name.endsWith(ToolbarPanel.LINEUP_FILE_SUFFIX) ? name : name + ToolbarPanel.LINEUP_FILE_SUFFIX;
+        if (LineupFiles.isOriginalFileName(fileName)) {
+            JOptionPane.showMessageDialog(this,
+                    "\"Original\" is a reserved lineup name - it is maintained automatically through the "
+                            + "guild hero/titan team assignment dialogs. Please choose a different name.",
+                    "New lineup", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         Path guildDir = appContext.guildFilePath().getParent();
         Path lineupPath = guildDir.resolve(fileName);
         if (Files.exists(lineupPath)) {
@@ -393,6 +400,12 @@ public class Cow2Frame extends JFrame {
     private void onRemoveLineup() {
         String fileName = toolbarPanel.selectedLineupFileName();
         if (fileName == null) {
+            return;
+        }
+        if (LineupFiles.isOriginalFileName(fileName)) {
+            JOptionPane.showMessageDialog(this,
+                    "The \"Original\" lineup cannot be removed - it is the fixed record of your in-game deployment.",
+                    "Remove lineup", JOptionPane.WARNING_MESSAGE);
             return;
         }
         List<String> fileNames = toolbarPanel.listLineupFileNames();
@@ -449,6 +462,12 @@ public class Cow2Frame extends JFrame {
      * {@link #onNewLineup()}/{@link #onRemoveLineup()}.
      */
     private void onClearLineup() {
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            JOptionPane.showMessageDialog(this,
+                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment dialogs.",
+                    "Clear lineup", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         Lineup currentLineup = appContext.lineup();
         if (currentLineup.entries().isEmpty()) {
             return;

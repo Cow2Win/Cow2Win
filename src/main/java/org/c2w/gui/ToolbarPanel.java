@@ -97,17 +97,23 @@ public class ToolbarPanel extends JPanel {
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_HERO_TEAMS}/{@link #ICON_TITAN_TEAMS}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open in-game change plan" button (see {@link #onOpenChangePlan()}). Added 2026-09-23. */
+    private static final String KEY_OPEN_CHANGE_PLAN = "toolbar.openChangePlan";
+
+    /** Icon of the "open in-game change plan" button - the "box-arrow-down" icon reads as "produce a checklist/plan to apply", telling it apart from the paired-hexagon "compare" button next to it. */
+    private static final String ICON_OPEN_CHANGE_PLAN = "/images/app/box-arrow-down.png";
+
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide hero team assignment" button (see {@link #onOpenGuildHeroEntry()}). */
     private static final String KEY_OPEN_GUILD_HERO_ENTRY = "toolbar.openGuildHeroEntry";
 
     /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon as {@link #ICON_HERO_TEAMS}, since this button opens the guild-wide hero counterpart of a single fortification's own team-entry dialog. */
-    private static final String ICON_OPEN_GUILD_HERO_ENTRY = ICON_HERO_TEAMS;
+    private static final String ICON_OPEN_GUILD_HERO_ENTRY = "/images/app/square-plus.png";;
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide titan team assignment" button (see {@link #onOpenGuildTitanEntry()}). */
     private static final String KEY_OPEN_GUILD_TITAN_ENTRY = "toolbar.openGuildTitanEntry";
 
     /** Reused rather than a dedicated icon - same "hexagon" (TITAN fortification) icon as {@link #ICON_TITAN_TEAMS}, since this button opens the guild-wide titan counterpart of a single fortification's own team-entry dialog. */
-    private static final String ICON_OPEN_GUILD_TITAN_ENTRY = ICON_TITAN_TEAMS;
+    private static final String ICON_OPEN_GUILD_TITAN_ENTRY = "/images/app/hexagon-plus.png";
 
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
@@ -170,6 +176,16 @@ public class ToolbarPanel extends JPanel {
         saveGuildButton.addActionListener(e -> onSaveGuild());
         add(saveGuildButton);
 
+        FlatButton openGuildHeroEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY));
+        openGuildHeroEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_HERO_ENTRY));
+        openGuildHeroEntryButton.addActionListener(e -> onOpenGuildHeroEntry());
+        add(openGuildHeroEntryButton);
+
+        FlatButton openGuildTitanEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY));
+        openGuildTitanEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_TITAN_ENTRY));
+        openGuildTitanEntryButton.addActionListener(e -> onOpenGuildTitanEntry());
+        add(openGuildTitanEntryButton);
+
         JSeparator guildLineupSeparator = new JSeparator(SwingConstants.VERTICAL);
         guildLineupSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
         add(guildLineupSeparator);
@@ -224,15 +240,12 @@ public class ToolbarPanel extends JPanel {
         compareLineupsButton.addActionListener(e -> onOpenLineupComparison());
         add(compareLineupsButton);
 
-        FlatButton openGuildHeroEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY));
-        openGuildHeroEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_HERO_ENTRY));
-        openGuildHeroEntryButton.addActionListener(e -> onOpenGuildHeroEntry());
-        add(openGuildHeroEntryButton);
+        FlatButton changePlanButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN));
+        changePlanButton.setToolTipText(LanguageService.displayName(KEY_OPEN_CHANGE_PLAN));
+        changePlanButton.addActionListener(e -> onOpenChangePlan());
+        add(changePlanButton);
 
-        FlatButton openGuildTitanEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY));
-        openGuildTitanEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_TITAN_ENTRY));
-        openGuildTitanEntryButton.addActionListener(e -> onOpenGuildTitanEntry());
-        add(openGuildTitanEntryButton);
+
 
         add(statusLabel);
     }
@@ -249,6 +262,14 @@ public class ToolbarPanel extends JPanel {
      * this method always had before this became configurable.
      */
     private void onRunAlgorithm() {
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            JOptionPane.showMessageDialog(this,
+                    "The \"Original\" lineup is a fixed record of your in-game deployment and can only be "
+                            + "changed through the guild hero/titan team assignment dialogs. Switch to another "
+                            + "lineup to run an algorithm.",
+                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         String configuredAlgorithm = Config.getDefaultAlgorithm();
         LineupAlgorithm algorithm = LineupAlgorithms.ALL.stream()
                 .filter(a -> a.displayName().equals(configuredAlgorithm))
@@ -289,11 +310,19 @@ public class ToolbarPanel extends JPanel {
     }
 
 
-    /** Package-visible (not {@code private}) so {@code Cow2Frame#onNewGuild()}/{@code onRemoveGuild()} can reuse it - see the class-level note on the removed guild buttons. */
+    /**
+     * The workspace directory, taken straight from {@link Config#getWorkspaceDir()}
+     * (the {@code workspacePath} entry in config.properties) - the single source
+     * of truth for "the workspace". Guild folders are therefore always listed and
+     * resolved under the configured workspace, rather than under whichever folder
+     * the currently loaded guild happens to live in. The old, guild-derived
+     * behaviour let a stale {@code lastGuildPath} from a previous workspace
+     * silently override the configured one (config said one directory while the
+     * app really used another). Package-visible so {@code Cow2Frame#onNewGuild()}/
+     * {@code onRemoveGuild()} can reuse it.
+     */
     Path workspaceDir() {
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path workspace = guildDir == null ? null : guildDir.getParent();
-        return workspace == null ? Config.getWorkspaceDir() : workspace;
+        return Config.getWorkspaceDir();
     }
 
 
@@ -512,6 +541,13 @@ public class ToolbarPanel extends JPanel {
     }
 
     private void onSaveLineup() {
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            JOptionPane.showMessageDialog(this,
+                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment "
+                            + "dialogs, so there is nothing to save here.",
+                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         try {
             LineupRepository.save(appContext.lineup(), appContext.lineupFilePath());
             GuiUtils.editedLineup = false;
@@ -535,17 +571,20 @@ public class ToolbarPanel extends JPanel {
                 : fileName;
     }
 
+    /**
+     * Builds the report HTML in memory and shows it in {@link
+     * ReportViewerDialog}. As of 2026-09-23 nothing is written to disk here -
+     * the dialog's own "Save report..." button lets the user choose where to
+     * save it (see {@link ReportGenerator#buildReportHtml}).
+     */
     private void onGenerateReport() {
-        try {
-            Path reportPath = ReportGenerator.generate(
-                    appContext.lineup(), appContext.guild(), appContext.lineupFilePath());
-            Logger.log("Report generated: " + reportPath);
-            Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-            new ReportViewerDialog(owner, reportPath).setVisible(true);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not generate report:\n" + e.getMessage(),
-                    "Error while generating report", JOptionPane.ERROR_MESSAGE);
-        }
+        Path lineupFilePath = appContext.lineupFilePath();
+        String suggestedFileName = ReportGenerator.suggestedReportFileName(lineupFilePath);
+        String reportHtml = ReportGenerator.buildReportHtml(
+                appContext.lineup(), appContext.guild(), suggestedFileName);
+        Logger.log("Report generated for: " + lineupFilePath);
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new ReportViewerDialog(owner, reportHtml, suggestedFileName).setVisible(true);
     }
 
 
@@ -573,19 +612,45 @@ public class ToolbarPanel extends JPanel {
     }
 
     /**
+     * Opens {@link LineupChangePlanDialog} - the step-by-step guide for turning
+     * the guild's fixed "Original" lineup (the actual in-game deployment) into
+     * a chosen target lineup, i.e. exactly which teams to re-arrange on the
+     * Hero Wars side. Read-only like {@link #onOpenLineupComparison()}.
+     */
+    private void onOpenChangePlan() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        new LineupChangePlanDialog(owner, appContext).setVisible(true);
+    }
+
+    /**
      * Opens {@link GuildHeroEntryDialog} - the guild-wide hero counterpart of
      * {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog},
      * refreshed the same way on save via {@link FortificationMapPanel#refreshAfterExternalSave()}.
      */
     private void onOpenGuildHeroEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new GuildHeroEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
+        new GuildHeroEntryDialog(owner, appContext, this::onGuildEntrySaved).setVisible(true);
     }
 
     /** The TITAN-side counterpart of {@link #onOpenGuildHeroEntry()} - opens {@link GuildTitanEntryDialog}. */
     private void onOpenGuildTitanEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new GuildTitanEntryDialog(owner, appContext, fortificationMapPanel::refreshAfterExternalSave).setVisible(true);
+        new GuildTitanEntryDialog(owner, appContext, this::onGuildEntrySaved).setVisible(true);
+    }
+
+    /**
+     * Invoked after either guild team-entry dialog saves. Those dialogs write
+     * their assignments into the guild's fixed "Original" lineup and make it
+     * the active lineup (see {@code GuildTeamEntryDialog#performSave}); on top
+     * of the map refresh the per-fortification dialog also does, this
+     * repopulates {@link #lineupCombo} so its selection switches to that
+     * freshly saved "Original" lineup (its file now exists and
+     * {@link #populateLineupCombo()} selects whatever {@link AppContext#lineupFilePath()}
+     * points at).
+     */
+    private void onGuildEntrySaved() {
+        populateLineupCombo();
+        fortificationMapPanel.refreshAfterExternalSave();
     }
 
     /**

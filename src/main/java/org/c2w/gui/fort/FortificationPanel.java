@@ -5,6 +5,7 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
+import org.c2w.util.LineupFiles;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,6 +86,16 @@ public class FortificationPanel extends JPanel {
     private void openEntryDialog(){
         Window window = SwingUtilities.getWindowAncestor(this);
         Frame owner = window instanceof Frame f ? f : null;
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            // The "Original" lineup is the fixed record of the actual in-game
+            // deployment and may only be changed through the two guild
+            // team-entry dialogs (see LineupFiles) - not by editing a single
+            // fortification here.
+            JOptionPane.showMessageDialog(owner,
+                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment dialogs.",
+                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         FortificationEntryDialog dialog = new FortificationEntryDialog(owner, fortification, appContext,
                 fortificationMapPanel::refreshAfterExternalSave);
         dialog.setVisible(true);

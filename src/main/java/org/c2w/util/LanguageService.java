@@ -9,6 +9,7 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,6 +101,28 @@ public class LanguageService {
     public static String displayName(String id) {
         ensureLoaded();
         return displayNames.getProperty(id, id);
+    }
+
+    /**
+     * Like {@link #displayName(String)} but formats the resolved text as a
+     * {@link MessageFormat} pattern with the given arguments (e.g. a text
+     * {@code "Move {0} from {1} to {2}"}). Returns the raw pattern unchanged
+     * when no arguments are given or when the pattern is not a valid
+     * {@link MessageFormat} (so a malformed translation never throws). Note
+     * that, per {@link MessageFormat}, a literal apostrophe inside a pattern
+     * that carries arguments must be written doubled ({@code ''}) in the
+     * language file.
+     */
+    public static String displayName(String id, Object... args) {
+        String pattern = displayName(id);
+        if (args == null || args.length == 0) {
+            return pattern;
+        }
+        try {
+            return MessageFormat.format(pattern, args);
+        } catch (IllegalArgumentException e) {
+            return pattern;
+        }
     }
 
 

@@ -164,8 +164,33 @@ public class C2WApp {
             Logger.logException("Could not load demo lineup from " + DEMO_GUILD_LINEUP, e);
         }
     }
+    /**
+     * Re-anchors a saved (typically absolute) guild/lineup path from
+     * config.properties into the currently configured workspace
+     * ({@link Config#getWorkspaceDir()}): it keeps only the guild-folder name
+     * and the file name and resolves them under the configured workspace. This
+     * makes the configured {@code workspacePath} the single source of truth on
+     * startup, so a {@code lastGuildPath}/{@code lastLineUpPath} that still
+     * points at a previous workspace no longer silently pulls the app back to
+     * that old location (the "config says one workspace but the app really uses
+     * another" mismatch). A blank saved path (nothing ever opened) resolves to
+     * the workspace directory itself.
+     */
+    private static Path reanchorIntoWorkspace(String savedPath) {
+        Path workspace = Config.getWorkspaceDir();
+        if (savedPath == null || savedPath.isBlank()) {
+            return workspace;
+        }
+        Path saved = Paths.get(savedPath);
+        Path fileName = saved.getFileName();
+        Path guildDir = saved.getParent();
+        Path guildFolder = guildDir == null ? null : guildDir.getFileName();
+        Path base = guildFolder == null ? workspace : workspace.resolve(guildFolder);
+        return fileName == null ? base : base.resolve(fileName);
+    }
+
     private static void loadGuildContext(AppContext context) {
-        Path guildFilePath = Paths.get(Config.getLastGuildPath());
+        Path guildFilePath = reanchorIntoWorkspace(Config.getLastGuildPath());
         Guild guild;
         try {
             guild = GuildRepository.load(guildFilePath);
@@ -174,10 +199,13 @@ public class C2WApp {
             guild = new Guild("guild", "", List.of());
         }
         context.set(guild, guildFilePath);
+        // Self-heal config so the corrected, workspace-anchored path is what
+        // gets persisted the next time config.properties is written.
+        Config.setLastGuildPath(guildFilePath.toString());
     }
 
     private static void loadLineupContext(AppContext context) {
-        Path lineupFilePath = Paths.get(Config.getLastLineUpPath());
+        Path lineupFilePath = reanchorIntoWorkspace(Config.getLastLineUpPath());
         Lineup lineup;
         try {
             lineup = LineupRepository.load(lineupFilePath);
@@ -186,6 +214,7 @@ public class C2WApp {
             lineup = LineupRepository.createEmptyLineup();
         }
         context.set(lineup, lineupFilePath);
+        Config.setLastLineUpPath(lineupFilePath.toString());
     }
 
     public static Path createInitialGuildFile(String guildName, Path guildDir) {

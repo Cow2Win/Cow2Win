@@ -6,10 +6,15 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
+import org.c2w.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +42,16 @@ public class SettingsDialog extends JDialog {
 
     /** Language file key for the workspace directory field's label (see {@link #buildUi()}). */
     private static final String KEY_WORKSPACE_DIRECTORY = "settingsDialog.workspaceDirectory";
+
+    /**
+     * Name of the dedicated workspace marker folder created inside a chosen
+     * directory when the user selects a workspace that is not itself such a
+     * folder (see {@link #normalizeWorkspaceDir(String)}). Keeping Cow2Win's
+     * data in its own {@value #WORKSPACE_MARKER_DIR_NAME} subfolder avoids
+     * mixing guilds/lineups/log into an arbitrary user-picked directory (e.g.
+     * a Documents folder that already holds unrelated files).
+     */
+    private static final String WORKSPACE_MARKER_DIR_NAME = ".cow2Win";
 
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
     private static final String ICON_SAVE_SETTINGS = "/images/app/save.png";
@@ -221,16 +236,48 @@ public class SettingsDialog extends JDialog {
         return null;
     }
 
+    /**
+     * Normalizes a user-selected workspace directory so it always ends in a
+     * dedicated {@value #WORKSPACE_MARKER_DIR_NAME} folder: if the chosen
+     * folder is not itself named {@value #WORKSPACE_MARKER_DIR_NAME} (compared
+     * case-insensitively), a {@value #WORKSPACE_MARKER_DIR_NAME} subfolder is
+     * created inside it and that subfolder becomes the workspace. The folder is
+     * created eagerly here (rather than lazily on first write) so the returned
+     * path is a real, usable directory the moment it is saved. A blank
+     * selection is passed through unchanged, letting
+     * {@link Config#setWorkspacePath(String)} fall back to its default.
+     */
+    private static String normalizeWorkspaceDir(String chosen) {
+        if (chosen == null || chosen.isBlank()) {
+            return chosen;
+        }
+        Path selected = Paths.get(chosen.trim());
+        Path folderName = selected.getFileName();
+        boolean alreadyMarker = folderName != null
+                && folderName.toString().equalsIgnoreCase(WORKSPACE_MARKER_DIR_NAME);
+        Path workspace = alreadyMarker ? selected : selected.resolve(WORKSPACE_MARKER_DIR_NAME);
+        try {
+            Files.createDirectories(workspace);
+        } catch (IOException e) {
+            Logger.logException("Could not create workspace directory " + workspace, e);
+        }
+        return workspace.toString();
+    }
+
     private void onOk() {
         String selectedLanguage = (String) languageComboBox.getSelectedItem();
         boolean languageChanged = !selectedLanguage.equals(LanguageService.configuredLanguage());
-        boolean workspaceChanged = !workspaceDirField.getText().trim().equals(Config.getWorkspacePath());
+        String workspacePath = normalizeWorkspaceDir(workspaceDirField.getText());
+        boolean workspaceChanged = !workspacePath.equals(Config.getWorkspacePath());
+        // Reflect the normalized (possibly .cow2Win-appended) path back into the
+        // field, so what is shown always matches what actually gets saved.
+        workspaceDirField.setText(workspacePath);
         Config.setLanguage(selectedLanguage);
         if (algorithmComboBox.getSelectedItem() != null) {
             Config.setDefaultAlgorithm((String) algorithmComboBox.getSelectedItem());
         }
         Config.setBackupDir(backupDirField.getText().trim());
-        Config.setWorkspacePath(workspaceDirField.getText().trim());
+        Config.setWorkspacePath(workspacePath);
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built
