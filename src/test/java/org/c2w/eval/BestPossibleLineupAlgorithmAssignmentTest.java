@@ -1,7 +1,7 @@
 package org.c2w.eval;
 
 import org.c2w.data.model.*;
-import org.c2w.eval.BestPossibleLineupAlgorithm.Candidate;
+import org.c2w.eval.AbstractLineupAlgorithm.Candidate;
 import org.c2w.util.BuffCalculationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Second unit test class for this project (see {@link BestPossibleLineupAlgorithmTest}, the
- * first one, which covers {@link BestPossibleLineupAlgorithm#computeUnlockDepths(List)} only).
+ * first one, which covers {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} only).
  * This class covers the actual team-to-fortification assignment logic: sorting criteria
  * (strongest-first for the bridge, best-buff-fit vs. lowest-sortScore for everything else),
  * buff-fit computation, and edge cases such as incomplete (fewer than 5 members) teams.
@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <ul>
  *     <li>{@link AssignStrongestFirstTests}, {@link AssignOneBuffedTests} and
  *     {@link AssignOneUnbuffedTests} call
- *     {@link BestPossibleLineupAlgorithm#assignStrongestFirst}/{@link BestPossibleLineupAlgorithm#assignOne}
+ *     {@link AbstractLineupAlgorithm#assignStrongestFirst}/{@link AbstractLineupAlgorithm#assignOne}
  *     directly with a synthetic {@link Fortification} and a hand-built candidate pool - both
  *     methods take the fortification and pool as plain parameters, so (like
  *     {@code computeUnlockDepths} in the first test class) they were widened from {@code private}
@@ -88,7 +88,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             ));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
+            AbstractLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
 
             // capacity 2, so only the two 800-power candidates make the cut - m1 (500) and m4
             // (300) are weaker and must remain untouched in the pool for later passes.
@@ -116,7 +116,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("strong", new HeroTeam("strong", 0, List.of(hero("h2", CowScoreTier.GOOD, Role.TANK)), 900), 0)
             ));
 
-            BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
+            AbstractLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
 
             assertEquals(3, updatedEntries.size(), "capacity is 3, no more than that may ever be assigned");
             assertEquals("strong", updatedEntries.get(2).teamMemberId(), "the single free slot goes to the stronger remaining candidate");
@@ -135,7 +135,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("m1", new HeroTeam("m1", 0, List.of(hero("h1", CowScoreTier.GOOD, Role.TANK)), 500), 0)
             ));
 
-            BestPossibleLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
+            AbstractLineupAlgorithm.assignStrongestFirst(bridge, pool, updatedEntries, Lineup.TeamType.HERO);
 
             assertEquals(1, updatedEntries.size(), "no new entry may be added - the fortification is already full");
             assertEquals(1, pool.size(), "the pool must stay untouched");
@@ -162,7 +162,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("a", noWarriors, 0), candidate("b", twoWarriors, 0), candidate("c", oneWarrior, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(bastion, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(bastion, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             assertEquals(1, updatedEntries.size());
             Lineup.Entry entry = updatedEntries.get(0);
@@ -186,7 +186,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("x", strongTie, 0), candidate("y", weakTie, 0), candidate("z", worseFit, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(foundry, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(foundry, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             assertEquals("y", updatedEntries.get(0).teamMemberId(),
                     "both x and y fit equally well (2 tanks) - the weaker one (y) must be picked so x stays available");
@@ -205,7 +205,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             List<Candidate<TitanTeam>> pool = new ArrayList<>(List.of(candidate("p", noFireTitans, 0), candidate("q", twoFireTitans, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(bastionOfFire, pool, updatedEntries, Lineup.TeamType.TITAN, TitanTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(bastionOfFire, pool, updatedEntries, Lineup.TeamType.TITAN, TitanTeam::buffFitScore);
 
             assertEquals("q", updatedEntries.get(0).teamMemberId());
             assertEquals(2, twoFireTitans.buffFitScore(fireBuff), "the winning team ('q') has 2 fire titans");
@@ -228,7 +228,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(candidate("single", oneHealerOnly, 0), candidate("full", fourHeroesOneHealer, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(cityHall, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(cityHall, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             assertEquals(1, oneHealerOnly.buffFitScore(healerBuff), "the 1-hero team's single healer must still count as a match");
             assertEquals("single", updatedEntries.get(0).teamMemberId(), "equal buffFitScore (1) - tie-break must pick the lower totalPower");
@@ -261,7 +261,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("weakerButEliteHeroes", lowPowerHighGeneralScore, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(lighthouse, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(lighthouse, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             Lineup.Entry entry = updatedEntries.get(0);
             assertEquals("strongButWeakHeroes", entry.teamMemberId(),
@@ -283,7 +283,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             List<Candidate<HeroTeam>> pool = new ArrayList<>(List.of(candidate("solo", oneHero, 0), candidate("full", fiveHeroes, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            BestPossibleLineupAlgorithm.assignOne(mageAcademy, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(mageAcademy, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             assertEquals("solo", updatedEntries.get(0).teamMemberId(),
                     "the 1-hero team has the lower sortScore (0.9 vs. 4.1) precisely because it is scored by its own roster size");
@@ -320,7 +320,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     heroMember("m550", 550), heroMember("m500", 500), heroMember("m450", 450),
                     heroMember("m100", 100));
             Guild guild = new Guild("g1", "Guild", members);
-            Lineup result = new BestPossibleLineupAlgorithm().run(emptyLineup(guild), guild);
+            Lineup result = new BestPossibleLineupAlgorithm<>(TeamSide.HERO).run(emptyLineup(guild), guild);
 
             List<Lineup.Entry> bridgeEntries = entriesFor(result, "heros-bridge");
             assertEquals(6, bridgeEntries.size(), "bridge capacity is 6");
@@ -354,7 +354,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                 members.add(heroMember("coverageTeam" + i, 50 - i));
             }
             Guild guild = new Guild("g2", "Guild", members);
-            Lineup result = new BestPossibleLineupAlgorithm().run(emptyLineup(guild), guild);
+            Lineup result = new BestPossibleLineupAlgorithm<>(TeamSide.HERO).run(emptyLineup(guild), guild);
 
             assertEquals(6, entriesFor(result, "heros-bridge").size());
             assertEquals(1, entriesFor(result, "barracks").size());
@@ -378,7 +378,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Lineup.Entry manualEntry = new Lineup.Entry("citadel", "manual", Lineup.TeamType.HERO, 0);
             Lineup lineupWithManualPick = new Lineup(guild.id(), guild.name(), "", null, List.of(manualEntry));
 
-            Lineup result = new BestPossibleLineupAlgorithm().run(lineupWithManualPick, guild);
+            Lineup result = new BestPossibleLineupAlgorithm<>(TeamSide.HERO).run(lineupWithManualPick, guild);
 
             assertTrue(result.entries().contains(manualEntry), "the manual entry must be preserved exactly as-is");
             List<Lineup.Entry> forManualMember = result.entries().stream()
@@ -391,12 +391,12 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         }
 
         @Test
-        @DisplayName("HERO and TITAN sides run independently - a guild with only titan teams produces only TITAN entries")
+        @DisplayName("HERO and TITAN sides run independently - the titan algorithm places titan teams on the TITAN bridge")
         void titanSideRunsIndependentlyOfHeroSide() {
             List<GuildMember> members = List.of(titanMember("t1", 500), titanMember("t2", 300));
             Guild guild = new Guild("g4", "Guild", members);
 
-            Lineup result = new BestPossibleLineupAlgorithm().run(emptyLineup(guild), guild);
+            Lineup result = new BestPossibleLineupAlgorithm<>(TeamSide.TITAN).run(emptyLineup(guild), guild);
 
             assertEquals(2, result.entries().size());
             assertTrue(result.entries().stream().allMatch(e -> e.teamType() == Lineup.TeamType.TITAN));

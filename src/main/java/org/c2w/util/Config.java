@@ -52,7 +52,10 @@ public final class Config {
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
+    /** Legacy (pre-2026-09-24) single default algorithm for both sides - only read as a fallback, see {@link #getDefaultHeroAlgorithm()}. */
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
+    private static final String KEY_DEFAULT_HERO_ALGORITHM = "defaultHeroAlgorithm";
+    private static final String KEY_DEFAULT_TITAN_ALGORITHM = "defaultTitanAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
     private static final String KEY_WORKSPACE_PATH = "workspacePath";
     /** Default backup directory: a "backup" folder next to {@link #DEFAULT_WORKSPACE_DIR}, under the same {@link #ROOT} umbrella. */
@@ -163,14 +166,30 @@ public final class Config {
         setProperty(KEY_LAST_LINEUP_PATH, lastLineUpPath == null ? "" : lastLineUpPath);
     }
 
-    // --- defaultAlgorithm ---
+    // --- defaultHeroAlgorithm / defaultTitanAlgorithm ---
 
-    public static String getDefaultAlgorithm() {
-        return properties.getProperty(KEY_DEFAULT_ALGORITHM, "");
+    /**
+     * Display name of the default HERO lineup algorithm (see {@code
+     * LineupAlgorithms#HERO}), or {@code ""} if none is configured. Falls back
+     * to the legacy single {@code defaultAlgorithm} value saved before the
+     * algorithms were split into hero and titan variants (2026-09-24), since
+     * every strategy kept its display name in that split.
+     */
+    public static String getDefaultHeroAlgorithm() {
+        return properties.getProperty(KEY_DEFAULT_HERO_ALGORITHM, properties.getProperty(KEY_DEFAULT_ALGORITHM, ""));
     }
 
-    public static void setDefaultAlgorithm(String defaultAlgorithm) {
-        setProperty(KEY_DEFAULT_ALGORITHM, defaultAlgorithm == null ? "" : defaultAlgorithm);
+    public static void setDefaultHeroAlgorithm(String defaultHeroAlgorithm) {
+        setProperty(KEY_DEFAULT_HERO_ALGORITHM, defaultHeroAlgorithm == null ? "" : defaultHeroAlgorithm);
+    }
+
+    /** Display name of the default TITAN lineup algorithm - same fallback as {@link #getDefaultHeroAlgorithm()}. */
+    public static String getDefaultTitanAlgorithm() {
+        return properties.getProperty(KEY_DEFAULT_TITAN_ALGORITHM, properties.getProperty(KEY_DEFAULT_ALGORITHM, ""));
+    }
+
+    public static void setDefaultTitanAlgorithm(String defaultTitanAlgorithm) {
+        setProperty(KEY_DEFAULT_TITAN_ALGORITHM, defaultTitanAlgorithm == null ? "" : defaultTitanAlgorithm);
     }
 
     // --- backupDir ---

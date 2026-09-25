@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * First unit test class for this project (added 2026-09-10, see
  * cow2win-verbesserungsvorschlaege.md). Covers
- * {@link BestPossibleLineupAlgorithm#computeUnlockDepths(List)} - a pure,
+ * {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} - a pure,
  * self-contained piece of the algorithm's logic with an already-documented
  * expected result (see clash-of-worlds-event-recherche.md), and the one
  * place a previous reading of this code got the semantics wrong (OR vs AND
@@ -41,7 +41,7 @@ class BestPossibleLineupAlgorithmTest {
     void initiallyAttackableFortsHaveDepthZero() {
         List<Fortification> catalog = List.of(fort("bridge"), fort("barracks"));
 
-        Map<String, Integer> depths = BestPossibleLineupAlgorithm.computeUnlockDepths(catalog);
+        Map<String, Integer> depths = AbstractLineupAlgorithm.computeUnlockDepths(catalog);
 
         assertEquals(0, depths.get("bridge"));
         assertEquals(0, depths.get("barracks"));
@@ -64,7 +64,7 @@ class BestPossibleLineupAlgorithmTest {
                 fort("target", "start", "deepChain2") // OR: min(0, 3) + 1 = 1, NOT max(0, 3) + 1 = 4
         );
 
-        Map<String, Integer> depths = BestPossibleLineupAlgorithm.computeUnlockDepths(catalog);
+        Map<String, Integer> depths = AbstractLineupAlgorithm.computeUnlockDepths(catalog);
 
         assertEquals(1, depths.get("target"), "OR-semantics: only the shallowest prerequisite should count");
         assertTrue(depths.get("target") != 4, "must not fall back to AND-semantics (deepest prerequisite)");
@@ -75,7 +75,7 @@ class BestPossibleLineupAlgorithmTest {
     void unknownPrerequisiteIsTreatedAsAlreadyUnlocked() {
         List<Fortification> catalog = List.of(fort("orphan", "does-not-exist"));
 
-        Map<String, Integer> depths = BestPossibleLineupAlgorithm.computeUnlockDepths(catalog);
+        Map<String, Integer> depths = AbstractLineupAlgorithm.computeUnlockDepths(catalog);
 
         assertEquals(1, depths.get("orphan"));
     }
@@ -89,7 +89,7 @@ class BestPossibleLineupAlgorithmTest {
         List<Fortification> catalog = List.of(fort("a", "b"), fort("b", "a"));
 
         Map<String, Integer> depths = assertTimeoutPreemptively(() ->
-                BestPossibleLineupAlgorithm.computeUnlockDepths(catalog));
+                AbstractLineupAlgorithm.computeUnlockDepths(catalog));
 
         assertEquals(Set.of("a", "b"), depths.keySet());
         assertTrue(depths.get("a") >= 0, "depth must be a valid non-negative number even for a cyclic entry");
@@ -102,7 +102,7 @@ class BestPossibleLineupAlgorithmTest {
         List<Fortification> catalog = FortificationRepository.findAll();
         assertEquals(20, catalog.size(), "this test pins the depth table below to exactly 20 fortifications");
 
-        Map<String, Integer> depths = BestPossibleLineupAlgorithm.computeUnlockDepths(catalog);
+        Map<String, Integer> depths = AbstractLineupAlgorithm.computeUnlockDepths(catalog);
 
         assertIdsAtDepth(depths, 0, "bridge", "barracks", "lighthouse", "mage-academy");
         assertIdsAtDepth(depths, 1, "bastion-of-fire", "bastion-of-ice", "gates-of-nature", "engineerium", "foundry", "spring-of-elements");

@@ -3,6 +3,7 @@ package org.c2w.util;
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.eval.AlgorithmDescriptions;
+import org.c2w.eval.LineupAlgorithms;
 
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
@@ -195,11 +196,31 @@ public final class ReportGenerator {
             return;
         }
         int pos = startPosition;
-        appendMetaRow(sb, ++pos, "Algorithm", algorithmName);
-        String description = AlgorithmDescriptions.forDisplayName(algorithmName);
-        if (!description.isBlank()) {
-            appendMetaRow(sb, ++pos, "Algorithm description", description);
+        // Since 2026-09-24 heroes and titans can be filled by different algorithms, and
+        // algorithmName combines both ("Heroes: ...; Titans: ...") - one row pair per side.
+        // A legacy single-algorithm name (older lineup files) is shown as-is, like before.
+        Map<Lineup.TeamType, String> bySide = LineupAlgorithms.parseAlgorithmName(algorithmName);
+        if (bySide.isEmpty()) {
+            appendAlgorithmRows(sb, pos, "Algorithm", algorithmName);
+            return;
         }
+        if (bySide.containsKey(Lineup.TeamType.HERO)) {
+            pos = appendAlgorithmRows(sb, pos, "Hero algorithm", bySide.get(Lineup.TeamType.HERO));
+        }
+        if (bySide.containsKey(Lineup.TeamType.TITAN)) {
+            appendAlgorithmRows(sb, pos, "Titan algorithm", bySide.get(Lineup.TeamType.TITAN));
+        }
+    }
+
+    /** Appends an algorithm name row plus, if one is on file, its description row; returns the last row position used. */
+    private static int appendAlgorithmRows(StringBuilder sb, int startPosition, String label, String displayName) {
+        int pos = startPosition;
+        appendMetaRow(sb, ++pos, label, displayName);
+        String description = AlgorithmDescriptions.forDisplayName(displayName);
+        if (!description.isBlank()) {
+            appendMetaRow(sb, ++pos, label + " description", description);
+        }
+        return pos;
     }
 
     private static void appendMetaRow(StringBuilder sb, int rowPosition, String label, String value) {

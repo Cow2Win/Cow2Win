@@ -24,7 +24,7 @@ public class FortificationPanel extends JPanel {
     private final int totalPower;
     /** Change of {@link #totalPower} against the baseline loaded from disk (see AppContext#loadedFortificationBaseline) - only shown when {@link #showChanges} is true (see {@link #getPowerLabel()}). */
     private final int totalPowerDiff;
-    /** True while the "Changes" checkbox (see FortificationMapPanel#buildTypeFilterPanel) is selected - then {@link #getPowerLabel()} shows {@link #totalPowerDiff} instead of {@link #totalPower}. */
+    /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel / FortificationMapPanel#setShowChanges) is selected - then {@link #getPowerLabel()} shows {@link #totalPowerDiff} instead of {@link #totalPower}. */
     private final boolean showChanges;
     private final int buffPercent;
     /** Change of {@link #buffPercent} against the baseline loaded from disk (see AppContext#loadedFortificationBaseline) - only shown when {@link #showChanges} is true (see {@link #getBuffPercentLabel()}). */

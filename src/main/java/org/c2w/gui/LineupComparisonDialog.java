@@ -12,6 +12,7 @@ import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
 import org.c2w.gui.titan.TitanValueOverviewDialog;
 import org.c2w.util.AppContext;
+import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 import org.c2w.util.LineupComparisonService;
 import org.c2w.util.LineupComparisonService.FortificationDiff;
@@ -54,6 +55,8 @@ public class LineupComparisonDialog extends JDialog {
     private static final String KEY_LINEUP_BEFORE = "lineupComparison.lineupBefore";
     private static final String KEY_LINEUP_AFTER = "lineupComparison.lineupAfter";
     private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
+    private static final String KEY_HERO_ALGORITHM_LABEL = "teamsOverview.heroAlgorithm";
+    private static final String KEY_TITAN_ALGORITHM_LABEL = "teamsOverview.titanAlgorithm";
     private static final String KEY_COMPARE = "lineupComparison.compare";
     private static final String KEY_ONLY_CHANGES = "lineupComparison.onlyChanges";
     private static final String KEY_TAB_TEAMS = "lineupComparison.tabTeams";
@@ -85,7 +88,9 @@ public class LineupComparisonDialog extends JDialog {
 
     private final JComboBox<String> lineupBeforeCombo = new JComboBox<>();
     private final JComboBox<String> lineupAfterCombo = new JComboBox<>();
-    private final JComboBox<LineupAlgorithm> algorithmCombo = new JComboBox<>();
+    /** One algorithm per side (since 2026-09-24) - see {@link LineupAlgorithms#runBoth}. */
+    private final JComboBox<LineupAlgorithm> heroAlgorithmCombo = new JComboBox<>();
+    private final JComboBox<LineupAlgorithm> titanAlgorithmCombo = new JComboBox<>();
 
     private final JPanel savedLineupsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     private final JPanel algorithmPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
@@ -131,7 +136,10 @@ public class LineupComparisonDialog extends JDialog {
         savedLineupsPanel.add(lineupAfterCombo);
 
         algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_ALGORITHM_LABEL)));
-        algorithmPanel.add(algorithmCombo);
+        algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_HERO_ALGORITHM_LABEL)));
+        algorithmPanel.add(heroAlgorithmCombo);
+        algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_TITAN_ALGORITHM_LABEL)));
+        algorithmPanel.add(titanAlgorithmCombo);
 
         JButton compareButton = new JButton(LanguageService.displayName(KEY_COMPARE));
         compareButton.addActionListener(e -> onCompare());
@@ -189,8 +197,19 @@ public class LineupComparisonDialog extends JDialog {
         algorithmPanel.setVisible(!savedMode);
     }
 
+    /**
+     * Fills both algorithm combo boxes with their side's algorithms and
+     * preselects the defaults configured in the Settings dialog (see {@link
+     * Config#getDefaultHeroAlgorithm()}/{@link Config#getDefaultTitanAlgorithm()}).
+     */
     private void populateAlgorithmCombo() {
-        algorithmCombo.setRenderer(new DefaultListCellRenderer() {
+        populateAlgorithmCombo(heroAlgorithmCombo, Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
+        populateAlgorithmCombo(titanAlgorithmCombo, Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
+    }
+
+    private static void populateAlgorithmCombo(JComboBox<LineupAlgorithm> combo, Lineup.TeamType teamType,
+                                               String configuredAlgorithm) {
+        combo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
@@ -201,9 +220,10 @@ public class LineupComparisonDialog extends JDialog {
                 return this;
             }
         });
-        for (LineupAlgorithm algorithm : LineupAlgorithms.ALL) {
-            algorithmCombo.addItem(algorithm);
+        for (LineupAlgorithm algorithm : LineupAlgorithms.forType(teamType)) {
+            combo.addItem(algorithm);
         }
+        combo.setSelectedItem(LineupAlgorithms.findOrDefault(teamType, configuredAlgorithm));
     }
 
     private void populateLineupCombos() {
@@ -292,14 +312,15 @@ public class LineupComparisonDialog extends JDialog {
                 return;
             }
         } else {
-            LineupAlgorithm algorithm = (LineupAlgorithm) algorithmCombo.getSelectedItem();
-            if (algorithm == null) {
+            LineupAlgorithm heroAlgorithm = (LineupAlgorithm) heroAlgorithmCombo.getSelectedItem();
+            LineupAlgorithm titanAlgorithm = (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem();
+            if (heroAlgorithm == null || titanAlgorithm == null) {
                 JOptionPane.showMessageDialog(this, "No algorithm available.",
                         "Compare lineups", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             before = appContext.lineup();
-            after = algorithm.run(before, guild);
+            after = LineupAlgorithms.runBoth(heroAlgorithm, titanAlgorithm, before, guild);
         }
 
         currentResult = LineupComparisonService.compare(before, after, guild);

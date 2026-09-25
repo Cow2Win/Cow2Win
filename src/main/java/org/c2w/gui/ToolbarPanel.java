@@ -1,6 +1,7 @@
 package org.c2w.gui;
 
 import org.c2w.C2WApp;
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
@@ -115,6 +116,15 @@ public class ToolbarPanel extends JPanel {
     /** Reused rather than a dedicated icon - same "hexagon" (TITAN fortification) icon as {@link #ICON_TITAN_TEAMS}, since this button opens the guild-wide titan counterpart of a single fortification's own team-entry dialog. */
     private static final String ICON_OPEN_GUILD_TITAN_ENTRY = "/images/app/hexagon-plus.png";
 
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show heroes" checkbox label - moved here from {@code FortificationMapPanel} together with the checkbox itself. */
+    private static final String KEY_SHOW_HEROES = "fortificationMap.showHeroes";
+
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show titans" checkbox label. */
+    private static final String KEY_SHOW_TITANS = "fortificationMap.showTitans";
+
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "changes" checkbox label. */
+    private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
+
     private final AppContext appContext;
     private final FortificationMapPanel fortificationMapPanel;
 
@@ -220,15 +230,8 @@ public class ToolbarPanel extends JPanel {
         generateReportButton.addActionListener(e -> onGenerateReport());
         add(generateReportButton);
 
-        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_HERO_TEAMS));
-        heroTeamsButton.setToolTipText(LanguageService.displayName(KEY_HERO_TEAMS));
-        heroTeamsButton.addActionListener(e -> onOpenHeroTeams());
-        add(heroTeamsButton);
 
-        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_TITAN_TEAMS));
-        titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
-        titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
-        add(titanTeamsButton);
+
 
         FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconForButton(ICON_RUN_ALGORITHM));
         runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
@@ -245,21 +248,72 @@ public class ToolbarPanel extends JPanel {
         changePlanButton.addActionListener(e -> onOpenChangePlan());
         add(changePlanButton);
 
+        JSeparator filterSeparator = new JSeparator(SwingConstants.VERTICAL);
+        filterSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
+        add(filterSeparator);
 
+        addMapFilterCheckboxes();
 
         add(statusLabel);
     }
 
 
     /**
-     * Runs the algorithm configured as the default in the Settings dialog
-     * (see {@link Config#getDefaultAlgorithm()}/{@code SettingsDialog}, added
-     * 2026-09-15 - Cow2Win todos 3.4), matched against {@link
-     * LineupAlgorithms#ALL} by {@link LineupAlgorithm#displayName()}. Falls
-     * back to the first entry in {@link LineupAlgorithms#ALL} if nothing is
-     * configured yet, or if a previously configured algorithm no longer
-     * exists (e.g. renamed/removed) - same "just use the first one" behavior
-     * this method always had before this became configurable.
+     * Adds the "show heroes"/"show titans"/"changes" checkboxes that used to
+     * sit in the top-right cell of {@link FortificationMapPanel} - they only
+     * forward their state to that panel, which still owns it.
+     */
+    private void addMapFilterCheckboxes() {
+        JCheckBox showHeroesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_HEROES),
+                fortificationMapPanel.isShowHeroFortifications());
+        showHeroesCheckbox.setOpaque(false);
+        showHeroesCheckbox.setForeground(FortificationType.HERO.getColor());
+        showHeroesCheckbox.addActionListener(e ->
+                fortificationMapPanel.setShowHeroFortifications(showHeroesCheckbox.isSelected()));
+        add(showHeroesCheckbox);
+
+        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_HERO_TEAMS));
+        heroTeamsButton.setToolTipText(LanguageService.displayName(KEY_HERO_TEAMS));
+        heroTeamsButton.addActionListener(e -> onOpenHeroTeams());
+        add(heroTeamsButton);
+
+        JSeparator filterSeparator = new JSeparator(SwingConstants.VERTICAL);
+        filterSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
+        add(filterSeparator);
+
+        JCheckBox showTitansCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_TITANS),
+                fortificationMapPanel.isShowTitanFortifications());
+        showTitansCheckbox.setOpaque(false);
+        showTitansCheckbox.setForeground(FortificationType.TITAN.getColor());
+        showTitansCheckbox.addActionListener(e ->
+                fortificationMapPanel.setShowTitanFortifications(showTitansCheckbox.isSelected()));
+        add(showTitansCheckbox);
+
+
+        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS,TOOLBAR_ICON_SIZE,FortificationType.TITAN.getColor()));
+        titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
+        titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
+        add(titanTeamsButton);
+
+        JCheckBox changesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES),
+                fortificationMapPanel.isShowChanges());
+        changesCheckbox.setOpaque(false);
+        changesCheckbox.addActionListener(e ->
+                fortificationMapPanel.setShowChanges(changesCheckbox.isSelected()));
+        add(changesCheckbox);
+    }
+
+
+    /**
+     * Runs the hero and the titan algorithm configured as defaults in the
+     * Settings dialog (see {@link Config#getDefaultHeroAlgorithm()}/{@link
+     * Config#getDefaultTitanAlgorithm()}/{@code SettingsDialog}, added
+     * 2026-09-15 - Cow2Win todos 3.4, split per side 2026-09-24), matched
+     * against {@link LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN} by
+     * {@link LineupAlgorithm#displayName()}. Falls back to the first entry of
+     * each side if nothing is configured yet, or if a previously configured
+     * algorithm no longer exists. A side configured as "Manual" (see {@link
+     * org.c2w.eval.ManualLineupAlgorithm}) is left untouched.
      */
     private void onRunAlgorithm() {
         if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
@@ -270,23 +324,24 @@ public class ToolbarPanel extends JPanel {
                     "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        String configuredAlgorithm = Config.getDefaultAlgorithm();
-        LineupAlgorithm algorithm = LineupAlgorithms.ALL.stream()
-                .filter(a -> a.displayName().equals(configuredAlgorithm))
-                .findFirst()
-                .orElseGet(() -> LineupAlgorithms.ALL.isEmpty() ? null : LineupAlgorithms.ALL.get(0));
-        if (algorithm == null) {
-            return;
-        }
+        LineupAlgorithm heroAlgorithm =
+                LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
+        LineupAlgorithm titanAlgorithm =
+                LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
+
         Lineup currentLineup = appContext.lineup();
-        Lineup updatedLineup = algorithm.run(currentLineup, appContext.guild());
-        int assigned = updatedLineup.entries().size() - currentLineup.entries().size();
+        Lineup afterHeroes = heroAlgorithm.run(currentLineup, appContext.guild());
+        Lineup updatedLineup = titanAlgorithm.run(afterHeroes, appContext.guild());
+        int heroesAssigned = afterHeroes.entries().size() - currentLineup.entries().size();
+        int titansAssigned = updatedLineup.entries().size() - afterHeroes.entries().size();
+
         appContext.setLineup(updatedLineup);
-        if (assigned > 0) {
+        if (heroesAssigned + titansAssigned > 0) {
             GuiUtils.editedLineup = true;
         }
         fortificationMapPanel.refresh(updatedLineup);
-        Logger.log(algorithm.displayName() + ": " + assigned + " team(s) newly assigned.");
+        Logger.log("Heroes (" + heroAlgorithm.displayName() + "): " + heroesAssigned + " team(s) newly assigned.");
+        Logger.log("Titans (" + titanAlgorithm.displayName() + "): " + titansAssigned + " team(s) newly assigned.");
     }
 
 

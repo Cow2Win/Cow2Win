@@ -8,25 +8,14 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.gui.common.GridPanel;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
-import org.c2w.util.LanguageService;
 import org.c2w.util.LineupBaseline;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class FortificationMapPanel extends GridPanel {
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show heroes" checkbox label. */
-    private static final String KEY_SHOW_HEROES = "fortificationMap.showHeroes";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show titans" checkbox label. */
-    private static final String KEY_SHOW_TITANS = "fortificationMap.showTitans";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "changes" checkbox label. */
-    private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
 
     private final AppContext appContext;
     private Lineup lineup;
@@ -36,7 +25,7 @@ public class FortificationMapPanel extends GridPanel {
     private boolean showHeroFortifications = true;
     private boolean showTitanFortifications = true;
 
-    /** True while the "Changes" checkbox (see {@link #buildTypeFilterPanel()}) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
+    /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
     private boolean showChanges = false;
 
     public FortificationMapPanel(AppContext appContext){
@@ -118,11 +107,16 @@ public class FortificationMapPanel extends GridPanel {
                     showChanges, buffPercent, buffPercentDiff, appContext, this));
         }
 
-        clearCellAt(0,0);
-        if(showHeroFortifications || showTitanFortifications) {
-             setComponentAt(0, 0, new LineupSummaryPanel(lineup, guild));
+        // Hero summary top left, titan summary top right (same row) - each one
+        // only while its fortification type is shown on the map.
+        clearCellAt(0, 0);
+        if (showHeroFortifications) {
+            setComponentAt(0, 0, new HeroLineupSummaryPanel(lineup, guild));
         }
-        setComponentAt(0, 4, buildTypeFilterPanel());
+        clearCellAt(0, columns() - 1);
+        if (showTitanFortifications) {
+            setComponentAt(0, columns() - 1, new TitanLineupSummaryPanel(lineup, guild));
+        }
     }
 
     /**
@@ -135,36 +129,34 @@ public class FortificationMapPanel extends GridPanel {
     }
 
 
-    private JPanel buildTypeFilterPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        panel.setOpaque(false);
-        JCheckBox showHeroesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_HEROES), showHeroFortifications);
-        showHeroesCheckbox.setOpaque(false);
-        showHeroesCheckbox.setForeground(FortificationType.HERO.getColor());
-        showHeroesCheckbox.addActionListener(e -> {
-            showHeroFortifications = showHeroesCheckbox.isSelected();
-            init();
-        });
+    public boolean isShowHeroFortifications() {
+        return showHeroFortifications;
+    }
 
-        JCheckBox showTitansCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_TITANS), showTitanFortifications);
-        showTitansCheckbox.setForeground(FortificationType.TITAN.getColor());
-        showTitansCheckbox.setOpaque(false);
-        showTitansCheckbox.addActionListener(e -> {
-            showTitanFortifications = showTitansCheckbox.isSelected();
-            init();
-        });
+    /** Shows/hides every HERO fortification on the map - driven by the toolbar's "show heroes" checkbox (see ToolbarPanel). */
+    public void setShowHeroFortifications(boolean showHeroFortifications) {
+        this.showHeroFortifications = showHeroFortifications;
+        init();
+    }
 
-        JCheckBox changesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES), showChanges);
-        changesCheckbox.setOpaque(false);
-        changesCheckbox.addActionListener(e -> {
-            showChanges = changesCheckbox.isSelected();
-            init();
-        });
+    public boolean isShowTitanFortifications() {
+        return showTitanFortifications;
+    }
 
-        panel.add(showHeroesCheckbox);
-        panel.add(showTitansCheckbox);
-        panel.add(changesCheckbox);
-        return panel;
+    /** Shows/hides every TITAN fortification on the map - driven by the toolbar's "show titans" checkbox (see ToolbarPanel). */
+    public void setShowTitanFortifications(boolean showTitanFortifications) {
+        this.showTitanFortifications = showTitanFortifications;
+        init();
+    }
+
+    public boolean isShowChanges() {
+        return showChanges;
+    }
+
+    /** Switches every {@link FortificationPanel} between total power and power change - driven by the toolbar's "changes" checkbox (see ToolbarPanel). */
+    public void setShowChanges(boolean showChanges) {
+        this.showChanges = showChanges;
+        init();
     }
 
 }

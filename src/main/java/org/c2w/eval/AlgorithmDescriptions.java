@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Short, human-readable prose explaining how each {@link LineupAlgorithm} in
- * {@link LineupAlgorithms#ALL} actually works - localized through {@link
+ * {@link LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN} actually works - localized through {@link
  * LanguageService}, exactly like every other display string in the app
  * (fortification/hero/titan names, toolbar labels, ...): the actual text
  * lives as {@code algorithm.<key>.description} in every
@@ -25,10 +25,13 @@ import java.util.Map;
  * not itself a usable properties key (spaces, not namespaced under
  * {@code algorithm.*}) - {@link #KEY_BY_DISPLAY_NAME} maps each known
  * algorithm's display name to its dotted key suffix. An algorithm missing
- * from that map (e.g. a new one just added to {@link LineupAlgorithms#ALL}
+ * from that map (e.g. a new one just added to {@link LineupAlgorithms}
  * without a matching entry here and in the three language files) falls
  * back to an empty description rather than throwing or leaking a raw
  * properties key into the UI/report.
+ *
+ * <p>The hero and the titan variant of a strategy share the same display
+ * name and therefore the same description (since 2026-09-24).
  */
 public final class AlgorithmDescriptions {
 
@@ -36,7 +39,8 @@ public final class AlgorithmDescriptions {
             "Best possible lineup", "bestPossibleLineup",
             "Balanced defense", "balancedDefense",
             "CowScore maximizer", "cowScoreMaximizer",
-            "Consensus picks", "consensusPicks"
+            "Consensus picks", "consensusPicks",
+            ManualLineupAlgorithm.DISPLAY_NAME, "manual"
     );
 
     private AlgorithmDescriptions() {

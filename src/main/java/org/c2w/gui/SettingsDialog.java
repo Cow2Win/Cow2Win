@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * Cow2Frame#buildMenuBar). Lets the user change the display language, the
- * default lineup algorithm (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
+ * default hero and titan lineup algorithms (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
  * the backup directory (see org.c2w.util.BackupService) and the workspace
  * directory (see {@link Config#getWorkspaceDir()}); named generically since
  * more application-wide settings are expected to move in here later.
@@ -34,8 +34,11 @@ public class SettingsDialog extends JDialog {
     /** Language file key for the language combo box's label (see {@link #buildUi()}). */
     private static final String KEY_LANGUAGE = "settingsDialog.language";
 
-    /** Language file key for the algorithm combo box's label (see {@link #buildUi()}). */
-    private static final String KEY_DEFAULT_ALGORITHM = "settingsDialog.defaultAlgorithm";
+    /** Language file key for the hero algorithm combo box's label (see {@link #buildUi()}). */
+    private static final String KEY_DEFAULT_HERO_ALGORITHM = "settingsDialog.defaultHeroAlgorithm";
+
+    /** Language file key for the titan algorithm combo box's label (see {@link #buildUi()}). */
+    private static final String KEY_DEFAULT_TITAN_ALGORITHM = "settingsDialog.defaultTitanAlgorithm";
 
     /** Language file key for the backup directory field's label (see {@link #buildUi()}). */
     private static final String KEY_BACKUP_DIRECTORY = "settingsDialog.backupDirectory";
@@ -62,16 +65,18 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<String> languageComboBox = new JComboBox<>();
 
     /**
-     * Lists {@link LineupAlgorithms#ALL} by {@link LineupAlgorithm#displayName()}
-     * (added 2026-09-15, see Cow2Win todos 3.4) - a plain {@code JComboBox<String>}
-     * like {@link #languageComboBox} rather than a {@code JComboBox<LineupAlgorithm>},
-     * since {@link LineupAlgorithm} has no {@code toString()} of its own and this
-     * avoids a custom cell renderer just for one combo box. The selected display
-     * name is what actually gets persisted via {@link Config#setDefaultAlgorithm}
-     * (see {@link #onOk()}) - simple and consistent with how {@link #languageComboBox}
-     * persists a language name rather than an index.
+     * Lists {@link LineupAlgorithms#HERO} by {@link LineupAlgorithm#displayName()}
+     * (added 2026-09-15, see Cow2Win todos 3.4; split into a hero and a titan
+     * combo box 2026-09-24) - a plain {@code JComboBox<String>} like {@link
+     * #languageComboBox} rather than a {@code JComboBox<LineupAlgorithm>}, since
+     * {@link LineupAlgorithm} has no {@code toString()} of its own. The selected
+     * display name is what actually gets persisted via {@link
+     * Config#setDefaultHeroAlgorithm} (see {@link #onOk()}).
      */
-    private final JComboBox<String> algorithmComboBox = new JComboBox<>();
+    private final JComboBox<String> heroAlgorithmComboBox = new JComboBox<>();
+
+    /** Titan counterpart of {@link #heroAlgorithmComboBox}, listing {@link LineupAlgorithms#TITAN}. */
+    private final JComboBox<String> titanAlgorithmComboBox = new JComboBox<>();
     private final JTextField backupDirField = new JTextField(20);
     private final JButton browseBackupDirButton = new JButton("...");
     private final JTextField workspaceDirField = new JTextField(20);
@@ -105,8 +110,11 @@ public class SettingsDialog extends JDialog {
         for (String language : LanguageService.availableLanguages()) {
             languageComboBox.addItem(language);
         }
-        for (LineupAlgorithm algorithm : LineupAlgorithms.ALL) {
-            algorithmComboBox.addItem(algorithm.displayName());
+        for (LineupAlgorithm algorithm : LineupAlgorithms.HERO) {
+            heroAlgorithmComboBox.addItem(algorithm.displayName());
+        }
+        for (LineupAlgorithm algorithm : LineupAlgorithms.TITAN) {
+            titanAlgorithmComboBox.addItem(algorithm.displayName());
         }
 
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -125,13 +133,21 @@ public class SettingsDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_ALGORITHM)), gbc);
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_HERO_ALGORITHM)), gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(algorithmComboBox, gbc);
+        formPanel.add(heroAlgorithmComboBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_TITAN_ALGORITHM)), gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(titanAlgorithmComboBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         gbc.fill = GridBagConstraints.NONE;
         formPanel.add(new JLabel(LanguageService.displayName(KEY_BACKUP_DIRECTORY)), gbc);
 
@@ -143,7 +159,7 @@ public class SettingsDialog extends JDialog {
         formPanel.add(backupDirPanel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.fill = GridBagConstraints.NONE;
         formPanel.add(new JLabel(LanguageService.displayName(KEY_WORKSPACE_DIRECTORY)), gbc);
 
@@ -166,7 +182,8 @@ public class SettingsDialog extends JDialog {
      * LanguageService#configuredLanguage()}, so an older, pre-restructuring
      * config value is matched correctly too), defaulting to the first entry
      * if none matches (e.g. no config saved yet); selects whichever {@link
-     * LineupAlgorithms#ALL} entry matches {@link Config#getDefaultAlgorithm()}
+     * LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN} entry matches {@link
+     * Config#getDefaultHeroAlgorithm()}/{@link Config#getDefaultTitanAlgorithm()}
      * the same way (added 2026-09-15, see Cow2Win todos 3.4); and fills in
      * the currently configured backup directory (see {@link Config#getBackupDir()})
      * and workspace directory (see {@link Config#getWorkspacePath()}).
@@ -182,21 +199,24 @@ public class SettingsDialog extends JDialog {
         }
         languageComboBox.setSelectedIndex(matchedIndex >= 0 ? matchedIndex : 0);
 
-        String configuredAlgorithm = Config.getDefaultAlgorithm();
-        boolean algorithmMatched = false;
-        for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
-            if (algorithmComboBox.getItemAt(i).equals(configuredAlgorithm)) {
-                algorithmComboBox.setSelectedIndex(i);
-                algorithmMatched = true;
-                break;
-            }
-        }
-        if (!algorithmMatched && algorithmComboBox.getItemCount() > 0) {
-            algorithmComboBox.setSelectedIndex(0);
-        }
+        preselectAlgorithm(heroAlgorithmComboBox, Config.getDefaultHeroAlgorithm());
+        preselectAlgorithm(titanAlgorithmComboBox, Config.getDefaultTitanAlgorithm());
 
         backupDirField.setText(Config.getBackupDir());
         workspaceDirField.setText(Config.getWorkspacePath());
+    }
+
+    /** Selects the entry of {@code comboBox} equal to {@code configuredAlgorithm}, or the first entry if none matches. */
+    private static void preselectAlgorithm(JComboBox<String> comboBox, String configuredAlgorithm) {
+        for (int i = 0; i < comboBox.getItemCount(); i++) {
+            if (comboBox.getItemAt(i).equals(configuredAlgorithm)) {
+                comboBox.setSelectedIndex(i);
+                return;
+            }
+        }
+        if (comboBox.getItemCount() > 0) {
+            comboBox.setSelectedIndex(0);
+        }
     }
 
     private void onBrowseBackupDir() {
@@ -273,8 +293,11 @@ public class SettingsDialog extends JDialog {
         // field, so what is shown always matches what actually gets saved.
         workspaceDirField.setText(workspacePath);
         Config.setLanguage(selectedLanguage);
-        if (algorithmComboBox.getSelectedItem() != null) {
-            Config.setDefaultAlgorithm((String) algorithmComboBox.getSelectedItem());
+        if (heroAlgorithmComboBox.getSelectedItem() != null) {
+            Config.setDefaultHeroAlgorithm((String) heroAlgorithmComboBox.getSelectedItem());
+        }
+        if (titanAlgorithmComboBox.getSelectedItem() != null) {
+            Config.setDefaultTitanAlgorithm((String) titanAlgorithmComboBox.getSelectedItem());
         }
         Config.setBackupDir(backupDirField.getText().trim());
         Config.setWorkspacePath(workspacePath);

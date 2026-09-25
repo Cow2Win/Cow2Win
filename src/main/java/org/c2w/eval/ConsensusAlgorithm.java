@@ -1,15 +1,17 @@
 package org.c2w.eval;
 
 import org.c2w.data.model.Guild;
+import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Lineup;
+import org.c2w.data.model.TitanTeam;
 
 import java.util.*;
 
 /**
- * Fourth lineup algorithm (added 2026-09-16 on Thorsten's request, see
+ * Fourth lineup strategy (added 2026-09-16 on Thorsten's request, see
  * Cow2Win todos 3.4 follow-up / "Meta-Algorithmus"), offered alongside
  * {@link BestPossibleLineupAlgorithm}, {@link BalancedDefenseAlgorithm} and
- * {@link CowScoreMaximizerAlgorithm} in {@link LineupAlgorithms#ALL}. Unlike
+ * {@link CowScoreMaximizerAlgorithm} in {@link LineupAlgorithms}. Unlike
  * those three, this is not a fourth independent strategy for deciding which
  * team defends which fortification - it is a META-algorithm that runs all
  * three of them and only keeps a team's assignment when ALL THREE agree on
@@ -35,12 +37,30 @@ import java.util.*;
  * sub-algorithms' opinions - it was Thorsten's own decision, or an earlier
  * run's, already). Only teams WITHOUT an existing entry go through the
  * three-way agreement check below.
+ *
+ * <p>Bound to one {@link TeamSide} per instance (since 2026-09-24): the
+ * three sub-algorithms are created for that same side, so a hero consensus
+ * only ever compares (and adds) hero entries, a titan consensus only titan
+ * entries.
+ *
+ * @param <T> {@link HeroTeam} or {@link TitanTeam}
  */
-public class ConsensusAlgorithm implements LineupAlgorithm {
+public class ConsensusAlgorithm<T> implements LineupAlgorithm {
+
+    private final TeamSide<T> side;
+
+    public ConsensusAlgorithm(TeamSide<T> side) {
+        this.side = Objects.requireNonNull(side, "side");
+    }
 
     @Override
     public String displayName() {
         return "Consensus picks";
+    }
+
+    @Override
+    public Lineup.TeamType teamType() {
+        return side.teamType();
     }
 
     @Override
@@ -52,9 +72,9 @@ public class ConsensusAlgorithm implements LineupAlgorithm {
         // are themselves additive (never touch an existing entry), every preexisting entry
         // trivially "agrees" across all three without needing to be compared at all; only the
         // NEWLY added entries (one per still-unassigned team) can actually differ between them.
-        Lineup bestPossible = new BestPossibleLineupAlgorithm().run(lineup, guild);
-        Lineup balancedDefense = new BalancedDefenseAlgorithm().run(lineup, guild);
-        Lineup cowScoreMaximizer = new CowScoreMaximizerAlgorithm().run(lineup, guild);
+        Lineup bestPossible = new BestPossibleLineupAlgorithm<>(side).run(lineup, guild);
+        Lineup balancedDefense = new BalancedDefenseAlgorithm<>(side).run(lineup, guild);
+        Lineup cowScoreMaximizer = new CowScoreMaximizerAlgorithm<>(side).run(lineup, guild);
 
         Map<TeamKey, String> bestPossibleNew = newAssignments(preexistingKeys, bestPossible.entries());
         Map<TeamKey, String> balancedDefenseNew = newAssignments(preexistingKeys, balancedDefense.entries());
@@ -69,7 +89,10 @@ public class ConsensusAlgorithm implements LineupAlgorithm {
         everyNewlyPlacedTeam.addAll(cowScoreMaximizerNew.keySet());
 
         List<Lineup.Entry> updatedEntries = new ArrayList<>(preexisting);
-        for (TeamKey key : everyNewlyPlacedTeam) {
+        // Sorted so the resulting entry order is deterministic (HashSet iteration order is not).
+        List<TeamKey> orderedKeys = new ArrayList<>(everyNewlyPlacedTeam);
+        orderedKeys.sort(Comparator.comparing(TeamKey::memberId).thenComparingInt(TeamKey::teamIndex));
+        for (TeamKey key : orderedKeys) {
             String fortificationId = bestPossibleNew.get(key);
             boolean allThreeAgree = fortificationId != null
                     && fortificationId.equals(balancedDefenseNew.get(key))
@@ -89,7 +112,9 @@ public class ConsensusAlgorithm implements LineupAlgorithm {
             updatedEntries.add(cowScoreMaximizerEntries.get(key));
         }
 
-        return new Lineup(lineup.guildId(), lineup.guildName(), displayName(), lineup.createdAt(), updatedEntries);
+        return new Lineup(lineup.guildId(), lineup.guildName(),
+                LineupAlgorithms.combinedAlgorithmName(lineup.algorithmName(), teamType(), displayName()),
+                lineup.createdAt(), updatedEntries);
     }
 
     /**

@@ -37,6 +37,13 @@ import java.util.List;
  * manual picks and algorithm-added entries; this field just names whichever
  * algorithm ran most recently. createdAt is the time this was created
  * (informational).
+ *
+ * Since 2026-09-24 every algorithm only fills ONE side (heroes or titans),
+ * so algorithmName combines both sides' algorithm names, e.g. "Heroes: Best
+ * possible lineup; Titans: Balanced defense" (format owned by
+ * org.c2w.eval.LineupAlgorithms#combinedAlgorithmName) - a side that has
+ * never been filled by an algorithm is simply missing from it. Lineup files
+ * saved before that still carry a single, un-prefixed algorithm name.
  */
 public record Lineup(
         String guildId,
