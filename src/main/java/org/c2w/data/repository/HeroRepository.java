@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
-import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
 import org.c2w.util.JsonSupport;
@@ -94,7 +93,7 @@ public class HeroRepository {
      * #findById}/{@link #findAll} calls - same round-trip convention as
      * {@code FortificationRepository#save}. Deliberately does NOT touch
      * {@code heroes.json} - see this class's own Javadoc for why the two
-     * files are kept separate. See {@link #cowScoresToTree} for the one rule
+     * files are kept separate. See {@link CowScoreFiles#toTree} for the one rule
      * this enforces on the way out: a hero whose {@link Hero#cowScore()} is
      * {@link CowScore#isDefault()} gets no entry at all in {@code
      * cowScore.json}, keeping it sparse regardless of what a caller (e.g.
@@ -105,7 +104,11 @@ public class HeroRepository {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
-        JsonSupport.writeJsonFile(cowScoresToTree(catalog), COW_SCORE_FILE_PATH);
+        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        for (Hero hero : catalog) {
+            cowScoresById.put(hero.id(), hero.cowScore());
+        }
+        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), COW_SCORE_FILE_PATH);
 
         Map<String, Hero> updated = new LinkedHashMap<>();
         for (Hero hero : catalog) {
@@ -129,41 +132,11 @@ public class HeroRepository {
     private static Map<String, Hero> loadHeroes() {
         try {
             String heroesJson = JsonSupport.readClasspathResource(HeroRepository.class, HEROES_JSON_PATH);
-            Map<String, CowScore> cowScores = loadCowScores();
+            Map<String, CowScore> cowScores = CowScoreFiles.load(HeroRepository.class, COW_SCORE_JSON_PATH, "hero");
             return parseHeroesJson(heroesJson, cowScores);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load hero catalog from " + HEROES_JSON_PATH, e);
         }
-    }
-
-    /**
-     * Loads {@code cowScore.json} into an id -> {@link CowScore} map. A
-     * missing or malformed file is logged and treated as "no hero has an
-     * explicit score yet" (empty map, i.e. every hero falls back to {@link
-     * CowScore#DEFAULT}) - same defensive convention as {@code
-     * CatalogVersion}: this sidecar file being absent/broken must never
-     * prevent {@code heroes.json} (and therefore the whole app) from
-     * loading.
-     */
-    private static Map<String, CowScore> loadCowScores() {
-        Map<String, CowScore> result = new LinkedHashMap<>();
-        try {
-            String json = JsonSupport.readClasspathResource(HeroRepository.class, COW_SCORE_JSON_PATH);
-            JsonArray array = JsonParser.parseString(json).getAsJsonArray();
-            for (var element : array) {
-                JsonObject obj = element.getAsJsonObject();
-                String id = JsonSupport.getStringOrNull(obj, "id");
-                if (id == null || id.isBlank()) {
-                    Logger.log("cowScore.json: skipping entry without an id");
-                    continue;
-                }
-                result.put(id, parseCowScore(obj, id));
-            }
-        } catch (IOException | RuntimeException e) {
-            Logger.log("cowScore.json: could not read Cow2Win scores (" + e.getMessage()
-                    + "), using the default CowScore for every hero");
-        }
-        return result;
     }
 
     private static Map<String, Hero> parseHeroesJson(String json, Map<String, CowScore> cowScores) {
@@ -197,64 +170,6 @@ public class HeroRepository {
         return new Hero(id, roles, image != null ? IMAGE_PATH_PREFIX + image : null, cowScore);
     }
 
-    /**
-     * Parses one {@code cowScore.json} entry's "generalScore"/"buffFitScores"
-     * fields into a {@link CowScore} - see {@link #parseGeneralScore}/{@link
-     * #parseBuffFitScores} for the per-field parsing rules (unchanged from
-     * before the heroes.json/cowScore.json split, just now producing a
-     * {@link CowScore} instead of being stored as two separate {@link Hero}
-     * fields).
-     */
-    private static CowScore parseCowScore(JsonObject obj, String heroId) {
-        CowScoreTier generalScore = parseGeneralScore(obj, heroId);
-        Map<String, CowScoreTier> buffFitScores = parseBuffFitScores(obj, heroId);
-        return new CowScore(generalScore, buffFitScores);
-    }
-
-    /**
-     * Parses the optional "generalScore" field (a {@link CowScoreTier} name, e.g.
-     * "ELEVATED") - absent for most heroes, in which case {@link CowScore}'s
-     * own compact constructor falls back to {@link CowScoreTier#GOOD}, so
-     * null is returned here both when the field is missing and when it names
-     * an unknown tier (logged either way is only the latter, since the former
-     * is the expected, sparse-catalog case).
-     */
-    private static CowScoreTier parseGeneralScore(JsonObject obj, String heroId) {
-        String name = JsonSupport.getStringOrNull(obj, "generalScore");
-        if (name == null) {
-            return null;
-        }
-        try {
-            return CowScoreTier.valueOf(name.trim());
-        } catch (IllegalArgumentException e) {
-            Logger.log("cowScore.json: hero '" + heroId + "' has unknown generalScore '" + name + "', using the default");
-            return null;
-        }
-    }
-
-    /**
-     * Parses the optional "buffFitScores" object (fortification id ->
-     * {@link CowScoreTier} name, e.g. {"bastion": "ELEVATED"}) - absent/empty
-     * for most heroes (sparse, per-fortification overrides only), in which
-     * case {@link CowScore#buffFitScore(String, boolean)} falls back to its
-     * role-match-based default. An entry with an unknown tier name is
-     * skipped (logged) rather than failing the whole hero.
-     */
-    private static Map<String, CowScoreTier> parseBuffFitScores(JsonObject obj, String heroId) {
-        Map<String, CowScoreTier> result = new LinkedHashMap<>();
-        for (var entry : JsonSupport.getStringMap(obj, "buffFitScores").entrySet()) {
-            String fortificationId = entry.getKey();
-            String tierName = entry.getValue();
-            try {
-                result.put(fortificationId, CowScoreTier.valueOf(tierName.trim()));
-            } catch (IllegalArgumentException e) {
-                Logger.log("cowScore.json: hero '" + heroId + "' has unknown buffFitScores tier '" + tierName
-                        + "' for fortification '" + fortificationId + "', ignoring it");
-            }
-        }
-        return result;
-    }
-
     private static List<Role> parseRoles(JsonObject obj) {
         List<Role> roles = new ArrayList<>();
         String heroId = JsonSupport.getStringOrNull(obj, "id");
@@ -266,62 +181,5 @@ public class HeroRepository {
             }
         }
         return roles;
-    }
-
-    // --- private: writing cowScore.json (see #saveCowScores) ---
-
-    /**
-     * Builds the {@code cowScore.json} array: one entry per hero whose
-     * {@link Hero#cowScore()} is NOT {@link CowScore#isDefault()} - a hero
-     * without any deliberate assessment gets no entry at all (sparser than
-     * the old, pre-split {@code heroes.json} writer, which always wrote an
-     * "id"/"roles" entry regardless since that file also carried master
-     * data).
-     */
-    private static JsonArray cowScoresToTree(List<Hero> catalog) {
-        JsonArray tree = new JsonArray();
-        for (Hero hero : catalog) {
-            if (!hero.cowScore().isDefault()) {
-                tree.add(cowScoreToTree(hero));
-            }
-        }
-        return tree;
-    }
-
-    private static JsonObject cowScoreToTree(Hero hero) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("id", hero.id());
-        if (hero.generalScore() != CowScoreTier.GOOD) {
-            obj.addProperty("generalScore", hero.generalScore().name());
-        }
-        JsonObject buffFitScores = buffFitScoresToTree(hero.buffFitScores());
-        if (buffFitScores.size() > 0) {
-            obj.add("buffFitScores", buffFitScores);
-        }
-        return obj;
-    }
-
-    /**
-     * Builds the "buffFitScores" JSON object for one hero, omitting any
-     * entry whose tier is {@link CowScoreTier#GOOD} - the same "sparse
-     * file, STANDARD is the unwritten default" convention already used for
-     * {@link Hero#generalScore()} (see {@link CowScore}'s Javadoc): a
-     * missing entry already resolves to STANDARD (when the hero's role
-     * matches the fortification's buff) via {@link Hero#buffFitScore}, so
-     * persisting it explicitly would only add dead weight to cowScore.json.
-     * This is the single place that enforces the rule, so a caller (e.g.
-     * {@code HeroCoreScoreDialog}) can hand {@link #saveCowScores} a
-     * {@link Hero#buffFitScores()} map with STANDARD entries in it (e.g. one
-     * left over from before this rule existed) without needing its own
-     * filtering - {@link #saveCowScores} always drops them on the way out.
-     */
-    private static JsonObject buffFitScoresToTree(Map<String, CowScoreTier> buffFitScores) {
-        JsonObject obj = new JsonObject();
-        for (var entry : buffFitScores.entrySet()) {
-            if (entry.getValue() != CowScoreTier.GOOD) {
-                obj.addProperty(entry.getKey(), entry.getValue().name());
-            }
-        }
-        return obj;
     }
 }

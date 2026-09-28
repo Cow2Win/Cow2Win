@@ -8,7 +8,6 @@
     "column": 4,
     "buff": {
       "kind": "ROLE",
-      "display": "Armor Increase per Mage Hero",
       "effect": "ARMOR_INCREASE",
       "bonusPercent": 4,
       "role": "MAGE"
@@ -51,7 +50,6 @@
     "column": 1,
     "buff": {
       "kind": "ROLE",
-      "display": "Magic Defense Increase per Warrior Hero ",
       "effect": "MAGIC_DEFENSE_INCREASE",
       "bonusPercent": 3,
       "role": "WARRIOR"
@@ -72,7 +70,6 @@
     "column": 1,
     "buff": {
       "kind": "ELEMENT",
-      "display": "Health Increase per Fire Titan",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 8,
       "element": "FIRE"
@@ -91,7 +88,6 @@
     "column": 3,
     "buff": {
       "kind": "ELEMENT",
-      "display": "Energy Gain per Water Titan",
       "effect": "ENERGY_GAIN",
       "bonusPercent": 3,
       "element": "WATER"
@@ -133,7 +129,6 @@
     "column": 0,
     "buff": {
       "kind": "ROLE",
-      "display": "Healing Increase per Healer Hero",
       "effect": "HEALING_INCREASE",
       "bonusPercent": 7,
       "role": "HEALER"
@@ -152,7 +147,6 @@
     "column": 4,
     "buff": {
       "kind": "ROLE",
-      "display": "Energy Gain per Control Hero",
       "effect": "ENERGY_GAIN",
       "bonusPercent": 5,
       "role": "CONTROL"
@@ -185,7 +179,6 @@
     "column": 0,
     "buff": {
       "kind": "ROLE",
-      "display": "Health Increase per Tank Hero",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 10,
       "role": "TANK"
@@ -204,7 +197,6 @@
     "column": 2,
     "buff": {
       "kind": "ELEMENT",
-      "display": "Damage Resist per Earth Titan",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 2,
       "element": "EARTH"
@@ -257,7 +249,6 @@
     "column": 3,
     "buff": {
       "kind": "ELEMENT",
-      "display": "Health Increase per Dark Titan",
       "effect": "HEALTH_INCREASE",
       "bonusPercent": 7,
       "element": "DARK"
@@ -276,7 +267,6 @@
     "column": 3,
     "buff": {
       "kind": "ROLE",
-      "display": "Damage Resist per Marksman Hero",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 3,
       "role": "MARKSMAN"
@@ -309,7 +299,6 @@
     "column": 1,
     "buff": {
       "kind": "ELEMENT",
-      "display": "Damage Resist per Light Titan",
       "effect": "DAMAGE_RESIST",
       "bonusPercent": 2,
       "element": "LIGHT"

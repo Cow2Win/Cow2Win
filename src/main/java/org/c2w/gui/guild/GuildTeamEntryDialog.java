@@ -9,6 +9,7 @@ import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.util.AppContext;
+import org.c2w.util.BuffTexts;
 import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 import org.c2w.util.LineupFiles;
@@ -153,7 +154,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     protected GuildTeamEntryDialog(Frame owner, AppContext appContext, Runnable onSaved,
                                    String titleKey, SectionSpec<T> spec, int maxTeams) {
-        super(owner, LanguageService.displayName(titleKey), false);
+        super(owner, LanguageService.displayTitle(titleKey), false);
         if (appContext == null) {
             throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
         }
@@ -450,8 +451,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             return;
         }
         int choice = JOptionPane.showConfirmDialog(this,
-                "Delete this team and remove it from the guild? This cannot be undone.",
-                "Delete team", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                LanguageService.displayName("guildEntry.deleteTeamConfirm"),
+                LanguageService.displayName("guildEntry.deleteTeamTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (choice != JOptionPane.YES_OPTION) {
             return;
         }
@@ -587,7 +588,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
         buffCountLabel.setText(count + " (" + String.format(Locale.ROOT, "%.1f", breakdown.total()) + ")");
         buffCountLabel.setToolTipText(selectedFortification != null && selectedFortification.buff() != null
-                ? selectedFortification.buff().display() : "");
+                ? BuffTexts.describe(selectedFortification.buff()) : "");
     }
 
     /** Mirrors {@code FortificationEntryDialog#logSortScoreBreakdown} exactly - see there. */
@@ -726,7 +727,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             }
             if (draft.members.size() >= MAX_MEMBERS) {
                 JOptionPane.showMessageDialog(GuildTeamEntryDialog.this,
-                        "A guild has at most " + MAX_MEMBERS + " members.", "Not possible",
+                        LanguageService.displayName("common.maxMembers", MAX_MEMBERS), LanguageService.displayName("common.notPossibleTitle"),
                         JOptionPane.WARNING_MESSAGE);
                 return combo.getSelectedItem();
             }
@@ -819,8 +820,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             MemberDraft selectedMember = (MemberDraft) row.memberCombo.getSelectedItem();
             if (selectedMember == null) {
                 JOptionPane.showMessageDialog(this,
-                        "A row has a team filled in but no member selected - pick a member for it, or clear its power, before saving.",
-                        "Could not save", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("common.rowWithoutMember"),
+                        LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return null;
             }
             List<TeamDraft<T>> teams = spec.teamsOf().apply(selectedMember);
@@ -828,9 +829,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             int idx = resolveTeamIndex(teams, boundKeys, selectedMember.id, preferredIndex);
             if (idx < 0) {
                 JOptionPane.showMessageDialog(this,
-                        "'" + memberDisplayName(selectedMember)
-                                + "' has no free team slot left.",
-                        "Could not save", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("common.noFreeTeamSlot", memberDisplayName(selectedMember)),
+                        LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return null;
             }
             boundKeys.add(rowKey(selectedMember.id, idx));
@@ -927,11 +927,11 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 onSaved.run();
             }
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "The data is invalid:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Could not save:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

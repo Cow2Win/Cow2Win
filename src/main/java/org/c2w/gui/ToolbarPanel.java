@@ -136,9 +136,6 @@ public class ToolbarPanel extends JPanel {
     /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - added 2026-09-05, sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
 
-    /** Lists the available lineup algorithms (see {@link #onRunAlgorithm()}). */
-    private final JComboBox<LineupAlgorithm> algorithmCombo = new JComboBox<>();
-
     /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}). */
     private final JLabel statusLabel = new JLabel(" ");
 
@@ -318,10 +315,8 @@ public class ToolbarPanel extends JPanel {
     private void onRunAlgorithm() {
         if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
             JOptionPane.showMessageDialog(this,
-                    "The \"Original\" lineup is a fixed record of your in-game deployment and can only be "
-                            + "changed through the guild hero/titan team assignment dialogs. Switch to another "
-                            + "lineup to run an algorithm.",
-                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayName("toolbar.runAlgorithm.originalMessage"),
+                    LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         LineupAlgorithm heroAlgorithm =
@@ -359,8 +354,8 @@ public class ToolbarPanel extends JPanel {
             GuiUtils.editedGuild = false;
             Logger.log("Saved: " + appContext.guildFilePath());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Could not save guild:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -425,11 +420,11 @@ public class ToolbarPanel extends JPanel {
         if (!GuiUtils.editedGuild && !GuiUtils.editedLineup) {
             return true;
         }
-        String what = GuiUtils.editedGuild && GuiUtils.editedLineup ? "guild and lineup"
-                : GuiUtils.editedGuild ? "guild" : "lineup";
+        String messageKey = GuiUtils.editedGuild && GuiUtils.editedLineup ? "toolbar.unsaved.switchGuildAndLineup"
+                : GuiUtils.editedGuild ? "toolbar.unsaved.switchGuild" : "toolbar.unsaved.switchLineup";
         int choice = JOptionPane.showConfirmDialog(this,
-                "There are unsaved " + what + " changes. Switch guild anyway?",
-                "Unsaved changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                LanguageService.displayName(messageKey),
+                LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         return choice == JOptionPane.YES_OPTION;
     }
 
@@ -439,8 +434,8 @@ public class ToolbarPanel extends JPanel {
         try {
             guild = GuildRepository.load(guildFilePath);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not load guild:\n" + e.getMessage(),
-                    "Error while loading guild", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("toolbar.loadGuildError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
             populateGuildCombo();
             return false;
         }
@@ -454,8 +449,8 @@ public class ToolbarPanel extends JPanel {
                     : guildDir.resolve(lineupFileNames.get(0));
             lineup = LineupRepository.load(lineupPath);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not load a lineup for this guild:\n" + e.getMessage(),
-                    "Error while loading guild", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("toolbar.loadGuildLineupError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
             populateGuildCombo();
             return false;
         }
@@ -590,17 +585,16 @@ public class ToolbarPanel extends JPanel {
             GuiUtils.editedLineup = false;
             fortificationMapPanel.refresh(lineup);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not load lineup:\n" + e.getMessage(),
-                    "Error while loading lineup", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void onSaveLineup() {
         if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
             JOptionPane.showMessageDialog(this,
-                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment "
-                            + "dialogs, so there is nothing to save here.",
-                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayName("toolbar.saveLineup.originalMessage"),
+                    LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         try {
@@ -608,8 +602,8 @@ public class ToolbarPanel extends JPanel {
             GuiUtils.editedLineup = false;
             Logger.log("Saved: " + appContext.lineupFilePath());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Could not save lineup:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveLineupError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

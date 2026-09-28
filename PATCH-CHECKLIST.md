@@ -34,6 +34,10 @@ organized by the actual files/checks involved, not by patch-note wording.
 - [ ] Avatar under `src/main/resources/images/titans/` (same
       placeholder-fallback note as heroes).
 - [ ] Display name in all three language files.
+- [ ] If the new titan deserves a deliberate `generalScore`/`buffFitScores`
+      assessment, set it via "File" > "CowScore - Titans" in-app, or by
+      hand in `src/main/resources/data/titanCowScore.json` -
+      NOT in `titans.json` (separate files since 2026-09-28, same as heroes).
 
 ## 3. Fortification changes (`fortifications.json`) - highest risk
 

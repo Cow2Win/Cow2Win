@@ -27,7 +27,7 @@ class SideSpecificLineupAlgorithmsTest {
     }
 
     private static Titan titan(String id) {
-        return new Titan(id, TitanElement.WATER, null, CowScoreTier.GOOD, null);
+        return new Titan(id, TitanElement.WATER, null, new CowScore(CowScoreTier.GOOD, null));
     }
 
     /** A member with one hero team and one titan team, both of the given power. */

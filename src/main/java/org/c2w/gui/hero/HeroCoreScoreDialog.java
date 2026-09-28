@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
  */
 public final class HeroCoreScoreDialog extends JDialog {
 
-    private static final String BASE_TITLE = "CowScore";
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    private static final String KEY_TITLE = "heroBuffFitScores.title";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button (see {@link #onSaveScores()}). */
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
@@ -119,13 +120,11 @@ public final class HeroCoreScoreDialog extends JDialog {
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
     public HeroCoreScoreDialog(Frame owner) {
-        super(owner, BASE_TITLE, false);
+        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.GRAY.darker());
 
-        setBackground(Color.GRAY.darker());
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(buildMainSplit(), BorderLayout.CENTER);
         heroList.setSelectedIndex(0);
@@ -190,7 +189,6 @@ public final class HeroCoreScoreDialog extends JDialog {
      */
     private JPanel buildDetailPanel(Hero hero) {
         JPanel panel = new JPanel();
-        panel.setBackground(Color.GRAY.darker());
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -237,7 +235,6 @@ public final class HeroCoreScoreDialog extends JDialog {
      */
     private JPanel buildGeneralScoreRow(Hero hero) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        row.setOpaque(false);
         JLabel label = new JLabel(LanguageService.displayName(KEY_GENERAL_SCORE));
         label.setForeground(Color.WHITE);
         label.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, label.getPreferredSize().height));
@@ -276,8 +273,6 @@ public final class HeroCoreScoreDialog extends JDialog {
      */
     private JPanel buildFortificationRow(Hero hero, Fortification fortification, Map<String, CowScoreTier> heroScores) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        row.setOpaque(false);
-
         JLabel nameLabel = new JLabel(LanguageService.displayName(fortification.id()));
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, nameLabel.getPreferredSize().height));
@@ -373,8 +368,8 @@ public final class HeroCoreScoreDialog extends JDialog {
             HeroRepository.saveCowScores(updatedCatalog);
             Logger.log("Saved: cowScore.json");
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Could not save heroes:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("heroBuffFitScores.saveError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 }

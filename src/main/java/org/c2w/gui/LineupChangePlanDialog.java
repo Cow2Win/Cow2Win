@@ -45,8 +45,8 @@ import java.util.Map;
  */
 public class LineupChangePlanDialog extends JDialog {
 
-    /** Dialog title - hardcoded, not localized (matches {@link LineupComparisonDialog}/{@link ReportViewerDialog}). */
-    private static final String BASE_TITLE = "Cow2 - In-Game Change Plan";
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    private static final String KEY_TITLE = "changePlan.title";
 
     private static final String LINEUP_FILE_GLOB = "*.lineup";
 
@@ -90,7 +90,7 @@ public class LineupChangePlanDialog extends JDialog {
     private String plainTextPlan = "";
 
     public LineupChangePlanDialog(Frame owner, AppContext appContext) {
-        super(owner, BASE_TITLE, false);
+        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("LineupChangePlanDialog needs an appContext");
         }
@@ -180,7 +180,7 @@ public class LineupChangePlanDialog extends JDialog {
                                                           boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof LineupAlgorithm algorithm) {
-                    setText(algorithm.displayName());
+                    setText(algorithm.localizedName());
                 }
                 return this;
             }
@@ -239,15 +239,15 @@ public class LineupChangePlanDialog extends JDialog {
         Path originalPath = LineupFiles.originalPathFor(guildDir);
         if (!Files.exists(originalPath)) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_NO_ORIGINAL),
-                    BASE_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayTitle(KEY_TITLE), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         Lineup original;
         try {
             original = LineupRepository.load(originalPath);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not load the Original lineup:\n" + e.getMessage(),
-                    BASE_TITLE, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("changePlan.loadOriginalError") + "\n" + e.getMessage(),
+                    LanguageService.displayTitle(KEY_TITLE), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -256,19 +256,19 @@ public class LineupChangePlanDialog extends JDialog {
             String fileName = (String) targetLineupCombo.getSelectedItem();
             if (fileName == null) {
                 JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_SELECT_TARGET),
-                        BASE_TITLE, JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayTitle(KEY_TITLE), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             try {
                 target = LineupRepository.load(guildDir.resolve(fileName));
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Could not load the target lineup:\n" + e.getMessage(),
-                        BASE_TITLE, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, LanguageService.displayName("changePlan.loadTargetError") + "\n" + e.getMessage(),
+                        LanguageService.displayTitle(KEY_TITLE), JOptionPane.ERROR_MESSAGE);
                 return;
             }
             if (!original.guildId().equals(target.guildId())) {
                 JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_DIFFERENT_GUILD),
-                        BASE_TITLE, JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayTitle(KEY_TITLE), JOptionPane.WARNING_MESSAGE);
                 return;
             }
         } else {
@@ -276,7 +276,7 @@ public class LineupChangePlanDialog extends JDialog {
             LineupAlgorithm titanAlgorithm = (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem();
             if (heroAlgorithm == null || titanAlgorithm == null) {
                 JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_SELECT_TARGET),
-                        BASE_TITLE, JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayTitle(KEY_TITLE), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             target = LineupAlgorithms.runBoth(heroAlgorithm, titanAlgorithm, original, guild);
@@ -356,7 +356,7 @@ public class LineupChangePlanDialog extends JDialog {
 
     private String teamDesignation(TeamKey teamKey) {
         return memberName(teamKey.teamMemberId()) + " · "
-                + GuildMember.teamLabel(teamKey.teamIndex()) + " (" + teamKey.teamType() + ")";
+                + GuildMember.teamLabel(teamKey.teamIndex()) + " (" + LanguageService.displayName("teamType." + teamKey.teamType().name()) + ")";
     }
 
     private String fortificationName(String fortificationId) {

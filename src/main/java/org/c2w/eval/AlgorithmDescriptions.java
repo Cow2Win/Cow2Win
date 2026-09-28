@@ -46,6 +46,21 @@ public final class AlgorithmDescriptions {
     private AlgorithmDescriptions() {
     }
 
+    /**
+     * The localized name ({@code algorithm.<key>.name}) for an algorithm's
+     * stable {@link LineupAlgorithm#displayName()} - falls back to that
+     * English name itself for an unknown algorithm or a missing language entry.
+     */
+    public static String localizedName(String displayName) {
+        String key = KEY_BY_DISPLAY_NAME.get(displayName);
+        if (key == null) {
+            return displayName;
+        }
+        String languageKey = "algorithm." + key + ".name";
+        String value = LanguageService.displayName(languageKey);
+        return value.equals(languageKey) ? displayName : value;
+    }
+
     /** Short prose explaining how {@code algorithm} works, in the currently configured language, or {@code ""} if none is on file for it. */
     public static String forAlgorithm(LineupAlgorithm algorithm) {
         return forDisplayName(algorithm.displayName());

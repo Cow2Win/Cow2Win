@@ -53,8 +53,8 @@ import java.util.function.Supplier;
  */
 public class HeroValueOverviewDialog extends JDialog {
 
-    /** Dialog title - hardcoded, not localized (matches {@link ReportViewerDialog}). */
-    private static final String BASE_TITLE = "Cow2 - Hero Teams";
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    private static final String KEY_TITLE = "teamsOverview.heroTeamsTitle";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for "no fortification assigned". */
     private static final String KEY_NO_FORTIFICATION = "common.none";
@@ -131,7 +131,7 @@ public class HeroValueOverviewDialog extends JDialog {
 
     public HeroValueOverviewDialog(Frame owner, AppContext appContext,
                                    FortificationMapPanel fortificationMapPanel) {
-        super(owner, BASE_TITLE, false);
+        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("HeroValueOverviewDialog needs a guildContext");
         }
@@ -308,9 +308,9 @@ public class HeroValueOverviewDialog extends JDialog {
                     .count();
             if (filledSlots >= fortification.capacity()) {
                 JOptionPane.showMessageDialog(this,
-                        "Fortification \"" + LanguageService.displayName(fortification.id()) + "\" has no free slot ("
-                                + filledSlots + "/" + fortification.capacity() + " already assigned).",
-                        "Fortification full", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("teamsOverview.fortificationFull",
+                                LanguageService.displayName(fortification.id()), filledSlots, fortification.capacity()),
+                        LanguageService.displayName("teamsOverview.fortificationFullTitle"), JOptionPane.WARNING_MESSAGE);
                 return false;
             }
         }
@@ -339,8 +339,8 @@ public class HeroValueOverviewDialog extends JDialog {
      */
     private boolean handlePowerEdited(HeroValueTableModel.Row row, int newPower) {
         if (newPower < 0) {
-            JOptionPane.showMessageDialog(this, "Power must not be negative.",
-                    "Invalid power", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("teamsOverview.negativePower"),
+                    LanguageService.displayName("teamsOverview.invalidPowerTitle"), JOptionPane.WARNING_MESSAGE);
             return false;
         }
         Guild currentGuild = appContext.guild();
@@ -367,8 +367,8 @@ public class HeroValueOverviewDialog extends JDialog {
             GuiUtils.editedGuild = false;
             Logger.log("Saved: " + appContext.guildFilePath());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Could not save guild:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

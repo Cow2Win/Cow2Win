@@ -10,6 +10,7 @@ import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroCoreScoreDialog;
+import org.c2w.gui.titan.TitanCoreScoreDialog;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -143,15 +144,19 @@ public class Cow2Frame extends JFrame {
         settingsItem.addActionListener(e -> onOpenSettings());
         fileMenu.add(settingsItem);
 
-        JMenuItem heroBuffFitScoresItem = new JMenuItem("CowScore");
+        JMenuItem heroBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.cowScore"));
         heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
         fileMenu.add(heroBuffFitScoresItem);
+
+        JMenuItem titanBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.titanCowScore"));
+        titanBuffFitScoresItem.addActionListener(e -> onOpenTitanBuffFitScores());
+        fileMenu.add(titanBuffFitScoresItem);
 
         JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
         showLogItem.addActionListener(e -> onShowLog());
         fileMenu.add(showLogItem);
 
-        JMenuItem hwWebItem = new JMenuItem(HERO_WARS_URL);
+        JMenuItem hwWebItem = new JMenuItem(LanguageService.displayName("toolbar.heroWars"));
         hwWebItem.setIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE));
         hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
         fileMenu.add(hwWebItem);
@@ -175,7 +180,7 @@ public class Cow2Frame extends JFrame {
      * menu item icon).
      */
     private JMenu buildGuildMenu() {
-        JMenu guildMenu = new JMenu("Guild");
+        JMenu guildMenu = new JMenu(LanguageService.displayName("menu.guild"));
 
         JMenuItem newGuildItem = new JMenuItem(LanguageService.displayName(KEY_NEW_GUILD));
         newGuildItem.setIcon(IconLoader.iconFor(ICON_NEW_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN));
@@ -205,27 +210,29 @@ public class Cow2Frame extends JFrame {
      * {@link ToolbarPanel#switchToGuild} instead of duplicating them.
      */
     private void onNewGuild() {
-        String input = JOptionPane.showInputDialog(this, "Name of the new guild:", "New guild",
+        String input = JOptionPane.showInputDialog(this, LanguageService.displayName("mainFrame.newGuild.prompt"),
+                LanguageService.displayName("mainFrame.newGuild.title"),
                 JOptionPane.PLAIN_MESSAGE);
         if (input == null) {
             return;
         }
         String name = input.trim();
         if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a name.", "New guild", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.enterName"),
+                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (ToolbarPanel.containsIllegalFilenameChar(name)) {
             JOptionPane.showMessageDialog(this,
-                    "The name must not contain any of these characters: " + ToolbarPanel.ILLEGAL_FILENAME_CHARS,
-                    "New guild", JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("common.illegalFilenameChars", ToolbarPanel.ILLEGAL_FILENAME_CHARS),
+                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Path guildDir = toolbarPanel.workspaceDir().resolve(name);
         if (Files.exists(guildDir)) {
-            JOptionPane.showMessageDialog(this, "A guild folder named \"" + name + "\" already exists.",
-                    "New guild", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newGuild.alreadyExists", name),
+                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (!toolbarPanel.confirmDiscardUnsavedChanges()) {
@@ -301,7 +308,7 @@ public class Cow2Frame extends JFrame {
      * {@link #buildGuildMenu()}.
      */
     private JMenu buildLineupMenu() {
-        JMenu lineupMenu = new JMenu("Lineup");
+        JMenu lineupMenu = new JMenu(LanguageService.displayName("menu.lineup"));
 
         JMenuItem newLineupItem = new JMenuItem(LanguageService.displayName(KEY_NEW_LINEUP));
         newLineupItem.setIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN));
@@ -337,7 +344,8 @@ public class Cow2Frame extends JFrame {
         // selectionValues array with a non-null initialSelectionValue
         // renders as a JTextField seeded with that value) - unchanged from
         // ToolbarPanel#onNewLineup()'s original behavior.
-        Object result = JOptionPane.showInputDialog(this, "Name of the new lineup:", "New lineup",
+        Object result = JOptionPane.showInputDialog(this, LanguageService.displayName("mainFrame.newLineup.prompt"),
+                LanguageService.displayName("mainFrame.newLineup.title"),
                 JOptionPane.PLAIN_MESSAGE, null, null, LocalDate.now().toString());
         if (result == null) {
             return;
@@ -345,29 +353,29 @@ public class Cow2Frame extends JFrame {
         String input = result.toString();
         String name = input.trim();
         if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a name.", "New lineup", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.enterName"),
+                    LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (ToolbarPanel.containsIllegalFilenameChar(name)) {
             JOptionPane.showMessageDialog(this,
-                    "The name must not contain any of these characters: " + ToolbarPanel.ILLEGAL_FILENAME_CHARS,
-                    "New lineup", JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("common.illegalFilenameChars", ToolbarPanel.ILLEGAL_FILENAME_CHARS),
+                    LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         String fileName = name.endsWith(ToolbarPanel.LINEUP_FILE_SUFFIX) ? name : name + ToolbarPanel.LINEUP_FILE_SUFFIX;
         if (LineupFiles.isOriginalFileName(fileName)) {
             JOptionPane.showMessageDialog(this,
-                    "\"Original\" is a reserved lineup name - it is maintained automatically through the "
-                            + "guild hero/titan team assignment dialogs. Please choose a different name.",
-                    "New lineup", JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("mainFrame.newLineup.reservedName"),
+                    LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         Path guildDir = appContext.guildFilePath().getParent();
         Path lineupPath = guildDir.resolve(fileName);
         if (Files.exists(lineupPath)) {
-            JOptionPane.showMessageDialog(this, "A lineup file named \"" + fileName + "\" already exists.",
-                    "New lineup", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newLineup.alreadyExists", fileName),
+                    LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -383,8 +391,8 @@ public class Cow2Frame extends JFrame {
             toolbarPanel.populateLineupCombo();
             Logger.log("Created: " + lineupPath);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not create lineup:\n" + e.getMessage(),
-                    "Error while creating lineup", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newLineup.createError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("mainFrame.newLineup.createErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -404,21 +412,21 @@ public class Cow2Frame extends JFrame {
         }
         if (LineupFiles.isOriginalFileName(fileName)) {
             JOptionPane.showMessageDialog(this,
-                    "The \"Original\" lineup cannot be removed - it is the fixed record of your in-game deployment.",
-                    "Remove lineup", JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("mainFrame.removeLineup.originalMessage"),
+                    LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.WARNING_MESSAGE);
             return;
         }
         List<String> fileNames = toolbarPanel.listLineupFileNames();
         int index = fileNames.indexOf(fileName);
         if (fileNames.size() <= 1) {
-            JOptionPane.showMessageDialog(this, "This is the only lineup left and cannot be removed.",
-                    "Remove lineup", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.removeLineup.lastMessage"),
+                    LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Really remove lineup \"" + ToolbarPanel.stripLineupSuffix(fileName) + "\"? This also deletes the file.",
-                "Remove lineup", JOptionPane.YES_NO_OPTION);
+                LanguageService.displayName("mainFrame.removeLineup.confirmMessage", ToolbarPanel.stripLineupSuffix(fileName)),
+                LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
@@ -428,8 +436,8 @@ public class Cow2Frame extends JFrame {
         try {
             LineupRepository.delete(lineupPath);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not delete lineup:\n" + e.getMessage(),
-                    "Error while removing lineup", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.removeLineup.deleteError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("mainFrame.removeLineup.deleteErrorTitle"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -448,8 +456,8 @@ public class Cow2Frame extends JFrame {
             Logger.log("Removed: " + fileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
-                    "Lineup deleted, but could not load \"" + nextFileName + "\":\n" + e.getMessage(),
-                    "Error while loading lineup", JOptionPane.ERROR_MESSAGE);
+                    LanguageService.displayName("mainFrame.removeLineup.loadNextError", nextFileName) + "\n" + e.getMessage(),
+                    LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -464,8 +472,8 @@ public class Cow2Frame extends JFrame {
     private void onClearLineup() {
         if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
             JOptionPane.showMessageDialog(this,
-                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment dialogs.",
-                    "Clear lineup", JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("common.originalReadOnly"),
+                    LanguageService.displayName(KEY_CLEAR_LINEUP), JOptionPane.WARNING_MESSAGE);
             return;
         }
         Lineup currentLineup = appContext.lineup();
@@ -474,9 +482,8 @@ public class Cow2Frame extends JFrame {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Really clear the current lineup? This removes all " + currentLineup.entries().size()
-                        + " team assignment(s) (not saved to disk until you save the lineup).",
-                "Clear lineup", JOptionPane.YES_NO_OPTION);
+                LanguageService.displayName("mainFrame.clearLineup.confirmMessage", currentLineup.entries().size()),
+                LanguageService.displayName(KEY_CLEAR_LINEUP), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
@@ -501,6 +508,11 @@ public class Cow2Frame extends JFrame {
      */
     private void onOpenHeroBuffFitScores() {
         new HeroCoreScoreDialog(this).setVisible(true);
+    }
+
+    /** Opens {@link TitanCoreScoreDialog} - the titan counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
+    private void onOpenTitanBuffFitScores() {
+        new TitanCoreScoreDialog(this).setVisible(true);
     }
 
     /**
@@ -534,9 +546,9 @@ public class Cow2Frame extends JFrame {
             case UPDATE_AVAILABLE -> {
                 Logger.log("Update available: " + result.latestVersion() + " (installed: " + result.currentVersion() + ")");
                 int choice = JOptionPane.showConfirmDialog(this,
-                        "A newer version of Cow2Win is available: " + result.latestVersion()
-                                + " (you have " + result.currentVersion() + ").\n\nOpen the release page?",
-                        "Update available", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+                        LanguageService.displayName("mainFrame.update.availableMessage", result.latestVersion(), result.currentVersion()),
+                        LanguageService.displayName("mainFrame.update.availableTitle"), JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE);
                 if (choice == JOptionPane.YES_OPTION) {
                     onOpenWeb(result.releaseUrl());
                 }
@@ -545,16 +557,16 @@ public class Cow2Frame extends JFrame {
                 Logger.log("Update check: already up to date (" + result.currentVersion() + ")");
                 if (alwaysShowDialog) {
                     JOptionPane.showMessageDialog(this,
-                            "Cow2Win is up to date (version " + result.currentVersion() + ").",
-                            "Check for Updates", JOptionPane.INFORMATION_MESSAGE);
+                            LanguageService.displayName("mainFrame.update.upToDateMessage", result.currentVersion()),
+                            LanguageService.displayName("menu.checkForUpdates"), JOptionPane.INFORMATION_MESSAGE);
                 }
             }
             case CHECK_FAILED -> {
                 Logger.log("Update check failed or could not be evaluated (installed: " + result.currentVersion() + ")");
                 if (alwaysShowDialog) {
                     JOptionPane.showMessageDialog(this,
-                            "Could not check for updates. Please check your internet connection and try again later.",
-                            "Check for Updates", JOptionPane.WARNING_MESSAGE);
+                            LanguageService.displayName("mainFrame.update.failedMessage"),
+                            LanguageService.displayName("menu.checkForUpdates"), JOptionPane.WARNING_MESSAGE);
                 }
             }
         }
@@ -571,7 +583,7 @@ public class Cow2Frame extends JFrame {
      */
     private void onShowLog() {
         if (logDialog == null) {
-            logDialog = new JDialog(this, "Log", false);
+            logDialog = new JDialog(this, LanguageService.displayTitle("mainFrame.logTitle"), false);
             logDialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
             logDialog.getContentPane().add(logPanel);
             logDialog.setSize(700, 400);
@@ -598,11 +610,11 @@ public class Cow2Frame extends JFrame {
 
     private void onWindowClosing() {
         if (GuiUtils.editedGuild || GuiUtils.editedLineup) {
-            String what = GuiUtils.editedGuild && GuiUtils.editedLineup ? "guild and lineup"
-                    : GuiUtils.editedGuild ? "guild" : "lineup";
+            String messageKey = GuiUtils.editedGuild && GuiUtils.editedLineup ? "mainFrame.unsaved.closeGuildAndLineup"
+                    : GuiUtils.editedGuild ? "mainFrame.unsaved.closeGuild" : "mainFrame.unsaved.closeLineup";
             int choice = JOptionPane.showConfirmDialog(this,
-                    "There are unsaved " + what + " changes. Close anyway?",
-                    "Unsaved changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName(messageKey),
+                    LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (choice != JOptionPane.YES_OPTION) {
                 return;
             }
@@ -657,15 +669,15 @@ public class Cow2Frame extends JFrame {
 
     private void onOpenWeb(String url) {
         if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            JOptionPane.showMessageDialog(this, "This system has no default browser Cow2 can open.",
-                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.web.noBrowser"),
+                    LanguageService.displayName("mainFrame.web.errorTitle"), JOptionPane.ERROR_MESSAGE);
             return;
         }
         try {
             Desktop.getDesktop().browse(new URI(url));
         } catch (IOException | URISyntaxException e) {
-            JOptionPane.showMessageDialog(this, "Could not open " + url + ":\n" + e.getMessage(),
-                    "Could not open Hero Wars", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.web.openError", url) + "\n" + e.getMessage(),
+                    LanguageService.displayName("mainFrame.web.errorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

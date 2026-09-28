@@ -229,17 +229,16 @@ public class FortificationRepository {
         }
         try {
             String kind = JsonSupport.getStringOrNull(buffObj, "kind");
-            String display = JsonSupport.getString(buffObj, "display", "");
             BuffEffect effect = BuffEffect.valueOf(JsonSupport.getStringOrNull(buffObj, "effect"));
             Double bonusPercent = JsonSupport.getDouble(buffObj, "bonusPercent");
 
             if ("ROLE".equals(kind)) {
                 Role role = Role.valueOf(JsonSupport.getStringOrNull(buffObj, "role"));
-                return new RoleBuff(role, effect, bonusPercent, display);
+                return new RoleBuff(role, effect, bonusPercent);
             }
             if ("ELEMENT".equals(kind)) {
                 TitanElement element = TitanElement.valueOf(JsonSupport.getStringOrNull(buffObj, "element"));
-                return new ElementBuff(element, effect, bonusPercent, display);
+                return new ElementBuff(element, effect, bonusPercent);
             }
             return null;
         } catch (RuntimeException e) {
@@ -279,13 +278,11 @@ public class FortificationRepository {
         JsonObject obj = new JsonObject();
         if (buff instanceof RoleBuff roleBuff) {
             obj.addProperty("kind", "ROLE");
-            obj.addProperty("display", roleBuff.display());
             obj.addProperty("effect", roleBuff.effect().name());
             JsonSupport.addNumber(obj, "bonusPercent", roleBuff.bonusPercent());
             obj.addProperty("role", roleBuff.role().name());
         } else if (buff instanceof ElementBuff elementBuff) {
             obj.addProperty("kind", "ELEMENT");
-            obj.addProperty("display", elementBuff.display());
             obj.addProperty("effect", elementBuff.effect().name());
             JsonSupport.addNumber(obj, "bonusPercent", elementBuff.bonusPercent());
             obj.addProperty("element", elementBuff.element().name());

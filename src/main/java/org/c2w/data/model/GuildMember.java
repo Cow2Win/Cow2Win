@@ -1,5 +1,7 @@
 package org.c2w.data.model;
 
+import org.c2w.util.LanguageService;
+
 import java.util.List;
 
 /**
@@ -9,7 +11,7 @@ import java.util.List;
  *
  * Teams themselves have no name of their own - for display purposes, the
  * position in the respective list is enough, see {@link #teamLabel(int)}
- * ("Team1", "Team2", ...). Every team's own {@link HeroTeam#index()}/
+ * (e.g. "Team 1", "Team 2", ... in the configured language). Every team's own {@link HeroTeam#index()}/
  * {@link TitanTeam#index()} must match its position in the respective list
  * here (0-based) - enforced below - so a team can be looked up/referenced by
  * memberId + index alone (see {@link Lineup.Entry#teamIndex()}) without
@@ -58,8 +60,11 @@ public record GuildMember(
         }
     }
 
-    /** Generic, 1-based display name for a team based on its position in the list. */
+    /**
+     * Generic, 1-based display name for a team based on its position in the
+     * list, in the configured language (language file key {@code common.teamLabel}).
+     */
     public static String teamLabel(int index) {
-        return "Team" + (index + 1);
+        return LanguageService.displayName("common.teamLabel", index + 1);
     }
 }

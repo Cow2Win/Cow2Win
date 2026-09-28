@@ -5,10 +5,9 @@ package org.c2w.data.model;
  * with a matching element in the defending team (e.g. "Health Increase per
  * Fire Titan (8%)").
  *
- * display: see {@link Buff#display()} - free, manually maintained display text.
+ * The localized display text is built by {@code org.c2w.util.BuffTexts}.
  */
-public record ElementBuff(TitanElement element, BuffEffect effect, double bonusPercent,
-                           String display) implements Buff {
+public record ElementBuff(TitanElement element, BuffEffect effect, double bonusPercent) implements Buff {
     public ElementBuff {
         if (element == null) {
             throw new IllegalArgumentException("ElementBuff needs an element");
@@ -16,11 +15,5 @@ public record ElementBuff(TitanElement element, BuffEffect effect, double bonusP
         if (effect == null) {
             throw new IllegalArgumentException("ElementBuff needs an effect");
         }
-        display = display == null ? "" : display;
-    }
-
-    /** Convenience constructor for ElementBuffs without display text. */
-    public ElementBuff(TitanElement element, BuffEffect effect, double bonusPercent) {
-        this(element, effect, bonusPercent, "");
     }
 }

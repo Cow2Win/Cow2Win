@@ -5,9 +5,9 @@ package org.c2w.data.model;
  * with a matching role in the defending team (e.g. "Health Increase per Tank
  * Hero (8%)").
  *
- * display: see {@link Buff#display()} - free, manually maintained display text.
+ * The localized display text is built by {@code org.c2w.util.BuffTexts}.
  */
-public record RoleBuff(Role role, BuffEffect effect, double bonusPercent, String display)
+public record RoleBuff(Role role, BuffEffect effect, double bonusPercent)
         implements Buff {
     public RoleBuff {
         if (role == null) {
@@ -16,11 +16,5 @@ public record RoleBuff(Role role, BuffEffect effect, double bonusPercent, String
         if (effect == null) {
             throw new IllegalArgumentException("RoleBuff needs an effect");
         }
-        display = display == null ? "" : display;
-    }
-
-    /** Convenience constructor for RoleBuffs without display text. */
-    public RoleBuff(Role role, BuffEffect effect, double bonusPercent) {
-        this(role, effect, bonusPercent, "");
     }
 }

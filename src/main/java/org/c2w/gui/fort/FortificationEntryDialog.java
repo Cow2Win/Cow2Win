@@ -6,6 +6,7 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.*;
 import org.c2w.util.AppContext;
+import org.c2w.util.BuffTexts;
 import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
 import org.c2w.util.TeamScoreCalculator;
@@ -75,7 +76,7 @@ public final class FortificationEntryDialog extends JDialog {
 
     public FortificationEntryDialog(Frame owner, Fortification fortification, AppContext appContext,
                                      Runnable onSaved) {
-        super(owner, LanguageService.displayName(fortification.id()), false);
+        super(owner, LanguageService.displayTitle(fortification.id()), false);
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationEntryDialog needs a fortification");
         }
@@ -278,7 +279,7 @@ public final class FortificationEntryDialog extends JDialog {
         buffCountLabel.setPreferredSize(new Dimension(BUFF_COUNT_LABEL_WIDTH, MEMBER_COMBO_HEIGHT));
         buffCountLabel.setForeground(fortification.type().getColor());
         if (fortification.buff() != null) {
-            buffCountLabel.setToolTipText(fortification.buff().display());
+            buffCountLabel.setToolTipText(BuffTexts.describe(fortification.buff()));
         }
         return buffCountLabel;
     }
@@ -460,8 +461,8 @@ public final class FortificationEntryDialog extends JDialog {
             MemberDraft selectedMember = (MemberDraft) row.combo.getSelectedItem();
             if (selectedMember == null) {
                 JOptionPane.showMessageDialog(this,
-                        "A row has a team filled in but no member selected - pick a member for it, or clear its power, before saving.",
-                        "Could not save", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("common.rowWithoutMember"),
+                        LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             List<TeamDraft<T>> teams = teamsOf.apply(selectedMember);
@@ -469,9 +470,9 @@ public final class FortificationEntryDialog extends JDialog {
             int idx = resolveTeamIndex(teams, boundKeys, selectedMember.id, preferredIndex);
             if (idx < 0) {
                 JOptionPane.showMessageDialog(this,
-                        "'" + (selectedMember.name.isBlank() ? selectedMember.id : selectedMember.name)
-                                + "' has no free team slot left.",
-                        "Could not save", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("common.noFreeTeamSlot",
+                                selectedMember.name.isBlank() ? selectedMember.id : selectedMember.name),
+                        LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             boundKeys.add(rowKey(selectedMember.id, idx));
@@ -524,11 +525,11 @@ public final class FortificationEntryDialog extends JDialog {
                 onSaved.run();
             }
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "The data is invalid:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Could not save:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

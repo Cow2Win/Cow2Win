@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
@@ -85,7 +86,7 @@ public class SettingsDialog extends JDialog {
     private boolean confirmed = false;
 
     public SettingsDialog(Frame owner) {
-        super(owner, LanguageService.displayName("menu.settings"), true);
+        super(owner, LanguageService.displayTitle("menu.settings"), true);
         setLayout(new BorderLayout());
         add(buildToolbarPanel(), BorderLayout.NORTH);
         buildUi();
@@ -116,6 +117,10 @@ public class SettingsDialog extends JDialog {
         for (LineupAlgorithm algorithm : LineupAlgorithms.TITAN) {
             titanAlgorithmComboBox.addItem(algorithm.displayName());
         }
+        // The combo boxes hold the stable (English) algorithm name that gets
+        // persisted - only the rendered text is localized.
+        heroAlgorithmComboBox.setRenderer(new LocalizedAlgorithmRenderer());
+        titanAlgorithmComboBox.setRenderer(new LocalizedAlgorithmRenderer());
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
@@ -220,14 +225,14 @@ public class SettingsDialog extends JDialog {
     }
 
     private void onBrowseBackupDir() {
-        String chosen = browseForDirectory(backupDirField.getText(), "Select backup directory");
+        String chosen = browseForDirectory(backupDirField.getText(), LanguageService.displayName("settingsDialog.selectBackupDirectory"));
         if (chosen != null) {
             backupDirField.setText(chosen);
         }
     }
 
     private void onBrowseWorkspaceDir() {
-        String chosen = browseForDirectory(workspaceDirField.getText(), "Select workspace directory");
+        String chosen = browseForDirectory(workspaceDirField.getText(), LanguageService.displayName("settingsDialog.selectWorkspaceDirectory"));
         if (chosen != null) {
             workspaceDirField.setText(chosen);
         }
@@ -318,16 +323,29 @@ public class SettingsDialog extends JDialog {
         // language rather than looking like it silently took effect.
         List<String> restartNotices = new ArrayList<>();
         if (languageChanged) {
-            restartNotices.add("Language changed.");
+            restartNotices.add(LanguageService.displayName("settingsDialog.languageChanged"));
         }
         if (workspaceChanged) {
-            restartNotices.add("Workspace directory changed.");
+            restartNotices.add(LanguageService.displayName("settingsDialog.workspaceChanged"));
         }
         if (!restartNotices.isEmpty()) {
-            restartNotices.add("Restart Cow2Win for the change to take full effect.");
+            restartNotices.add(LanguageService.displayName("settingsDialog.restartHint"));
             JOptionPane.showMessageDialog(owner,
                     String.join(" ", restartNotices),
-                    "Settings", JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayTitle("menu.settings"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    /** Shows an algorithm combo box entry (a stable algorithm name) by its localized name. */
+    private static final class LocalizedAlgorithmRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof String algorithmName) {
+                setText(AlgorithmDescriptions.localizedName(algorithmName));
+            }
+            return this;
         }
     }
 

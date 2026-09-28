@@ -5,6 +5,8 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.util.AppContext;
+import org.c2w.util.BuffTexts;
+import org.c2w.util.LanguageService;
 import org.c2w.util.LineupFiles;
 
 import javax.swing.*;
@@ -92,8 +94,8 @@ public class FortificationPanel extends JPanel {
             // team-entry dialogs (see LineupFiles) - not by editing a single
             // fortification here.
             JOptionPane.showMessageDialog(owner,
-                    "The \"Original\" lineup can only be changed through the guild hero/titan team assignment dialogs.",
-                    "Original lineup is read-only", JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayName("common.originalReadOnly"),
+                    LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         FortificationEntryDialog dialog = new FortificationEntryDialog(owner, fortification, appContext,
@@ -149,7 +151,7 @@ public class FortificationPanel extends JPanel {
                 String text = showChanges ? formatPercentDiff(buffPercentDiff) : (buffPercent + "%");
                 Color color = showChanges ? diffColor(buffPercentDiff) : fortification.type().getColor();
                 buffPercentLbl.setText(text);
-                buffPercentLbl.setToolTipText(fortification.buff().display());
+                buffPercentLbl.setToolTipText(BuffTexts.describe(fortification.buff()));
                 buffPercentLbl.setForeground(color);
             }
 

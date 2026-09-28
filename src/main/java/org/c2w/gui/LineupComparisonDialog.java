@@ -47,8 +47,8 @@ import java.util.Locale;
  */
 public class LineupComparisonDialog extends JDialog {
 
-    /** Dialog title - hardcoded, not localized (matches {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}/{@link ReportViewerDialog}). */
-    private static final String BASE_TITLE = "Cow2 - Lineup Comparison";
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    private static final String KEY_TITLE = "lineupComparison.title";
 
     private static final String KEY_MODE_SAVED_LINEUPS = "lineupComparison.modeSavedLineups";
     private static final String KEY_MODE_ALGORITHM = "lineupComparison.modeCurrentVsAlgorithm";
@@ -112,7 +112,7 @@ public class LineupComparisonDialog extends JDialog {
     private LineupComparison currentResult;
 
     public LineupComparisonDialog(Frame owner, AppContext appContext) {
-        super(owner, BASE_TITLE, false);
+        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("LineupComparisonDialog needs an appContext");
         }
@@ -215,7 +215,7 @@ public class LineupComparisonDialog extends JDialog {
                                                           boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof LineupAlgorithm algorithm) {
-                    setText(algorithm.displayName());
+                    setText(algorithm.localizedName());
                 }
                 return this;
             }
@@ -292,8 +292,8 @@ public class LineupComparisonDialog extends JDialog {
             String beforeFileName = (String) lineupBeforeCombo.getSelectedItem();
             String afterFileName = (String) lineupAfterCombo.getSelectedItem();
             if (beforeFileName == null || afterFileName == null) {
-                JOptionPane.showMessageDialog(this, "Please select two lineups to compare.",
-                        "Compare lineups", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, LanguageService.displayName("lineupComparison.selectTwo"),
+                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             Path guildDir = appContext.guildFilePath().getParent();
@@ -301,22 +301,22 @@ public class LineupComparisonDialog extends JDialog {
                 before = LineupRepository.load(guildDir.resolve(beforeFileName));
                 after = LineupRepository.load(guildDir.resolve(afterFileName));
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Could not load lineup:\n" + e.getMessage(),
-                        "Error while loading lineup", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
+                        LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
                 return;
             }
             if (!before.guildId().equals(after.guildId())) {
                 JOptionPane.showMessageDialog(this,
-                        "These two lineups belong to different guilds and cannot be meaningfully compared.",
-                        "Compare lineups", JOptionPane.WARNING_MESSAGE);
+                        LanguageService.displayName("lineupComparison.differentGuilds"),
+                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
         } else {
             LineupAlgorithm heroAlgorithm = (LineupAlgorithm) heroAlgorithmCombo.getSelectedItem();
             LineupAlgorithm titanAlgorithm = (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem();
             if (heroAlgorithm == null || titanAlgorithm == null) {
-                JOptionPane.showMessageDialog(this, "No algorithm available.",
-                        "Compare lineups", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, LanguageService.displayName("lineupComparison.noAlgorithm"),
+                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             before = appContext.lineup();
@@ -500,7 +500,8 @@ public class LineupComparisonDialog extends JDialog {
             return switch (columnIndex) {
                 case 0 -> statusText(diff.status());
                 case 1 -> memberName(diff.teamKey().teamMemberId());
-                case 2 -> GuildMember.teamLabel(diff.teamKey().teamIndex()) + " (" + diff.teamKey().teamType() + ")";
+                case 2 -> GuildMember.teamLabel(diff.teamKey().teamIndex())
+                        + " (" + LanguageService.displayName("teamType." + diff.teamKey().teamType().name()) + ")";
                 case 3 -> fortificationName(diff.fortificationIdBefore());
                 case 4 -> fortificationName(diff.fortificationIdAfter());
                 case 5 -> GuiUtils.NUMBER_FORMAT.format(diff.powerBefore()) + " → "

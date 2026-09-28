@@ -106,30 +106,36 @@ public final class ReportGenerator {
         html.append("<!DOCTYPE html>\n");
         html.append("<html>\n<head>\n");
         html.append("<meta charset=\"UTF-8\">\n");
-        html.append("<title>Lineup Report - ").append(escape(lineup.guildName())).append("</title>\n");
+        html.append("<title>").append(escape(LanguageService.displayName("report.heading"))).append(" - ")
+                .append(escape(lineup.guildName())).append("</title>\n");
         html.append(styleBlock());
         html.append("</head>\n<body>\n");
 
-        html.append("<h1>Lineup Report</h1>\n");
+        html.append("<h1>").append(escape(LanguageService.displayName("report.heading"))).append("</h1>\n");
         html.append(metaTableHtml(lineup,lineupName));
 
-        html.append("<h2>Statistics</h2>\n");
+        appendHeading2(html, "report.sectionStatistics");
         html.append(statisticsTableHtml(lineup, guild));
 
-        html.append("<h2>Fortifications</h2>\n");
+        appendHeading2(html, "report.sectionFortifications");
         html.append(fortificationsTableHtml(lineup, guild));
 
-        html.append("<h2>Top used heroes</h2>\n");
+        appendHeading2(html, "report.sectionTopHeroes");
         html.append(usedUnitsTableHtml(lineup, guild, Lineup.TeamType.HERO));
 
-        html.append("<h2>Top used titans</h2>\n");
+        appendHeading2(html, "report.sectionTopTitans");
         html.append(usedUnitsTableHtml(lineup, guild, Lineup.TeamType.TITAN));
 
-        html.append("<h2>Lineup data</h2>\n");
+        appendHeading2(html, "report.sectionLineupData");
         html.append(entriesTableHtml(lineup, guild));
 
         html.append("</body>\n</html>\n");
         return html.toString();
+    }
+
+    /** Appends an {@code <h2>} section heading with the localized text for {@code key}. */
+    private static void appendHeading2(StringBuilder html, String key) {
+        html.append("<h2>").append(escape(LanguageService.displayName(key))).append("</h2>\n");
     }
 
     private static String styleBlock() {
@@ -169,10 +175,10 @@ public final class ReportGenerator {
         StringBuilder sb = new StringBuilder();
         sb.append("<table class=\"meta-table\">\n");
         int pos = 0;
-        appendMetaRow(sb, ++pos, "Guild", lineup.guildName());
-        appendMetaRow(sb, ++pos, "Lineup", lineupName);
-        appendMetaRow(sb, ++pos, "Lineup created at", lineup.createdAt().format(TIMESTAMP_FORMAT));
-        appendMetaRow(sb, ++pos, "Report generated at", java.time.LocalDateTime.now().format(TIMESTAMP_FORMAT));
+        appendMetaRow(sb, ++pos, LanguageService.displayName("report.metaGuild"), lineup.guildName());
+        appendMetaRow(sb, ++pos, LanguageService.displayName("report.metaLineup"), lineupName);
+        appendMetaRow(sb, ++pos, LanguageService.displayName("report.metaCreatedAt"), lineup.createdAt().format(TIMESTAMP_FORMAT));
+        appendMetaRow(sb, ++pos, LanguageService.displayName("report.metaGeneratedAt"), java.time.LocalDateTime.now().format(TIMESTAMP_FORMAT));
         appendAlgorithmRowsIfPresent(sb, pos, lineup);
         sb.append("</table>\n");
         return sb.toString();
@@ -201,24 +207,24 @@ public final class ReportGenerator {
         // A legacy single-algorithm name (older lineup files) is shown as-is, like before.
         Map<Lineup.TeamType, String> bySide = LineupAlgorithms.parseAlgorithmName(algorithmName);
         if (bySide.isEmpty()) {
-            appendAlgorithmRows(sb, pos, "Algorithm", algorithmName);
+            appendAlgorithmRows(sb, pos, LanguageService.displayName("report.metaAlgorithm"), algorithmName);
             return;
         }
         if (bySide.containsKey(Lineup.TeamType.HERO)) {
-            pos = appendAlgorithmRows(sb, pos, "Hero algorithm", bySide.get(Lineup.TeamType.HERO));
+            pos = appendAlgorithmRows(sb, pos, LanguageService.displayName("report.metaHeroAlgorithm"), bySide.get(Lineup.TeamType.HERO));
         }
         if (bySide.containsKey(Lineup.TeamType.TITAN)) {
-            appendAlgorithmRows(sb, pos, "Titan algorithm", bySide.get(Lineup.TeamType.TITAN));
+            appendAlgorithmRows(sb, pos, LanguageService.displayName("report.metaTitanAlgorithm"), bySide.get(Lineup.TeamType.TITAN));
         }
     }
 
     /** Appends an algorithm name row plus, if one is on file, its description row; returns the last row position used. */
     private static int appendAlgorithmRows(StringBuilder sb, int startPosition, String label, String displayName) {
         int pos = startPosition;
-        appendMetaRow(sb, ++pos, label, displayName);
+        appendMetaRow(sb, ++pos, label, AlgorithmDescriptions.localizedName(displayName));
         String description = AlgorithmDescriptions.forDisplayName(displayName);
         if (!description.isBlank()) {
-            appendMetaRow(sb, ++pos, label + " description", description);
+            appendMetaRow(sb, ++pos, LanguageService.displayName("report.metaDescription", label), description);
         }
         return pos;
     }
@@ -241,15 +247,15 @@ public final class ReportGenerator {
 
         StringBuilder sb = new StringBuilder();
         if (entries.isEmpty()) {
-            sb.append("<p>This lineup has no team assignments yet.</p>\n");
+            sb.append("<p>").append(escape(LanguageService.displayName("report.noEntries"))).append("</p>\n");
             return sb.toString();
         }
 
         sb.append("<table>\n<tr>")
-                .append(thOpen(false)).append("Fortification</th>")
-                .append(thOpen(false)).append("Team member</th>")
-                .append(thOpen(false)).append("Team composition</th>")
-                .append(thOpen(true)).append("Power</th>")
+                .append(thOpen(false)).append(headerText("report.columnFortification"))
+                .append(thOpen(false)).append(headerText("report.columnTeamMember"))
+                .append(thOpen(false)).append(headerText("report.columnTeamComposition"))
+                .append(thOpen(true)).append(headerText("report.columnPower"))
                 .append("</tr>\n");
 
         int pos = 1; // header is child 1; data rows start at child 2 (matches the old nth-child zebra)
@@ -291,16 +297,16 @@ public final class ReportGenerator {
 
         StringBuilder sb = new StringBuilder();
         if (fortificationIds.isEmpty()) {
-            sb.append("<p>No fortification with a buff is used in this lineup.</p>\n");
+            sb.append("<p>").append(escape(LanguageService.displayName("report.noBuffFortifications"))).append("</p>\n");
             return sb.toString();
         }
 
         sb.append("<table>\n<tr>")
-                .append(thOpen(false)).append("Fortification</th>")
-                .append(thOpen(false)).append("Buff</th>")
-                .append(thOpen(true)).append("Buff %</th>")
-                .append(thOpen(true)).append("Matching role/element</th>")
-                .append(thOpen(true)).append("CowScore</th>")
+                .append(thOpen(false)).append(headerText("report.columnFortification"))
+                .append(thOpen(false)).append(headerText("report.columnBuff"))
+                .append(thOpen(true)).append(headerText("report.columnBuffPercent"))
+                .append(thOpen(true)).append(headerText("report.columnMatching"))
+                .append(thOpen(true)).append(headerText("report.columnCowScore"))
                 .append("</tr>\n");
 
         int pos = 1; // header is child 1; data rows start at child 2 (matches the old nth-child zebra)
@@ -317,7 +323,7 @@ public final class ReportGenerator {
 
             sb.append("<tr>");
             sb.append(tdOpen(false, pos)).append(escape(fortificationDisplayName(fortificationId))).append("</td>");
-            sb.append(tdOpen(false, pos)).append(escape(buffDisplayText(buff))).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(BuffTexts.describe(buff))).append("</td>");
             sb.append(tdOpen(true, pos)).append(buffPercent).append("%</td>");
             sb.append(tdOpen(true, pos)).append(matchingCount).append("</td>");
             sb.append(tdOpen(true, pos)).append(formatCowScore(cowScore)).append("</td>");
@@ -327,30 +333,6 @@ public final class ReportGenerator {
         return sb.toString();
     }
 
-    /**
-     * Display text for a buff: its manually maintained {@link Buff#display()}
-     * if set, otherwise a fallback built from effect/bonusPercent - same
-     * fallback rule {@code FortificationInfoPanel#buffText()} already
-     * uses, except formatted via {@link #formatBonusPercent(double)}
-     * ({@link Locale#ROOT}) rather than {@code Config#NUMBER_FORMAT}'s German
-     * locale, which would read oddly (a German decimal comma) inside this
-     * otherwise English-only report (see class Javadoc).
-     */
-    private static String buffDisplayText(Buff buff) {
-        String text = buff.display();
-        if (text == null || text.isBlank()) {
-            text = buff.effect().name() + " (" + formatBonusPercent(buff.bonusPercent()) + "%)";
-        }
-        return text;
-    }
-
-    /** Formats a buff's raw {@code bonusPercent} for this report - see {@link #buffDisplayText(Buff)}. */
-    private static String formatBonusPercent(double bonusPercent) {
-        if (bonusPercent == Math.floor(bonusPercent)) {
-            return String.valueOf((long) bonusPercent);
-        }
-        return String.format(Locale.ROOT, "%.1f", bonusPercent);
-    }
 
     /**
      * One row per distinct hero (for {@code teamType} HERO) or titan (TITAN)
@@ -377,10 +359,11 @@ public final class ReportGenerator {
             }
         }
 
-        String unitLabel = teamType == Lineup.TeamType.HERO ? "hero" : "titan";
+        boolean heroes = teamType == Lineup.TeamType.HERO;
         StringBuilder sb = new StringBuilder();
         if (counts.isEmpty()) {
-            sb.append("<p>No ").append(unitLabel).append(" is used in this lineup.</p>\n");
+            sb.append("<p>").append(escape(LanguageService.displayName(heroes ? "report.noHeroesUsed" : "report.noTitansUsed")))
+                    .append("</p>\n");
             return sb.toString();
         }
 
@@ -390,8 +373,8 @@ public final class ReportGenerator {
                 .thenComparing(e -> LanguageService.displayName(e.getKey())));
 
         sb.append("<table>\n<tr>")
-                .append(thOpen(false)).append(teamType == Lineup.TeamType.HERO ? "Hero" : "Titan").append("</th>")
-                .append(thOpen(true)).append("Count</th>")
+                .append(thOpen(false)).append(headerText(heroes ? "report.columnHero" : "report.columnTitan"))
+                .append(thOpen(true)).append(headerText("report.columnCount"))
                 .append("</tr>\n");
 
         List<Map.Entry<String, Integer>> shown = sorted.subList(0, Math.min(sorted.size(), MAX_USED_UNITS_ROWS));
@@ -407,9 +390,8 @@ public final class ReportGenerator {
 
         int omitted = sorted.size() - shown.size();
         if (omitted > 0) {
-            sb.append("<p>... and ").append(omitted).append(" more ").append(unitLabel)
-                    .append(omitted == 1 ? "" : "s").append(" (showing the top ").append(MAX_USED_UNITS_ROWS)
-                    .append(").</p>\n");
+            sb.append("<p>").append(escape(LanguageService.displayName(heroes ? "report.moreHeroes" : "report.moreTitans",
+                    omitted, MAX_USED_UNITS_ROWS))).append("</p>\n");
         }
         return sb.toString();
     }
@@ -454,27 +436,32 @@ public final class ReportGenerator {
         StringBuilder sb = new StringBuilder();
         sb.append("<table class=\"stats-table\">\n");
         int pos = 0;
-        appendStatRow(sb, ++pos, "Total hero power (deployed)", heroPower);
-        appendStatRow(sb, ++pos, "Total hero power (guild)", guildHeroPower);
-        appendStatRow(sb, ++pos, "Hero power deployed", percentText(heroPower, guildHeroPower));
-        appendStatRow(sb, ++pos, "Heroes increasing a buff", heroBuffCount);
-        appendStatRow(sb, ++pos, "Hero CowScore", formatCowScore(heroCowScore));
-        appendStatRow(sb, ++pos, "Total titan power (deployed)", titanPower);
-        appendStatRow(sb, ++pos, "Total titan power (guild)", guildTitanPower);
-        appendStatRow(sb, ++pos, "Titan power deployed", percentText(titanPower, guildTitanPower));
-        appendStatRow(sb, ++pos, "Titans increasing a buff", titanBuffCount);
-        appendStatRow(sb, ++pos, "Titan CowScore", formatCowScore(titanCowScore));
-        appendStatRow(sb, ++pos, "Total power (heroes + titans, deployed)", heroPower + titanPower);
-        appendStatRow(sb, ++pos, "Total power (heroes + titans, guild)", guildHeroPower + guildTitanPower);
-        appendStatRow(sb, ++pos, "Total power deployed", percentText(heroPower + titanPower, guildHeroPower + guildTitanPower));
-        appendStatRow(sb, ++pos, "Total team assignments", lineup.entries().size());
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statHeroPowerDeployed"), heroPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statHeroPowerGuild"), guildHeroPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statHeroPowerPercent"), percentText(heroPower, guildHeroPower));
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statHeroesIncreasingBuff"), heroBuffCount);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statHeroCowScore"), formatCowScore(heroCowScore));
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTitanPowerDeployed"), titanPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTitanPowerGuild"), guildTitanPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTitanPowerPercent"), percentText(titanPower, guildTitanPower));
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTitansIncreasingBuff"), titanBuffCount);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTitanCowScore"), formatCowScore(titanCowScore));
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTotalPowerDeployed"), heroPower + titanPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTotalPowerGuild"), guildHeroPower + guildTitanPower);
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTotalPowerPercent"), percentText(heroPower + titanPower, guildHeroPower + guildTitanPower));
+        appendStatRow(sb, ++pos, LanguageService.displayName("report.statTotalAssignments"), lineup.entries().size());
         sb.append("</table>\n");
         return sb.toString();
     }
 
-    /** Formats a summed CowScore total (see {@link BuffCalculationService#sumHeroCowScore}/{@link BuffCalculationService#sumTitanCowScore}/{@link BuffCalculationService#sumCowScoreForFortification}) to one decimal place, {@link Locale#ROOT} like the rest of this English-only report - same precision {@code LineupSummaryPanel}'s COW_SCORE_FORMAT uses in the GUI. */
+    /** Formats a summed CowScore total (see {@link BuffCalculationService#sumHeroCowScore}/{@link BuffCalculationService#sumTitanCowScore}/{@link BuffCalculationService#sumCowScoreForFortification}) to one decimal place, {@link Locale#ROOT} like every other number in this report - same precision {@code LineupSummaryPanel}'s COW_SCORE_FORMAT uses in the GUI. */
     private static String formatCowScore(double cowScore) {
         return String.format(Locale.ROOT, "%.1f", cowScore);
+    }
+
+    /** Localized, HTML-escaped column header text for {@code key}, followed by the closing {@code </th>}. */
+    private static String headerText(String key) {
+        return escape(LanguageService.displayName(key)) + "</th>";
     }
 
     private static void appendStatRow(StringBuilder sb, int rowPosition, String label, int value) {
@@ -516,7 +503,7 @@ public final class ReportGenerator {
      */
     private static String percentText(int deployed, int guildTotal) {
         if (guildTotal <= 0) {
-            return "n/a";
+            return LanguageService.displayName("report.notAvailable");
         }
         return String.format(Locale.ROOT, "%.1f%%", 100.0 * deployed / guildTotal);
     }

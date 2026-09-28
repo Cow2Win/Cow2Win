@@ -3,18 +3,46 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.CowScoreTier;
+import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Loads/saves the titan catalog from two separate files (2026-09-28, the
+ * same split {@link HeroRepository} got on 2026-09-14):
+ * <ul>
+ *     <li>{@code titans.json} - the "objective" master data (id/element/image)
+ *     that is identical for every guild and only changes when Hero Wars
+ *     itself changes (new titans, a changed element/avatar). Never written
+ *     by this class.</li>
+ *     <li>{@code titanCowScore.json} - Thorsten's manually curated {@link
+ *     CowScore} per titan (see that type's Javadoc), persisted through
+ *     {@link #saveCowScores}. Same file format as the heroes'
+ *     {@code cowScore.json}, see {@link CowScoreFiles}.</li>
+ * </ul>
+ * Keeping these in two files means a future wholesale refresh of {@code
+ * titans.json} can never accidentally clobber the scores in {@code
+ * titanCowScore.json}, and vice versa. {@link #findById}/{@link #findAll}
+ * merge both files back into the combined {@link Titan} view the rest of the
+ * app uses.
+ */
 public class TitanRepository {
-    private static final String JSON_PATH = "/data/titans.json";
+    private static final String TITANS_JSON_PATH = "/data/titans.json";
+    private static final String COW_SCORE_JSON_PATH = "/data/titanCowScore.json";
+
+    /** See {@link JsonSupport#resolveDataFile} for how this resolves in the IDE vs. the packaged app. */
+    private static final Path COW_SCORE_FILE_PATH = JsonSupport.resolveDataFile("data", "titanCowScore.json");
+
+    /** Classpath-relative folder every titan's "image" JSON field is resolved against - see {@link #parseTitanObject}. */
+    private static final String IMAGE_PATH_PREFIX = "/images/titans/";
+
     private static volatile Map<String, Titan> titansById;
 
     /**
@@ -56,13 +84,40 @@ public class TitanRepository {
     }
 
     /**
-     * Resets the catalog (for tests). The JSON file is reloaded on the next
-     * access.
+     * Resets the catalog (for tests). Both JSON files are reloaded on the
+     * next access.
      */
     public static void resetCache() {
         synchronized (TitanRepository.class) {
             titansById = null;
         }
+    }
+
+    /**
+     * Persists every titan's current {@link Titan#cowScore()} to {@code
+     * titanCowScore.json} (pretty-printed, see {@link
+     * JsonSupport#writeJsonFile}) and makes {@code catalog} the in-memory
+     * catalog for subsequent {@link #findById}/{@link #findAll} calls - the
+     * TITAN-side counterpart of {@link HeroRepository#saveCowScores}.
+     * Deliberately does NOT touch {@code titans.json}. Titans with the
+     * default CowScore get no entry at all, see {@link CowScoreFiles#toTree}.
+     */
+    public static synchronized void saveCowScores(List<Titan> catalog) throws IOException {
+        if (catalog == null) {
+            throw new IllegalArgumentException("catalog must not be null");
+        }
+
+        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        for (Titan titan : catalog) {
+            cowScoresById.put(titan.id(), titan.cowScore());
+        }
+        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), COW_SCORE_FILE_PATH);
+
+        Map<String, Titan> updated = new LinkedHashMap<>();
+        for (Titan titan : catalog) {
+            updated.put(titan.id(), titan);
+        }
+        titansById = updated;
     }
 
     // --- private ---
@@ -79,30 +134,37 @@ public class TitanRepository {
 
     private static Map<String, Titan> loadTitans() {
         try {
-            String json = JsonSupport.readClasspathResource(TitanRepository.class, JSON_PATH);
-            return parseTitansJson(json);
+            String titansJson = JsonSupport.readClasspathResource(TitanRepository.class, TITANS_JSON_PATH);
+            Map<String, CowScore> cowScores = CowScoreFiles.load(TitanRepository.class, COW_SCORE_JSON_PATH, "titan");
+            return parseTitansJson(titansJson, cowScores);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load titan catalog from " + JSON_PATH, e);
+            throw new RuntimeException("Failed to load titan catalog from " + TITANS_JSON_PATH, e);
         }
     }
 
-    private static Map<String, Titan> parseTitansJson(String json) {
+    private static Map<String, Titan> parseTitansJson(String json, Map<String, CowScore> cowScores) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
-        // Expects: [{ "id": "...", "element": "...", "image": "...", "generalScore": "..." (optional),
-        //             "buffFitScores": {"fortificationId": "TIER", ...} (optional) }, ...]
+        // Expects: [{ "id": "...", "element": "...", "image": "..." }, ...] - purely the
+        // "objective" master data; generalScore/buffFitScores live in titanCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Titan titan = parseTitanObject(element.getAsJsonObject());
+            Titan titan = parseTitanObject(element.getAsJsonObject(), cowScores);
             if (titan != null) {
                 result.put(titan.id(), titan);
+            }
+        }
+
+        for (String id : cowScores.keySet()) {
+            if (!result.containsKey(id)) {
+                Logger.log("titanCowScore.json: entry for unknown titan '" + id + "', ignoring it");
             }
         }
 
         return result;
     }
 
-    private static Titan parseTitanObject(JsonObject obj) {
+    private static Titan parseTitanObject(JsonObject obj, Map<String, CowScore> cowScores) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String elementStr = JsonSupport.getStringOrNull(obj, "element");
         String image = JsonSupport.getStringOrNull(obj, "image");
@@ -120,52 +182,14 @@ public class TitanRepository {
             return null;
         }
 
-        CowScoreTier generalScore = parseGeneralScore(obj, id);
-        Map<String, CowScoreTier> buffFitScores = parseBuffFitScores(obj, id);
-
-        return new Titan(id, element, image != null ? "/images/titans/" + image : null, generalScore, buffFitScores);
-    }
-
-    /**
-     * Parses the optional "generalScore" field (a {@link CowScoreTier} name, e.g.
-     * "ELEVATED") - analogous to {@code HeroRepository.parseGeneralScore},
-     * same sparse-catalog reasoning: absent for most titans, in which case
-     * {@link Titan}'s own compact constructor falls back to
-     * {@link CowScoreTier#GOOD}, so null is returned here both when the
-     * field is missing and when it names an unknown tier (logged either way
-     * is only the latter, since the former is the expected case).
-     */
-    private static CowScoreTier parseGeneralScore(JsonObject obj, String titanId) {
-        String name = JsonSupport.getStringOrNull(obj, "generalScore");
-        if (name == null) {
-            return null;
+        // Scores used to live directly in titans.json (before 2026-09-28) - they are no longer
+        // read from there, so point out any leftovers instead of dropping them silently.
+        if (obj.has("generalScore") || obj.has("buffFitScores")) {
+            Logger.log("titans.json: titan '" + id + "' still carries generalScore/buffFitScores - these are "
+                    + "ignored now, move them to titanCowScore.json");
         }
-        try {
-            return CowScoreTier.valueOf(name.trim());
-        } catch (IllegalArgumentException e) {
-            Logger.log("titans.json: titan '" + titanId + "' has unknown generalScore '" + name + "', using the default");
-            return null;
-        }
-    }
 
-    /**
-     * Parses the optional "buffFitScores" object (fortification id ->
-     * {@link CowScoreTier} name) - analogous to
-     * {@code HeroRepository.parseBuffFitScores}, see there for the full
-     * reasoning.
-     */
-    private static Map<String, CowScoreTier> parseBuffFitScores(JsonObject obj, String titanId) {
-        Map<String, CowScoreTier> result = new LinkedHashMap<>();
-        for (var entry : JsonSupport.getStringMap(obj, "buffFitScores").entrySet()) {
-            String fortificationId = entry.getKey();
-            String tierName = entry.getValue();
-            try {
-                result.put(fortificationId, CowScoreTier.valueOf(tierName.trim()));
-            } catch (IllegalArgumentException e) {
-                Logger.log("titans.json: titan '" + titanId + "' has unknown buffFitScores tier '" + tierName
-                        + "' for fortification '" + fortificationId + "', ignoring it");
-            }
-        }
-        return result;
+        CowScore cowScore = cowScores.getOrDefault(id, CowScore.DEFAULT);
+        return new Titan(id, element, image != null ? IMAGE_PATH_PREFIX + image : null, cowScore);
     }
 }

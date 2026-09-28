@@ -15,8 +15,19 @@ import org.c2w.data.model.Lineup;
  */
 public interface LineupAlgorithm {
 
-    /** Strategy name shown in combo boxes and stored in {@link Lineup#algorithmName()} - the same for the hero and the titan variant of a strategy. */
+    /**
+     * Stable, English strategy name - the same for the hero and the titan
+     * variant of a strategy. Acts as the algorithm's ID: it is what gets
+     * stored in {@code config.properties} and in {@link Lineup#algorithmName()},
+     * so it must never be translated or renamed. For anything shown to the
+     * user, use {@link #localizedName()} instead.
+     */
     String displayName();
+
+    /** The name to show in the UI/report, in the configured language - see {@link AlgorithmDescriptions#localizedName(String)}. */
+    default String localizedName() {
+        return AlgorithmDescriptions.localizedName(displayName());
+    }
 
     /** The side this algorithm assigns teams for. */
     Lineup.TeamType teamType();

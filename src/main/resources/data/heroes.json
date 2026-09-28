@@ -180,7 +180,6 @@
   },
   {
     "id": "eva",
-    "image": "placeholder",
     "roles": [
       "MARKSMAN",
       "SUPPORT"
@@ -523,7 +522,6 @@
   },
   {
     "id": "somna",
-    "image": "placeholder",
     "roles": [
       "CONTROL"
     ]

@@ -59,7 +59,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
     }
 
     private static Titan titan(String id, CowScoreTier generalScore, TitanElement element) {
-        return new Titan(id, element, null, generalScore, null);
+        return new Titan(id, element, null, new CowScore(generalScore, null));
     }
 
     private static Candidate<HeroTeam> candidate(String memberId, HeroTeam team, int teamIndex) {

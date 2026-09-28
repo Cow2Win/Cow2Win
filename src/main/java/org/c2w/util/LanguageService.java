@@ -46,8 +46,8 @@ public class LanguageService {
      * from the packaged, shaded jar) rather than hardcoded, so adding a
      * language is just adding a new {@code <name>/<name>.properties} folder,
      * no Java change required. The directory name IS what every UI spot
-     * that lets the user pick a language (see {@link org.c2w.gui.InitialSetupDialog},
-     * {@link org.c2w.gui.SettingsDialog}) shows in its combo box - there is
+     * that lets the user pick a language (see {@link org.c2w.gui.SettingsDialog})
+     * shows in its combo box - there is
      * no separate "nice" display name mapping anymore. Sorted
      * alphabetically (case-insensitive) for a stable, predictable order.
      * Never empty: falls back to a single {@link #DEFAULT_LANGUAGE} entry

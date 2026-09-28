@@ -4,6 +4,7 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.HeroRepository;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.util.BuffTexts;
 import org.c2w.util.LanguageService;
 
 import javax.swing.*;
@@ -66,12 +67,12 @@ public class FortificationInfoPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         int y = 0;
 
-        addInfoRow(panel, gbc, y++, "Buff:", buffText());
+        addInfoRow(panel, gbc, y++, LanguageService.displayName("fortificationDetail.buff"), buffText());
         addInfoRow(panel, gbc, y++, LanguageService.displayName("fortificationDetail.prerequisites"), prerequisitesText());
 
         gbc.gridx = 0;
         gbc.gridy = y;
-        panel.add(new JLabel("Strategic Importance:"), gbc);
+        panel.add(new JLabel(LanguageService.displayName("fortificationDetail.strategicImportance")), gbc);
         gbc.gridx = 1;
         panel.add(new JLabel(fortification.strategicImportance()+""), gbc);
         return panel;
@@ -91,11 +92,7 @@ public class FortificationInfoPanel extends JPanel {
         if (buff == null) {
             return LanguageService.displayName("common.none");
         }
-        String text = buff.display();
-        if (text == null || text.isBlank()) {
-            text = buff.effect().name() + " (" + GuiUtils.NUMBER_FORMAT.format(buff.bonusPercent()) + "%)";
-        }
-        return text;
+        return BuffTexts.describe(buff);
     }
 
 

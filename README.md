@@ -47,7 +47,10 @@ under `target/dist/Cow2Win/`, and zips it into
   (`java.desktop` + `java.base`).
 - `resources/` - a plain, on-disk copy of `src/main/resources` (images, the
   catalog JSONs, the language files) alongside the app, in addition to the
-  same files being on the jar's classpath as usual.
+  same files being on the jar's classpath as usual. Exception:
+  `app-version.properties` is left out there - it is only read from the
+  (filtered) copy inside the jar, and an on-disk copy would just show the
+  unresolved `${app.version}` placeholder.
 - `app/` - the executable jar (all dependencies, i.e. Gson, merged in via
   `maven-shade-plugin`) and jpackage's own launcher config.
 
@@ -116,7 +119,8 @@ resolving against the new `resources/` folder next to the exe).
   curated `CowScore` (`generalScore`/`buffFitScores`) lives in a separate
   file, `cowScore.json` - see "Canonical data files" below.
 - **Titan** (`id`, `element`, `image`) - see `TitanElement.java`, which
-  includes the rare `DISTORTION` element used by some event titans.
+  includes the rare `DISTORTION` element used by some event titans. Its
+  curated `CowScore` lives in `titanCowScore.json`, same split as heroes.
 - **Fortification** (`id`, `type` HERO/TITAN, `capacity`, `captureBonus`,
   `row`/`column` for the map layout, `buff`, `prerequisites`,
   `strategicImportance`) - `prerequisites` is an **OR-relation**: capturing
@@ -142,9 +146,15 @@ resolving against the new `resources/` folder next to the exe).
   split means a future wholesale refresh of `heroes.json` (e.g. new heroes
   pulled from GitHub) can't accidentally clobber these hand-tuned scores,
   and vice versa: `HeroBuffFitScoresDialog`/`HeroRepository#saveCowScores`
-  only ever write `cowScore.json`, never `heroes.json`. Titans don't (yet)
-  have this split - `Titan#generalScore()`/`#buffFitScores()` still live
-  directly in `titans.json`, same as before.
+  only ever write `cowScore.json`, never `heroes.json`.
+- `src/main/resources/data/titanCowScore.json` (since 2026-09-28) is the same
+  for titans: the curated per-titan `CowScore`, kept out of `titans.json`
+  (which only carries `id`/`element`/`image`), written only by
+  `TitanRepository#saveCowScores` - edited in-app via "File" >
+  "CowScore - Titans" (`TitanCoreScoreDialog`). Both score files share one file format
+  and one reader/writer, `CowScoreFiles` (`org.c2w.data.repository`). A
+  `generalScore`/`buffFitScores` left over in `titans.json` is ignored and
+  logged.
 - `src/main/resources/data/catalog-version.json` records the `dataVersion`
   (a date) that the three catalog files above were last checked against,
   read via `CatalogVersion` and logged once at app startup so it's visible

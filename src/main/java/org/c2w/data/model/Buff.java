@@ -6,5 +6,4 @@ public sealed interface Buff permits RoleBuff, ElementBuff {
 
     double bonusPercent();
 
-    String display();
 }

@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.util.LanguageService;
 import org.c2w.util.Logger;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class ReportViewerDialog extends JDialog {
     private final String suggestedFileName;
 
     public ReportViewerDialog(Frame owner, String reportHtml, String suggestedFileName) {
-        super(owner, "Cow2Win - Report", false);
+        super(owner, LanguageService.displayTitle("report.title"), false);
         if (reportHtml == null) {
             throw new IllegalArgumentException("ReportViewerDialog needs reportHtml");
         }
@@ -51,8 +52,8 @@ public class ReportViewerDialog extends JDialog {
     private JToolBar buildToolBar() {
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        JButton saveButton = new JButton("Save report...");
-        saveButton.setToolTipText("Choose a directory and save this report as an HTML file");
+        JButton saveButton = new JButton(LanguageService.displayName("report.saveButton"));
+        saveButton.setToolTipText(LanguageService.displayName("report.saveButtonTooltip"));
         saveButton.addActionListener(e -> onSave());
         toolBar.add(saveButton);
         return toolBar;
@@ -79,7 +80,7 @@ public class ReportViewerDialog extends JDialog {
      */
     private void onSave() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Select a directory to save the report in");
+        chooser.setDialogTitle(LanguageService.displayName("report.chooseDirectory"));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
             return;
@@ -88,8 +89,8 @@ public class ReportViewerDialog extends JDialog {
         Path targetFile = chooser.getSelectedFile().toPath().resolve(suggestedFileName);
         if (Files.exists(targetFile)) {
             int overwrite = JOptionPane.showConfirmDialog(this,
-                    "This file already exists:\n" + targetFile + "\n\nOverwrite it?",
-                    "Overwrite report?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    LanguageService.displayName("report.overwriteMessage", targetFile),
+                    LanguageService.displayName("report.overwriteTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (overwrite != JOptionPane.YES_OPTION) {
                 return;
             }
@@ -98,11 +99,11 @@ public class ReportViewerDialog extends JDialog {
         try {
             Files.writeString(targetFile, reportHtml, StandardCharsets.UTF_8);
             Logger.log("Report saved: " + targetFile);
-            JOptionPane.showMessageDialog(this, "Report saved to:\n" + targetFile,
-                    "Report saved", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("report.savedMessage", targetFile),
+                    LanguageService.displayName("report.savedTitle"), JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Could not save the report:\n" + e.getMessage(),
-                    "Error while saving report", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("report.saveError") + "\n" + e.getMessage(),
+                    LanguageService.displayName("report.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 }

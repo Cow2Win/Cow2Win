@@ -4,11 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.tdi</groupId>
+    <groupId>org.c2w</groupId>
     <artifactId>Cow2Win</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
-    <name>Cow 2</name>
+    <name>Cow2Win</name>
     <description>An Assistant for Clash of world (Hero wars: Dominion Era)</description>
     <properties>
         <maven.compiler.source>24</maven.compiler.source>
@@ -33,7 +33,7 @@
         <!-- jpackage's "app-version" option must be a clean digits-and-dots version (no
              "-SNAPSHOT"/qualifiers), so this is intentionally decoupled from
              ${project.version} rather than reused from it. Bump by hand for now. -->
-        <app.version>1.0.3</app.version>
+        <app.version>1.0.4</app.version>
         <app.vendor>org.c2w</app.vendor>
         <!-- Set -Ddist.skip=true to skip the jpackage/zip steps below (e.g. for a
              quick "mvn clean test") without touching the rest of the build. -->
@@ -114,6 +114,13 @@
                             <resources>
                                 <resource>
                                     <directory>src/main/resources</directory>
+                                    <!-- Only meaningful on the classpath (filtered copy inside the
+                                         jar, read by org.c2w.util.AppVersion). This on-disk copy would
+                                         be unfiltered, i.e. still show the literal "${app.version}"
+                                         placeholder, and is never read - so leave it out. -->
+                                    <excludes>
+                                        <exclude>app-version.properties</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>

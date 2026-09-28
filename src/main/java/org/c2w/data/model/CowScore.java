@@ -13,12 +13,10 @@ import java.util.Map;
  * {@code HeroRepository}'s class Javadoc for why that separation exists
  * ({@code cowScore.json} vs. {@code heroes.json}).
  *
- * <p>Currently used by {@link Hero} only ({@link Hero#cowScore()}); {@link
- * Titan} still keeps its own, identical pair of fields directly (its master
- * data and scores are not split across two files the way heroes.json/
- * cowScore.json are) - nothing about this type is hero-specific, though, so
- * {@link Titan} could adopt it later without changing the underlying
- * {@link CowScoreTier} grid or resolution logic.
+ * <p>Used by both {@link Hero#cowScore()} and (since 2026-09-28) {@link
+ * Titan#cowScore()} - heroes persist theirs in {@code cowScore.json}, titans
+ * in {@code titanCowScore.json}, both in the same format (see {@code
+ * CowScoreFiles}), each separate from its master-data file.
  *
  * @param generalScore this entity's general quality/usefulness on {@link
  *         CowScoreTier}'s shared grid, independent of any specific
@@ -77,9 +75,9 @@ public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buff
      * True if this is exactly the all-default CowScore ({@link
      * CowScoreTier#GOOD} general score, no buff-fit overrides at all) - i.e.
      * there is nothing here worth persisting explicitly. Used by {@code
-     * HeroRepository#saveCowScores} to omit an entry from cowScore.json
-     * entirely for a hero without any deliberate assessment, keeping that
-     * file sparse.
+     * CowScoreFiles#toTree} to omit an entry from cowScore.json/
+     * titanCowScore.json entirely for an entity without any deliberate
+     * assessment, keeping those files sparse.
      */
     public boolean isDefault() {
         return generalScore == CowScoreTier.GOOD && buffFitScores.isEmpty();

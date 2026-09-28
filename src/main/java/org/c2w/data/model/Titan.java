@@ -7,10 +7,9 @@ import java.util.Map;
  *
  * Used to also have a buffAffinities field, analogous to {@link Hero} - that
  * was removed in favor of a per-buff buffProfits list on the respective
- * Fortification buff, which was itself later removed again (2026-09-11, see
- * cow2win-verbesserungsvorschlaege.md) in favor of {@link #generalScore()}
- * and {@link #buffFitScores()} below - see the Javadoc on {@link Hero} for
- * the full reasoning, identical here.
+ * Fortification buff, which was itself later removed again (2026-09-11) in
+ * favor of the two scores now bundled in {@link #cowScore()} - see the
+ * Javadoc on {@link Hero} for the full reasoning, identical here.
  *
  * displayName is no longer stored in this class - that information now lives
  * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
@@ -24,28 +23,22 @@ import java.util.Map;
  * "image"), it automatically falls back to the placeholder at
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
- * generalScore: the TITAN-side counterpart of {@link Hero#generalScore()} -
- * same shared {@link CowScoreTier} grid, same default ({@link
- * CowScoreTier#GOOD}) and same sparse-catalog intent (added 2026-09-11, see
- * cow2win-verbesserungsvorschlaege.md, "gleiche Behandlung" as heroes per
- * the user's own words). Used by {@link TitanTeam#sortScore()} for
- * fortifications without a buff, exactly as {@link Hero#generalScore()} is
- * used by {@link HeroTeam#sortScore()}.
- *
- * buffFitScores: the TITAN-side counterpart of {@link Hero#buffFitScores()} -
- * same idea (buffProfits successor, keyed by {@link Fortification#id()},
- * n:m, sparse), same default resolution (see
- * {@link #buffFitScore(String, boolean)}), also added 2026-09-11 for the
- * same "gleiche Behandlung" reason as generalScore above. Used INSTEAD OF
- * generalScore for fortifications WITH a buff - see
- * {@link TitanTeamBuffFitScore}.
+ * cowScore: this titan's manually curated {@link CowScore} - the TITAN-side
+ * counterpart of {@link Hero#cowScore()}, same {@link CowScoreTier} grid,
+ * same defaults. Kept in {@code titanCowScore.json}, deliberately SEPARATE
+ * from this record's "objective" fields (id/element/imagePath), which live
+ * in {@code titans.json} (2026-09-28, same split the heroes got on
+ * 2026-09-14 - see {@code TitanRepository}'s class Javadoc): a future
+ * master-data refresh can overwrite {@code titans.json} wholesale without
+ * risking the manually maintained scores. {@link #generalScore()}/{@link
+ * #buffFitScores()}/{@link #buffFitScore(String, boolean)} remain as
+ * convenience delegates so every other caller keeps working unchanged.
  */
 public record Titan(
         String id,
         TitanElement element,
         String imagePath,
-        CowScoreTier generalScore,
-        Map<String, CowScoreTier> buffFitScores
+        CowScore cowScore
 ) {
     /** Avatar for titans that don't have their own icon under images/titans yet. */
     public static final String PLACEHOLDER_IMAGE_PATH = "/images/titans/placeholder.png";
@@ -58,29 +51,39 @@ public record Titan(
             throw new IllegalArgumentException("Titan '" + id + "' needs an element");
         }
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
-        generalScore = generalScore == null ? CowScoreTier.GOOD : generalScore;
-        buffFitScores = buffFitScores == null ? Map.of() : Map.copyOf(buffFitScores);
+        cowScore = cowScore == null ? CowScore.DEFAULT : cowScore;
     }
 
-    /** Convenience constructor for titans without an avatar and without an explicit general/buff-fit score (e.g. in tests). */
+    /** Convenience constructor for titans without an avatar and without an explicit CowScore (e.g. in tests). */
     public Titan(String id, TitanElement element) {
-        this(id, element, null, null, null);
+        this(id, element, null, null);
+    }
+
+    /**
+     * This titan's general quality/usefulness - delegates to {@link #cowScore()},
+     * see {@link CowScore#generalScore()}. Used by {@link TitanTeam#sortScore()}
+     * for fortifications without a buff, exactly as {@link Hero#generalScore()}
+     * is used by {@link HeroTeam#sortScore()}.
+     */
+    public CowScoreTier generalScore() {
+        return cowScore.generalScore();
+    }
+
+    /** This titan's buff-specific fit overrides - delegates to {@link #cowScore()}, see {@link CowScore#buffFitScores()}. */
+    public Map<String, CowScoreTier> buffFitScores() {
+        return cowScore.buffFitScores();
     }
 
     /**
      * This titan's buff-specific fit score for the fortification with the
-     * given id (which must have a buff) - see {@link
-     * Hero#buffFitScore(String, boolean)} for the identical resolution
-     * order/reasoning (element match instead of role match here). Intended
-     * caller: {@link TitanTeamBuffFitScore#of(TitanTeam, Fortification)},
-     * which resolves {@code elementMatches} against the fortification's
+     * given id (which must have a buff) - delegates to {@link #cowScore()},
+     * see {@link CowScore#buffFitScore(String, boolean)} for the resolution
+     * order (element match instead of role match here). Intended caller:
+     * {@link TitanTeamBuffFitScore#of(TitanTeam, Fortification)}, which
+     * resolves {@code elementMatches} against the fortification's
      * {@link ElementBuff#element()}.
      */
     public CowScoreTier buffFitScore(String fortificationId, boolean elementMatches) {
-        CowScoreTier override = buffFitScores.get(fortificationId);
-        if (override != null) {
-            return override;
-        }
-        return elementMatches ? CowScoreTier.GOOD : CowScoreTier.AVERAGE;
+        return cowScore.buffFitScore(fortificationId, elementMatches);
     }
 }

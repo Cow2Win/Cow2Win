@@ -26,7 +26,8 @@ import java.util.List;
 
 public final class GuildEditorDialog extends JDialog {
 
-    private static final String BASE_TITLE = "Cow2 - Guild Editor";
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    private static final String KEY_TITLE = "guildEditor.title";
 
     private static final int MAX_MEMBERS = 30;
 
@@ -59,7 +60,7 @@ public final class GuildEditorDialog extends JDialog {
     private final JLabel lastSavedLabel = new JLabel();
 
     public GuildEditorDialog(Frame owner, AppContext context, Runnable onGuildSaved) {
-        super(owner, BASE_TITLE, false);
+        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (context == null) {
             throw new IllegalArgumentException("GuildEditorDialog needs a AppContext");
         }
@@ -72,7 +73,7 @@ public final class GuildEditorDialog extends JDialog {
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(buildMainSplit(), BorderLayout.CENTER);
 
-        showEmptyDetail("No member selected.");
+        showEmptyDetail(LanguageService.displayName("guildEditor.noMemberSelected"));
         refreshMemberList();
         updateLastSavedLabel();
 
@@ -161,9 +162,9 @@ public final class GuildEditorDialog extends JDialog {
         try {
             var lastModified = Files.getLastModifiedTime(context.guildFilePath());
             String formatted = LAST_SAVED_FORMAT.format(lastModified.toInstant().atZone(ZoneId.systemDefault()));
-            lastSavedLabel.setText("Last saved: " + formatted);
+            lastSavedLabel.setText(LanguageService.displayName("guildEditor.lastSaved", formatted));
         } catch (IOException e) {
-            lastSavedLabel.setText("Last saved: never");
+            lastSavedLabel.setText(LanguageService.displayName("guildEditor.lastSavedNever"));
         }
     }
 
@@ -183,12 +184,12 @@ public final class GuildEditorDialog extends JDialog {
         if (previouslySelected != null && memberListModel.contains(previouslySelected)) {
             memberList.setSelectedValue(previouslySelected, true);
         }
-        memberCountLabel.setText("Members: " + draft.members.size() + " / " + MAX_MEMBERS);
+        memberCountLabel.setText(LanguageService.displayName("guildEditor.memberCount", draft.members.size(), MAX_MEMBERS));
     }
 
     private void onMemberSelected(MemberDraft selected) {
         if (selected == null) {
-            showEmptyDetail("No member selected.");
+            showEmptyDetail(LanguageService.displayName("guildEditor.noMemberSelected"));
             return;
         }
         detailContainer.removeAll();
@@ -208,20 +209,20 @@ public final class GuildEditorDialog extends JDialog {
 
     private void onAddMember() {
         if (draft.members.size() >= MAX_MEMBERS) {
-            JOptionPane.showMessageDialog(this, "A guild has at most " + MAX_MEMBERS + " members.",
-                    "Not possible", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.maxMembers", MAX_MEMBERS),
+                    LanguageService.displayName("common.notPossibleTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        String id = JOptionPane.showInputDialog(this, "Member ID (unique):",
-                "member" + (draft.members.size() + 1));
+        String id = JOptionPane.showInputDialog(this, LanguageService.displayName("guildEditor.memberIdPrompt"),
+                LanguageService.displayName("guildEditor.memberIdSuggestion", draft.members.size() + 1));
         if (id == null || id.isBlank()) {
             return;
         }
         String trimmedId = id.trim();
         boolean duplicate = draft.members.stream().anyMatch(m -> m.id.equals(trimmedId));
         if (duplicate) {
-            JOptionPane.showMessageDialog(this, "A member with this ID already exists.",
-                    "Not possible", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("guildEditor.memberIdExists"),
+                    LanguageService.displayName("common.notPossibleTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         MemberDraft member = new MemberDraft(trimmedId, trimmedId);
@@ -236,13 +237,14 @@ public final class GuildEditorDialog extends JDialog {
             return;
         }
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Really remove member '" + selected.id + "'?", "Confirm", JOptionPane.YES_NO_OPTION);
+                LanguageService.displayName("guildEditor.removeMemberConfirm", selected.id),
+                LanguageService.displayName("common.confirmTitle"), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
         draft.members.remove(selected);
         refreshMemberList();
-        showEmptyDetail("No member selected.");
+        showEmptyDetail(LanguageService.displayName("guildEditor.noMemberSelected"));
     }
 
     private void onSaveGuild() {
@@ -256,11 +258,11 @@ public final class GuildEditorDialog extends JDialog {
                 onGuildSaved.run();
             }
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "The data is invalid:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Could not save the guild file:\n" + ex.getMessage(),
-                    "Error while saving", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("guildEditor.saveGuildFileError") + "\n" + ex.getMessage(),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 }
