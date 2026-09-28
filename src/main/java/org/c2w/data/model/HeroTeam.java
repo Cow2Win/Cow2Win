@@ -1,5 +1,7 @@
 package org.c2w.data.model;
 
+import org.c2w.util.TeamScoreCalculator;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -79,27 +81,18 @@ public record HeroTeam(
     }
 
     /**
-     * Divisor {@link #totalPower()} is scaled down by before adding it to
-     * {@link #sortScore()} - totalPower is typically five/six digits, while
-     * a hero's {@link Hero#generalScore()} lives on {@link CowScoreTier}'s
-     * 0.5-1.1 grid, so this brings both terms to a comparable order of
-     * magnitude instead of one completely swamping the other.
-     */
-    private static final double SORT_SCORE_POWER_DIVISOR = 100_000.0;
-
-    /**
      * Used instead of {@link #buffFitScore(Buff)} to pick a team for a
      * fortification that has NO buff - there is no role to score against
      * there, so this falls back to a general "how good is this team"
      * measure: the sum of every hero's {@link Hero#generalScore()} (some
      * heroes are simply better than others, independent of any specific
      * buff/role) plus {@link #totalPower()} scaled down via
-     * {@link #SORT_SCORE_POWER_DIVISOR} - per the user's own formula (added
+     * {@link TeamScoreCalculator#POWER_DIVISOR} - per the user's own formula (added
      * 2026-09-11, see cow2win-verbesserungsvorschlaege.md): generalScore +
      * power / 100 000.
      */
     public double sortScore() {
         double generalScoreSum = heroes.stream().mapToDouble(h -> h.generalScore().value()).sum();
-        return generalScoreSum + totalPower() / SORT_SCORE_POWER_DIVISOR;
+        return generalScoreSum + totalPower() / TeamScoreCalculator.POWER_DIVISOR;
     }
 }

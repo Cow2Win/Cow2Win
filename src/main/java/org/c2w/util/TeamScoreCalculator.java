@@ -33,8 +33,15 @@ import java.util.List;
  */
 public final class TeamScoreCalculator {
 
-    /** Mirrors {@code HeroTeam}'s/{@code TitanTeam}'s own (private) SORT_SCORE_POWER_DIVISOR exactly - kept in sync manually. */
-    private static final double POWER_DIVISOR = 100_000.0;
+    /**
+     * Divisor a team's totalPower is scaled down by before it is added to a
+     * score - totalPower is typically five/six digits, while every
+     * per-member score lives on {@link org.c2w.data.model.CowScoreTier}'s
+     * 0.4-0.9 grid, so this brings both terms to a comparable order of
+     * magnitude. The single source of this value: {@link HeroTeam#sortScore()}
+     * and {@link TitanTeam#sortScore()} use it too.
+     */
+    public static final double POWER_DIVISOR = 100_000.0;
 
     private TeamScoreCalculator() {
     }

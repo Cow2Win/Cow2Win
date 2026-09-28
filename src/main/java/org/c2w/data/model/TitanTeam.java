@@ -1,5 +1,7 @@
 package org.c2w.data.model;
 
+import org.c2w.util.TeamScoreCalculator;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -70,14 +72,11 @@ public record TitanTeam(
         return score;
     }
 
-    /** See {@link HeroTeam#SORT_SCORE_POWER_DIVISOR} - identical reasoning, here for titan teams. */
-    private static final double SORT_SCORE_POWER_DIVISOR = 100_000.0;
-
     /**
      * The TITAN-side counterpart of {@link HeroTeam#sortScore()}, used the
      * same way to pick a team for a fortification without a buff: the sum of
      * every titan's {@link Titan#generalScore()} plus {@link #totalPower()}
-     * scaled down via {@link #SORT_SCORE_POWER_DIVISOR} - same formula, same
+     * scaled down via {@link TeamScoreCalculator#POWER_DIVISOR} - same formula, same
      * treatment as the hero side (per the user's explicit request, 2026-09-11,
      * see cow2win-verbesserungsvorschlaege.md: titans get "die gleiche
      * Behandlung" as heroes here), now that {@link Titan#generalScore()}
@@ -85,6 +84,6 @@ public record TitanTeam(
      */
     public double sortScore() {
         double generalScoreSum = titans.stream().mapToDouble(t -> t.generalScore().value()).sum();
-        return generalScoreSum + totalPower() / SORT_SCORE_POWER_DIVISOR;
+        return generalScoreSum + totalPower() / TeamScoreCalculator.POWER_DIVISOR;
     }
 }
