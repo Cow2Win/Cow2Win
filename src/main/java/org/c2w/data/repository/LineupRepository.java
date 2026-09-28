@@ -52,7 +52,7 @@ public class LineupRepository {
 
     /**
      * Deletes the lineup file at the given path (see
-     * {@code org.tdi.cow2.gui.ToolbarPanel#onRemoveLineup}, added
+     * {@code org.c2w.gui.Cow2Frame#onRemoveLineup}, added
      * 2026-09-03).
      *
      * @throws IOException if the file does not exist or cannot be deleted

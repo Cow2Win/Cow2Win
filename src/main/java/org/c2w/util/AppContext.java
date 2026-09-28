@@ -55,7 +55,7 @@ public class AppContext {
      * one call - use this (rather than {@link #setGuild} alone) whenever the
      * guild being set was loaded from a DIFFERENT file than
      * {@link #guildFilePath()} currently holds (e.g.
-     * {@code org.tdi.cow2.gui.ToolbarPanel}'s guild combo box switching to
+     * {@code org.c2w.gui.ToolbarPanel}'s guild combo box switching to
      * another guild folder under workspace/), so the two fields always
      * describe the same file and never drift apart.
      */
@@ -92,7 +92,7 @@ public class AppContext {
      * Replaces both the currently open lineup and the file it belongs to, in
      * one call - use this (rather than {@link #setLineup} alone) whenever
      * the lineup being set was loaded from a DIFFERENT file than
-     * {@link #lineupFilePath()} currently holds (e.g. {@code org.tdi.cow2.gui.ToolbarPanel}'s
+     * {@link #lineupFilePath()} currently holds (e.g. {@code org.c2w.gui.ToolbarPanel}'s
      * lineup combo box switching to another ".lineup" file in the guild
      * folder), so the two fields always describe the same file and never
      * drift apart.

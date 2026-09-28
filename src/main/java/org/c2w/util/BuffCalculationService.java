@@ -166,7 +166,7 @@ public class BuffCalculationService {
      * {@link #calculateBuffForFortification} does per fortification, just
      * summed over every TITAN-type {@link Lineup.Entry} in the lineup
      * instead of filtered down to one fortification. Used by
-     * {@code org.tdi.cow2.gui.LineupSummaryPanel} (added 2026-09-03).
+     * {@code org.c2w.gui.fort.LineupSummaryPanel} (added 2026-09-03).
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Titans and their elements)

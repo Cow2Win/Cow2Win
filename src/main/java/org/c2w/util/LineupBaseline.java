@@ -13,7 +13,7 @@ import org.c2w.data.model.Lineup;
  * moment a ".lineup" file is (re)loaded (see
  * {@link AppContext#set(Lineup, java.nio.file.Path)}), so that later - once
  * the user has changed the in-memory lineup via
- * TeamsOverviewPanel/ToolbarPanel (team assignments, algorithm runs, "clear
+ * the value overview dialogs/ToolbarPanel (team assignments, algorithm runs, "clear
  * lineup", ...) - the difference to what is currently saved on disk can be
  * computed per fortification on demand via {@link #diffFrom}, without
  * re-reading/re-parsing the file. Not yet surfaced in the GUI; that is

@@ -309,7 +309,7 @@ public class SettingsDialog extends JDialog {
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built
-        // once at startup, see ToolbarPanel/TeamsOverviewPanel) still needs
+        // once at startup, see ToolbarPanel/Cow2Frame) still needs
         // a restart to actually re-render with it - see the notice below.
         LanguageService.resetCache();
         confirmed = true;

@@ -15,9 +15,8 @@ public class GuiUtils {
     /**
      * Custom UIManager key - not a built-in Swing/L&amp;F key, namespaced with
      * "Cow2Win." so it can never collide with one - for the background color
-     * of TeamsOverviewPanel's hero/titan table cells (see its
-     * PowerCellRenderer/FortificationCellRenderer/MembersCellRenderer/
-     * PlainCellRenderer). Registered once below in {@link #setGUIConstants()},
+     * of the hero/titan team table cells in {@code HeroValueOverviewDialog}/
+     * {@code TitanValueOverviewDialog} (see their cell renderers). Registered once below in {@link #setGUIConstants()},
      * the same way "TabbedPane.selected" already is, instead of hardcoding the
      * color into each of those renderers.
      */

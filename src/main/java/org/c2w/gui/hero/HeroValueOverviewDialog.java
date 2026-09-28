@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  * cell renderer Javadocs) rather than sharing code across two otherwise-
  * independent dialogs.
  *
- * <p>Column 0 ("Power") is editable, the same way {@code TeamsOverviewPanel}'s
+ * <p>Column 0 ("Power") is editable, the same way the former {@code TeamsOverviewPanel} (removed 2026-09-20)'s
  * own table makes it editable (see {@link HeroValueTableModel#isCellEditable}) -
  * unlike that panel, this dialog has no toolbar of its own to host a "save
  * guild" button, so {@link #buildSaveButton()} puts an equivalent
@@ -88,7 +88,7 @@ public class HeroValueOverviewDialog extends JDialog {
     /** Language file key for the label in front of {@link #buildValueModeCombo()}. */
     private static final String KEY_VALUE_MODE_LABEL = "teamsOverview.valueMode";
 
-    /** Language file key (see {@code TeamsOverviewPanel}/{@code ToolbarPanel}'s own "save guild" button) for {@link #buildSaveButton()}'s tooltip - reused since this button does the exact same thing. */
+    /** Language file key (see {@code ToolbarPanel}'s own "save guild" button) for {@link #buildSaveButton()}'s tooltip - reused since this button does the exact same thing. */
     private static final String KEY_SAVE_GUILD = "teamsOverview.saveGuild";
 
     /** Classpath path of {@link #buildSaveButton()}'s icon (see {@link IconLoader}) - same file {@code ToolbarPanel}'s own "save guild" button uses. */

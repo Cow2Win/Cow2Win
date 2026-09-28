@@ -215,7 +215,7 @@ public final class FortificationEntryDialog extends JDialog {
             // out too; performSave then drops the row entirely (totalPower
             // == 0) instead of re-creating its Lineup.Entry, so the member's
             // team loses its tie to this fortification once "save" is
-            // clicked (which also refreshes TeamsOverviewPanel and friends
+            // clicked (which also refreshes the other views
             // via onSaved, same as any other save from this dialog).
             combo.addActionListener(e -> {
                 if (combo.getSelectedItem() == null) {

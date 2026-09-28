@@ -6,7 +6,7 @@ import java.util.List;
  * A fortification type (catalog entry, like Hero/Titan - identical across all guilds).
  *
  * row/column: position of this fortification in the map overview grid (see
- * {@link org.tdi.cow2.gui.GridPanel}), 0-based. Purely a layout concern
+ * {@link org.c2w.gui.common.GridPanel}), 0-based. Purely a layout concern
  * (which grid cell this fortification occupies) - unrelated to
  * prerequisites/route, maintained manually by the user.
  *

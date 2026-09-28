@@ -5,12 +5,12 @@ import java.util.List;
 
 /**
  * Persisted result of ONE assignment run (see
- * org.tdi.cow2.eval.LineupAlgorithm, added 2026-09-03): which team was
+ * {@link org.c2w.eval.LineupAlgorithm}, added 2026-09-03): which team was
  * assigned to which fortification. Purely data-holding like {@link Guild} -
  * references teams/fortifications only via ids (see Entry), no object
  * references, so that this file stays independent of a particular Guild
  * instance in memory and can later be read back in by other modules (see
- * org.tdi.cow2.repository.LineupRepository).
+ * {@link org.c2w.data.repository.LineupRepository}).
  *
  * A team is identified via teamMemberId + teamType + teamIndex alone - per
  * the user's explicit request (2026-09-20), an {@link Entry} is a pure
@@ -24,14 +24,16 @@ import java.util.List;
  * (heroTeams/titanTeams) is enough (see {@link GuildMember#teamLabel(int)}).
  *
  * algorithmName is the displayName() of the algorithm that produced this
- * result (see org.tdi.cow2.eval.LineupAlgorithm#displayName()) - additionally
- * feeds into the file name on save (see org.tdi.cow2.data.LineupRepository).
+ * result (see {@link org.c2w.eval.LineupAlgorithm#displayName()}) - additionally
+ * feeds into the file name on save (see {@link org.c2w.data.repository.LineupRepository}).
  * Empty ("") means no algorithm has (yet) produced this lineup - e.g. the
  * default lineup created together with a new guild (see
- * org.tdi.cow2.Cow2App#createInitialLineupFile) or one built purely from
- * manual picks in org.tdi.cow2.gui.TeamsOverviewPanel's "Fortification"
- * column, never run through an algorithm. Since an algorithm (see
- * org.tdi.cow2.eval.LineupAlgorithm#run) only ADDS entries for teams that
+ * {@link org.c2w.C2WApp#createInitialLineupFile}) or one built purely from
+ * manual picks (e.g. the "Fortification" column of {@link
+ * org.c2w.gui.hero.HeroValueOverviewDialog}/{@link
+ * org.c2w.gui.titan.TitanValueOverviewDialog}), never run through an
+ * algorithm. Since an algorithm (see {@link
+ * org.c2w.eval.LineupAlgorithm#run}) only ADDS entries for teams that
  * had none yet, algorithmName really means "produced/last extended by",
  * not "every entry in here came from this one algorithm" - a lineup can mix
  * manual picks and algorithm-added entries; this field just names whichever
@@ -66,9 +68,8 @@ public record Lineup(
     }
 
     /**
-     * A single team-to-fortification assignment (see
-     * org.tdi.cow2.eval.LineupAssigner.Assignment, but referenced here only
-     * via ids/index instead of object references - see the class comment).
+     * A single team-to-fortification assignment, referenced only via
+     * ids/index instead of object references - see the class comment.
      * teamMemberId + teamType + teamIndex is the assigned team's primary key
      * (see {@link HeroTeam#index()}/{@link TitanTeam#index()}) - deliberately
      * nothing else: no totalPower/buffFitScore/weightedScore snapshot, so an

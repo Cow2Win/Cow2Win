@@ -9,10 +9,10 @@ import java.util.List;
  * a valid state).
  *
  * season / seasonStart: this guild's current Clash of Worlds season - entered
- * manually by the user via the GUI (see GuildEditorFrame), not determined
+ * manually by the user via the GUI (see {@link org.c2w.gui.guild.GuildEditorDialog}), not determined
  * automatically. season = 0 and seasonStart = null mean "not set yet". The
  * season value additionally feeds into the suggested file name on save (see
- * GuildEditorFrame#onSaveGuild).
+ * {@code GuildEditorDialog#onSaveGuild}).
  */
 public record Guild(
         String id,

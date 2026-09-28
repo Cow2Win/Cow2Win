@@ -4,8 +4,27 @@
 
 A desktop companion tool for Hero Wars: Dominion Era's Clash of Worlds event.
 It keeps a guild's roster (members, hero/titan teams), computes a suggested
-lineup (which team defends which fortification) via
-`BestPossibleLineupAlgorithm`, and exports the result as an HTML report.
+lineup (which team defends which fortification) and exports the result as an
+HTML report. There are fewer defense slots than teams (55 hero slots for up
+to 90 hero teams, 40 titan slots for up to 60 titan teams), so the core job
+is picking the best lineup and leaving the weakest teams out.
+
+Lineup strategies (`org.c2w.eval`, registered in `LineupAlgorithms`) are
+chosen separately for the hero side and the titan side (since 2026-09-24):
+
+- **Best possible lineup** (`BestPossibleLineupAlgorithm`) - bridge first
+  with the strongest teams, then fortifications by strategic importance.
+- **Balanced defense** (`BalancedDefenseAlgorithm`) - always feeds the
+  currently weakest open fortification.
+- **CowScore maximizer** (`CowScoreMaximizerAlgorithm`) - one consistent
+  measure (CowScore plus power) for every decision.
+- **Consensus picks** (`ConsensusAlgorithm`) - only assignments all three
+  strategies above agree on; everything else is left for a manual decision.
+- **Manual** (`ManualLineupAlgorithm`) - leaves that side to manual picks.
+
+All strategies are additive: they never change an existing assignment.
+Comparing two lineups (`LineupComparisonDialog`) and turning the difference
+into in-game steps (`LineupChangePlanDialog`) is built in as well.
 
 ## Requirements
 
@@ -224,6 +243,15 @@ resolving against the new `resources/` folder next to the exe).
   `BackupService` (first-run creation, same-day/same-ISO-week skip,
   recreation once stale, and not backing up a backup directory nested
   inside the workspace).
+- `SideSpecificLineupAlgorithmsTest` - the hero/titan split of the lineup
+  strategies: each side only fills its own fortifications, both sides can be
+  combined freely (including `ManualLineupAlgorithm`), and the combined
+  `algorithmName` records both.
+- `UpdateCheckerVersionTest` - version parsing/comparison of
+  `UpdateChecker`, without touching the network.
+- `CowScoreFilesTest` - the shared `cowScore.json`/`titanCowScore.json`
+  format (parsing, tolerance for unknown tiers, sparse writing, round trip)
+  and loading the real titan catalog.
 
 ## More context
 
