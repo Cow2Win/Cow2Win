@@ -39,20 +39,16 @@ import java.util.stream.Collectors;
  * already use generalScore instead (see its Javadoc) and are therefore not
  * listed among these per-fortification rows.
  *
- * <p>Per the "sparse file" convention already used for {@link
- * Hero#generalScore()} (see {@link CowScore}'s Javadoc - {@link
- * CowScoreTier#GOOD} is the default and is never written to disk), picking
- * {@link CowScoreTier#GOOD} in either kind of combo box is equivalent to
- * having no override at all: for a fortification row, selecting it removes
- * any entry from that hero's working scores (see
- * {@link #buildFortificationRow}); for generalScore there is nothing to
- * remove (it is a single field, not a sparse map), but
- * {@link HeroRepository} drops a {@code STANDARD}-valued
- * {@code generalScore}/{@code buffFitScores} entry on save regardless (see
- * {@code HeroRepository#cowScoreToTree}/{@code #buffFitScoresToTree}) - so
- * {@code cowScore.json} (not {@code heroes.json} - see {@link
- * HeroRepository}'s class Javadoc for why the two are separate files) only
- * ever grows an entry for a deliberately-set, non-default tier.
+ * <p>Picking {@link CowScoreTier#GOOD} in a fortification row's combo box is
+ * equivalent to having no override at all: selecting it removes any entry
+ * from that hero's working scores (see {@link #buildFortificationRow}). The
+ * generalScore is a single field and is stored as selected. Saving writes
+ * every hero to the workspace copy of {@code cowScore.json} (not {@code
+ * heroes.json} - see {@link HeroRepository}'s class Javadoc for why the two
+ * are separate files; see {@code CowScoreFiles#toTree} for the format).
+ *
+ * <p>The toolbar's "restore defaults" button resets the values of every hero
+ * to the defaults shipped inside the jar - see {@link #onRestoreDefaults()}.
  */
 public final class HeroCoreScoreDialog extends JDialog {
 
@@ -62,7 +58,15 @@ public final class HeroCoreScoreDialog extends JDialog {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save" toolbar button (see {@link #onSaveScores()}). */
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
 
+    /** Language file key for the tooltip of the "restore defaults" toolbar button (see {@link #onRestoreDefaults()}). */
+    private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
+
+    /** Language file key for the confirmation question of {@link #onRestoreDefaults()}. */
+    private static final String KEY_RESTORE_DEFAULTS_CONFIRM = "heroBuffFitScores.restoreDefaultsConfirm";
+
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
+
+    private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
 
     private static final int TOOLBAR_ICON_SIZE = 20;
 
@@ -139,6 +143,10 @@ public final class HeroCoreScoreDialog extends JDialog {
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_SCORES));
         saveButton.addActionListener(e -> onSaveScores());
         buttons.add(saveButton);
+        FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        restoreDefaultsButton.setToolTipText(LanguageService.displayName(KEY_RESTORE_DEFAULTS));
+        restoreDefaultsButton.addActionListener(e -> onRestoreDefaults());
+        buttons.add(restoreDefaultsButton);
         panel.add(buttons, BorderLayout.WEST);
         return panel;
     }
@@ -335,6 +343,41 @@ public final class HeroCoreScoreDialog extends JDialog {
      */
     private static String roleLabel(Role role) {
         return LanguageService.displayName("role." + role.name());
+    }
+
+    /**
+     * Handler of the "restore defaults" toolbar button: after a confirmation,
+     * replaces the working values of <em>every</em> hero (not only the ones
+     * opened so far) with the shipped defaults from {@link
+     * HeroRepository#loadDefaultCowScores()} and refreshes the detail panel
+     * of the selected hero. Like every other edit in this dialog, nothing is
+     * written until the user saves (see {@link #onSaveScores()}), so closing
+     * the dialog without saving discards the reset again.
+     */
+    private void onRestoreDefaults() {
+        int answer = JOptionPane.showConfirmDialog(this,
+                LanguageService.displayName(KEY_RESTORE_DEFAULTS_CONFIRM),
+                LanguageService.displayName("common.confirmTitle"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        Map<String, CowScore> defaults = HeroRepository.loadDefaultCowScores();
+        for (Hero hero : heroCatalog) {
+            CowScore cowScore = defaults.getOrDefault(hero.id(), CowScore.DEFAULT);
+            workingGeneralScores.put(hero.id(), cowScore.generalScore());
+            // GOOD means "no override" in this dialog - see buildFortificationRow.
+            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>();
+            cowScore.buffFitScores().forEach((fortificationId, tier) -> {
+                if (tier != CowScoreTier.GOOD) {
+                    buffFitScores.put(fortificationId, tier);
+                }
+            });
+            workingScores.put(hero.id(), buffFitScores);
+        }
+        onHeroSelected(heroList.getSelectedValue());
+        Logger.log("CowScore dialog: restored the default values for every hero (not saved yet)");
     }
 
     private static String heroLabel(Hero hero) {

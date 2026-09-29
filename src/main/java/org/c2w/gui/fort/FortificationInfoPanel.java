@@ -13,6 +13,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only information about one fortification (buff, prerequisites,
+ * strategic importance and the hero CowScore groups), shown at the top of
+ * {@link FortificationEntryDialog}. The fortification's values are fixed -
+ * nothing here can be edited (see {@code FortificationRepository}).
+ */
 public class FortificationInfoPanel extends JPanel {
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link CowScoreTier#NEGATIVE} hero group (see {@link #buildHeroScorePanel()}). */
@@ -32,8 +38,6 @@ public class FortificationInfoPanel extends JPanel {
 
     private final Fortification fortification;
 
-    //private final JComboBox<Integer> strategicImportanceCombo = new JComboBox<>(STRATEGIC_IMPORTANCE_VALUES);
-
     public FortificationInfoPanel(Fortification fortification) {
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationInfoPanel needs a fortification");
@@ -48,16 +52,6 @@ public class FortificationInfoPanel extends JPanel {
         add(infoPanel);
         add(Box.createHorizontalStrut(12));
         add(heroScorePanel);
-
-        loadFromFortification();
-    }
-
-    private void loadFromFortification() {
-        //strategicImportanceCombo.setSelectedItem(clampToStrategicImportanceRange(fortification.strategicImportance()));
-    }
-
-    private static int clampToStrategicImportanceRange(int value) {
-        return Math.max(1, Math.min(10, value));
     }
 
     private JPanel buildInfoPanel() {
@@ -112,7 +106,7 @@ public class FortificationInfoPanel extends JPanel {
      * {@link CowScoreTier#NEGATIVE} on top ("rather avoid these"), heroes with
      * {@link CowScoreTier#GOOD} or {@link CowScoreTier#GREAT} below ("good
      * fits"), per {@link #scoreTierFor(Hero)}. Purely informational
-     * (no editing hook, unlike {@link #applyEditsTo}) - rebuilt fresh from
+     * - rebuilt fresh from
      * the current hero catalog every time this panel is constructed.
      */
     private JPanel buildHeroScorePanel() {
@@ -212,15 +206,5 @@ public class FortificationInfoPanel extends JPanel {
         return LanguageService.displayName(hero.id());
     }
 
-
-    /**
-     * Applies this panel's edits (currently none - {@code strategicImportanceCombo} is
-     * commented out above) to {@code base}, returning the resulting {@link Fortification}.
-     * Kept as its own method/hook (see {@link org.c2w.gui.fort.FortificationEntryDialog}'s
-     * javadoc on its {@code infoPanel} field) for when a catalog field becomes editable here again.
-     */
-    public Fortification applyEditsTo(Fortification base) {
-        return base;
-    }
 }
 

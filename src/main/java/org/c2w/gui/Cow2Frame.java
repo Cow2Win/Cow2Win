@@ -7,9 +7,11 @@ import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.flag.WarFlagCoreScoreDialog;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroCoreScoreDialog;
+import org.c2w.gui.pet.PetCoreScoreDialog;
 import org.c2w.gui.titan.TitanCoreScoreDialog;
 import org.c2w.util.*;
 
@@ -151,6 +153,14 @@ public class Cow2Frame extends JFrame {
         JMenuItem titanBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.titanCowScore"));
         titanBuffFitScoresItem.addActionListener(e -> onOpenTitanBuffFitScores());
         fileMenu.add(titanBuffFitScoresItem);
+
+        JMenuItem petBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.petCowScore"));
+        petBuffFitScoresItem.addActionListener(e -> onOpenPetBuffFitScores());
+        fileMenu.add(petBuffFitScoresItem);
+
+        JMenuItem warFlagBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.warFlagCowScore"));
+        warFlagBuffFitScoresItem.addActionListener(e -> onOpenWarFlagBuffFitScores());
+        fileMenu.add(warFlagBuffFitScoresItem);
 
         JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
         showLogItem.addActionListener(e -> onShowLog());
@@ -513,6 +523,16 @@ public class Cow2Frame extends JFrame {
     /** Opens {@link TitanCoreScoreDialog} - the titan counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
     private void onOpenTitanBuffFitScores() {
         new TitanCoreScoreDialog(this).setVisible(true);
+    }
+
+    /** Opens {@link PetCoreScoreDialog} - the pet counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
+    private void onOpenPetBuffFitScores() {
+        new PetCoreScoreDialog(this).setVisible(true);
+    }
+
+    /** Opens {@link WarFlagCoreScoreDialog} - the war flag counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
+    private void onOpenWarFlagBuffFitScores() {
+        new WarFlagCoreScoreDialog(this).setVisible(true);
     }
 
     /**

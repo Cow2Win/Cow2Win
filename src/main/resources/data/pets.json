@@ -1,0 +1,34 @@
+[
+  {
+    "id": "albus",
+    "image": "Albus.png"
+  },
+  {
+    "id": "axel",
+    "image": "Axel.png"
+  },
+  {
+    "id": "biscuit",
+    "image": "Biscuit.png"
+  },
+  {
+    "id": "cain",
+    "image": "Cain.png"
+  },
+  {
+    "id": "fenris",
+    "image": "Fenris.png"
+  },
+  {
+    "id": "khorus",
+    "image": "Khorus.png"
+  },
+  {
+    "id": "merlin",
+    "image": "Merlin.png"
+  },
+  {
+    "id": "oliver",
+    "image": "Oliver.png"
+  }
+]

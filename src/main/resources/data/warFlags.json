@@ -1,0 +1,46 @@
+[
+  {
+    "id": "flag-bastion",
+    "image": "Bastion.png"
+  },
+  {
+    "id": "flag-decline",
+    "image": "Decline.png"
+  },
+  {
+    "id": "flag-false-immortality",
+    "image": "FalseImmortality.png"
+  },
+  {
+    "id": "flag-fervor",
+    "image": "Fervor.png"
+  },
+  {
+    "id": "flag-frost",
+    "image": "Frost.png"
+  },
+  {
+    "id": "flag-pet-strength",
+    "image": "PetStrength.png"
+  },
+  {
+    "id": "flag-readiness",
+    "image": "Readiness.png"
+  },
+  {
+    "id": "flag-recovery",
+    "image": "Recovery.png"
+  },
+  {
+    "id": "flag-steel-storm",
+    "image": "SteelStorm.png"
+  },
+  {
+    "id": "flag-swift-warriors",
+    "image": "SwiftWarriors.png"
+  },
+  {
+    "id": "flag-vanguard",
+    "image": "Vanguard.png"
+  }
+]

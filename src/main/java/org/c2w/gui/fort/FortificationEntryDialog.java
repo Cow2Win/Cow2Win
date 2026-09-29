@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class FortificationEntryDialog extends JDialog {
 
@@ -56,11 +55,9 @@ public final class FortificationEntryDialog extends JDialog {
     private final List<MemberDraft> memberOptions;
 
     /**
-     * Catalog fields (e.g. strategicImportance) editable directly
-     * above {@link #rowsPanel} (see constructor) - folded into
-     * {@link #performSave}'s own save via
-     * {@link FortificationInfoPanel#applyEditsTo(Fortification)} rather than
-     * needing a separate save action of its own.
+     * Read-only catalog information (buff, prerequisites, strategic
+     * importance, hero scores) shown above {@link #rowsPanel} - the
+     * fortification's own values are fixed and never saved from here.
      */
     private final FortificationInfoPanel infoPanel;
 
@@ -509,13 +506,7 @@ public final class FortificationEntryDialog extends JDialog {
                 currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
         Guild updatedGuild = GuildDraftConverter.toGuild(draft);
 
-        Fortification updatedFortification = infoPanel.applyEditsTo(fortification);
-        List<Fortification> updatedCatalog = FortificationRepository.findAll().stream()
-                .map(f -> f.id().equals(updatedFortification.id()) ? updatedFortification : f)
-                .collect(Collectors.toList());
-
         try {
-            FortificationRepository.save(updatedCatalog);
             GuildRepository.save(updatedGuild, appContext.guildFilePath());
             LineupRepository.save(updatedLineup, appContext.lineupFilePath());
             appContext.setGuild(updatedGuild);

@@ -8,13 +8,16 @@ import java.io.IOException;
 /**
  * Reads {@code data/catalog-version.json} - a small sidecar file that
  * records which Hero Wars: Dominion Era patch/game state
- * {@code heroes.json}, {@code titans.json} and {@code fortifications.json}
- * were last checked against.
+ * {@code heroes.json}, {@code titans.json}, {@code pets.json},
+ * {@code warFlags.json} and {@code fortifications.json} were last checked
+ * against.
  *
  * <p>Kept as a separate file rather than a "dataVersion" field inside those
- * three catalog files themselves, because all three currently have a JSON
+ * five catalog files themselves, because all five currently have a JSON
  * <b>array</b> as their root (see {@code HeroRepository}/{@code
- * TitanRepository}/{@code FortificationRepository}'s {@code parse*Json}),
+ * TitanRepository}/{@code PetRepository}/{@code WarFlagRepository}/{@code
+ * FortificationRepository}'s
+ * {@code parse*Json}),
  * so adding a top-level key there would mean restructuring every
  * repository's parse/save round-trip - a real change with a real
  * regression risk. A sidecar file gets the same "state the data at a

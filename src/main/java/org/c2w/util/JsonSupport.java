@@ -55,9 +55,10 @@ public final class JsonSupport {
     /**
      * Resolves the on-disk location of a writable catalog/demo data file - used where a real
      * {@link Path} is needed (via {@link Files}/{@link #writeJsonFile}), not just a classpath
-     * resource: {@code HeroRepository}/{@code FortificationRepository}'s {@code save(...)}
-     * (the catalog-editing dialogs, e.g. {@code HeroCoreScoreDialog}) and {@code C2WApp}'s
-     * first-run demo guild/lineup.
+     * resource: {@code C2WApp}'s first-run demo guild/lineup. (The CowScore files no longer
+     * go through here - since 2026-09-29 they live in the workspace folder, see {@code
+     * CowScoreFiles} - and {@code fortifications.json} is read-only, see {@code
+     * FortificationRepository}.)
      *
      * <p>Always a path relative to the current working directory, never absolute or tied to
      * one specific layout, so the same code works both:
@@ -75,10 +76,8 @@ public final class JsonSupport {
      *
      * <p>Note this only decides WHERE to read/write the file - it does not make edits saved
      * this way visible to the normal catalog loading in {@link #readClasspathResource}, which
-     * always reads the classpath copy embedded in the jar. Callers that already hold the
-     * updated data in memory (as both current {@code save(...)} implementations do) are
-     * unaffected by that; it would only matter for picking up such an edit after restarting
-     * the packaged app without rebuilding it.
+     * always reads the classpath copy embedded in the jar - which is why no catalog file is
+     * written through here any more.
      *
      * @param relativeParts path segments under the data folder, e.g. {@code "data",
      *         "heroes.json"} - joined the same way as {@link Paths#get(String, String...)}.

@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
+import org.c2w.util.Config;
 import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
@@ -27,7 +28,10 @@ import java.util.stream.Collectors;
  *     <li>{@code cowScore.json} - Thorsten's manually curated {@link
  *     CowScore} per hero (see that type's Javadoc), edited exclusively via
  *     {@code HeroCoreScoreDialog} and persisted through {@link
- *     #saveCowScores}.</li>
+ *     #saveCowScores}. Since 2026-09-29 the copy the app reads and writes
+ *     lives in the workspace folder (see {@link #cowScoreFile()}); the copy
+ *     inside the jar only holds the shipped defaults it is created from -
+ *     see {@link CowScoreFiles}' class Javadoc.</li>
  * </ul>
  * Keeping these in two files means a future wholesale refresh of {@code
  * heroes.json} (e.g. pulling updated master data from GitHub) can never
@@ -41,8 +45,8 @@ public class HeroRepository {
     private static final String HEROES_JSON_PATH = "/data/heroes.json";
     private static final String COW_SCORE_JSON_PATH = "/data/cowScore.json";
 
-    /** See {@link JsonSupport#resolveDataFile} for how this resolves in the IDE vs. the packaged app. */
-    private static final Path COW_SCORE_FILE_PATH = JsonSupport.resolveDataFile("data", "cowScore.json");
+    /** File name of the workspace copy of the hero CowScores - see {@link #cowScoreFile()}. */
+    private static final String COW_SCORE_FILE_NAME = "cowScore.json";
 
     /** Classpath-relative folder every hero's "image" JSON field is resolved against - see {@link #parseHeroObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/heroes/";
@@ -87,17 +91,14 @@ public class HeroRepository {
     }
 
     /**
-     * Persists every hero's current {@link Hero#cowScore()} to {@code
-     * cowScore.json} (pretty-printed, see {@link JsonSupport#writeJsonFile})
+     * Persists every hero's current {@link Hero#cowScore()} to the
+     * workspace copy of {@code cowScore.json} (see {@link #cowScoreFile()};
+     * pretty-printed, see {@link JsonSupport#writeJsonFile})
      * and makes {@code catalog} the in-memory catalog for subsequent {@link
-     * #findById}/{@link #findAll} calls - same round-trip convention as
-     * {@code FortificationRepository#save}. Deliberately does NOT touch
+     * #findById}/{@link #findAll} calls. Deliberately does NOT touch
      * {@code heroes.json} - see this class's own Javadoc for why the two
-     * files are kept separate. See {@link CowScoreFiles#toTree} for the one rule
-     * this enforces on the way out: a hero whose {@link Hero#cowScore()} is
-     * {@link CowScore#isDefault()} gets no entry at all in {@code
-     * cowScore.json}, keeping it sparse regardless of what a caller (e.g.
-     * {@code HeroCoreScoreDialog}) passes in.
+     * files are kept separate. Every hero in {@code catalog} gets an entry,
+     * see {@link CowScoreFiles#toTree} for the exact format.
      */
     public static synchronized void saveCowScores(List<Hero> catalog) throws IOException {
         if (catalog == null) {
@@ -108,13 +109,35 @@ public class HeroRepository {
         for (Hero hero : catalog) {
             cowScoresById.put(hero.id(), hero.cowScore());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), COW_SCORE_FILE_PATH);
+        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), cowScoreFile());
 
         Map<String, Hero> updated = new LinkedHashMap<>();
         for (Hero hero : catalog) {
             updated.put(hero.id(), hero);
         }
         heroesById = updated;
+    }
+
+    /**
+     * The shipped default CowScore of every known hero (from the {@code
+     * cowScore.json} inside the jar, {@link CowScore#DEFAULT} for a hero
+     * without an entry there) - what {@code HeroCoreScoreDialog}'s "restore
+     * defaults" button resets its values to. Only reads, never writes: the
+     * workspace copy is not touched until the dialog is saved.
+     */
+    public static Map<String, CowScore> loadDefaultCowScores() {
+        ensureLoaded();
+        return CowScoreFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH, heroesById.keySet(), "hero");
+    }
+
+    /**
+     * The workspace copy of {@code cowScore.json} - directly in {@link
+     * Config#getWorkspaceDir()}, resolved fresh on every call since the
+     * workspace can be reconfigured at runtime (it only takes effect for the
+     * loaded catalog after a restart, like every other workspace change).
+     */
+    public static Path cowScoreFile() {
+        return Config.getWorkspaceDir().resolve(COW_SCORE_FILE_NAME);
     }
 
     // --- private ---
@@ -132,8 +155,15 @@ public class HeroRepository {
     private static Map<String, Hero> loadHeroes() {
         try {
             String heroesJson = JsonSupport.readClasspathResource(HeroRepository.class, HEROES_JSON_PATH);
-            Map<String, CowScore> cowScores = CowScoreFiles.load(HeroRepository.class, COW_SCORE_JSON_PATH, "hero");
-            return parseHeroesJson(heroesJson, cowScores);
+            Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());
+            Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
+                    masterData.keySet(), "hero");
+            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "hero");
+            Map<String, Hero> result = new LinkedHashMap<>();
+            for (Hero hero : masterData.values()) {
+                result.put(hero.id(), new Hero(hero.id(), hero.roles(), hero.imagePath(), cowScores.get(hero.id())));
+            }
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("Failed to load hero catalog from " + HEROES_JSON_PATH, e);
         }

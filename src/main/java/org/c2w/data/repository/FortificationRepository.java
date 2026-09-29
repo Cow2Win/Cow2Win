@@ -7,15 +7,17 @@ import org.c2w.util.JsonSupport;
 import org.c2w.util.Logger;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only access to the fortification catalog ({@code fortifications.json}
+ * inside the jar). All values in it are fixed (decided 2026-09-29): the app
+ * offers no way to edit or save the catalog, it can only be changed in the
+ * source tree and shipped with a new build.
+ */
 public class FortificationRepository {
     private static final String JSON_PATH = "/data/fortifications.json";
-
-    /** See {@link JsonSupport#resolveDataFile} for how this resolves in the IDE vs. the packaged app. */
-    private static final Path CATALOG_FILE_PATH = JsonSupport.resolveDataFile("data", "fortifications.json");
 
     private static volatile Map<String, Fortification> fortificationsByid;
 
@@ -54,20 +56,6 @@ public class FortificationRepository {
         synchronized (FortificationRepository.class) {
             fortificationsByid = null;
         }
-    }
-
-    public static synchronized void save(List<Fortification> catalog) throws IOException {
-        if (catalog == null) {
-            throw new IllegalArgumentException("catalog must not be null");
-        }
-
-        JsonSupport.writeJsonFile(catalogToTree(catalog), CATALOG_FILE_PATH);
-
-        Map<String, Fortification> updated = new LinkedHashMap<>();
-        for (Fortification f : catalog) {
-            updated.put(f.id(), f);
-        }
-        fortificationsByid = updated;
     }
 
     // --- private: loading ---
@@ -245,48 +233,5 @@ public class FortificationRepository {
             Logger.log("fortifications.json: could not parse fortification buff, skipping it: " + e.getMessage());
             return null;
         }
-    }
-
-    // --- private: writing (see #save) ---
-
-    private static JsonArray catalogToTree(List<Fortification> catalog) {
-        JsonArray tree = new JsonArray();
-        for (Fortification f : catalog) {
-            tree.add(fortificationToTree(f));
-        }
-        return tree;
-    }
-
-    private static JsonObject fortificationToTree(Fortification f) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("id", f.id());
-        obj.addProperty("type", f.type().name());
-        obj.addProperty("capacity", f.capacity());
-        obj.addProperty("captureBonus", f.captureBonus());
-        obj.addProperty("row", f.row());
-        obj.addProperty("column", f.column());
-        obj.add("buff", buffToTree(f.buff()));
-        obj.add("prerequisites", JsonSupport.toStringArray(f.prerequisites()));
-        obj.addProperty("strategicImportance", f.strategicImportance());
-        return obj;
-    }
-
-    private static JsonElement buffToTree(Buff buff) {
-        if (buff == null) {
-            return JsonNull.INSTANCE;
-        }
-        JsonObject obj = new JsonObject();
-        if (buff instanceof RoleBuff roleBuff) {
-            obj.addProperty("kind", "ROLE");
-            obj.addProperty("effect", roleBuff.effect().name());
-            JsonSupport.addNumber(obj, "bonusPercent", roleBuff.bonusPercent());
-            obj.addProperty("role", roleBuff.role().name());
-        } else if (buff instanceof ElementBuff elementBuff) {
-            obj.addProperty("kind", "ELEMENT");
-            obj.addProperty("effect", elementBuff.effect().name());
-            JsonSupport.addNumber(obj, "bonusPercent", elementBuff.bonusPercent());
-            obj.addProperty("element", elementBuff.element().name());
-        }
-        return obj;
     }
 }

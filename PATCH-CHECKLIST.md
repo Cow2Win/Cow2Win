@@ -1,6 +1,6 @@
 # Patch checklist
 
-Hero Wars: Dominion Era patches regularly (new heroes/titans, balance changes,
+Hero Wars: Dominion Era patches regularly (new heroes/titans/pets, balance changes,
 sometimes new Clash of Worlds fortifications or rule tweaks). Cow2Win's data
 files don't update themselves, so after any patch that could touch Clash of
 Worlds, work through this list before trusting the app's output again. It's
@@ -39,7 +39,41 @@ organized by the actual files/checks involved, not by patch-note wording.
       hand in `src/main/resources/data/titanCowScore.json` -
       NOT in `titans.json` (separate files since 2026-09-28, same as heroes).
 
-## 3. Fortification changes (`fortifications.json`) - highest risk
+## 3. New pets
+
+- [ ] Add an entry to `src/main/resources/data/pets.json`: `id` (lowercase,
+      used as the language key) and `image`. Pets have **no** roles and no
+      element - there is nothing else to fill in.
+- [ ] Avatar under `src/main/resources/images/pets/` (same
+      placeholder-fallback note as heroes - see `Pet.java`).
+- [ ] Display name in all three language files (section `# Pets` /
+      `# Familiers`). Check that the new `id` doesn't collide with an
+      existing hero, titan or fortification key - all of them share one
+      flat key namespace in the language files.
+- [ ] If the new pet deserves a deliberate `generalScore`/`buffFitScores`
+      assessment, set it via "File" > "CowScore - Pets" in-app, or by hand
+      in `src/main/resources/data/petCowScore.json` - NOT in `pets.json`
+      (same master-data/score split as heroes and titans, see
+      `PetRepository.java`).
+
+## 4. New war flags
+
+- [ ] Add an entry to `src/main/resources/data/warFlags.json`: `id`
+      (lowercase with a `flag-` prefix, e.g. `flag-bastion` - used as the
+      language key; the prefix avoids collisions like the `bastion`
+      fortification) and `image`. War flags have **no** roles and no
+      element - there is nothing else to fill in.
+- [ ] Icon under `src/main/resources/images/flags/` (same
+      placeholder-fallback note as heroes - see `WarFlag.java`).
+- [ ] Display name in all three language files (section `# Kriegsflaggen` /
+      `# War flags` / `# Drapeaux de guerre`).
+- [ ] If the new war flag deserves a deliberate `generalScore`/`buffFitScores`
+      assessment, set it via "File" > "CowScore - War Flags" in-app, or by
+      hand in `src/main/resources/data/warFlagCowScore.json` - NOT in
+      `warFlags.json` (same master-data/score split as heroes, titans and
+      pets, see `WarFlagRepository.java`).
+
+## 5. Fortification changes (`fortifications.json`) - highest risk
 
 This file drives `BestPossibleLineupAlgorithm` directly, so an error here
 silently produces a wrong "optimal" lineup rather than an obvious crash.
@@ -65,7 +99,7 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
       `Fortification.java` javadoc; the research doc got this wrong once
       before a codebase re-check).
 
-## 4. After any data change
+## 6. After any data change
 
 - [ ] Re-run `BestPossibleLineupAlgorithmTest` (`mvn test`). If the total
       fortification count changed from 20, or the unlock chain changed,

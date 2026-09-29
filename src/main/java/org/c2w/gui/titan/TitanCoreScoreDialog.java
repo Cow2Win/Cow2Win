@@ -49,8 +49,11 @@ public final class TitanCoreScoreDialog extends JDialog {
     private static final String KEY_GENERAL_SCORE = "heroBuffFitScores.generalScore";
     private static final String KEY_BUFF_FIT_SCORES_HEADER = "heroBuffFitScores.buffFitScoresHeader";
     private static final String KEY_SAVE_ERROR = "heroBuffFitScores.saveError";
+    private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
+    private static final String KEY_RESTORE_DEFAULTS_CONFIRM = "titanBuffFitScores.restoreDefaultsConfirm";
 
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
+    private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
     private static final int TOOLBAR_ICON_SIZE = 20;
 
     /** Avatar size for the titan name label in {@link #buildDetailPanel}. */
@@ -109,6 +112,10 @@ public final class TitanCoreScoreDialog extends JDialog {
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_SCORES));
         saveButton.addActionListener(e -> onSaveScores());
         buttons.add(saveButton);
+        FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        restoreDefaultsButton.setToolTipText(LanguageService.displayName(KEY_RESTORE_DEFAULTS));
+        restoreDefaultsButton.addActionListener(e -> onRestoreDefaults());
+        buttons.add(restoreDefaultsButton);
         panel.add(buttons, BorderLayout.WEST);
         return panel;
     }
@@ -271,6 +278,41 @@ public final class TitanCoreScoreDialog extends JDialog {
     /** Localized element name (language file key {@code titanElement.<NAME>}). */
     private static String elementLabel(TitanElement element) {
         return LanguageService.displayName("titanElement." + element.name());
+    }
+
+    /**
+     * Handler of the "restore defaults" toolbar button: after a confirmation,
+     * replaces the working values of <em>every</em> titan (not only the ones
+     * opened so far) with the shipped defaults from {@link
+     * TitanRepository#loadDefaultCowScores()} and refreshes the detail panel
+     * of the selected titan. Like every other edit in this dialog, nothing is
+     * written until the user saves (see {@link #onSaveScores()}), so closing
+     * the dialog without saving discards the reset again.
+     */
+    private void onRestoreDefaults() {
+        int answer = JOptionPane.showConfirmDialog(this,
+                LanguageService.displayName(KEY_RESTORE_DEFAULTS_CONFIRM),
+                LanguageService.displayName("common.confirmTitle"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        Map<String, CowScore> defaults = TitanRepository.loadDefaultCowScores();
+        for (Titan titan : titanCatalog) {
+            CowScore cowScore = defaults.getOrDefault(titan.id(), CowScore.DEFAULT);
+            workingGeneralScores.put(titan.id(), cowScore.generalScore());
+            // GOOD means "no override" in this dialog - see buildFortificationRow.
+            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>();
+            cowScore.buffFitScores().forEach((fortificationId, tier) -> {
+                if (tier != CowScoreTier.GOOD) {
+                    buffFitScores.put(fortificationId, tier);
+                }
+            });
+            workingScores.put(titan.id(), buffFitScores);
+        }
+        onTitanSelected(titanList.getSelectedValue());
+        Logger.log("CowScore dialog: restored the default values for every titan (not saved yet)");
     }
 
     private static String titanLabel(Titan titan) {

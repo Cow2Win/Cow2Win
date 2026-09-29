@@ -24,9 +24,9 @@ import java.util.Map;
  *         others") - used for fortifications WITHOUT a buff, where there is
  *         no role/element match to score against. {@link CowScoreTier#GOOD}
  *         is the default for an entity without an explicit, deliberate
- *         assessment - most heroes are expected to stay at the default; only
- *         deliberately better/worse heroes need an explicit entry in
- *         cowScore.json, keeping that file sparse.
+ *         assessment - most heroes are expected to stay at the default.
+ *         (Since 2026-09-29 the workspace copy of cowScore.json lists every
+ *         hero explicitly, see {@code CowScoreFiles}.)
  * @param buffFitScores this entity's buff-specific fit, keyed by {@link
  *         Fortification#id()} - the buffProfits successor (Stufe 3, added
  *         2026-09-11, see cow2win-verbesserungsvorschlaege.md). An n:m
@@ -74,10 +74,7 @@ public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buff
     /**
      * True if this is exactly the all-default CowScore ({@link
      * CowScoreTier#GOOD} general score, no buff-fit overrides at all) - i.e.
-     * there is nothing here worth persisting explicitly. Used by {@code
-     * CowScoreFiles#toTree} to omit an entry from cowScore.json/
-     * titanCowScore.json entirely for an entity without any deliberate
-     * assessment, keeping those files sparse.
+     * there is no deliberate assessment in it.
      */
     public boolean isDefault() {
         return generalScore == CowScoreTier.GOOD && buffFitScores.isEmpty();
