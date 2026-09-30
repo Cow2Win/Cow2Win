@@ -23,7 +23,7 @@ class SideSpecificLineupAlgorithmsTest {
     // --- fixtures ----------------------------------------------------------
 
     private static Hero hero(String id) {
-        return new Hero(id, List.of(Role.MAGE), null, new CowScore(CowScoreTier.GOOD, null));
+        return new Hero(id, List.of(Role.MAGE));
     }
 
     private static Titan titan(String id) {

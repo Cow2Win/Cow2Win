@@ -1,7 +1,7 @@
 package org.c2w.gui.pet;
 
-import org.c2w.data.model.CowScore;
-import org.c2w.data.model.CowScoreTier;
+import org.c2w.data.model.FortMark;
+import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Pet;
@@ -18,50 +18,31 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Dialog for maintaining a pet's {@link CowScore} - {@link Pet#generalScore()}
- * and {@link Pet#buffFitScores()} - the PET-side counterpart of {@code
- * HeroCoreScoreDialog}. Opened from the main window's "File" menu,
- * independent of the currently open guild/lineup, since the pet catalog is
- * shared across every guild.
- *
- * <p>Pets only ever appear in {@link FortificationType#HERO} fortifications
- * (they accompany a hero team), so - exactly like the hero dialog - the
- * detail panel shows one {@link CowScoreTier} combo box for the pet's
- * {@link Pet#generalScore()} (used for buff-less fortifications), followed by
- * one row per HERO fortification that has a buff. Titan fortifications are
- * never listed. Unlike heroes, pets have no roles, so there is no
- * role-match column.
- *
- * <p>Every fortification row starts with a "(general score)" entry meaning
- * "no override": the pet then uses its generalScore there too (see
- * {@link CowScore#buffFitScoreOrGeneral(String)}) - picking it removes the
- * entry from the pet's working scores, while any tier - GOOD included - is
- * stored as an explicit override (see {@link #buildFortificationRow}). Every
- * tier is shown with its {@link CowScoreTier#petWarFlagValue()}, the value it
- * is actually worth for a pet. Saving writes every pet to the
- * workspace copy of {@code petCowScore.json} (never {@code pets.json} - see
- * {@link PetRepository}'s class Javadoc). The "restore defaults" button
- * resets every pet to the defaults shipped inside the jar - see {@link
- * #onRestoreDefaults()}.
+ * Dialog for maintaining a pet's {@link FortMarks}: for every fortification of
+ * type {@link FortificationType#HERO} a "marked" checkbox - a pet marked for a
+ * fortification adds a bonus to its team's CowScore there (see {@code
+ * TeamScoreCalculator}). Successor of the former tier-based
+ * generalScore/buffFitScores (CowScore concept of 2026-09-30). Opened from the
+ * toolbar, independent of the currently open guild/lineup. Saving writes the
+ * workspace copy of {@code petCowScore.json} (see {@code FortMarkFiles}).
  */
 public final class PetCoreScoreDialog extends JDialog {
 
     /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
     private static final String KEY_TITLE = "petBuffFitScores.title";
 
-    // Shared with the hero/titan dialogs - identical wording for all three.
+    // Shared with the hero/titan/war flag dialogs - identical wording for all of them.
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
-    private static final String KEY_GENERAL_SCORE = "heroBuffFitScores.generalScore";
-    private static final String KEY_BUFF_FIT_SCORES_HEADER = "heroBuffFitScores.buffFitScoresHeader";
     private static final String KEY_SAVE_ERROR = "heroBuffFitScores.saveError";
     private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
-
-    /** Shared with the other pet/war flag dialog: the "no override, use the general score" entry of a fortification row. */
-    private static final String KEY_USE_GENERAL_SCORE = "petWarFlagScores.useGeneralScore";
+    private static final String KEY_FORTIFICATIONS_HEADER = "fortMarks.header";
+    private static final String KEY_MARKED_TOOLTIP = "fortMarks.markedTooltip";
 
     /** Pet-specific confirmation question of {@link #onRestoreDefaults()}. */
     private static final String KEY_RESTORE_DEFAULTS_CONFIRM = "petBuffFitScores.restoreDefaultsConfirm";
@@ -73,7 +54,7 @@ public final class PetCoreScoreDialog extends JDialog {
     /** Avatar size for the pet name label in {@link #buildDetailPanel}. */
     private static final int PET_ICON_SIZE = 32;
 
-    /** Width reserved for a row's name label, so every combo box in the list lines up. */
+    /** Width reserved for a row's fortification-name label, so every checkbox lines up. */
     private static final int NAME_LABEL_WIDTH = 170;
 
     /** Every known pet, sorted by display name - the catalog never changes while this dialog is open. */
@@ -81,21 +62,18 @@ public final class PetCoreScoreDialog extends JDialog {
             .sorted(Comparator.comparing(PetCoreScoreDialog::petLabel, String.CASE_INSENSITIVE_ORDER))
             .toList();
 
-    /** Every fortification a pet's {@link Pet#buffFitScores()} can apply to: HERO fortifications with a buff. */
-    private final List<Fortification> buffedFortifications = FortificationRepository.findAll().stream()
-            .filter(f -> f.type() == FortificationType.HERO && f.buff() != null)
+    /** Every fortification a pet can be marked for: all fortifications of type {@link FortificationType#HERO}. */
+    private final List<Fortification> heroFortifications = FortificationRepository.findAll().stream()
+            .filter(f -> f.type() == FortificationType.HERO)
             .sorted(Comparator.comparing((Fortification f) -> LanguageService.displayName(f.id()), String.CASE_INSENSITIVE_ORDER))
             .toList();
 
     /**
-     * In-progress buffFitScores edits, keyed by pet id, populated lazily for
-     * every pet the user has actually looked at. A pet never selected keeps
-     * its original map untouched on {@link #onSaveScores()}.
+     * In-progress edits: the ids of the fortifications each pet is marked for,
+     * keyed by pet id - populated lazily for every pet opened in this dialog
+     * session; a pet never opened keeps its original marks on save.
      */
-    private final Map<String, Map<String, CowScoreTier>> workingScores = new LinkedHashMap<>();
-
-    /** In-progress generalScore edits, keyed by pet id - populated lazily like {@link #workingScores}. */
-    private final Map<String, CowScoreTier> workingGeneralScores = new LinkedHashMap<>();
+    private final Map<String, Set<String>> workingMarks = new LinkedHashMap<>();
 
     private final DefaultListModel<Pet> petListModel = new DefaultListModel<>();
     private final JList<Pet> petList = new JList<>(petListModel);
@@ -166,11 +144,7 @@ public final class PetCoreScoreDialog extends JDialog {
         detailContainer.repaint();
     }
 
-    /**
-     * Builds the given pet's header (avatar plus display name), its {@link
-     * Pet#generalScore()} row, a small header and one row per {@link
-     * #buffedFortifications} entry - see {@link #buildFortificationRow}.
-     */
+    /** The pet's header (avatar plus name), a small header and one checkbox row per {@link #heroFortifications} entry. */
     private JPanel buildDetailPanel(Pet pet) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -182,105 +156,50 @@ public final class PetCoreScoreDialog extends JDialog {
         petNameLabel.setIconTextGap(8);
         petNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(petNameLabel);
-
-        JPanel generalScoreRow = buildGeneralScoreRow(pet);
-        generalScoreRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(generalScoreRow);
         panel.add(Box.createVerticalStrut(12));
 
-        JLabel buffFitScoresHeader = new JLabel(LanguageService.displayName(KEY_BUFF_FIT_SCORES_HEADER));
-        buffFitScoresHeader.setForeground(Color.WHITE);
-        buffFitScoresHeader.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
-        buffFitScoresHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(buffFitScoresHeader);
+        JLabel fortificationsHeader = new JLabel(LanguageService.displayName(KEY_FORTIFICATIONS_HEADER));
+        fortificationsHeader.setForeground(Color.WHITE);
+        fortificationsHeader.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
+        fortificationsHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(fortificationsHeader);
         panel.add(Box.createVerticalStrut(4));
 
-        Map<String, CowScoreTier> petScores = workingScores.computeIfAbsent(pet.id(),
-                id -> new LinkedHashMap<>(pet.buffFitScores()));
-
-        for (Fortification fortification : buffedFortifications) {
-            JPanel row = buildFortificationRow(fortification, petScores);
+        Set<String> marked = workingMarks.computeIfAbsent(pet.id(), id -> markedIds(pet.fortMarks()));
+        for (Fortification fortification : heroFortifications) {
+            JPanel row = buildFortificationRow(fortification, marked);
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(row);
         }
         return panel;
     }
 
-    /** The pet's {@link Pet#generalScore()} row: a label plus a {@link CowScoreTier} combo box, stored as selected. */
-    private JPanel buildGeneralScoreRow(Pet pet) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        JLabel label = new JLabel(LanguageService.displayName(KEY_GENERAL_SCORE));
-        label.setForeground(Color.WHITE);
-        label.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, label.getPreferredSize().height));
-        row.add(label);
-
-        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
-        combo.setSelectedItem(workingGeneralScores.computeIfAbsent(pet.id(), id -> pet.generalScore()));
-        combo.addActionListener(e -> {
-            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
-            workingGeneralScores.put(pet.id(), selected == null ? CowScoreTier.GOOD : selected);
-        });
-        row.add(combo);
-        return row;
-    }
-
-    /**
-     * One (pet, fortification) row: the fortification's display name and a
-     * combo box pre-selected to the pet's current override, or to the
-     * leading "(general score)" entry (null) if there is none. Selecting that
-     * entry removes the override, any tier - GOOD included - is stored.
-     */
-    private JPanel buildFortificationRow(Fortification fortification, Map<String, CowScoreTier> petScores) {
+    /** One (pet, fortification) row: the fortification's display name and a "marked" checkbox wired into {@code marked}. */
+    private JPanel buildFortificationRow(Fortification fortification, Set<String> marked) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         JLabel nameLabel = new JLabel(LanguageService.displayName(fortification.id()));
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, nameLabel.getPreferredSize().height));
         row.add(nameLabel);
 
-        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
-        combo.insertItemAt(null, 0);
-        combo.setSelectedItem(petScores.get(fortification.id()));
-        combo.addActionListener(e -> {
-            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
-            if (selected == null) {
-                petScores.remove(fortification.id());
+        JCheckBox checkBox = new JCheckBox();
+        checkBox.setToolTipText(LanguageService.displayName(KEY_MARKED_TOOLTIP));
+        checkBox.setSelected(marked.contains(fortification.id()));
+        checkBox.addActionListener(e -> {
+            if (checkBox.isSelected()) {
+                marked.add(fortification.id());
             } else {
-                petScores.put(fortification.id(), selected);
+                marked.remove(fortification.id());
             }
         });
-        row.add(combo);
+        row.add(checkBox);
         return row;
     }
 
     /**
-     * A {@link CowScoreTier} combo box listing all tiers, rendered with their
-     * {@link CowScoreTier#petWarFlagValue()}, e.g. "Good (0.3)"; a null entry
-     * (only in fortification rows, see {@link #buildFortificationRow}) is
-     * rendered as "(general score)".
-     */
-    private static JComboBox<CowScoreTier> buildScoreTierCombo() {
-        JComboBox<CowScoreTier> combo = new JComboBox<>(CowScoreTier.values());
-        combo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                           boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof CowScoreTier tier) {
-                    setText(LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.petWarFlagValue() + ")");
-                } else if (value == null) {
-                    setText(LanguageService.displayName(KEY_USE_GENERAL_SCORE));
-                }
-                return this;
-            }
-        });
-        return combo;
-    }
-
-    /**
-     * Handler of the "restore defaults" button: after a confirmation, replaces
-     * the working values of every pet with the shipped defaults from {@link
-     * PetRepository#loadDefaultCowScores()}. Nothing is written until the
-     * user saves.
+     * Handler of the "restore defaults" toolbar button: after a confirmation,
+     * replaces the working marks of every pet with the shipped defaults.
+     * Nothing is written until the user saves.
      */
     private void onRestoreDefaults() {
         int answer = JOptionPane.showConfirmDialog(this,
@@ -291,35 +210,40 @@ public final class PetCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, CowScore> defaults = PetRepository.loadDefaultCowScores();
+        Map<String, FortMarks> defaults = PetRepository.loadDefaultCowScores();
         for (Pet pet : petCatalog) {
-            CowScore cowScore = defaults.getOrDefault(pet.id(), CowScore.DEFAULT);
-            workingGeneralScores.put(pet.id(), cowScore.generalScore());
-            // Every tier - GOOD included - is a real override here, see buildFortificationRow.
-            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>(cowScore.buffFitScores());
-            workingScores.put(pet.id(), buffFitScores);
+            workingMarks.put(pet.id(), markedIds(defaults.getOrDefault(pet.id(), FortMarks.NONE)));
         }
         onPetSelected(petList.getSelectedValue());
         Logger.log("Pet CowScore dialog: restored the default values for every pet (not saved yet)");
+    }
+
+    /** The ids of the fortifications marked {@link FortMark#POSITIVE} in {@code fortMarks}. */
+    private static Set<String> markedIds(FortMarks fortMarks) {
+        Set<String> ids = new LinkedHashSet<>();
+        fortMarks.marks().forEach((fortificationId, mark) -> {
+            if (mark == FortMark.POSITIVE) {
+                ids.add(fortificationId);
+            }
+        });
+        return ids;
     }
 
     private static String petLabel(Pet pet) {
         return LanguageService.displayName(pet.id());
     }
 
-    /**
-     * Writes every pet's working values back into a fresh {@link Pet} (the
-     * original values for a pet never opened) and saves the whole catalog via
-     * {@link PetRepository#saveCowScores} - which only writes {@code
-     * petCowScore.json}, never {@code pets.json}.
-     */
+    /** Writes every pet's current {@link #workingMarks} back and saves the catalog via {@link PetRepository#saveCowScores}. */
     private void onSaveScores() {
         List<Pet> updatedCatalog = petCatalog.stream()
                 .map(pet -> {
-                    Map<String, CowScoreTier> scores = workingScores.get(pet.id());
-                    Map<String, CowScoreTier> buffFitScores = scores == null ? pet.buffFitScores() : scores;
-                    CowScoreTier generalScore = workingGeneralScores.getOrDefault(pet.id(), pet.generalScore());
-                    return new Pet(pet.id(), pet.imagePath(), new CowScore(generalScore, buffFitScores));
+                    Set<String> marked = workingMarks.get(pet.id());
+                    if (marked == null) {
+                        return pet;
+                    }
+                    Map<String, FortMark> marks = new LinkedHashMap<>();
+                    marked.forEach(fortificationId -> marks.put(fortificationId, FortMark.POSITIVE));
+                    return new Pet(pet.id(), pet.imagePath(), new FortMarks(marks));
                 })
                 .toList();
 

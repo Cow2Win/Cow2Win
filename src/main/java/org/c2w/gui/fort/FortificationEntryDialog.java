@@ -149,9 +149,7 @@ public final class FortificationEntryDialog extends JDialog {
      * Builds teamDraft's {@link TeamScoreCalculator.Breakdown} against
      * {@link #fortification} - delegates to the shared
      * {@link TeamScoreCalculator#scoreFor(HeroTeam, Fortification)} (see
-     * there for the formula: buffFitScore or generalScore per member,
-     * depending on whether the fortification has a buff, plus the
-     * totalPower term either way).
+     * there for the formula: power / 100 000 x (1 + bonus)).
      */
     private TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft) {
         HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.pet, teamDraft.warFlag,
@@ -289,9 +287,8 @@ public final class FortificationEntryDialog extends JDialog {
      * Sets buffCountLabel's text to how many of teamDraft's currently
      * selected members satisfy matchesBuff (see {@link #buildRows()} for what
      * that means per fortification type), followed by the team's score total
-     * (via scoreBreakdownOf - per-member buffFitScore if {@link #fortification}
-     * has a buff, generalScore otherwise, plus the totalPower term either way,
-     * see {@link #heroScoreBreakdown}/{@link #titanScoreBreakdown}) in
+     * (via scoreBreakdownOf, see {@link #heroScoreBreakdown}/{@link
+     * #titanScoreBreakdown}) in
      * parentheses, e.g. "2 (4.5)". Also logs the breakdown to {@link Logger}
      * (and thus the log panel) for debugging - see
      * {@link #logSortScoreBreakdown}.
@@ -309,10 +306,10 @@ public final class FortificationEntryDialog extends JDialog {
     }
 
     /**
-     * Logs breakdown for one row, e.g. "Wachturm: Team 1 : 10.00 + 1.00 +
-     * 1.00 + 0.70 = 12.70" (buff-less) or "Wachturm: Team 1 : 10.00 + 1.00 +
-     * 1.00 + 0.50 = 12.50" (buffed - same power term, buffFitScore instead of
-     * generalScore per member). Skipped for a still-empty row (no members and
+     * Logs breakdown for one row: power term + each component of
+     * {@link TeamScoreCalculator.Breakdown#memberScores()} = total, e.g.
+     * "Wachturm: Team 1 : 10.00 + 0.30 + 0.13 + 0.00 + 0.06 = 10.49" for a
+     * hero team (role, relation, pet, war flag bonus in score points). Skipped for a still-empty row (no members and
      * no power) - it carries no information and would just spam the log once
      * per row every time the dialog opens.
      */

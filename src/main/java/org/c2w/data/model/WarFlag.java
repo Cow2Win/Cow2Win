@@ -1,7 +1,5 @@
 package org.c2w.data.model;
 
-import java.util.Map;
-
 /**
  * Catalog entry of a war flag: master data, identical for all guild members.
  * Analogous to {@link Pet} - war flags have neither roles nor an element,
@@ -22,18 +20,16 @@ import java.util.Map;
  * automatically falls back to the placeholder at {@link
  * #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
- * cowScore: this flag's manually curated {@link CowScore} - same {@link
- * CowScoreTier} grid and defaults as {@link Pet#cowScore()}. Kept in {@code
- * warFlagCowScore.json}, deliberately SEPARATE from this record's
- * "objective" fields (id/imagePath), which live in {@code warFlags.json} -
- * the same split heroes, titans and pets have (see {@code
- * WarFlagRepository}'s class Javadoc). {@link #generalScore()}/{@link
- * #buffFitScores()} are convenience delegates.
+ * fortMarks: the fortifications this war flag is marked as a good fit for
+ * ({@link FortMark#POSITIVE} only - war flags carry no negative marks). Kept in
+ * {@code warFlagCowScore.json}, deliberately SEPARATE from this record's
+ * "objective" fields (id/imagePath), the same split heroes have. Replaces
+ * the former tier-based CowScore (CowScore concept of 2026-09-30).
  */
 public record WarFlag(
         String id,
         String imagePath,
-        CowScore cowScore
+        FortMarks fortMarks
 ) {
     /** Icon for war flags that don't have their own icon under images/flags yet. */
     public static final String PLACEHOLDER_IMAGE_PATH = "/images/flags/placeholder.png";
@@ -43,32 +39,16 @@ public record WarFlag(
             throw new IllegalArgumentException("WarFlag needs an id");
         }
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
-        cowScore = cowScore == null ? CowScore.DEFAULT : cowScore;
+        fortMarks = fortMarks == null ? FortMarks.NONE : fortMarks;
     }
 
-    /** Convenience constructor for war flags without an icon and without an explicit CowScore (e.g. in tests). */
+    /** Convenience constructor for war flags without an icon and without fortification marks (e.g. in tests). */
     public WarFlag(String id) {
         this(id, null, null);
     }
 
-    /** This flag's general quality/usefulness - delegates to {@link #cowScore()}, see {@link CowScore#generalScore()}. */
-    public CowScoreTier generalScore() {
-        return cowScore.generalScore();
-    }
-
-    /** This flag's buff-specific fit overrides - delegates to {@link #cowScore()}, see {@link CowScore#buffFitScores()}. */
-    public Map<String, CowScoreTier> buffFitScores() {
-        return cowScore.buffFitScores();
-    }
-
-    /**
-     * This war flag's fit score for the fortification with the given id (which
-     * must have a buff) - its explicit override for that fortification if
-     * present, otherwise its {@link #generalScore()}: war flags have no
-     * role/element, so there is no match to default on - see {@link
-     * CowScore#buffFitScoreOrGeneral(String)}.
-     */
-    public CowScoreTier buffFitScore(String fortificationId) {
-        return cowScore.buffFitScoreOrGeneral(fortificationId);
+    /** True if this war flag is marked as a good fit for the given fortification. */
+    public boolean isMarkedFor(String fortificationId) {
+        return fortMarks.isPositive(fortificationId);
     }
 }

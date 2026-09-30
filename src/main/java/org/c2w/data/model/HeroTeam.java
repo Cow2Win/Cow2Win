@@ -3,7 +3,6 @@ package org.c2w.data.model;
 import org.c2w.util.TeamScoreCalculator;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,10 +29,10 @@ import java.util.List;
  * none. Both only exist for hero teams (titan teams have neither). Per
  * Clash of Worlds rules, a member can field each pet and each war flag in
  * at most ONE of their hero teams - enforced by {@link GuildMember}, not
- * here, since a single team cannot see its siblings. Both are already
- * included in {@link #totalPower()} as shown in-game. Their CowScore adds
- * to the team's score on top of the heroes', at the lower {@link
- * CowScoreTier#petWarFlagValue()} - see {@link #petWarFlagScores(Fortification)}.
+ * here, since a single team cannot see its siblings. The pet's strength is
+ * already part of {@link #totalPower()}, the war flag's is not (per the
+ * user, 2026-09-30) - see {@link TeamScoreCalculator} for how each adds a
+ * bonus to the team's CowScore.
  */
 public record HeroTeam(
         String memberId,
@@ -100,45 +99,12 @@ public record HeroTeam(
 
     /**
      * Used instead of {@link #buffFitScore(Buff)} to pick a team for a
-     * fortification that has NO buff - there is no role to score against
-     * there, so this falls back to a general "how good is this team"
-     * measure: the sum of every hero's {@link Hero#generalScore()} (some
-     * heroes are simply better than others, independent of any specific
-     * buff/role) plus {@link #totalPower()} scaled down via
-     * {@link TeamScoreCalculator#POWER_DIVISOR} - per the user's own formula (added
-     * 2026-09-11, see cow2win-verbesserungsvorschlaege.md): generalScore +
-     * power / 100 000.
+     * fortification that has NO buff, and as the general "how good is this
+     * team" measure independent of any specific fortification: see
+     * {@link TeamScoreCalculator#sortScore(HeroTeam)} (power / 100 000 x
+     * (1 + fortification-independent bonus), CowScore concept of 2026-09-30).
      */
     public double sortScore() {
-        double generalScoreSum = heroes.stream().mapToDouble(h -> h.generalScore().value()).sum();
-        double petWarFlagSum = petWarFlagScores(null).stream().mapToDouble(Double::doubleValue).sum();
-        return generalScoreSum + petWarFlagSum + totalPower() / TeamScoreCalculator.POWER_DIVISOR;
-    }
-
-    /**
-     * The war flag's and the pet's contribution to this team's score at
-     * {@code fortification}, in row order (war flag, then pet) - an absent
-     * war flag/pet is simply left out, i.e. counts 0 (per the user's
-     * decision, 2026-09-29). Each is its {@link CowScoreTier#petWarFlagValue()}
-     * of: its {@link WarFlag#buffFitScore(String)}/{@link Pet#buffFitScore(String)}
-     * if {@code fortification} has a buff, otherwise (also for a null
-     * {@code fortification}, see {@link #sortScore()}) its generalScore.
-     * Used on top of the heroes' own scores by {@link #sortScore()} and
-     * {@code TeamScoreCalculator#scoreFor(HeroTeam, Fortification)}; never
-     * part of {@link #buffFitScore(Buff)}, which only counts heroes whose
-     * role matches.
-     */
-    public List<Double> petWarFlagScores(Fortification fortification) {
-        boolean buffed = fortification != null && fortification.buff() != null;
-        List<Double> scores = new ArrayList<>(2);
-        if (warFlag != null) {
-            CowScoreTier tier = buffed ? warFlag.buffFitScore(fortification.id()) : warFlag.generalScore();
-            scores.add(tier.petWarFlagValue());
-        }
-        if (pet != null) {
-            CowScoreTier tier = buffed ? pet.buffFitScore(fortification.id()) : pet.generalScore();
-            scores.add(tier.petWarFlagValue());
-        }
-        return scores;
+        return TeamScoreCalculator.sortScore(this);
     }
 }

@@ -16,8 +16,8 @@ import java.util.Map;
  * inconsistent metrics depending on the decision: raw {@code totalPower} for
  * the bridge, a simple integer role/element MATCH COUNT ({@link
  * HeroTeam#buffFitScore}/{@link TitanTeam#buffFitScore}) for a buffed
- * fortification - notably NOT each hero's/titan's actual, manually curated
- * {@link CowScore#buffFitScores()} tier - and {@link HeroTeam#sortScore()}/
+ * fortification - notably NOT the manually curated CowScore bonus
+ * (hero fortification marks, titan tiers) - and {@link HeroTeam#sortScore()}/
  * {@link TitanTeam#sortScore()} for an unbuffed fortification. This
  * algorithm instead uses exactly ONE metric for every single decision,
  * bridge included: {@link TeamScoreCalculator#scoreFor}'s {@code total()} -

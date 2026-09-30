@@ -1,233 +1,50 @@
 [
   {
-    "id": "aidan",
-    "buffFitScores": {
-      "bastion": "MODERATE",
-      "alchemy-tower": "MODERATE"
-    }
-  },
-  {
-    "id": "alvanor",
-    "buffFitScores": {
-      "foundry": "MODERATE",
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "andvari",
-    "buffFitScores": {
-      "foundry": "MODERATE"
-    }
-  },
-  {
-    "id": "arachne",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "artemis",
-    "buffFitScores": {
-      "shooting-range": "AVERAGE",
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "augustus",
-    "generalScore": "GREAT"
-  },
-  {
     "id": "corvus",
-    "buffFitScores": {
-      "foundry": "GREAT"
-    }
-  },
-  {
-    "id": "dark-star",
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "engineerium": "MODERATE",
-      "shooting-range": "MODERATE"
+    "fortMarks": {
+      "foundry": "POSITIVE"
     }
   },
   {
     "id": "electra",
-    "buffFitScores": {
-      "alchemy-tower": "MODERATE",
-      "city-hall": "MODERATE",
-      "foundry": "GREAT",
-      "bastion": "MODERATE",
-      "shooting-range": "MODERATE"
-    }
-  },
-  {
-    "id": "elmir",
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "shooting-range": "MODERATE"
+    "fortMarks": {
+      "foundry": "POSITIVE"
     }
   },
   {
     "id": "fluffy",
-    "buffFitScores": {
+    "fortMarks": {
       "foundry": "NEGATIVE"
     }
   },
   {
-    "id": "fox",
-    "generalScore": "MODERATE"
-  },
-  {
     "id": "galahad",
-    "buffFitScores": {
-      "bastion": "GREAT",
-      "city-hall": "MODERATE"
+    "fortMarks": {
+      "bastion": "POSITIVE"
     }
   },
   {
     "id": "isaac",
-    "buffFitScores": {
+    "fortMarks": {
       "shooting-range": "NEGATIVE"
     }
   },
   {
-    "id": "ishmael",
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
-  },
-  {
-    "id": "jet",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "jhu",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
     "id": "judge",
-    "buffFitScores": {
-      "shooting-range": "NEGATIVE",
-      "city-hall": "MODERATE"
+    "fortMarks": {
+      "shooting-range": "NEGATIVE"
     }
-  },
-  {
-    "id": "julius",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "kai",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "kayla",
-    "buffFitScores": {
-      "shooting-range": "MODERATE"
-    }
-  },
-  {
-    "id": "karkh",
-    "buffFitScores": {
-      "engineerium": "MODERATE",
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "lara",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "lilith",
-    "generalScore": "MODERATE"
-  },
-  {
-    "id": "luther",
-    "generalScore": "MODERATE"
-  },
-  {
-    "id": "lyria",
-    "generalScore": "GREAT"
   },
   {
     "id": "markus",
-    "buffFitScores": {
-      "city-hall": "GREAT"
-    }
-  },
-  {
-    "id": "mojo",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
+    "fortMarks": {
+      "city-hall": "POSITIVE"
     }
   },
   {
     "id": "mushy-and-shroom",
-    "buffFitScores": {
-      "foundry": "GREAT",
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "nebula",
-    "generalScore": "GREAT"
-  },
-  {
-    "id": "ninja-turtles",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "orion",
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
-  },
-  {
-    "id": "peppy",
-    "generalScore": "MODERATE"
-  },
-  {
-    "id": "phobos",
-    "buffFitScores": {
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "rufus",
-    "buffFitScores": {
-      "bastion": "MODERATE",
-      "city-hall": "MODERATE"
-    }
-  },
-  {
-    "id": "sebastian",
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
-  },
-  {
-    "id": "tristan",
-    "buffFitScores": {
-      "engineerium": "MODERATE"
-    }
-  },
-  {
-    "id": "ziri",
-    "generalScore": "MODERATE",
-    "buffFitScores": {
-      "foundry": "MODERATE",
-      "alchemy-tower": "MODERATE"
+    "fortMarks": {
+      "foundry": "POSITIVE"
     }
   }
 ]

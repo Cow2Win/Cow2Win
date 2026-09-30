@@ -3,7 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.CowScore;
+import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Pet;
 import org.c2w.util.Config;
 import org.c2w.util.JsonSupport;
@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
  *     identical for every guild and only changes when Hero Wars itself
  *     changes (new pets, a changed avatar). Never written by this class.
  *     Pets have no roles and no element.</li>
- *     <li>{@code petCowScore.json} - the manually curated {@link CowScore}
+ *     <li>{@code petCowScore.json} - the manually curated {@link org.c2w.data.model.FortMarks}
  *     per pet, persisted through {@link #saveCowScores}. Same file format
  *     and the same shipped-defaults/workspace-copy handling as the heroes'
- *     {@code cowScore.json}, see {@link CowScoreFiles}.</li>
+ *     {@code cowScore.json}, see {@link FortMarkFiles}.</li>
  * </ul>
  * {@link #findById}/{@link #findAll} merge both files back into the combined
  * {@link Pet} view the rest of the app uses.
@@ -80,25 +80,25 @@ public class PetRepository {
     }
 
     /**
-     * Persists every pet's current {@link Pet#cowScore()} to the workspace
+     * Persists every pet's current {@link Pet#fortMarks()} to the workspace
      * copy of {@code petCowScore.json} (see {@link #cowScoreFile()};
      * pretty-printed, see {@link JsonSupport#writeJsonFile}) and makes {@code
      * catalog} the in-memory catalog for subsequent {@link #findById}/{@link
      * #findAll} calls - the PET-side counterpart of {@link
      * HeroRepository#saveCowScores}. Deliberately does NOT touch {@code
      * pets.json}. Every pet in {@code catalog} gets an entry, see {@link
-     * CowScoreFiles#toTree}.
+     * FortMarkFiles#toTree}.
      */
     public static synchronized void saveCowScores(List<Pet> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
-        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        Map<String, FortMarks> cowScoresById = new LinkedHashMap<>();
         for (Pet pet : catalog) {
-            cowScoresById.put(pet.id(), pet.cowScore());
+            cowScoresById.put(pet.id(), pet.fortMarks());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById, true), cowScoreFile());
+        JsonSupport.writeJsonFile(FortMarkFiles.toTree(cowScoresById), cowScoreFile());
 
         Map<String, Pet> updated = new LinkedHashMap<>();
         for (Pet pet : catalog) {
@@ -112,9 +112,9 @@ public class PetRepository {
      * petCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a pet
      * without an entry there). Only reads, never writes.
      */
-    public static Map<String, CowScore> loadDefaultCowScores() {
+    public static Map<String, FortMarks> loadDefaultCowScores() {
         ensureLoaded();
-        return CowScoreFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH, petsById.keySet(), "pet");
+        return FortMarkFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH, petsById.keySet(), false, "pet");
     }
 
     /**
@@ -142,12 +142,12 @@ public class PetRepository {
         try {
             String petsJson = JsonSupport.readClasspathResource(PetRepository.class, PETS_JSON_PATH);
             Map<String, Pet> masterData = parsePetsJson(petsJson);
-            Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH,
-                    masterData.keySet(), "pet");
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "pet", true);
+            Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH,
+                    masterData.keySet(), false, "pet");
+            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, false, "pet");
             Map<String, Pet> result = new LinkedHashMap<>();
             for (Pet pet : masterData.values()) {
-                result.put(pet.id(), new Pet(pet.id(), pet.imagePath(), cowScores.get(pet.id())));
+                result.put(pet.id(), new Pet(pet.id(), pet.imagePath(), fortMarks.get(pet.id())));
             }
             return result;
         } catch (IOException e) {
@@ -159,7 +159,7 @@ public class PetRepository {
         Map<String, Pet> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "..." }, ...] - purely the "objective"
-        // master data; generalScore/buffFitScores live in petCowScore.json.
+        // master data; fortification marks live in petCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
             Pet pet = parsePetObject(element.getAsJsonObject());
@@ -183,6 +183,6 @@ public class PetRepository {
             return null;
         }
 
-        return new Pet(id, image != null ? IMAGE_PATH_PREFIX + image : null, CowScore.DEFAULT);
+        return new Pet(id, image != null ? IMAGE_PATH_PREFIX + image : null, FortMarks.NONE);
     }
 }

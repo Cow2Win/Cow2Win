@@ -17,7 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Reading and writing of a CowScore file - {@code cowScore.json} for heroes
+ * <b>Since 2026-09-30 only used for {@code titanCowScore.json}</b> - heroes,
+ * pets and war flags moved to {@link FortMarkFiles}.
+ *
+ * <p>Reading and writing of a CowScore file - {@code cowScore.json} for heroes
  * (see {@link HeroRepository}) and {@code titanCowScore.json} for titans
  * (see {@link TitanRepository}). Extracted (2026-09-28) when the titans got
  * the same master-data/score split the heroes already had since 2026-09-14,

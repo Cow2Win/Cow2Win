@@ -3,7 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.CowScore;
+import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
 import org.c2w.util.Config;
@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
  *     this class's own perspective for now - there is no in-app editor for
  *     it yet (see the planned GitHub-based master-data download workflow).</li>
  *     <li>{@code cowScore.json} - Thorsten's manually curated {@link
- *     CowScore} per hero (see that type's Javadoc), edited exclusively via
+ *     org.c2w.data.model.FortMarks} per hero (see that type's Javadoc), edited exclusively via
  *     {@code HeroCoreScoreDialog} and persisted through {@link
  *     #saveCowScores}. Since 2026-09-29 the copy the app reads and writes
  *     lives in the workspace folder (see {@link #cowScoreFile()}); the copy
  *     inside the jar only holds the shipped defaults it is created from -
- *     see {@link CowScoreFiles}' class Javadoc.</li>
+ *     see {@link FortMarkFiles}' class Javadoc.</li>
  * </ul>
  * Keeping these in two files means a future wholesale refresh of {@code
  * heroes.json} (e.g. pulling updated master data from GitHub) can never
@@ -91,25 +91,25 @@ public class HeroRepository {
     }
 
     /**
-     * Persists every hero's current {@link Hero#cowScore()} to the
+     * Persists every hero's current {@link Hero#fortMarks()} to the
      * workspace copy of {@code cowScore.json} (see {@link #cowScoreFile()};
      * pretty-printed, see {@link JsonSupport#writeJsonFile})
      * and makes {@code catalog} the in-memory catalog for subsequent {@link
      * #findById}/{@link #findAll} calls. Deliberately does NOT touch
      * {@code heroes.json} - see this class's own Javadoc for why the two
      * files are kept separate. Every hero in {@code catalog} gets an entry,
-     * see {@link CowScoreFiles#toTree} for the exact format.
+     * see {@link FortMarkFiles#toTree} for the exact format.
      */
     public static synchronized void saveCowScores(List<Hero> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
-        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        Map<String, FortMarks> cowScoresById = new LinkedHashMap<>();
         for (Hero hero : catalog) {
-            cowScoresById.put(hero.id(), hero.cowScore());
+            cowScoresById.put(hero.id(), hero.fortMarks());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), cowScoreFile());
+        JsonSupport.writeJsonFile(FortMarkFiles.toTree(cowScoresById), cowScoreFile());
 
         Map<String, Hero> updated = new LinkedHashMap<>();
         for (Hero hero : catalog) {
@@ -125,9 +125,9 @@ public class HeroRepository {
      * defaults" button resets its values to. Only reads, never writes: the
      * workspace copy is not touched until the dialog is saved.
      */
-    public static Map<String, CowScore> loadDefaultCowScores() {
+    public static Map<String, FortMarks> loadDefaultCowScores() {
         ensureLoaded();
-        return CowScoreFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH, heroesById.keySet(), "hero");
+        return FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH, heroesById.keySet(), true, "hero");
     }
 
     /**
@@ -156,12 +156,12 @@ public class HeroRepository {
         try {
             String heroesJson = JsonSupport.readClasspathResource(HeroRepository.class, HEROES_JSON_PATH);
             Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());
-            Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
-                    masterData.keySet(), "hero");
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "hero");
+            Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
+                    masterData.keySet(), true, "hero");
+            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, true, "hero");
             Map<String, Hero> result = new LinkedHashMap<>();
             for (Hero hero : masterData.values()) {
-                result.put(hero.id(), new Hero(hero.id(), hero.roles(), hero.imagePath(), cowScores.get(hero.id())));
+                result.put(hero.id(), new Hero(hero.id(), hero.roles(), hero.imagePath(), fortMarks.get(hero.id())));
             }
             return result;
         } catch (IOException e) {
@@ -169,11 +169,11 @@ public class HeroRepository {
         }
     }
 
-    private static Map<String, Hero> parseHeroesJson(String json, Map<String, CowScore> cowScores) {
+    private static Map<String, Hero> parseHeroesJson(String json, Map<String, FortMarks> cowScores) {
         Map<String, Hero> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "...", "roles": [...] }, ...] - purely the
-        // "objective" master data; generalScore/buffFitScores now live in cowScore.json.
+        // "objective" master data; fortification marks now live in cowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
             Hero hero = parseHeroObject(element.getAsJsonObject(), cowScores);
@@ -185,7 +185,7 @@ public class HeroRepository {
         return result;
     }
 
-    private static Hero parseHeroObject(JsonObject obj, Map<String, CowScore> cowScores) {
+    private static Hero parseHeroObject(JsonObject obj, Map<String, FortMarks> cowScores) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String image = JsonSupport.getStringOrNull(obj, "image");
         List<Role> roles = parseRoles(obj);
@@ -196,8 +196,8 @@ public class HeroRepository {
             return null;
         }
 
-        CowScore cowScore = cowScores.getOrDefault(id, CowScore.DEFAULT);
-        return new Hero(id, roles, image != null ? IMAGE_PATH_PREFIX + image : null, cowScore);
+        FortMarks fortMarks = cowScores.getOrDefault(id, FortMarks.NONE);
+        return new Hero(id, roles, image != null ? IMAGE_PATH_PREFIX + image : null, fortMarks);
     }
 
     private static List<Role> parseRoles(JsonObject obj) {

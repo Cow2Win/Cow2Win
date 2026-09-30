@@ -100,7 +100,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
      * Stand-in used to score a row that currently has no fortification
      * selected (see {@link #updateBuffCountLabel}) - only its {@code buff() == null}
      * matters to {@link TeamScoreCalculator#scoreFor}, so an unassigned row
-     * simply scores like a buff-less fortification (generalScore per member).
+     * simply scores like a buff-less fortification.
      */
     private static final Fortification UNASSIGNED_FORTIFICATION =
             new Fortification("__unassigned__", FortificationType.HERO, 1, 0, 0, 0, null, List.of(), 0);

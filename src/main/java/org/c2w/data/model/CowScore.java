@@ -18,6 +18,10 @@ import java.util.Map;
  * in {@code titanCowScore.json}, both in the same format (see {@code
  * CowScoreFiles}), each separate from its master-data file.
  *
+ * <p><b>Since 2026-09-30 only used by titans.</b> Heroes, pets and war flags
+ * use {@link FortMarks} instead (CowScore concept of 2026-09-30); titans will
+ * follow separately.
+ *
  * @param generalScore this entity's general quality/usefulness on {@link
  *         CowScoreTier}'s shared grid, independent of any specific
  *         fortification/buff ("some heroes are simply better or worse than

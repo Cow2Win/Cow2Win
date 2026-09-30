@@ -28,6 +28,7 @@ package org.c2w.data.model;
  * decision, 2026-09-29: they are weaker than heroes and get values of their
  * own, GOOD = 0.3).
  */
+// Since 2026-09-30 only used by titans - heroes, pets and war flags use FortMark/FortMarks.
 public enum CowScoreTier {
     // PLACEHOLDER pet/war flag values: only GOOD = 0.3 is the user's own
     // decision (2026-09-29), the other four are provisional - same order,

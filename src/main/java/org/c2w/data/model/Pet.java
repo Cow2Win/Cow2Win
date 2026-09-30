@@ -1,7 +1,5 @@
 package org.c2w.data.model;
 
-import java.util.Map;
-
 /**
  * Catalog entry of a pet: master data, identical for all guild members.
  * Analogous to {@link Hero} and {@link Titan}, but pets have neither roles
@@ -19,17 +17,16 @@ import java.util.Map;
  * falls back to the placeholder at {@link #PLACEHOLDER_IMAGE_PATH}, so the
  * field is never null.
  *
- * cowScore: this pet's manually curated {@link CowScore} - same {@link
- * CowScoreTier} grid and defaults as {@link Hero#cowScore()}. Kept in {@code
- * petCowScore.json}, deliberately SEPARATE from this record's "objective"
- * fields (id/imagePath), which live in {@code pets.json} - the same split
- * heroes and titans have (see {@code PetRepository}'s class Javadoc).
- * {@link #generalScore()}/{@link #buffFitScores()} are convenience delegates.
+ * fortMarks: the fortifications this pet is marked as a good fit for
+ * ({@link FortMark#POSITIVE} only - pets carry no negative marks). Kept in
+ * {@code petCowScore.json}, deliberately SEPARATE from this record's
+ * "objective" fields (id/imagePath), the same split heroes have. Replaces
+ * the former tier-based CowScore (CowScore concept of 2026-09-30).
  */
 public record Pet(
         String id,
         String imagePath,
-        CowScore cowScore
+        FortMarks fortMarks
 ) {
     /** Avatar for pets that don't have their own icon under images/pets yet. */
     public static final String PLACEHOLDER_IMAGE_PATH = "/images/pets/placeholder.png";
@@ -39,32 +36,16 @@ public record Pet(
             throw new IllegalArgumentException("Pet needs an id");
         }
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
-        cowScore = cowScore == null ? CowScore.DEFAULT : cowScore;
+        fortMarks = fortMarks == null ? FortMarks.NONE : fortMarks;
     }
 
-    /** Convenience constructor for pets without an avatar and without an explicit CowScore (e.g. in tests). */
+    /** Convenience constructor for pets without an avatar and without fortification marks (e.g. in tests). */
     public Pet(String id) {
         this(id, null, null);
     }
 
-    /** This pet's general quality/usefulness - delegates to {@link #cowScore()}, see {@link CowScore#generalScore()}. */
-    public CowScoreTier generalScore() {
-        return cowScore.generalScore();
-    }
-
-    /** This pet's buff-specific fit overrides - delegates to {@link #cowScore()}, see {@link CowScore#buffFitScores()}. */
-    public Map<String, CowScoreTier> buffFitScores() {
-        return cowScore.buffFitScores();
-    }
-
-    /**
-     * This pet's fit score for the fortification with the given id (which
-     * must have a buff) - its explicit override for that fortification if
-     * present, otherwise its {@link #generalScore()}: pets have no
-     * role/element, so there is no match to default on - see {@link
-     * CowScore#buffFitScoreOrGeneral(String)}.
-     */
-    public CowScoreTier buffFitScore(String fortificationId) {
-        return cowScore.buffFitScoreOrGeneral(fortificationId);
+    /** True if this pet is marked as a good fit for the given fortification. */
+    public boolean isMarkedFor(String fortificationId) {
+        return fortMarks.isPositive(fortificationId);
     }
 }

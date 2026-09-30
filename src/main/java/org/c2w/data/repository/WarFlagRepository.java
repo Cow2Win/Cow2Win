@@ -3,7 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.CowScore;
+import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.WarFlag;
 import org.c2w.util.Config;
 import org.c2w.util.JsonSupport;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
  *     itself changes (new war flags, a changed icon). Never written by this
  *     class. War flags have no roles and no element.</li>
  *     <li>{@code warFlagCowScore.json} - the manually curated {@link
- *     CowScore} per war flag, persisted through {@link #saveCowScores}. Same
+ *     org.c2w.data.model.FortMarks} per war flag, persisted through {@link #saveCowScores}. Same
  *     file format and the same shipped-defaults/workspace-copy handling as
- *     the heroes' {@code cowScore.json}, see {@link CowScoreFiles}.</li>
+ *     the heroes' {@code cowScore.json}, see {@link FortMarkFiles}.</li>
  * </ul>
  * {@link #findById}/{@link #findAll} merge both files back into the combined
  * {@link WarFlag} view the rest of the app uses.
@@ -41,7 +41,7 @@ public class WarFlagRepository {
     /** Classpath-relative folder every war flag's "image" JSON field is resolved against - see {@link #parseWarFlagObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/flags/";
 
-    /** Entity label used in {@link CowScoreFiles}' log messages. */
+    /** Entity label used in {@link FortMarkFiles}' log messages. */
     private static final String ENTITY_LABEL = "war flag";
 
     private static volatile Map<String, WarFlag> warFlagsById;
@@ -84,25 +84,25 @@ public class WarFlagRepository {
     }
 
     /**
-     * Persists every war flag's current {@link WarFlag#cowScore()} to the
+     * Persists every war flag's current {@link WarFlag#fortMarks()} to the
      * workspace copy of {@code warFlagCowScore.json} (see {@link
      * #cowScoreFile()}; pretty-printed, see {@link JsonSupport#writeJsonFile})
      * and makes {@code catalog} the in-memory catalog for subsequent {@link
      * #findById}/{@link #findAll} calls - the WAR FLAG counterpart of {@link
      * PetRepository#saveCowScores}. Deliberately does NOT touch {@code
      * warFlags.json}. Every war flag in {@code catalog} gets an entry, see
-     * {@link CowScoreFiles#toTree}.
+     * {@link FortMarkFiles#toTree}.
      */
     public static synchronized void saveCowScores(List<WarFlag> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
-        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        Map<String, FortMarks> cowScoresById = new LinkedHashMap<>();
         for (WarFlag warFlag : catalog) {
-            cowScoresById.put(warFlag.id(), warFlag.cowScore());
+            cowScoresById.put(warFlag.id(), warFlag.fortMarks());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById, true), cowScoreFile());
+        JsonSupport.writeJsonFile(FortMarkFiles.toTree(cowScoresById), cowScoreFile());
 
         Map<String, WarFlag> updated = new LinkedHashMap<>();
         for (WarFlag warFlag : catalog) {
@@ -116,10 +116,9 @@ public class WarFlagRepository {
      * warFlagCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a
      * war flag without an entry there). Only reads, never writes.
      */
-    public static Map<String, CowScore> loadDefaultCowScores() {
+    public static Map<String, FortMarks> loadDefaultCowScores() {
         ensureLoaded();
-        return CowScoreFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH, warFlagsById.keySet(),
-                ENTITY_LABEL);
+        return FortMarkFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH, warFlagsById.keySet(), false, ENTITY_LABEL);
     }
 
     /**
@@ -147,12 +146,12 @@ public class WarFlagRepository {
         try {
             String warFlagsJson = JsonSupport.readClasspathResource(WarFlagRepository.class, WAR_FLAGS_JSON_PATH);
             Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson);
-            Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH,
-                    masterData.keySet(), ENTITY_LABEL);
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, ENTITY_LABEL, true);
+            Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH,
+                    masterData.keySet(), false, ENTITY_LABEL);
+            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, false, ENTITY_LABEL);
             Map<String, WarFlag> result = new LinkedHashMap<>();
             for (WarFlag warFlag : masterData.values()) {
-                result.put(warFlag.id(), new WarFlag(warFlag.id(), warFlag.imagePath(), cowScores.get(warFlag.id())));
+                result.put(warFlag.id(), new WarFlag(warFlag.id(), warFlag.imagePath(), fortMarks.get(warFlag.id())));
             }
             return result;
         } catch (IOException e) {
@@ -164,7 +163,7 @@ public class WarFlagRepository {
         Map<String, WarFlag> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "..." }, ...] - purely the "objective"
-        // master data; generalScore/buffFitScores live in warFlagCowScore.json.
+        // master data; fortification marks live in warFlagCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
             WarFlag warFlag = parseWarFlagObject(element.getAsJsonObject());
@@ -188,6 +187,6 @@ public class WarFlagRepository {
             return null;
         }
 
-        return new WarFlag(id, image != null ? IMAGE_PATH_PREFIX + image : null, CowScore.DEFAULT);
+        return new WarFlag(id, image != null ? IMAGE_PATH_PREFIX + image : null, FortMarks.NONE);
     }
 }

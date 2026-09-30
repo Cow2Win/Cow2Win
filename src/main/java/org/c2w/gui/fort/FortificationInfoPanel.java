@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
  */
 public class FortificationInfoPanel extends JPanel {
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link CowScoreTier#NEGATIVE} hero group (see {@link #buildHeroScorePanel()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link FortMark#NEGATIVE} hero group (see {@link #buildHeroScorePanel()}). */
     private static final String KEY_NEGATIVE_HEROES_HEADER = "fortificationDetail.negativeHeroesHeader";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link CowScoreTier#GOOD}/{@link CowScoreTier#GREAT} hero group (see {@link #buildHeroScorePanel()}). */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the header above the {@link FortMark#POSITIVE} hero group (see {@link #buildHeroScorePanel()}). */
     private static final String KEY_GOOD_HEROES_HEADER = "fortificationDetail.goodHeroesHeader";
 
     /** Avatar size for the hero groups built by {@link #buildHeroScorePanel()} - smaller than the 32px used for editable hero pickers elsewhere (e.g. {@code MemberEditorPanel}), since these are purely informational thumbnails. */
@@ -102,26 +102,19 @@ public class FortificationInfoPanel extends JPanel {
 
     /**
      * Right of {@link #buildInfoPanel()} (see the constructor): two
-     * read-only hero avatar groups for {@link #fortification} - heroes with
-     * {@link CowScoreTier#NEGATIVE} on top ("rather avoid these"), heroes with
-     * {@link CowScoreTier#GOOD} or {@link CowScoreTier#GREAT} below ("good
-     * fits"), per {@link #scoreTierFor(Hero)}. Purely informational
-     * - rebuilt fresh from
-     * the current hero catalog every time this panel is constructed.
+     * read-only hero avatar groups for {@link #fortification} - heroes marked
+     * {@link FortMark#NEGATIVE} for it on top ("rather avoid these"), heroes
+     * marked {@link FortMark#POSITIVE} below ("good fits"). Purely
+     * informational - rebuilt fresh from the current hero catalog every time
+     * this panel is constructed.
      */
     private JPanel buildHeroScorePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         List<Hero> heroes = HeroRepository.findAll();
-        List<Hero> negativeHeroes = heroes.stream()
-                .filter(hero -> scoreTierFor(hero) == CowScoreTier.NEGATIVE)
-                .sorted(Comparator.comparing(FortificationInfoPanel::heroLabel, String.CASE_INSENSITIVE_ORDER))
-                .toList();
-        List<Hero> goodHeroes = heroes.stream()
-                .filter(hero -> scoreTierFor(hero) == CowScoreTier.GOOD || scoreTierFor(hero) == CowScoreTier.GREAT)
-                .sorted(Comparator.comparing(FortificationInfoPanel::heroLabel, String.CASE_INSENSITIVE_ORDER))
-                .toList();
+        List<Hero> negativeHeroes = heroesMarked(heroes, FortMark.NEGATIVE);
+        List<Hero> goodHeroes = heroesMarked(heroes, FortMark.POSITIVE);
 
         JPanel negativeGroup = buildHeroGroupPanel(LanguageService.displayName(KEY_NEGATIVE_HEROES_HEADER), negativeHeroes);
         JPanel goodGroup = buildHeroGroupPanel(LanguageService.displayName(KEY_GOOD_HEROES_HEADER), goodHeroes);
@@ -134,21 +127,12 @@ public class FortificationInfoPanel extends JPanel {
         return panel;
     }
 
-    /**
-     * This hero's {@link CowScoreTier} for {@link #fortification}: when the
-     * fortification has a {@link RoleBuff}, its buff-specific
-     * {@link Hero#buffFitScore(String, boolean)} (role match resolved
-     * against {@link RoleBuff#role()}, mirroring
-     * {@link HeroTeamBuffFitScore#of(HeroTeam, Fortification)}); otherwise
-     * (no buff, or a titan {@link ElementBuff}, for which heroes have no
-     * buff-specific score of their own) its {@link Hero#generalScore()}.
-     */
-    private CowScoreTier scoreTierFor(Hero hero) {
-        if (fortification.buff() instanceof RoleBuff roleBuff) {
-            boolean roleMatches = hero.roles().contains(roleBuff.role());
-            return hero.buffFitScore(fortification.id(), roleMatches);
-        }
-        return hero.generalScore();
+    /** Every hero carrying {@code mark} for {@link #fortification}, sorted by display name. */
+    private List<Hero> heroesMarked(List<Hero> heroes, FortMark mark) {
+        return heroes.stream()
+                .filter(hero -> hero.fortMark(fortification.id()) == mark)
+                .sorted(Comparator.comparing(FortificationInfoPanel::heroLabel, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     /**
@@ -183,23 +167,16 @@ public class FortificationInfoPanel extends JPanel {
         return wrapper;
     }
 
-    /** One hero's avatar (see {@link IconLoader#iconFor(String, int)}), with its display name and {@link CowScoreTier} as a tooltip. */
+    /** One hero's avatar (see {@link IconLoader#iconFor(String, int)}), with its display name and {@link FortMark} as a tooltip. */
     private JLabel buildHeroIconLabel(Hero hero) {
         JLabel label = new JLabel(IconLoader.iconFor(hero.imagePath(), HERO_ICON_SIZE));
-        label.setToolTipText(heroLabel(hero) + " (" + scoreTierLabel(scoreTierFor(hero)) + ")");
+        label.setToolTipText(heroLabel(hero) + " (" + fortMarkLabel(hero.fortMark(fortification.id())) + ")");
         return label;
     }
 
-    /**
-     * The localized display name for a {@link CowScoreTier} (language file
-     * key {@code scoreTier.<NAME>}, see
-     * {@code resources/language/<name>/<name>.properties}) - used instead of
-     * {@link CowScoreTier#name()} so this tooltip stays consistent with the
-     * translated tier names shown in {@code HeroCoreScoreDialog}'s combo
-     * boxes.
-     */
-    private static String scoreTierLabel(CowScoreTier tier) {
-        return LanguageService.displayName("scoreTier." + tier.name());
+    /** The localized display name for a {@link FortMark} (language file key {@code fortMark.<NAME>}, {@code fortMark.NONE} for null). */
+    private static String fortMarkLabel(FortMark mark) {
+        return LanguageService.displayName("fortMark." + (mark == null ? "NONE" : mark.name()));
     }
 
     private static String heroLabel(Hero hero) {

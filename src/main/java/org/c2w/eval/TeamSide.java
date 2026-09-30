@@ -38,7 +38,7 @@ import java.util.function.ToIntFunction;
  * @param teamsOf          a member's teams of this side ({@link GuildMember#heroTeams()}/{@link GuildMember#titanTeams()})
  * @param totalPowerOf     raw power of one team
  * @param buffFitScoreOf   simple role/element match count of one team for a buff
- * @param sortScoreOf      generalScore + scaled-down power of one team
+ * @param sortScoreOf      fortification-independent score of one team (see {@link HeroTeam#sortScore()}/{@link TitanTeam#sortScore()})
  * @param cowScoreOf       full CowScore-plus-power figure of one team on one fortification
  *                         (see {@link TeamScoreCalculator#scoreFor})
  * @param <T>              {@link HeroTeam} or {@link TitanTeam}
