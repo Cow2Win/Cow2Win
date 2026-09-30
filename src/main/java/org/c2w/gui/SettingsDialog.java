@@ -5,9 +5,9 @@ import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.Config;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Config;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +23,7 @@ import java.util.List;
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * Cow2Frame#buildMenuBar). Lets the user change the display language, the
  * default hero and titan lineup algorithms (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
- * the backup directory (see org.c2w.util.BackupService) and the workspace
+ * the backup directory (see org.c2w.infra.BackupService) and the workspace
  * directory (see {@link Config#getWorkspaceDir()}); named generically since
  * more application-wide settings are expected to move in here later.
  */

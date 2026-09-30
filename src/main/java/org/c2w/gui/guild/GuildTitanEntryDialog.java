@@ -1,11 +1,11 @@
 package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
-import org.c2w.data.repository.TitanRepository;
+import org.c2w.data.repository.Catalog;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.AppContext;
-import org.c2w.util.LanguageService;
-import org.c2w.util.TeamScoreCalculator;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -26,11 +26,11 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
     private static final String KEY_TITLE = "guildEntry.titanTeams";
 
     public GuildTitanEntryDialog(Frame owner, AppContext appContext) {
-        super(owner, appContext, KEY_TITLE, buildSpec(), MAX_TITAN_TEAMS);
+        super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_TITAN_TEAMS);
     }
 
-    private static SectionSpec<Titan> buildSpec() {
-        return new SectionSpec<>(TitanRepository.findAll(), GuildTitanEntryDialog::titanLabel,
+    private static SectionSpec<Titan> buildSpec(Catalog catalog) {
+        return new SectionSpec<>(catalog.titans().findAll(), GuildTitanEntryDialog::titanLabel,
                 t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildTitanEntryDialog::titanLabel),
                 m -> m.titanTeams, FortificationType.TITAN, Lineup.TeamType.TITAN,
                 GuildTitanEntryDialog::titanMatchesBuff, GuildTitanEntryDialog::titanScoreBreakdown);

@@ -1,10 +1,12 @@
-package org.c2w.util;
+package org.c2w.domain;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 
 import java.util.*;
 

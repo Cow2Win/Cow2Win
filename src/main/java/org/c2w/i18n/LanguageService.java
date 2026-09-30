@@ -1,6 +1,8 @@
-package org.c2w.util;
+package org.c2w.i18n;
 
 import org.c2w.C2WApp;
+import org.c2w.infra.Config;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;

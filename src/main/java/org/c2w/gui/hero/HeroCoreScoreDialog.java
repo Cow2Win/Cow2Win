@@ -5,8 +5,8 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.HeroRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -73,9 +73,8 @@ public final class HeroCoreScoreDialog extends JDialog {
      * changes size while this dialog is open, so it is built once here
      * rather than refreshed.
      */
-    private final List<Hero> heroCatalog = HeroRepository.findAll().stream()
-            .sorted(Comparator.comparing(HeroCoreScoreDialog::heroLabel, String.CASE_INSENSITIVE_ORDER))
-            .toList();
+    private final HeroRepository repository;
+    private final List<Hero> heroCatalog;
 
     /** Every fortification a hero can be marked for: all fortifications of type {@link FortificationType#HERO}. */
     private final List<Fortification> heroFortifications = FortificationRepository.findAll().stream()
@@ -96,8 +95,15 @@ public final class HeroCoreScoreDialog extends JDialog {
     private final JList<Hero> heroList = new JList<>(heroListModel);
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
-    public HeroCoreScoreDialog(Frame owner) {
+    public HeroCoreScoreDialog(Frame owner, HeroRepository repository) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        if (repository == null) {
+            throw new IllegalArgumentException("HeroCoreScoreDialog needs a HeroRepository");
+        }
+        this.repository = repository;
+        this.heroCatalog = repository.findAll().stream()
+                .sorted(Comparator.comparing(HeroCoreScoreDialog::heroLabel, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -275,7 +281,7 @@ public final class HeroCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, FortMarks> defaults = HeroRepository.loadDefaultCowScores();
+        Map<String, FortMarks> defaults = repository.loadDefaultCowScores();
         for (Hero hero : heroCatalog) {
             workingMarks.put(hero.id(), new LinkedHashMap<>(defaults.getOrDefault(hero.id(), FortMarks.NONE).marks()));
         }
@@ -304,7 +310,7 @@ public final class HeroCoreScoreDialog extends JDialog {
                 .toList();
 
         try {
-            HeroRepository.saveCowScores(updatedCatalog);
+            repository.saveCowScores(updatedCatalog);
             Logger.log("Saved: cowScore.json");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("heroBuffFitScores.saveError") + "\n" + ex.getMessage(),

@@ -1,9 +1,11 @@
-package org.c2w.util;
+package org.c2w.service;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.LineupBaseline;
 
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -40,6 +42,7 @@ public class AppContext {
     }
 
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final Catalog catalog;
 
     private Guild guild;
     private Path guildFilePath;
@@ -62,6 +65,17 @@ public class AppContext {
      */
     private Map<String, LineupBaseline> loadedFortificationBaselines = Map.of();
 
+    public AppContext(Catalog catalog) {
+        if (catalog == null) {
+            throw new IllegalArgumentException("catalog must not be null");
+        }
+        this.catalog = catalog;
+    }
+
+    /** The hero/titan/pet/war flag catalogs of the workspace this app was started with. */
+    public Catalog catalog() {
+        return catalog;
+    }
 
     /** The guild currently open in the application. */
     public Guild guild() {

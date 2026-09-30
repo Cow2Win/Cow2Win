@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.infra;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

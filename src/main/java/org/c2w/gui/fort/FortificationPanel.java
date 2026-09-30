@@ -1,13 +1,13 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.AppContext;
-import org.c2w.util.BuffTexts;
-import org.c2w.util.LanguageService;
-import org.c2w.util.LineupFiles;
+import org.c2w.i18n.BuffTexts;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 
 import javax.swing.*;
 import java.awt.*;

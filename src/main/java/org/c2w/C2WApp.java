@@ -2,12 +2,18 @@ package org.c2w;
 
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.Cow2Frame;
+import org.c2w.infra.BackupService;
+import org.c2w.infra.CatalogVersion;
+import org.c2w.infra.Config;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
+import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
-import org.c2w.util.*;
 
 import javax.swing.*;
 import mdlaf.MaterialLookAndFeel;
@@ -37,7 +43,7 @@ public class C2WApp {
         Config.load();
         BackupService.checkAndCreateBackups();
         logCatalogVersion();
-        AppContext context = new AppContext();
+        AppContext context = new AppContext(new Catalog(Config.getWorkspaceDir()));
         loadGuildContext(context);
         loadLineupContext(context);
 
@@ -148,7 +154,7 @@ public class C2WApp {
      */
     private static void loadDemo(AppContext context) {
         try {
-            Guild demoGuild = GuildRepository.load(DEMO_GUILD_PATH);
+            Guild demoGuild = GuildRepository.load(DEMO_GUILD_PATH, context.catalog());
             GuildRepository.save(demoGuild, context.guildFilePath());
             context.setGuild(demoGuild);
         } catch (IOException e) {
@@ -192,7 +198,7 @@ public class C2WApp {
         Path guildFilePath = reanchorIntoWorkspace(Config.getLastGuildPath());
         Guild guild;
         try {
-            guild = GuildRepository.load(guildFilePath);
+            guild = GuildRepository.load(guildFilePath, context.catalog());
         } catch (IOException e) {
             Logger.logException("Could not load guild from " + guildFilePath, e);
             guild = new Guild("guild", "", List.of());

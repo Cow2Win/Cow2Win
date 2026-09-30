@@ -1,6 +1,6 @@
 package org.c2w.gui.common;
 
-import org.c2w.util.Logger;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import java.awt.*;

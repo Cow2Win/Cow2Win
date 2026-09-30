@@ -1,6 +1,6 @@
 package org.c2w.service;
 
-import org.c2w.util.Config;
+import org.c2w.infra.Config;
 
 import java.nio.file.Path;
 

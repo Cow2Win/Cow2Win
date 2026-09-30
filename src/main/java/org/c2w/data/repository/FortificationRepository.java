@@ -3,8 +3,8 @@ package org.c2w.data.repository;
 import com.google.gson.*;
 import org.c2w.data.model.*;
 import org.c2w.eval.AbstractLineupAlgorithm;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.util.*;

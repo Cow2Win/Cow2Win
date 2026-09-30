@@ -1,8 +1,9 @@
-package org.c2w.util;
+package org.c2w.domain;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.service.AppContext;
 
 /**
  * Snapshot of ONE fortification's total power and buff-member count within

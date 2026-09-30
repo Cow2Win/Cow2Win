@@ -9,8 +9,8 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.WarFlagRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -58,9 +58,8 @@ public final class WarFlagCoreScoreDialog extends JDialog {
     private static final int NAME_LABEL_WIDTH = 170;
 
     /** Every known war flag, sorted by display name - the catalog never changes while this dialog is open. */
-    private final List<WarFlag> warFlagCatalog = WarFlagRepository.findAll().stream()
-            .sorted(Comparator.comparing(WarFlagCoreScoreDialog::warFlagLabel, String.CASE_INSENSITIVE_ORDER))
-            .toList();
+    private final WarFlagRepository repository;
+    private final List<WarFlag> warFlagCatalog;
 
     /** Every fortification a war flag can be marked for: all fortifications of type {@link FortificationType#HERO}. */
     private final List<Fortification> heroFortifications = FortificationRepository.findAll().stream()
@@ -79,8 +78,15 @@ public final class WarFlagCoreScoreDialog extends JDialog {
     private final JList<WarFlag> warFlagList = new JList<>(warFlagListModel);
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
-    public WarFlagCoreScoreDialog(Frame owner) {
+    public WarFlagCoreScoreDialog(Frame owner, WarFlagRepository repository) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        if (repository == null) {
+            throw new IllegalArgumentException("WarFlagCoreScoreDialog needs a WarFlagRepository");
+        }
+        this.repository = repository;
+        this.warFlagCatalog = repository.findAll().stream()
+                .sorted(Comparator.comparing(WarFlagCoreScoreDialog::warFlagLabel, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -210,7 +216,7 @@ public final class WarFlagCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, FortMarks> defaults = WarFlagRepository.loadDefaultCowScores();
+        Map<String, FortMarks> defaults = repository.loadDefaultCowScores();
         for (WarFlag warFlag : warFlagCatalog) {
             workingMarks.put(warFlag.id(), markedIds(defaults.getOrDefault(warFlag.id(), FortMarks.NONE)));
         }
@@ -248,7 +254,7 @@ public final class WarFlagCoreScoreDialog extends JDialog {
                 .toList();
 
         try {
-            WarFlagRepository.saveCowScores(updatedCatalog);
+            repository.saveCowScores(updatedCatalog);
             Logger.log("Saved: warFlagCowScore.json");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_SAVE_ERROR) + "\n" + ex.getMessage(),

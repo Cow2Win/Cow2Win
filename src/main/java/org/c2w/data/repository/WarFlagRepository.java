@@ -5,9 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.WarFlag;
-import org.c2w.util.Config;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -44,22 +43,36 @@ public class WarFlagRepository {
     /** Entity label used in {@link FortMarkFiles}' log messages. */
     private static final String ENTITY_LABEL = "war flag";
 
-    private static volatile Map<String, WarFlag> warFlagsById;
+    private final Path workspaceDir;
+    private volatile Map<String, WarFlag> warFlagsById;
+
+    /**
+     * Loads the catalog right away: the master data from the classpath,
+     * the CowScores from the workspace copy in {@code workspaceDir} (created
+     * from the shipped defaults if it does not exist yet).
+     *
+     * @throws RuntimeException if the master data cannot be read
+     */
+    public WarFlagRepository(Path workspaceDir) {
+        if (workspaceDir == null) {
+            throw new IllegalArgumentException("workspaceDir must not be null");
+        }
+        this.workspaceDir = workspaceDir;
+        this.warFlagsById = loadWarFlags();
+    }
 
     /**
      * Returns the war flag with the given id, or Optional.empty() if no war
      * flag with this id exists.
      */
-    public static Optional<WarFlag> findById(String warFlagId) {
-        ensureLoaded();
+    public Optional<WarFlag> findById(String warFlagId) {
         return Optional.ofNullable(warFlagsById.get(warFlagId));
     }
 
     /**
      * Returns all known war flags as a list sorted by id.
      */
-    public static List<WarFlag> findAll() {
-        ensureLoaded();
+    public List<WarFlag> findAll() {
         return warFlagsById.values().stream()
                 .sorted(Comparator.comparing(WarFlag::id))
                 .collect(Collectors.toList());
@@ -68,19 +81,8 @@ public class WarFlagRepository {
     /**
      * Returns the number of known war flags.
      */
-    public static int count() {
-        ensureLoaded();
+    public int count() {
         return warFlagsById.size();
-    }
-
-    /**
-     * Resets the catalog (for tests). Both JSON files are reloaded on the
-     * next access.
-     */
-    public static void resetCache() {
-        synchronized (WarFlagRepository.class) {
-            warFlagsById = null;
-        }
     }
 
     /**
@@ -93,7 +95,7 @@ public class WarFlagRepository {
      * warFlags.json}. Every war flag in {@code catalog} gets an entry, see
      * {@link FortMarkFiles#toTree}.
      */
-    public static synchronized void saveCowScores(List<WarFlag> catalog) throws IOException {
+    public synchronized void saveCowScores(List<WarFlag> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
@@ -116,33 +118,21 @@ public class WarFlagRepository {
      * warFlagCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a
      * war flag without an entry there). Only reads, never writes.
      */
-    public static Map<String, FortMarks> loadDefaultCowScores() {
-        ensureLoaded();
+    public Map<String, FortMarks> loadDefaultCowScores() {
         return FortMarkFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH, warFlagsById.keySet(), false, ENTITY_LABEL);
     }
 
     /**
-     * The workspace copy of {@code warFlagCowScore.json} - directly in {@link
-     * Config#getWorkspaceDir()}, resolved fresh on every call (see {@link
-     * HeroRepository#cowScoreFile()}).
+     * The workspace copy of {@code warFlagCowScore.json} - directly in the workspace folder this repository was
+     * created for (see {@link HeroRepository#cowScoreFile()}).
      */
-    public static Path cowScoreFile() {
-        return Config.getWorkspaceDir().resolve(COW_SCORE_FILE_NAME);
+    public Path cowScoreFile() {
+        return workspaceDir.resolve(COW_SCORE_FILE_NAME);
     }
 
     // --- private ---
 
-    private static void ensureLoaded() {
-        if (warFlagsById == null) {
-            synchronized (WarFlagRepository.class) {
-                if (warFlagsById == null) {
-                    warFlagsById = loadWarFlags();
-                }
-            }
-        }
-    }
-
-    private static Map<String, WarFlag> loadWarFlags() {
+    private Map<String, WarFlag> loadWarFlags() {
         try {
             String warFlagsJson = JsonSupport.readClasspathResource(WarFlagRepository.class, WAR_FLAGS_JSON_PATH);
             Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson);

@@ -6,9 +6,8 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
-import org.c2w.util.Config;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,22 +50,36 @@ public class HeroRepository {
     /** Classpath-relative folder every hero's "image" JSON field is resolved against - see {@link #parseHeroObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/heroes/";
 
-    private static volatile Map<String, Hero> heroesById;
+    private final Path workspaceDir;
+    private volatile Map<String, Hero> heroesById;
+
+    /**
+     * Loads the catalog right away: the master data from the classpath,
+     * the CowScores from the workspace copy in {@code workspaceDir} (created
+     * from the shipped defaults if it does not exist yet).
+     *
+     * @throws RuntimeException if the master data cannot be read
+     */
+    public HeroRepository(Path workspaceDir) {
+        if (workspaceDir == null) {
+            throw new IllegalArgumentException("workspaceDir must not be null");
+        }
+        this.workspaceDir = workspaceDir;
+        this.heroesById = loadHeroes();
+    }
 
     /**
      * Returns the hero with the given id, or Optional.empty() if no hero with
      * this id exists.
      */
-    public static Optional<Hero> findById(String heroId) {
-        ensureLoaded();
+    public Optional<Hero> findById(String heroId) {
         return Optional.ofNullable(heroesById.get(heroId));
     }
 
     /**
      * Returns all known heroes as a list sorted by id.
      */
-    public static List<Hero> findAll() {
-        ensureLoaded();
+    public List<Hero> findAll() {
         return heroesById.values().stream()
                 .sorted(Comparator.comparing(Hero::id))
                 .collect(Collectors.toList());
@@ -75,19 +88,8 @@ public class HeroRepository {
     /**
      * Returns the number of known heroes.
      */
-    public static int count() {
-        ensureLoaded();
+    public int count() {
         return heroesById.size();
-    }
-
-    /**
-     * Resets the catalog (for tests). Both JSON files are reloaded on the
-     * next access.
-     */
-    public static void resetCache() {
-        synchronized (HeroRepository.class) {
-            heroesById = null;
-        }
     }
 
     /**
@@ -100,7 +102,7 @@ public class HeroRepository {
      * files are kept separate. Every hero in {@code catalog} gets an entry,
      * see {@link FortMarkFiles#toTree} for the exact format.
      */
-    public static synchronized void saveCowScores(List<Hero> catalog) throws IOException {
+    public synchronized void saveCowScores(List<Hero> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
@@ -125,34 +127,22 @@ public class HeroRepository {
      * defaults" button resets its values to. Only reads, never writes: the
      * workspace copy is not touched until the dialog is saved.
      */
-    public static Map<String, FortMarks> loadDefaultCowScores() {
-        ensureLoaded();
+    public Map<String, FortMarks> loadDefaultCowScores() {
         return FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH, heroesById.keySet(), true, "hero");
     }
 
     /**
-     * The workspace copy of {@code cowScore.json} - directly in {@link
-     * Config#getWorkspaceDir()}, resolved fresh on every call since the
-     * workspace can be reconfigured at runtime (it only takes effect for the
-     * loaded catalog after a restart, like every other workspace change).
+     * The workspace copy of {@code cowScore.json} - directly in the workspace folder this repository was
+     * created for. A workspace change in the settings only takes effect after
+     * a restart, when a new repository is created for the new folder.
      */
-    public static Path cowScoreFile() {
-        return Config.getWorkspaceDir().resolve(COW_SCORE_FILE_NAME);
+    public Path cowScoreFile() {
+        return workspaceDir.resolve(COW_SCORE_FILE_NAME);
     }
 
     // --- private ---
 
-    private static void ensureLoaded() {
-        if (heroesById == null) {
-            synchronized (HeroRepository.class) {
-                if (heroesById == null) {
-                    heroesById = loadHeroes();
-                }
-            }
-        }
-    }
-
-    private static Map<String, Hero> loadHeroes() {
+    private Map<String, Hero> loadHeroes() {
         try {
             String heroesJson = JsonSupport.readClasspathResource(HeroRepository.class, HEROES_JSON_PATH);
             Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());

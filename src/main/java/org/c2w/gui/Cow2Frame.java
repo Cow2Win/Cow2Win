@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCoreScoreDialog;
@@ -8,9 +9,13 @@ import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroCoreScoreDialog;
 import org.c2w.gui.pet.PetCoreScoreDialog;
 import org.c2w.gui.titan.TitanCoreScoreDialog;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.AppVersion;
+import org.c2w.infra.Logger;
+import org.c2w.infra.UpdateChecker;
+import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
-import org.c2w.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -457,26 +462,26 @@ public class Cow2Frame extends JFrame {
 
     /**
      * Opens {@link HeroCoreScoreDialog} - independent of the currently
-     * open guild/lineup (see that dialog's class Javadoc), so this only
-     * needs the frame itself as owner.
+     * open guild/lineup (see that dialog's class Javadoc) - it only needs
+     * the hero catalog.
      */
     private void onOpenHeroBuffFitScores() {
-        new HeroCoreScoreDialog(this).setVisible(true);
+        new HeroCoreScoreDialog(this, appContext.catalog().heroes()).setVisible(true);
     }
 
     /** Opens {@link TitanCoreScoreDialog} - the titan counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
     private void onOpenTitanBuffFitScores() {
-        new TitanCoreScoreDialog(this).setVisible(true);
+        new TitanCoreScoreDialog(this, appContext.catalog().titans()).setVisible(true);
     }
 
     /** Opens {@link PetCoreScoreDialog} - the pet counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
     private void onOpenPetBuffFitScores() {
-        new PetCoreScoreDialog(this).setVisible(true);
+        new PetCoreScoreDialog(this, appContext.catalog().pets()).setVisible(true);
     }
 
     /** Opens {@link WarFlagCoreScoreDialog} - the war flag counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
     private void onOpenWarFlagBuffFitScores() {
-        new WarFlagCoreScoreDialog(this).setVisible(true);
+        new WarFlagCoreScoreDialog(this, appContext.catalog().warFlags()).setVisible(true);
     }
 
     /**

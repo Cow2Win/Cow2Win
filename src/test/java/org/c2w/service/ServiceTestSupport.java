@@ -1,7 +1,8 @@
 package org.c2w.service;
 
-import org.c2w.util.AppContext;
-import org.c2w.util.Config;
+import org.c2w.data.repository.Catalog;
+import org.c2w.infra.Config;
+import org.c2w.service.AppContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,7 +39,7 @@ abstract class ServiceTestSupport {
 
     private String previousWorkspace;
 
-    final AppContext context = new AppContext();
+    AppContext context;
     final RecordingRecentFiles recentFiles = new RecordingRecentFiles();
     GuildService guildService;
     LineupService lineupService;
@@ -47,6 +48,7 @@ abstract class ServiceTestSupport {
     void openWorkspace() throws Exception {
         previousWorkspace = Config.getWorkspacePath();
         Config.setWorkspacePath(workspace.toString());
+        context = new AppContext(new Catalog(workspace));
         guildService = new GuildService(context, recentFiles);
         lineupService = new LineupService(context, recentFiles);
 

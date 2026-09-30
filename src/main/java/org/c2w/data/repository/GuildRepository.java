@@ -5,8 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.*;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,13 +25,17 @@ public class GuildRepository {
     }
 
     /**
-     * Loads the guild stored at the given path.
+     * Loads the guild stored at the given path, resolving hero/titan/pet/war
+     * flag ids against {@code catalog}.
      *
      * @throws IOException if the file cannot be read, is not valid JSON, or
      *                      does not describe a valid {@link Guild} (e.g.
      *                      missing id)
      */
-    public static Guild load(Path path) throws IOException {
+    public static Guild load(Path path, Catalog catalog) throws IOException {
+        if (catalog == null) {
+            throw new IllegalArgumentException("catalog must not be null");
+        }
         String json = Files.readString(path, StandardCharsets.UTF_8);
 
         JsonObject root;
@@ -42,7 +46,7 @@ public class GuildRepository {
         }
 
         try {
-            return guildFromJson(root);
+            return guildFromJson(root, catalog);
         } catch (RuntimeException e) {
             throw new IOException("Could not interpret guild JSON in " + path + ": " + e.getMessage(), e);
         }
@@ -88,7 +92,7 @@ public class GuildRepository {
 
     // ---- Guild <-> JSON tree ----
 
-    private static Guild guildFromJson(JsonObject obj) {
+    private static Guild guildFromJson(JsonObject obj, Catalog catalog) {
         String id = JsonSupport.getString(obj, "id", "");
         String name = JsonSupport.getString(obj, "name", "");
         int season = JsonSupport.getInt(obj, "season", 0);
@@ -96,7 +100,7 @@ public class GuildRepository {
 
         List<GuildMember> members = new ArrayList<>();
         for (JsonElement memberEl : JsonSupport.getArray(obj, "members")) {
-            members.add(memberFromJson(memberEl.getAsJsonObject()));
+            members.add(memberFromJson(memberEl.getAsJsonObject(), catalog));
         }
 
         return new Guild(id, name, members, season, seasonStart);
@@ -118,7 +122,7 @@ public class GuildRepository {
         return obj;
     }
 
-    private static GuildMember memberFromJson(JsonObject obj) {
+    private static GuildMember memberFromJson(JsonObject obj, Catalog catalog) {
         String id = JsonSupport.getString(obj, "id", "");
         String name = JsonSupport.getString(obj, "name", "");
 
@@ -129,13 +133,14 @@ public class GuildRepository {
         Set<String> usedPetIds = new HashSet<>();
         Set<String> usedWarFlagIds = new HashSet<>();
         for (int i = 0; i < heroTeamsArr.size(); i++) {
-            heroTeams.add(heroTeamFromJson(heroTeamsArr.get(i).getAsJsonObject(), id, i, usedPetIds, usedWarFlagIds));
+            heroTeams.add(heroTeamFromJson(heroTeamsArr.get(i).getAsJsonObject(), id, i, usedPetIds, usedWarFlagIds,
+                    catalog));
         }
 
         List<TitanTeam> titanTeams = new ArrayList<>();
         JsonArray titanTeamsArr = JsonSupport.getArray(obj, "titanTeams");
         for (int i = 0; i < titanTeamsArr.size(); i++) {
-            titanTeams.add(titanTeamFromJson(titanTeamsArr.get(i).getAsJsonObject(), id, i));
+            titanTeams.add(titanTeamFromJson(titanTeamsArr.get(i).getAsJsonObject(), id, i, catalog));
         }
 
         return new GuildMember(id, name, heroTeams, titanTeams);
@@ -172,17 +177,17 @@ public class GuildRepository {
      * member" rule.
      */
     private static HeroTeam heroTeamFromJson(JsonObject obj, String memberId, int index,
-                                             Set<String> usedPetIds, Set<String> usedWarFlagIds) {
+                                             Set<String> usedPetIds, Set<String> usedWarFlagIds, Catalog catalog) {
         List<Hero> heroes = new ArrayList<>();
         for (String heroId : JsonSupport.getStringList(obj, "heroIds")) {
-            HeroRepository.findById(heroId).ifPresentOrElse(heroes::add,
+            catalog.heroes().findById(heroId).ifPresentOrElse(heroes::add,
                     () -> Logger.log("Unknown hero id in guild file, skipping: " + heroId));
         }
 
         Pet pet = null;
         String petId = JsonSupport.getStringOrNull(obj, "petId");
         if (petId != null) {
-            pet = PetRepository.findById(petId).orElse(null);
+            pet = catalog.pets().findById(petId).orElse(null);
             if (pet == null) {
                 Logger.log("Unknown pet id in guild file, skipping: " + petId);
             } else if (!usedPetIds.add(petId)) {
@@ -195,7 +200,7 @@ public class GuildRepository {
         WarFlag warFlag = null;
         String warFlagId = JsonSupport.getStringOrNull(obj, "warFlagId");
         if (warFlagId != null) {
-            warFlag = WarFlagRepository.findById(warFlagId).orElse(null);
+            warFlag = catalog.warFlags().findById(warFlagId).orElse(null);
             if (warFlag == null) {
                 Logger.log("Unknown war flag id in guild file, skipping: " + warFlagId);
             } else if (!usedWarFlagIds.add(warFlagId)) {
@@ -228,10 +233,10 @@ public class GuildRepository {
         return obj;
     }
 
-    private static TitanTeam titanTeamFromJson(JsonObject obj, String memberId, int index) {
+    private static TitanTeam titanTeamFromJson(JsonObject obj, String memberId, int index, Catalog catalog) {
         List<Titan> titans = new ArrayList<>();
         for (String titanId : JsonSupport.getStringList(obj, "titanIds")) {
-            TitanRepository.findById(titanId).ifPresentOrElse(titans::add,
+            catalog.titans().findById(titanId).ifPresentOrElse(titans::add,
                     () -> Logger.log("Unknown titan id in guild file, skipping: " + titanId));
         }
 

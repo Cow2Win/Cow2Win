@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.infra;
 
 import java.io.IOException;
 import java.io.InputStream;

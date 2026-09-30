@@ -19,7 +19,7 @@ import java.util.List;
  * could go stale the moment the team itself changed afterwards). Anything
  * about the team itself (totalPower, buff fit, score, ...) is looked up
  * fresh from the current {@link Guild} whenever it is needed (see e.g.
- * {@link org.c2w.util.BuffCalculationService#totalPowerOf}) - teams have no
+ * {@link org.c2w.domain.BuffCalculationService#totalPowerOf}) - teams have no
  * name of their own; their position in the member's respective list
  * (heroTeams/titanTeams) is enough (see {@link GuildMember#teamLabel(int)}).
  *

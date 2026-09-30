@@ -1,9 +1,12 @@
-package org.c2w.util;
+package org.c2w.report;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.BuffCalculationService;
 import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.i18n.BuffTexts;
+import org.c2w.i18n.LanguageService;
 
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;

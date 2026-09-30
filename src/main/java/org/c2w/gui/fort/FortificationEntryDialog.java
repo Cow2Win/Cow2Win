@@ -2,15 +2,15 @@ package org.c2w.gui.fort;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.*;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.*;
+import org.c2w.i18n.BuffTexts;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
+import org.c2w.service.AppContext;
 import org.c2w.service.LineupService;
-import org.c2w.util.AppContext;
-import org.c2w.util.BuffTexts;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
-import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +81,7 @@ public final class FortificationEntryDialog extends JDialog {
         }
         this.fortification = fortification;
         this.appContext = appContext;
-        this.infoPanel = new FortificationInfoPanel(fortification);
+        this.infoPanel = new FortificationInfoPanel(fortification, appContext.catalog().heroes().findAll());
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
         for (MemberDraft member : draft.members) {
@@ -119,14 +119,14 @@ public final class FortificationEntryDialog extends JDialog {
 
     private void buildRows() {
         if (fortification.type() == FortificationType.HERO) {
-            buildRowsGeneric(HeroRepository.findAll(), FortificationEntryDialog::heroLabel,
+            buildRowsGeneric(appContext.catalog().heroes().findAll(), FortificationEntryDialog::heroLabel,
                     h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::heroLabel),
                     m -> m.heroTeams, Lineup.TeamType.HERO,
                     hero -> fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role()),
                     this::heroScoreBreakdown);
         } else {
-            buildRowsGeneric(TitanRepository.findAll(), FortificationEntryDialog::titanLabel,
+            buildRowsGeneric(appContext.catalog().titans().findAll(), FortificationEntryDialog::titanLabel,
                     t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::titanLabel),
                     m -> m.titanTeams, Lineup.TeamType.TITAN,
@@ -200,7 +200,8 @@ public final class FortificationEntryDialog extends JDialog {
             JLabel buffCountLabel = buildBuffCountLabel();
             // War flag/pet only for hero teams - see TeamExtras/otherTeamsOfRowMember.
             TeamExtras extras = teamType == Lineup.TeamType.HERO
-                    ? TeamExtras.forOtherDrafts(() -> otherTeamsOfRowMember(rowDraft, combo, rowStates, teamsOf))
+                    ? TeamExtras.forOtherDrafts(appContext.catalog(),
+                            () -> otherTeamsOfRowMember(rowDraft, combo, rowStates, teamsOf))
                     : null;
             TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
                     () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber),

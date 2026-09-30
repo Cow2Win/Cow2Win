@@ -3,11 +3,9 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.Pet;
 import org.c2w.data.model.WarFlag;
-import org.c2w.data.repository.PetRepository;
-import org.c2w.data.repository.WarFlagRepository;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -127,11 +125,11 @@ public final class TeamEditorPanel<T> extends JPanel {
         add(powerField);
 
         if (extras != null) {
-            warFlagCombo = buildExtraCombo(WarFlagRepository.findAll(), WarFlag::id, WarFlag::imagePath,
+            warFlagCombo = buildExtraCombo(extras.warFlags(), WarFlag::id, WarFlag::imagePath,
                     teamDraft.warFlag, extras.blockedWarFlagIds(), KEY_WAR_FLAG, true,
                     selected -> teamDraft.warFlag = selected);
             add(warFlagCombo);
-            petCombo = buildExtraCombo(PetRepository.findAll(), Pet::id, Pet::imagePath,
+            petCombo = buildExtraCombo(extras.pets(), Pet::id, Pet::imagePath,
                     teamDraft.pet, extras.blockedPetIds(), KEY_PET, false,
                     selected -> teamDraft.pet = selected);
             add(petCombo);

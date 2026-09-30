@@ -1,6 +1,9 @@
 package org.c2w.gui.guild;
 
-import org.c2w.util.LanguageService;
+import org.c2w.data.model.Pet;
+import org.c2w.data.model.WarFlag;
+import org.c2w.data.repository.Catalog;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +15,7 @@ import java.util.function.Supplier;
  * Turns on a {@link TeamEditorPanel}'s optional war flag and pet combo boxes
  * (in this order, between the power field and the member slots) - hero teams
  * only, titan teams have neither.
+ * {@code pets}/{@code warFlags} are what the two combo boxes offer.
  *
  * Per Clash of Worlds rules, a member can field each pet and each war flag in
  * at most ONE of their hero teams (see {@code GuildMember}). The two
@@ -26,7 +30,8 @@ import java.util.function.Supplier;
  * dialog supplies its own - see {@link #forOtherDrafts}. This only guides the
  * user; {@link #confirmNoConflict} is the save-time safety net.
  */
-public record TeamExtras(Supplier<Set<String>> blockedPetIds, Supplier<Set<String>> blockedWarFlagIds) {
+public record TeamExtras(List<Pet> pets, List<WarFlag> warFlags,
+                         Supplier<Set<String>> blockedPetIds, Supplier<Set<String>> blockedWarFlagIds) {
 
     /** Icon size of the war flag/pet combo boxes - same as the member slots' icons in every dialog. */
     public static final int ICON_SIZE = 32;
@@ -35,6 +40,8 @@ public record TeamExtras(Supplier<Set<String>> blockedPetIds, Supplier<Set<Strin
     private static final String KEY_CONFLICT = "teamEditor.petWarFlagConflict";
 
     public TeamExtras {
+        pets = pets == null ? List.of() : List.copyOf(pets);
+        warFlags = warFlags == null ? List.of() : List.copyOf(warFlags);
         blockedPetIds = blockedPetIds == null ? Set::of : blockedPetIds;
         blockedWarFlagIds = blockedWarFlagIds == null ? Set::of : blockedWarFlagIds;
     }
@@ -42,10 +49,13 @@ public record TeamExtras(Supplier<Set<String>> blockedPetIds, Supplier<Set<Strin
     /**
      * Blocks every pet/war flag used by one of the drafts {@code otherDrafts}
      * returns - i.e. the member's other hero team drafts, as far as the
-     * calling dialog can tell (see class Javadoc).
+     * calling dialog can tell (see class Javadoc). The combo boxes offer
+     * every pet/war flag of {@code catalog}.
      */
-    public static TeamExtras forOtherDrafts(Supplier<? extends Collection<? extends TeamDraft<?>>> otherDrafts) {
-        return new TeamExtras(() -> petIdsOf(otherDrafts.get()), () -> warFlagIdsOf(otherDrafts.get()));
+    public static TeamExtras forOtherDrafts(Catalog catalog,
+                                            Supplier<? extends Collection<? extends TeamDraft<?>>> otherDrafts) {
+        return new TeamExtras(catalog.pets().findAll(), catalog.warFlags().findAll(),
+                () -> petIdsOf(otherDrafts.get()), () -> warFlagIdsOf(otherDrafts.get()));
     }
 
     static Set<String> petIdsOf(Collection<? extends TeamDraft<?>> drafts) {

@@ -1,7 +1,7 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;

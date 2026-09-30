@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import org.c2w.data.model.CowScore;
 import org.c2w.data.model.CowScoreTier;
 import org.c2w.data.model.Titan;
-import org.c2w.util.Config;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -163,23 +162,16 @@ class CowScoreFilesTest {
     @Test
     @DisplayName("TitanRepository: real catalog loads and seeds a complete titanCowScore.json in the workspace")
     void titanCatalogLoads(@TempDir Path workspace) throws IOException {
-        String previousWorkspace = Config.getWorkspacePath();
-        Config.setWorkspacePath(workspace.toString());
-        try {
-            TitanRepository.resetCache();
+        TitanRepository titans = new TitanRepository(workspace);
 
-            assertTrue(TitanRepository.count() > 0);
-            Titan ignis = TitanRepository.findById("ignis").orElseThrow();
-            assertNotNull(ignis.cowScore());
-            Path file = workspace.resolve("titanCowScore.json");
-            assertEquals(TitanRepository.cowScoreFile(), file);
-            assertEquals(TitanRepository.count(),
-                    CowScoreFiles.parse(Files.readString(file), "titanCowScore.json", "titan").size());
-            assertEquals(TitanRepository.count(), TitanRepository.loadDefaultCowScores().size());
-        } finally {
-            Config.setWorkspacePath(previousWorkspace);
-            TitanRepository.resetCache();
-        }
+        assertTrue(titans.count() > 0);
+        Titan ignis = titans.findById("ignis").orElseThrow();
+        assertNotNull(ignis.cowScore());
+        Path file = workspace.resolve("titanCowScore.json");
+        assertEquals(titans.cowScoreFile(), file);
+        assertEquals(titans.count(),
+                CowScoreFiles.parse(Files.readString(file), "titanCowScore.json", "titan").size());
+        assertEquals(titans.count(), titans.loadDefaultCowScores().size());
     }
 
     @Test

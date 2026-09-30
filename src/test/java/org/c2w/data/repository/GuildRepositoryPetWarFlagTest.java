@@ -1,7 +1,7 @@
 package org.c2w.data.repository;
 
 import org.c2w.data.model.*;
-import org.c2w.util.Config;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,31 +23,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class GuildRepositoryPetWarFlagTest {
 
-    private interface IoAction {
-        void run() throws IOException;
-    }
+    /** The catalogs seed their CowScore workspace files here instead of the real workspace. */
+    @TempDir
+    Path workspace;
 
-    /**
-     * Runs {@code action} with the workspace pointed at {@code workspace},
-     * so the catalogs seed their CowScore workspace files there instead of
-     * the real workspace - same approach as {@code CowScoreFilesTest}.
-     */
-    private static void inWorkspace(Path workspace, IoAction action) throws IOException {
-        String previousWorkspace = Config.getWorkspacePath();
-        Config.setWorkspacePath(workspace.toString());
-        resetCatalogs();
-        try {
-            action.run();
-        } finally {
-            Config.setWorkspacePath(previousWorkspace);
-            resetCatalogs();
-        }
-    }
+    private Catalog catalog;
 
-    private static void resetCatalogs() {
-        HeroRepository.resetCache();
-        PetRepository.resetCache();
-        WarFlagRepository.resetCache();
+    @BeforeEach
+    void loadCatalog() {
+        catalog = new Catalog(workspace);
     }
 
     private static Path writeGuildFile(Path dir, String heroTeamsJson) throws IOException {
@@ -69,72 +53,64 @@ class GuildRepositoryPetWarFlagTest {
 
     @Test
     @DisplayName("pet and war flag survive a save/load round trip, a team without them stays without")
-    void roundTrip(@TempDir Path workspace) throws IOException {
-        inWorkspace(workspace, () -> {
-            Hero galahad = HeroRepository.findById("galahad").orElseThrow();
-            Pet albus = PetRepository.findById("albus").orElseThrow();
-            WarFlag frost = WarFlagRepository.findById("flag-frost").orElseThrow();
-            GuildMember member = new GuildMember("m1", "Member", List.of(
-                    new HeroTeam("m1", 0, List.of(galahad), albus, frost, 1000, LocalDate.of(2026, 9, 29)),
-                    new HeroTeam("m1", 1, List.of(), null, null, 500, null)), List.of());
-            Guild guild = new Guild("g1", "Guild", List.of(member), 1, LocalDate.of(2026, 1, 1));
+    void roundTrip() throws IOException {
+        Hero galahad = catalog.heroes().findById("galahad").orElseThrow();
+        Pet albus = catalog.pets().findById("albus").orElseThrow();
+        WarFlag frost = catalog.warFlags().findById("flag-frost").orElseThrow();
+        GuildMember member = new GuildMember("m1", "Member", List.of(
+                new HeroTeam("m1", 0, List.of(galahad), albus, frost, 1000, LocalDate.of(2026, 9, 29)),
+                new HeroTeam("m1", 1, List.of(), null, null, 500, null)), List.of());
+        Guild guild = new Guild("g1", "Guild", List.of(member), 1, LocalDate.of(2026, 1, 1));
 
-            Path file = workspace.resolve("guild.json");
-            GuildRepository.save(guild, file);
-            Guild loaded = GuildRepository.load(file);
+        Path file = workspace.resolve("guild.json");
+        GuildRepository.save(guild, file);
+        Guild loaded = GuildRepository.load(file, catalog);
 
-            HeroTeam withExtras = loaded.members().get(0).heroTeams().get(0);
-            assertEquals("albus", withExtras.pet().id());
-            assertEquals("flag-frost", withExtras.warFlag().id());
-            HeroTeam withoutExtras = loaded.members().get(0).heroTeams().get(1);
-            assertNull(withoutExtras.pet());
-            assertNull(withoutExtras.warFlag());
-        });
+        HeroTeam withExtras = loaded.members().get(0).heroTeams().get(0);
+        assertEquals("albus", withExtras.pet().id());
+        assertEquals("flag-frost", withExtras.warFlag().id());
+        HeroTeam withoutExtras = loaded.members().get(0).heroTeams().get(1);
+        assertNull(withoutExtras.pet());
+        assertNull(withoutExtras.warFlag());
     }
 
     @Test
     @DisplayName("a guild file saved before pets/war flags existed still loads, without either")
-    void legacyFileWithoutFields(@TempDir Path workspace) throws IOException {
-        inWorkspace(workspace, () -> {
-            Path file = writeGuildFile(workspace,
-                    "[ { \"heroIds\": [\"galahad\"], \"totalPower\": 1000, \"lastModified\": null } ]");
-            HeroTeam team = GuildRepository.load(file).members().get(0).heroTeams().get(0);
-            assertNull(team.pet());
-            assertNull(team.warFlag());
-            assertEquals(1000, team.totalPower());
-            assertEquals(1, team.heroes().size());
-        });
+    void legacyFileWithoutFields() throws IOException {
+        Path file = writeGuildFile(workspace,
+                "[ { \"heroIds\": [\"galahad\"], \"totalPower\": 1000, \"lastModified\": null } ]");
+        HeroTeam team = GuildRepository.load(file, catalog).members().get(0).heroTeams().get(0);
+        assertNull(team.pet());
+        assertNull(team.warFlag());
+        assertEquals(1000, team.totalPower());
+        assertEquals(1, team.heroes().size());
     }
 
     @Test
     @DisplayName("unknown pet/war flag ids are skipped, the rest of the team still loads")
-    void unknownIdsAreSkipped(@TempDir Path workspace) throws IOException {
-        inWorkspace(workspace, () -> {
-            Path file = writeGuildFile(workspace,
-                    "[ { \"heroIds\": [\"galahad\"], \"petId\": \"no-such-pet\", \"warFlagId\": \"no-such-flag\","
-                            + " \"totalPower\": 1000 } ]");
-            HeroTeam team = GuildRepository.load(file).members().get(0).heroTeams().get(0);
-            assertNull(team.pet());
-            assertNull(team.warFlag());
-            assertEquals(1, team.heroes().size());
-        });
+    void unknownIdsAreSkipped() throws IOException {
+        Path file = writeGuildFile(workspace,
+                "[ { \"heroIds\": [\"galahad\"], \"petId\": \"no-such-pet\", \"warFlagId\": \"no-such-flag\","
+                        + " \"totalPower\": 1000 } ]");
+        HeroTeam team = GuildRepository.load(file, catalog).members().get(0).heroTeams().get(0);
+        assertNull(team.pet());
+        assertNull(team.warFlag());
+        assertEquals(1, team.heroes().size());
     }
 
     @Test
     @DisplayName("a pet/war flag used twice by one member is kept in the first team and dropped from the second")
-    void duplicatesAreDroppedFromLaterTeam(@TempDir Path workspace) throws IOException {
-        inWorkspace(workspace, () -> {
-            Path file = writeGuildFile(workspace, """
-                    [
-                      { "heroIds": [], "petId": "albus", "warFlagId": "flag-frost", "totalPower": 1000 },
-                      { "heroIds": [], "petId": "albus", "warFlagId": "flag-frost", "totalPower": 900 }
-                    ]
-                    """);
-            List<HeroTeam> teams = GuildRepository.load(file).members().get(0).heroTeams();
-            assertEquals("albus", teams.get(0).pet().id());
-            assertEquals("flag-frost", teams.get(0).warFlag().id());
-            assertNull(teams.get(1).pet());
-            assertNull(teams.get(1).warFlag());
-        });
+    void duplicatesAreDroppedFromLaterTeam() throws IOException {
+        Path file = writeGuildFile(workspace, """
+                [
+                  { "heroIds": [], "petId": "albus", "warFlagId": "flag-frost", "totalPower": 1000 },
+                  { "heroIds": [], "petId": "albus", "warFlagId": "flag-frost", "totalPower": 900 }
+                ]
+                """);
+        List<HeroTeam> teams = GuildRepository.load(file, catalog).members().get(0).heroTeams();
+        assertEquals("albus", teams.get(0).pet().id());
+        assertEquals("flag-frost", teams.get(0).warFlag().id());
+        assertNull(teams.get(1).pet());
+        assertNull(teams.get(1).warFlag());
     }
 }

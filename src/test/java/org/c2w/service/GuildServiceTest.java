@@ -93,7 +93,7 @@ class GuildServiceTest extends ServiceTestSupport {
 
         assertSame(renamed, context.guild());
         assertFalse(context.isGuildDirty());
-        assertEquals("Alpha renamed", GuildRepository.load(context.guildFilePath()).name());
+        assertEquals("Alpha renamed", GuildRepository.load(context.guildFilePath(), context.catalog()).name());
     }
 
     @Test

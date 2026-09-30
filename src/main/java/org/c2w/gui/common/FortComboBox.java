@@ -2,7 +2,7 @@ package org.c2w.gui.common;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;

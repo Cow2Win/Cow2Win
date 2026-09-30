@@ -1,9 +1,11 @@
-package org.c2w.util;
+package org.c2w.service;
 
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.data.repository.Catalog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -48,8 +50,11 @@ class AppContextTest {
         return new Lineup(guildId, guildId, "", LocalDateTime.now(), List.of());
     }
 
-    private static AppContext openContext() {
-        AppContext context = new AppContext();
+    @TempDir
+    Path workspace;
+
+    private AppContext openContext() {
+        AppContext context = new AppContext(new Catalog(workspace));
         context.set(guild("a"), GUILD_A);
         context.set(lineup("a"), LINEUP_A);
         return context;

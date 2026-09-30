@@ -84,32 +84,62 @@ Implementation: `maven-shade-plugin` (executable jar) ->
 `src/assembly/windows-app.xml`) - all three bound to the `package` phase in
 `pom.xml`.
 
-**Known limitation:** `HeroRepository.saveCowScores`/`FortificationRepository.save`
-(used by the in-app catalog-editing dialogs, e.g. `HeroBuffFitScoresDialog`)
-write to the hardcoded dev-time path `src/main/resources/data/*.json`, and
-`C2WApp`'s first-run demo guild loads from that same source path via
-`Files`/`Path`, not the classpath. Both keep working when run from the
-source tree (e.g. from the IDE), but neither has anywhere to write to inside
-the packaged app above (there's no `src/` there) - catalog editing and the
-first-run demo guild are effectively IDE/dev-only features until those paths
-are changed to something that also makes sense for a packaged install (e.g.
-resolving against the new `resources/` folder next to the exe).
+## Workspace, configuration & backups
+
+- **Workspace** - all user data: one subfolder per guild (`guild.json` plus
+  any number of `.lineup` files), the editable CowScore files
+  (`cowScore.json`, `titanCowScore.json`, `petCowScore.json`,
+  `warFlagCowScore.json`) and the log file. Defaults to
+  `<user.home>/.cow2Win/workspace`, configurable in the Settings dialog; a
+  change takes effect after a restart.
+- **`config.properties`** - language, workspace/backup folder, default
+  algorithms and the last opened guild/lineup (`org.c2w.infra.Config`). Lives
+  in the packaged app's `resources/` folder next to `Cow2Win.exe`, or in the
+  project root when run from the IDE - so several installations can use
+  different workspaces.
+- **Backups** - a daily and a weekly ZIP of the workspace, checked once at
+  startup (`org.c2w.infra.BackupService`), by default in
+  `<user.home>/.cow2Win/backup`.
+- **First start** - creates a "Demo" guild pre-filled from
+  `data/guild.json`/`data/default.lineup` (read from the packaged
+  `resources/` folder, or from `src/main/resources` in the IDE).
+
+## Architecture
+
+Swing desktop app, entry point `org.c2w.C2WApp`. Packages under `org.c2w`,
+roughly from top to bottom:
+
+| Package | Contents |
+|---|---|
+| `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. |
+| `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
+| `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
+| `report` | `ReportGenerator` - the HTML lineup report. |
+| `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
+| `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
+| `i18n` | `LanguageService` (UI texts, see "Canonical data files") and `BuffTexts`. |
+| `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
+
+`Config`, `Logger` and `LanguageService` are still static singletons; the
+catalog repositories are instances, so tests can load them for a temp
+folder (`new Catalog(tempDir)`).
 
 ## Releases & update check (GitHub)
 
-- `org.c2w.util.AppVersion` reads this build's own version at runtime from
+- `org.c2w.infra.AppVersion` reads this build's own version at runtime from
   `app-version.properties`, a classpath resource whose `${app.version}`
   placeholder is filled in at build time by Maven resource filtering (see
   `pom.xml`'s `<resources>` section) - kept as its own tiny sidecar file
   (filtered) rather than turning on filtering for all of `src/main/resources`
   (unfiltered for everything else, e.g. the JSON catalogs/language files, so
   none of them can ever have a `${...}`-looking substring "resolved" away).
-- `org.c2w.util.UpdateChecker` compares that version against
+- `org.c2w.infra.UpdateChecker` compares that version against
   `GET /repos/Cow2Win/Cow2Win/releases/latest` on GitHub's public REST API
   and reports whether a newer release exists. `Cow2Frame` uses it twice: a
   silent check once at startup (only ever shows a dialog when an update was
   actually found - no popup for "up to date" or a failed/offline check), and
-  the "Settings" > "Check for Updates" menu item, which always reports back.
+  the "File" > "Check for Updates" menu item, which always reports back.
   A found update offers to open the release's GitHub page in the system
   browser.
 - **Requires the `Cow2Win/Cow2Win` repository - or at least its Releases -
@@ -135,11 +165,20 @@ resolving against the new `resources/` folder next to the exe).
 
 - **Hero** (`id`, `roles[]`, `image`) - see `Role.java` for the valid roles;
   some heroes have two roles (e.g. Cleaver = TANK + CONTROL). Its manually
-  curated `CowScore` (`generalScore`/`buffFitScores`) lives in a separate
-  file, `cowScore.json` - see "Canonical data files" below.
+  curated fortification marks (`FortMarks`: per fortification `POSITIVE` or
+  `NEGATIVE`, unmarked = neutral) live in a separate file, `cowScore.json` -
+  see "Canonical data files" below.
 - **Titan** (`id`, `element`, `image`) - see `TitanElement.java`, which
   includes the rare `DISTORTION` element used by some event titans. Its
-  curated `CowScore` lives in `titanCowScore.json`, same split as heroes.
+  curated score still uses the older tier-based `CowScore`
+  (`generalScore`/`buffFitScores`) and lives in `titanCowScore.json`.
+- **Pet** / **War flag** (`id`, `image`) - optional per hero team, each at
+  most once per member. Their `FortMarks` (positive only) live in
+  `petCowScore.json`/`warFlagCowScore.json`.
+- **CowScore** of a hero team at a fortification: `totalPower / 100 000 x
+  (1 + B)`, where the bonus `B` comes from matching roles, marked heroes,
+  a marked pet and the war flag - see `TeamScoreCalculator`'s class Javadoc.
+  Titan teams still use the tier sum plus power.
 - **Fortification** (`id`, `type` HERO/TITAN, `capacity`, `captureBonus`,
   `row`/`column` for the map layout, `buff`, `prerequisites`,
   `strategicImportance`) - `prerequisites` is an **OR-relation**: capturing
@@ -150,28 +189,36 @@ resolving against the new `resources/` folder next to the exe).
   guild is one subfolder under `workspace/`.
 - **Lineup** (`guildId`, `algorithmName`, `createdAt`, `entries[]`) - the
   saved result of one assignment run (manual and algorithm-produced entries
-  can be mixed); persisted as `workspace/<guild>/<name>.lineup`.
+  can be mixed); persisted as `workspace/<guild>/<name>.lineup`. The
+  reserved `Original.lineup` records the actual in-game deployment: it is
+  only edited through the guild-wide team-entry dialogs and is the starting
+  point of the in-game change plan (`LineupChangePlanDialog`).
 
 ## Canonical data files
 
-- `src/main/resources/data/heroes.json`, `titans.json`, `fortifications.json`
-  are the canonical source for the app's catalog. When the game itself
+- `src/main/resources/data/heroes.json`, `titans.json`, `pets.json`,
+  `warFlags.json`, `fortifications.json` are the canonical source for the
+  app's catalog ("objective" master data only). When the game itself
   changes (new heroes/titans, balance changes, new fortifications), edit
   these files, not the research doc.
-- `src/main/resources/data/cowScore.json` (since 2026-09-14) holds Thorsten's
-  manually curated per-hero `CowScore` (`generalScore`/`buffFitScores`,
-  keyed by hero `id`) - deliberately kept OUT of `heroes.json`, which now
-  only ever carries "objective" master data (`id`/`roles`/`image`). The
-  split means a future wholesale refresh of `heroes.json` (e.g. new heroes
-  pulled from GitHub) can't accidentally clobber these hand-tuned scores,
-  and vice versa: `HeroBuffFitScoresDialog`/`HeroRepository#saveCowScores`
-  only ever write `cowScore.json`, never `heroes.json`.
-- `src/main/resources/data/titanCowScore.json` (since 2026-09-28) is the same
-  for titans: the curated per-titan `CowScore`, kept out of `titans.json`
-  (which only carries `id`/`element`/`image`), written only by
-  `TitanRepository#saveCowScores` - edited in-app via "File" >
-  "CowScore - Titans" (`TitanCoreScoreDialog`). Both score files share one file format
-  and one reader/writer, `CowScoreFiles` (`org.c2w.data.repository`). A
+- The curated scores are kept OUT of those master data files, one score
+  file per catalog: `cowScore.json` (heroes), `titanCowScore.json`,
+  `petCowScore.json`, `warFlagCowScore.json`. The split means a wholesale
+  refresh of the master data (e.g. new heroes pulled from GitHub) can't
+  clobber the hand-tuned scores, and vice versa.
+- Each score file exists twice: the copy in `src/main/resources/data` holds
+  the **shipped defaults** (read-only at runtime); the app reads and saves
+  the **workspace copy** (see "Workspace, configuration & backups"), created
+  from the defaults on the first start and completed with defaults for
+  entities added by an update. They are edited in-app via "File" >
+  "CowScore - Heroes/Titans/Pets/War Flags" (`HeroCoreScoreDialog`,
+  `TitanCoreScoreDialog`, `PetCoreScoreDialog`, `WarFlagCoreScoreDialog`),
+  whose "restore defaults" button resets to the shipped values.
+- Formats: heroes, pets and war flags use `FortMarkFiles`
+  (`[{"id": "corvus", "fortMarks": {"foundry": "POSITIVE"}}, ...]`; a
+  workspace copy still in the former tier-based format is backed up as
+  `<name>.legacy-<date>.bak` and migrated on load). Titans still use
+  `CowScoreFiles` (`generalScore`/`buffFitScores`); a
   `generalScore`/`buffFitScores` left over in `titans.json` is ignored and
   logged.
 - `src/main/resources/data/catalog-version.json` records the `dataVersion`
@@ -183,8 +230,9 @@ resolving against the new `resources/` folder next to the exe).
   `CatalogVersion`'s class javadoc for why that ruled out a field on the
   files directly. Update `dataVersion` (and `note` if useful) whenever you
   work through `PATCH-CHECKLIST.md`.
-- `src/main/resources/images/heroes/`, `images/titans/` hold the avatar
-  icons (a missing icon falls back to `placeholder.png`, not an error).
+- `src/main/resources/images/heroes/`, `images/titans/`, `images/pets/`,
+  `images/flags/` hold the avatar icons (a missing icon falls back to
+  `placeholder.png`, not an error).
 - `src/main/resources/language/<name>/<name>.properties` (e.g.
   `language/deutsch/deutsch.properties`) hold display names and UI strings,
   looked up at runtime via `LanguageService` - they are not stored on the
@@ -197,27 +245,24 @@ resolving against the new `resources/` folder next to the exe).
   packaged jar) rather than a hardcoded list, and the directory name is
   exactly what's shown in the language combo box - no separate display-name
   mapping in code anymore.
-- Each language's `.properties` file also carries `algorithm.<key>.description`
-  entries (since 2026-09-16, one per `LineupAlgorithm` in `LineupAlgorithms.ALL`)
-  - a short prose explanation of how that algorithm works, read via
-  `org.c2w.eval.AlgorithmDescriptions#forAlgorithm`/`#forDisplayName`. Not
-  wired into any UI yet, ready to surface later (e.g. a tooltip next to the
-  algorithm dropdown in `SettingsDialog`, or a new section in
-  `ReportGenerator`'s HTML report). This used to be its own English-only
-  sidecar JSON under `data/` - moved here because the report is **not**
-  English-only throughout: fortification/hero/titan names in it already go
-  through `LanguageService.displayName`, so this text should too, the same
-  way. `AlgorithmDescriptions.KEY_BY_DISPLAY_NAME` maps each algorithm's
-  `displayName()` to its key suffix - update it (and add the matching
-  `algorithm.<key>.description` line to **all three** language files)
-  whenever a new `LineupAlgorithm` is added to `LineupAlgorithms.ALL`.
+- Each language's `.properties` file also carries an `algorithm.<key>.name`
+  and an `algorithm.<key>.description` entry per lineup strategy - the
+  localized name shown in the UI and a short prose explanation of how the
+  strategy works, read via `org.c2w.eval.AlgorithmDescriptions`
+  (`#localizedName`, `#forAlgorithm`/`#forDisplayName`). The HTML report
+  prints the description below each side's algorithm.
+  `AlgorithmDescriptions.KEY_BY_DISPLAY_NAME` maps each algorithm's stable
+  English `displayName()` to its key suffix - update it (and add both
+  matching lines to **all three** language files) whenever a new strategy is
+  added to `LineupAlgorithms`.
 - After any patch that could touch this data, work through
   [`PATCH-CHECKLIST.md`](./PATCH-CHECKLIST.md) in the repo root - it lists
   exactly which files/checks are affected per kind of change.
-- Since 2026-09-10, `HeroRepository`/`TitanRepository`/`FortificationRepository`
-  validate their data on load (unknown enum values, prerequisites referencing
-  an unknown fortification id, prerequisite cycles) and report problems via
-  `Logger` (visible in the app's log panel) instead of failing silently.
+- The repositories validate their data on load and report problems via
+  `Logger` (visible in the app's log panel) instead of failing silently:
+  invalid entries and unknown roles/elements in `heroes.json`/`titans.json`
+  are skipped, and `FortificationRepository` checks for prerequisites
+  referencing an unknown fortification id and for prerequisite cycles.
 
 ## Tests
 
@@ -249,9 +294,24 @@ resolving against the new `resources/` folder next to the exe).
   `algorithmName` records both.
 - `UpdateCheckerVersionTest` - version parsing/comparison of
   `UpdateChecker`, without touching the network.
-- `CowScoreFilesTest` - the shared `cowScore.json`/`titanCowScore.json`
-  format (parsing, tolerance for unknown tiers, sparse writing, round trip)
-  and loading the real titan catalog.
+- `CowScoreFilesTest` - the tier-based `titanCowScore.json` format
+  (parsing, tolerance for unknown tiers, sparse writing, round trip) and
+  loading the real titan catalog.
+- `FortMarkFilesTest` - the fortification-mark format of
+  `cowScore.json`/`petCowScore.json`/`warFlagCowScore.json`, including the
+  migration of the former tier-based format and a save/reload round trip
+  through `HeroRepository`.
+- `TeamScoreCalculatorHeroTest` - the hero-team CowScore formula (role
+  buff, hero relation, pet and war flag bonuses).
+- `GuildMemberTest`, `GuildRepositoryPetWarFlagTest`,
+  `GuildDraftConverterPetWarFlagTest`, `TeamEditorPanelExtrasTest` - a hero
+  team's optional pet/war flag: the "at most once per member" rule, guild
+  file round trip (including older files and unknown ids), the editing
+  dialogs' draft round trip and the combo boxes in `TeamEditorPanel`.
+- `AppContextTest` - change notifications and the unsaved-changes state.
+- `GuildServiceTest`, `LineupServiceTest` - the guild/lineup use cases
+  against a temp workspace: files on disk, the open guild/lineup and the
+  unsaved-changes state stay consistent.
 
 ## More context
 

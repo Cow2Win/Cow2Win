@@ -5,7 +5,7 @@ package org.c2w.data.model;
  * with a matching element in the defending team (e.g. "Health Increase per
  * Fire Titan (8%)").
  *
- * The localized display text is built by {@code org.c2w.util.BuffTexts}.
+ * The localized display text is built by {@code org.c2w.i18n.BuffTexts}.
  */
 public record ElementBuff(TitanElement element, BuffEffect effect, double bonusPercent) implements Buff {
     public ElementBuff {

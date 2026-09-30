@@ -1,8 +1,9 @@
-package org.c2w.util;
+package org.c2w.domain;
 
-import org.c2w.util.LineupComparisonService.LineupComparison;
-import org.c2w.util.LineupComparisonService.TeamDiff;
-import org.c2w.util.LineupComparisonService.TeamKey;
+import org.c2w.domain.LineupComparisonService.LineupComparison;
+import org.c2w.domain.LineupComparisonService.TeamDiff;
+import org.c2w.domain.LineupComparisonService.TeamKey;
+import org.c2w.service.AppContext;
 
 import java.util.ArrayList;
 import java.util.Comparator;

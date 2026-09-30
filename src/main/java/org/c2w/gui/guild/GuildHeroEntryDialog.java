@@ -1,11 +1,11 @@
 package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
-import org.c2w.data.repository.HeroRepository;
+import org.c2w.data.repository.Catalog;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.AppContext;
-import org.c2w.util.LanguageService;
-import org.c2w.util.TeamScoreCalculator;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -26,11 +26,11 @@ public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {
     private static final String KEY_TITLE = "guildEntry.heroTeams";
 
     public GuildHeroEntryDialog(Frame owner, AppContext appContext) {
-        super(owner, appContext, KEY_TITLE, buildSpec(), MAX_HERO_TEAMS);
+        super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_HERO_TEAMS);
     }
 
-    private static SectionSpec<Hero> buildSpec() {
-        return new SectionSpec<>(HeroRepository.findAll(), GuildHeroEntryDialog::heroLabel,
+    private static SectionSpec<Hero> buildSpec(Catalog catalog) {
+        return new SectionSpec<>(catalog.heroes().findAll(), GuildHeroEntryDialog::heroLabel,
                 h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), Comparator.comparing(GuildHeroEntryDialog::heroLabel),
                 m -> m.heroTeams, FortificationType.HERO, Lineup.TeamType.HERO,
                 GuildHeroEntryDialog::heroMatchesBuff, GuildHeroEntryDialog::heroScoreBreakdown);

@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.i18n;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import org.c2w.data.model.FortMark;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Hero;
-import org.c2w.util.Config;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -137,28 +136,19 @@ class FortMarkFilesTest {
 
     @Test
     @DisplayName("HeroRepository: saveCowScores writes marks that a fresh load reads back")
-    void heroRepositoryRoundTrip(@TempDir Path workspace) {
-        String previousWorkspace = Config.getWorkspacePath();
-        Config.setWorkspacePath(workspace.toString());
-        try {
-            HeroRepository.resetCache();
-            List<Hero> catalog = HeroRepository.findAll();
-            assertFalse(catalog.isEmpty());
-            Hero first = catalog.get(0);
-            List<Hero> updated = catalog.stream()
-                    .map(h -> h == first
-                            ? new Hero(h.id(), h.roles(), h.imagePath(), new FortMarks(Map.of("foundry", FortMark.NEGATIVE)))
-                            : h)
-                    .toList();
-            HeroRepository.saveCowScores(updated);
+    void heroRepositoryRoundTrip(@TempDir Path workspace) throws IOException {
+        HeroRepository heroes = new HeroRepository(workspace);
+        List<Hero> catalog = heroes.findAll();
+        assertFalse(catalog.isEmpty());
+        Hero first = catalog.get(0);
+        List<Hero> updated = catalog.stream()
+                .map(h -> h == first
+                        ? new Hero(h.id(), h.roles(), h.imagePath(), new FortMarks(Map.of("foundry", FortMark.NEGATIVE)))
+                        : h)
+                .toList();
+        heroes.saveCowScores(updated);
 
-            HeroRepository.resetCache();
-            assertEquals(FortMark.NEGATIVE, HeroRepository.findById(first.id()).orElseThrow().fortMark("foundry"));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } finally {
-            Config.setWorkspacePath(previousWorkspace);
-            HeroRepository.resetCache();
-        }
+        HeroRepository reloaded = new HeroRepository(workspace);
+        assertEquals(FortMark.NEGATIVE, reloaded.findById(first.id()).orElseThrow().fortMark("foundry"));
     }
 }

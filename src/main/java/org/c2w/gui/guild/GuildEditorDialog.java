@@ -1,15 +1,11 @@
 package org.c2w.gui.guild;
 
 import org.c2w.data.model.Guild;
-import org.c2w.data.model.Hero;
-import org.c2w.data.model.Titan;
-import org.c2w.data.repository.HeroRepository;
-import org.c2w.data.repository.TitanRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
-import org.c2w.util.AppContext;
-import org.c2w.util.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,8 +38,6 @@ public final class GuildEditorDialog extends JDialog {
    private static final DateTimeFormatter LAST_SAVED_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final AppContext context;
-    private final List<Hero> heroCatalog = HeroRepository.findAll();
-    private final List<Titan> titanCatalog = TitanRepository.findAll();
 
     private final GuildDraft draft;
 
@@ -190,7 +184,7 @@ public final class GuildEditorDialog extends JDialog {
             return;
         }
         detailContainer.removeAll();
-        detailContainer.add(new MemberEditorPanel(selected, heroCatalog, titanCatalog),
+        detailContainer.add(new MemberEditorPanel(selected, context.catalog()),
                 BorderLayout.CENTER);
         detailContainer.revalidate();
         detailContainer.repaint();

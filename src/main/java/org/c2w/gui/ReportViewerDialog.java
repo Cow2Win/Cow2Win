@@ -1,7 +1,7 @@
 package org.c2w.gui;
 
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +16,7 @@ import java.nio.file.Path;
  * <p>Until 2026-09-23 the report was written to disk the moment it was
  * generated and this dialog just displayed that file. Per the user's
  * explicit request it is no longer auto-saved: the dialog now receives the
- * raw report HTML (see {@link org.c2w.util.ReportGenerator#buildReportHtml})
+ * raw report HTML (see {@link org.c2w.report.ReportGenerator#buildReportHtml})
  * plus a suggested file name, renders the HTML in a read-only pane, and
  * offers a "Save report..." toolbar button that opens a directory chooser
  * and writes the report into the chosen directory.

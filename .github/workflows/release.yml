@@ -2,7 +2,7 @@ name: Release
 
 # Publishes a GitHub Release with the Windows app-image zip attached,
 # whenever a tag matching "v<major>.<minor>.<patch>" (e.g. v1.0.0) is
-# pushed - see org.c2w.util.UpdateChecker (Cow2Win todos 1.1), which reads
+# pushed - see org.c2w.infra.UpdateChecker (Cow2Win todos 1.1), which reads
 # exactly this tag format (optionally without the "v") off the GitHub
 # "latest release" API to tell an installed Cow2Win whether a newer
 # version exists.

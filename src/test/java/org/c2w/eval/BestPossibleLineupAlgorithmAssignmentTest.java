@@ -1,8 +1,8 @@
 package org.c2w.eval;
 
 import org.c2w.data.model.*;
+import org.c2w.domain.BuffCalculationService;
 import org.c2w.eval.AbstractLineupAlgorithm.Candidate;
-import org.c2w.util.BuffCalculationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

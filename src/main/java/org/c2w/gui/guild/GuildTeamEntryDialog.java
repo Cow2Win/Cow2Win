@@ -2,17 +2,17 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.i18n.BuffTexts;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
+import org.c2w.service.AppContext;
 import org.c2w.service.LineupService;
-import org.c2w.util.AppContext;
-import org.c2w.util.BuffTexts;
-import org.c2w.util.LanguageService;
-import org.c2w.util.LineupFiles;
-import org.c2w.util.Logger;
-import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -297,7 +297,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         JLabel buffCountLabel = buildBuffCountLabel(spec.fortificationType());
         // War flag/pet only for hero teams - see TeamExtras/otherTeamsOfRowMember.
         TeamExtras extras = spec.teamType() == Lineup.TeamType.HERO
-                ? TeamExtras.forOtherDrafts(() -> otherTeamsOfRowMember(rowDraft, memberCombo))
+                ? TeamExtras.forOtherDrafts(appContext.catalog(), () -> otherTeamsOfRowMember(rowDraft, memberCombo))
                 : null;
         TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft,
                 () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber),

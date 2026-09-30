@@ -5,8 +5,8 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.TitanRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -66,9 +66,8 @@ public final class TitanCoreScoreDialog extends JDialog {
     private static final int ELEMENT_LABEL_WIDTH = 120;
 
     /** Every known titan, sorted by display name - the catalog never changes while this dialog is open. */
-    private final List<Titan> titanCatalog = TitanRepository.findAll().stream()
-            .sorted(Comparator.comparing(TitanCoreScoreDialog::titanLabel, String.CASE_INSENSITIVE_ORDER))
-            .toList();
+    private final TitanRepository repository;
+    private final List<Titan> titanCatalog;
 
     /** Every fortification a titan's {@link Titan#buffFitScores()} can meaningfully apply to - see class Javadoc. */
     private final List<Fortification> buffedFortifications = FortificationRepository.findAll().stream()
@@ -90,8 +89,15 @@ public final class TitanCoreScoreDialog extends JDialog {
     private final JList<Titan> titanList = new JList<>(titanListModel);
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
-    public TitanCoreScoreDialog(Frame owner) {
+    public TitanCoreScoreDialog(Frame owner, TitanRepository repository) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        if (repository == null) {
+            throw new IllegalArgumentException("TitanCoreScoreDialog needs a TitanRepository");
+        }
+        this.repository = repository;
+        this.titanCatalog = repository.findAll().stream()
+                .sorted(Comparator.comparing(TitanCoreScoreDialog::titanLabel, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -298,7 +304,7 @@ public final class TitanCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, CowScore> defaults = TitanRepository.loadDefaultCowScores();
+        Map<String, CowScore> defaults = repository.loadDefaultCowScores();
         for (Titan titan : titanCatalog) {
             CowScore cowScore = defaults.getOrDefault(titan.id(), CowScore.DEFAULT);
             workingGeneralScores.put(titan.id(), cowScore.generalScore());
@@ -336,7 +342,7 @@ public final class TitanCoreScoreDialog extends JDialog {
                 .toList();
 
         try {
-            TitanRepository.saveCowScores(updatedCatalog);
+            repository.saveCowScores(updatedCatalog);
             Logger.log("Saved: titanCowScore.json");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_SAVE_ERROR) + "\n" + ex.getMessage(),

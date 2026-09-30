@@ -5,9 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Pet;
-import org.c2w.util.Config;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,22 +39,36 @@ public class PetRepository {
     /** Classpath-relative folder every pet's "image" JSON field is resolved against - see {@link #parsePetObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/pets/";
 
-    private static volatile Map<String, Pet> petsById;
+    private final Path workspaceDir;
+    private volatile Map<String, Pet> petsById;
+
+    /**
+     * Loads the catalog right away: the master data from the classpath,
+     * the CowScores from the workspace copy in {@code workspaceDir} (created
+     * from the shipped defaults if it does not exist yet).
+     *
+     * @throws RuntimeException if the master data cannot be read
+     */
+    public PetRepository(Path workspaceDir) {
+        if (workspaceDir == null) {
+            throw new IllegalArgumentException("workspaceDir must not be null");
+        }
+        this.workspaceDir = workspaceDir;
+        this.petsById = loadPets();
+    }
 
     /**
      * Returns the pet with the given id, or Optional.empty() if no pet with
      * this id exists.
      */
-    public static Optional<Pet> findById(String petId) {
-        ensureLoaded();
+    public Optional<Pet> findById(String petId) {
         return Optional.ofNullable(petsById.get(petId));
     }
 
     /**
      * Returns all known pets as a list sorted by id.
      */
-    public static List<Pet> findAll() {
-        ensureLoaded();
+    public List<Pet> findAll() {
         return petsById.values().stream()
                 .sorted(Comparator.comparing(Pet::id))
                 .collect(Collectors.toList());
@@ -64,19 +77,8 @@ public class PetRepository {
     /**
      * Returns the number of known pets.
      */
-    public static int count() {
-        ensureLoaded();
+    public int count() {
         return petsById.size();
-    }
-
-    /**
-     * Resets the catalog (for tests). Both JSON files are reloaded on the
-     * next access.
-     */
-    public static void resetCache() {
-        synchronized (PetRepository.class) {
-            petsById = null;
-        }
     }
 
     /**
@@ -89,7 +91,7 @@ public class PetRepository {
      * pets.json}. Every pet in {@code catalog} gets an entry, see {@link
      * FortMarkFiles#toTree}.
      */
-    public static synchronized void saveCowScores(List<Pet> catalog) throws IOException {
+    public synchronized void saveCowScores(List<Pet> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
@@ -112,33 +114,21 @@ public class PetRepository {
      * petCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a pet
      * without an entry there). Only reads, never writes.
      */
-    public static Map<String, FortMarks> loadDefaultCowScores() {
-        ensureLoaded();
+    public Map<String, FortMarks> loadDefaultCowScores() {
         return FortMarkFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH, petsById.keySet(), false, "pet");
     }
 
     /**
-     * The workspace copy of {@code petCowScore.json} - directly in {@link
-     * Config#getWorkspaceDir()}, resolved fresh on every call (see {@link
-     * HeroRepository#cowScoreFile()}).
+     * The workspace copy of {@code petCowScore.json} - directly in the workspace folder this repository was
+     * created for (see {@link HeroRepository#cowScoreFile()}).
      */
-    public static Path cowScoreFile() {
-        return Config.getWorkspaceDir().resolve(COW_SCORE_FILE_NAME);
+    public Path cowScoreFile() {
+        return workspaceDir.resolve(COW_SCORE_FILE_NAME);
     }
 
     // --- private ---
 
-    private static void ensureLoaded() {
-        if (petsById == null) {
-            synchronized (PetRepository.class) {
-                if (petsById == null) {
-                    petsById = loadPets();
-                }
-            }
-        }
-    }
-
-    private static Map<String, Pet> loadPets() {
+    private Map<String, Pet> loadPets() {
         try {
             String petsJson = JsonSupport.readClasspathResource(PetRepository.class, PETS_JSON_PATH);
             Map<String, Pet> masterData = parsePetsJson(petsJson);

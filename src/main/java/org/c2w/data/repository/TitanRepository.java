@@ -6,9 +6,8 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
-import org.c2w.util.Config;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -44,22 +43,36 @@ public class TitanRepository {
     /** Classpath-relative folder every titan's "image" JSON field is resolved against - see {@link #parseTitanObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/titans/";
 
-    private static volatile Map<String, Titan> titansById;
+    private final Path workspaceDir;
+    private volatile Map<String, Titan> titansById;
+
+    /**
+     * Loads the catalog right away: the master data from the classpath,
+     * the CowScores from the workspace copy in {@code workspaceDir} (created
+     * from the shipped defaults if it does not exist yet).
+     *
+     * @throws RuntimeException if the master data cannot be read
+     */
+    public TitanRepository(Path workspaceDir) {
+        if (workspaceDir == null) {
+            throw new IllegalArgumentException("workspaceDir must not be null");
+        }
+        this.workspaceDir = workspaceDir;
+        this.titansById = loadTitans();
+    }
 
     /**
      * Returns the titan with the given id, or Optional.empty() if no titan
      * with this id exists.
      */
-    public static Optional<Titan> findById(String titanId) {
-        ensureLoaded();
+    public Optional<Titan> findById(String titanId) {
         return Optional.ofNullable(titansById.get(titanId));
     }
 
     /**
      * Returns all known titans as a list sorted by id.
      */
-    public static List<Titan> findAll() {
-        ensureLoaded();
+    public List<Titan> findAll() {
         return titansById.values().stream()
                 .sorted(Comparator.comparing(Titan::id))
                 .collect(Collectors.toList());
@@ -68,8 +81,7 @@ public class TitanRepository {
     /**
      * Returns the titans of a given element (sorted by id).
      */
-    public static List<Titan> findByElement(TitanElement element) {
-        ensureLoaded();
+    public List<Titan> findByElement(TitanElement element) {
         return titansById.values().stream()
                 .filter(t -> t.element().equals(element))
                 .sorted(Comparator.comparing(Titan::id))
@@ -79,19 +91,8 @@ public class TitanRepository {
     /**
      * Returns the number of known titans.
      */
-    public static int count() {
-        ensureLoaded();
+    public int count() {
         return titansById.size();
-    }
-
-    /**
-     * Resets the catalog (for tests). Both JSON files are reloaded on the
-     * next access.
-     */
-    public static void resetCache() {
-        synchronized (TitanRepository.class) {
-            titansById = null;
-        }
     }
 
     /**
@@ -103,7 +104,7 @@ public class TitanRepository {
      * Deliberately does NOT touch {@code titans.json}. Every titan in {@code
      * catalog} gets an entry, see {@link CowScoreFiles#toTree}.
      */
-    public static synchronized void saveCowScores(List<Titan> catalog) throws IOException {
+    public synchronized void saveCowScores(List<Titan> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
@@ -128,33 +129,21 @@ public class TitanRepository {
      * "restore defaults" button resets its values to. Only reads, never
      * writes: the workspace copy is not touched until the dialog is saved.
      */
-    public static Map<String, CowScore> loadDefaultCowScores() {
-        ensureLoaded();
+    public Map<String, CowScore> loadDefaultCowScores() {
         return CowScoreFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH, titansById.keySet(), "titan");
     }
 
     /**
-     * The workspace copy of {@code titanCowScore.json} - directly in {@link
-     * Config#getWorkspaceDir()}, resolved fresh on every call (see {@link
-     * HeroRepository#cowScoreFile()}).
+     * The workspace copy of {@code titanCowScore.json} - directly in the workspace folder this repository was
+     * created for (see {@link HeroRepository#cowScoreFile()}).
      */
-    public static Path cowScoreFile() {
-        return Config.getWorkspaceDir().resolve(COW_SCORE_FILE_NAME);
+    public Path cowScoreFile() {
+        return workspaceDir.resolve(COW_SCORE_FILE_NAME);
     }
 
     // --- private ---
 
-    private static void ensureLoaded() {
-        if (titansById == null) {
-            synchronized (TitanRepository.class) {
-                if (titansById == null) {
-                    titansById = loadTitans();
-                }
-            }
-        }
-    }
-
-    private static Map<String, Titan> loadTitans() {
+    private Map<String, Titan> loadTitans() {
         try {
             String titansJson = JsonSupport.readClasspathResource(TitanRepository.class, TITANS_JSON_PATH);
             Map<String, Titan> masterData = parseTitansJson(titansJson, Map.of());

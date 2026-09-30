@@ -1,7 +1,7 @@
 package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
-import org.c2w.util.Logger;
+import org.c2w.infra.Logger;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

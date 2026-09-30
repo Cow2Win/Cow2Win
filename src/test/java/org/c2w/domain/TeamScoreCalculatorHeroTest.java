@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.domain;
 
 import org.c2w.data.model.*;
 import org.junit.jupiter.api.DisplayName;

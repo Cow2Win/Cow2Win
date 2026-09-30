@@ -9,8 +9,8 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.PetRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -58,9 +58,8 @@ public final class PetCoreScoreDialog extends JDialog {
     private static final int NAME_LABEL_WIDTH = 170;
 
     /** Every known pet, sorted by display name - the catalog never changes while this dialog is open. */
-    private final List<Pet> petCatalog = PetRepository.findAll().stream()
-            .sorted(Comparator.comparing(PetCoreScoreDialog::petLabel, String.CASE_INSENSITIVE_ORDER))
-            .toList();
+    private final PetRepository repository;
+    private final List<Pet> petCatalog;
 
     /** Every fortification a pet can be marked for: all fortifications of type {@link FortificationType#HERO}. */
     private final List<Fortification> heroFortifications = FortificationRepository.findAll().stream()
@@ -79,8 +78,15 @@ public final class PetCoreScoreDialog extends JDialog {
     private final JList<Pet> petList = new JList<>(petListModel);
     private final JPanel detailContainer = new JPanel(new BorderLayout());
 
-    public PetCoreScoreDialog(Frame owner) {
+    public PetCoreScoreDialog(Frame owner, PetRepository repository) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        if (repository == null) {
+            throw new IllegalArgumentException("PetCoreScoreDialog needs a PetRepository");
+        }
+        this.repository = repository;
+        this.petCatalog = repository.findAll().stream()
+                .sorted(Comparator.comparing(PetCoreScoreDialog::petLabel, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -210,7 +216,7 @@ public final class PetCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, FortMarks> defaults = PetRepository.loadDefaultCowScores();
+        Map<String, FortMarks> defaults = repository.loadDefaultCowScores();
         for (Pet pet : petCatalog) {
             workingMarks.put(pet.id(), markedIds(defaults.getOrDefault(pet.id(), FortMarks.NONE)));
         }
@@ -248,7 +254,7 @@ public final class PetCoreScoreDialog extends JDialog {
                 .toList();
 
         try {
-            PetRepository.saveCowScores(updatedCatalog);
+            repository.saveCowScores(updatedCatalog);
             Logger.log("Saved: petCowScore.json");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName(KEY_SAVE_ERROR) + "\n" + ex.getMessage(),

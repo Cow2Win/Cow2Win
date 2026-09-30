@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.Lineup;
-import org.c2w.util.JsonSupport;
+import org.c2w.infra.JsonSupport;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

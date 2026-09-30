@@ -2,8 +2,9 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Titan;
+import org.c2w.data.repository.Catalog;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -54,7 +55,7 @@ final class MemberEditorPanel extends JPanel {
 
     private final MemberDraft memberDraft;
 
-    MemberEditorPanel(MemberDraft memberDraft, List<Hero> heroCatalog, List<Titan> titanCatalog) {
+    MemberEditorPanel(MemberDraft memberDraft, Catalog catalog) {
         super(new BorderLayout(8, 8));
         this.memberDraft = memberDraft;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -63,7 +64,7 @@ final class MemberEditorPanel extends JPanel {
         ensureTeamCount(memberDraft.titanTeams, MAX_TITAN_TEAMS);
 
         add(buildHeaderPanel(), BorderLayout.NORTH);
-        add(buildTeamRows(heroCatalog, titanCatalog), BorderLayout.CENTER);
+        add(buildTeamRows(catalog), BorderLayout.CENTER);
     }
 
     /** Pads teams with empty TeamDraft entries as needed, until exactly maxCount entries exist (see class Javadoc). */
@@ -95,7 +96,9 @@ final class MemberEditorPanel extends JPanel {
      * titan slots' combo boxes by element, then name (see
      * {@link TeamEditorPanel}).
      */
-    private JPanel buildTeamRows(List<Hero> heroCatalog, List<Titan> titanCatalog) {
+    private JPanel buildTeamRows(Catalog catalog) {
+        List<Hero> heroCatalog = catalog.heroes().findAll();
+        List<Titan> titanCatalog = catalog.titans().findAll();
         JPanel rows = new JPanel();
         rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
 
@@ -107,7 +110,7 @@ final class MemberEditorPanel extends JPanel {
                     h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), null, teamDraft,
                     LanguageService.displayName(KEY_NO_SELECTION),
                     Comparator.comparing(MemberEditorPanel::heroLabel), null,
-                    TeamExtras.forOtherDrafts(() -> TeamExtras.allExcept(memberDraft.heroTeams, teamDraft)));
+                    TeamExtras.forOtherDrafts(catalog, () -> TeamExtras.allExcept(memberDraft.heroTeams, teamDraft)));
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             rows.add(row);
         }

@@ -4,13 +4,13 @@ import org.c2w.data.model.Fortification;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
-import org.c2w.util.AppContext;
-import org.c2w.util.Config;
-import org.c2w.util.LineupFiles;
-import org.c2w.util.Logger;
+import org.c2w.infra.Config;
+import org.c2w.infra.Logger;
+import org.c2w.service.AppContext;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;

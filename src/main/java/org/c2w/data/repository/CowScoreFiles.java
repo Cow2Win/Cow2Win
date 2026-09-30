@@ -5,8 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.CowScore;
 import org.c2w.data.model.CowScoreTier;
-import org.c2w.util.JsonSupport;
-import org.c2w.util.Logger;
+import org.c2w.infra.JsonSupport;
+import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +34,7 @@ import java.util.Map;
  *     read-only at runtime and only ever used as the starting point, see
  *     {@link #loadDefaults}; and</li>
  *     <li>the <b>workspace copy</b> - a plain file directly in the configured
- *     workspace folder ({@link org.c2w.util.Config#getWorkspaceDir()}), the
+ *     workspace folder ({@link org.c2w.infra.Config#getWorkspaceDir()}), the
  *     one the app actually reads and the CowScore dialogs save to, see
  *     {@link #loadWorkspace}. Created from the shipped defaults on the first
  *     start, so edits survive a restart and an app update (the jar copy used

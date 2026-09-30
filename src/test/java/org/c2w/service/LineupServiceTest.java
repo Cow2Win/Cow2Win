@@ -5,7 +5,7 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.ManualLineupAlgorithm;
-import org.c2w.util.AppContext;
+import org.c2w.service.AppContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

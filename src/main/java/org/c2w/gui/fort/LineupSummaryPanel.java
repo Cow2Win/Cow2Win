@@ -3,9 +3,9 @@ package org.c2w.gui.fort;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.domain.BuffCalculationService;
 import org.c2w.gui.common.GuiUtils;
-import org.c2w.util.BuffCalculationService;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;

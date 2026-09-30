@@ -1,7 +1,7 @@
 package org.c2w.data.repository;
 
 import org.c2w.data.model.Fortification;
-import org.c2w.util.Logger;
+import org.c2w.infra.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

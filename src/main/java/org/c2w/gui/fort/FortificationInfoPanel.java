@@ -1,11 +1,10 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.*;
-import org.c2w.data.repository.HeroRepository;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.util.BuffTexts;
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.BuffTexts;
+import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,11 +37,18 @@ public class FortificationInfoPanel extends JPanel {
 
     private final Fortification fortification;
 
-    public FortificationInfoPanel(Fortification fortification) {
+    /** The hero catalog the hero score groups are built from (see {@link #buildHeroScorePanel()}). */
+    private final List<Hero> heroes;
+
+    public FortificationInfoPanel(Fortification fortification, List<Hero> heroes) {
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationInfoPanel needs a fortification");
         }
+        if (heroes == null) {
+            throw new IllegalArgumentException("FortificationInfoPanel needs the hero catalog");
+        }
         this.fortification = fortification;
+        this.heroes = heroes;
 
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         JPanel infoPanel = buildInfoPanel();
@@ -105,14 +111,12 @@ public class FortificationInfoPanel extends JPanel {
      * read-only hero avatar groups for {@link #fortification} - heroes marked
      * {@link FortMark#NEGATIVE} for it on top ("rather avoid these"), heroes
      * marked {@link FortMark#POSITIVE} below ("good fits"). Purely
-     * informational - rebuilt fresh from the current hero catalog every time
-     * this panel is constructed.
+     * informational - built from the hero catalog passed to the constructor.
      */
     private JPanel buildHeroScorePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        List<Hero> heroes = HeroRepository.findAll();
         List<Hero> negativeHeroes = heroesMarked(heroes, FortMark.NEGATIVE);
         List<Hero> goodHeroes = heroesMarked(heroes, FortMark.POSITIVE);
 

@@ -3,7 +3,7 @@ package org.c2w.gui.fort;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
-import org.c2w.util.BuffCalculationService;
+import org.c2w.domain.BuffCalculationService;
 
 /** {@link LineupSummaryPanel} for the hero teams - total hero power and summed hero CowScore. */
 public class HeroLineupSummaryPanel extends LineupSummaryPanel {

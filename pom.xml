@@ -64,7 +64,7 @@
     <build>
         <!-- Only app-version.properties needs Maven resource filtering (so its
              "${app.version}" placeholder becomes the real, build-time value read
-             at runtime by org.c2w.util.AppVersion, in turn used by UpdateChecker
+             at runtime by org.c2w.infra.AppVersion, in turn used by UpdateChecker
              - Cow2Win todos 1.1) - every other resource (JSON catalogs, images,
              language files) is copied through unfiltered, so none of them can
              ever have a "${...}"-looking substring accidentally "resolved" away. -->
@@ -115,7 +115,7 @@
                                 <resource>
                                     <directory>src/main/resources</directory>
                                     <!-- Only meaningful on the classpath (filtered copy inside the
-                                         jar, read by org.c2w.util.AppVersion). This on-disk copy would
+                                         jar, read by org.c2w.infra.AppVersion). This on-disk copy would
                                          be unfiltered, i.e. still show the literal "${app.version}"
                                          placeholder, and is never read - so leave it out. -->
                                     <excludes>

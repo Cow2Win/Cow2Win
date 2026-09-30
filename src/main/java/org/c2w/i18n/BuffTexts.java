@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.i18n;
 
 import org.c2w.data.model.Buff;
 import org.c2w.data.model.ElementBuff;

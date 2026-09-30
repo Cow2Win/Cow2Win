@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.domain;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
@@ -265,7 +265,7 @@ public class BuffCalculationService {
      * Sums the CowScore strength of every hero/titan team currently assigned
      * to ONE specific fortification (as opposed to {@link #sumHeroCowScore}/
      * {@link #sumTitanCowScore}, which sum over the whole lineup). Used by
-     * {@code org.c2w.util.ReportGenerator}'s "Fortifications" table
+     * {@code org.c2w.report.ReportGenerator}'s "Fortifications" table
      * (2026-09-15).
      *
      * @param fortificationId The ID of the fortification

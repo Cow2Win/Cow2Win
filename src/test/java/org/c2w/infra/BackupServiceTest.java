@@ -1,4 +1,4 @@
-package org.c2w.util;
+package org.c2w.infra;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

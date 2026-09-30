@@ -2,17 +2,17 @@ package org.c2w.gui.titan;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
+import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
-import org.c2w.util.AppContext;
-import org.c2w.util.BuffCalculationService;
-import org.c2w.util.LanguageService;
-import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;

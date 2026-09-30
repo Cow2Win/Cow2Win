@@ -1,7 +1,7 @@
 package org.c2w.eval;
 
 import org.c2w.data.model.*;
-import org.c2w.util.TeamScoreCalculator;
+import org.c2w.domain.TeamScoreCalculator;
 
 import java.util.Comparator;
 import java.util.List;

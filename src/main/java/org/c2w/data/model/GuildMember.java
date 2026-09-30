@@ -1,6 +1,6 @@
 package org.c2w.data.model;
 
-import org.c2w.util.LanguageService;
+import org.c2w.i18n.LanguageService;
 
 import java.util.HashSet;
 import java.util.List;

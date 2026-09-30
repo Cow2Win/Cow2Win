@@ -4,9 +4,9 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
-import org.c2w.util.AppContext;
-import org.c2w.util.Config;
-import org.c2w.util.Logger;
+import org.c2w.infra.Config;
+import org.c2w.infra.Logger;
+import org.c2w.service.AppContext;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -128,7 +128,7 @@ public class GuildService {
     public void switchToGuild(String folderName) throws IOException {
         Path guildDir = guildDir(folderName);
         Path guildFilePath = guildDir.resolve(GUILD_FILE_NAME);
-        Guild guild = GuildRepository.load(guildFilePath);
+        Guild guild = GuildRepository.load(guildFilePath, context.catalog());
 
         Path lineupPath;
         Lineup lineup;
