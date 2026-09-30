@@ -2,6 +2,7 @@ package org.c2w.util;
 
 import org.c2w.data.model.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,16 +47,20 @@ public final class TeamScoreCalculator {
     private TeamScoreCalculator() {
     }
 
-    /** Scores {@code team} against {@code fortification} - see class Javadoc. */
+    /**
+     * Scores {@code team} against {@code fortification} - see class Javadoc.
+     * The team's war flag and pet (if any) count as members too, at their
+     * lower value (see {@link HeroTeam#petWarFlagScores(Fortification)}) -
+     * {@link Breakdown#memberScores()} lists them first, in row order (war
+     * flag, pet, heroes).
+     */
     public static Breakdown scoreFor(HeroTeam team, Fortification fortification) {
-        List<Double> memberScores;
+        List<Double> memberScores = new ArrayList<>(team.petWarFlagScores(fortification));
         if (fortification.buff() != null) {
             HeroTeamBuffFitScore buffFitScore = HeroTeamBuffFitScore.of(team, fortification);
-            memberScores = team.heroes().stream()
-                    .map(h -> buffFitScore.memberScores().get(h.id()).value())
-                    .toList();
+            team.heroes().forEach(h -> memberScores.add(buffFitScore.memberScores().get(h.id()).value()));
         } else {
-            memberScores = team.heroes().stream().map(h -> h.generalScore().value()).toList();
+            team.heroes().forEach(h -> memberScores.add(h.generalScore().value()));
         }
         return breakdownFor(memberScores, team.totalPower());
     }
@@ -84,7 +89,8 @@ public final class TeamScoreCalculator {
      * One team's score breakdown against one fortification. memberScores
      * are the per-member values (buffFitScore or generalScore, depending on
      * whether the fortification has a buff) that sum into total, in team
-     * order; powerTerm is the totalPower-derived term added on top; total is
+     * order - for a hero team, its war flag and pet (if any) come first, see
+     * {@link #scoreFor(HeroTeam, Fortification)}; powerTerm is the totalPower-derived term added on top; total is
      * powerTerm plus the sum of memberScores.
      */
     public record Breakdown(List<Double> memberScores, double powerTerm, double total) {

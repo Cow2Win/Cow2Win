@@ -72,6 +72,18 @@ public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buff
     }
 
     /**
+     * The buff-specific fit score for an entity WITHOUT role/element - pets
+     * and war flags: an explicit override in {@link #buffFitScores()} for
+     * this fortification id if present, otherwise {@link #generalScore()}
+     * (per the user's decision, 2026-09-29) - unlike {@link
+     * #buffFitScore(String, boolean)}, there is no role/element match that
+     * could pick a default here.
+     */
+    public CowScoreTier buffFitScoreOrGeneral(String fortificationId) {
+        return buffFitScores.getOrDefault(fortificationId, generalScore);
+    }
+
+    /**
      * True if this is exactly the all-default CowScore ({@link
      * CowScoreTier#GOOD} general score, no buff-fit overrides at all) - i.e.
      * there is no deliberate assessment in it.

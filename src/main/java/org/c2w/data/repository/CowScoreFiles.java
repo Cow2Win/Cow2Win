@@ -110,6 +110,16 @@ final class CowScoreFiles {
      */
     static Map<String, CowScore> loadWorkspace(Path workspaceFile, Map<String, CowScore> defaults,
                                                String entityLabel) {
+        return loadWorkspace(workspaceFile, defaults, entityLabel, false);
+    }
+
+    /**
+     * Same as {@link #loadWorkspace(Path, Map, String)}; {@code
+     * keepGoodBuffFitScores} is passed on to {@link #toTree(Map, boolean)}
+     * when the file is (re)written - true for pets and war flags.
+     */
+    static Map<String, CowScore> loadWorkspace(Path workspaceFile, Map<String, CowScore> defaults,
+                                               String entityLabel, boolean keepGoodBuffFitScores) {
         String fileName = String.valueOf(workspaceFile.getFileName());
         Map<String, CowScore> stored = null;
         if (Files.isRegularFile(workspaceFile)) {
@@ -143,7 +153,7 @@ final class CowScoreFiles {
 
         if (!complete) {
             try {
-                JsonSupport.writeJsonFile(toTree(result), workspaceFile);
+                JsonSupport.writeJsonFile(toTree(result, keepGoodBuffFitScores), workspaceFile);
                 Logger.log(fileName + ": " + (stored == null ? "created" : "completed") + " " + workspaceFile);
             } catch (IOException e) {
                 Logger.logException("Could not write " + workspaceFile, e);
@@ -189,6 +199,18 @@ final class CowScoreFiles {
      * A null CowScore is written as {@link CowScore#DEFAULT}.
      */
     static JsonArray toTree(Map<String, CowScore> cowScoresById) {
+        return toTree(cowScoresById, false);
+    }
+
+    /**
+     * Same as {@link #toTree(Map)}, except that with {@code
+     * keepGoodBuffFitScores} a {@link CowScoreTier#GOOD} buffFitScores entry
+     * is written like any other tier - needed for pets and war flags, where a
+     * missing entry means "use the generalScore" (see {@link
+     * CowScore#buffFitScoreOrGeneral(String)}), so an explicit GOOD is a real
+     * override whenever the generalScore is anything else.
+     */
+    static JsonArray toTree(Map<String, CowScore> cowScoresById, boolean keepGoodBuffFitScores) {
         JsonArray tree = new JsonArray();
         for (var entry : cowScoresById.entrySet()) {
             CowScore cowScore = entry.getValue() == null ? CowScore.DEFAULT : entry.getValue();
@@ -197,7 +219,7 @@ final class CowScoreFiles {
             obj.addProperty("generalScore", cowScore.generalScore().name());
             JsonObject buffFitScores = new JsonObject();
             for (var buffFit : cowScore.buffFitScores().entrySet()) {
-                if (buffFit.getValue() != CowScoreTier.GOOD) {
+                if (keepGoodBuffFitScores || buffFit.getValue() != CowScoreTier.GOOD) {
                     buffFitScores.addProperty(buffFit.getKey(), buffFit.getValue().name());
                 }
             }

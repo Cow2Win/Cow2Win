@@ -24,6 +24,10 @@ import java.util.Map;
  * fortifications, via {@link HeroTeam#sortScore()}. The fortification's
  * actual in-game buff bonus (role-match count times bonusPercent) is a
  * separate, untouched mechanism - see {@link HeroTeam#buffFitScore(Buff)}.
+ *
+ * Heroes only: the team's war flag and pet are scored separately (see
+ * {@link HeroTeam#petWarFlagScores(Fortification)}) and added by {@code
+ * TeamScoreCalculator}, not included in {@link #memberScores()}/{@link #total()}.
  */
 public record HeroTeamBuffFitScore(
         HeroTeam team,

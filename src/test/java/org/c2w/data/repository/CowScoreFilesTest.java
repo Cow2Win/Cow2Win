@@ -181,4 +181,18 @@ class CowScoreFilesTest {
             TitanRepository.resetCache();
         }
     }
+
+    @Test
+    @DisplayName("toTree drops GOOD buffFitScores by default, but keeps them for pets/war flags")
+    void toTreeKeepsGoodOverridesOnRequest() {
+        Map<String, CowScore> scores = Map.of("albus",
+                new CowScore(CowScoreTier.GREAT, Map.of("f1", CowScoreTier.GOOD)));
+        assertFalse(CowScoreFiles.toTree(scores).toString().contains("\"f1\""));
+        String kept = CowScoreFiles.toTree(scores, true).toString();
+        assertTrue(kept.contains("\"f1\":\"GOOD\""), kept);
+        assertEquals(CowScoreTier.GOOD,
+                CowScoreFiles.parse(kept, "petCowScore.json", "pet").get("albus").buffFitScoreOrGeneral("f1"));
+        assertEquals(CowScoreTier.GREAT,
+                CowScoreFiles.parse(kept, "petCowScore.json", "pet").get("albus").buffFitScoreOrGeneral("f2"));
+    }
 }

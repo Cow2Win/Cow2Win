@@ -101,11 +101,13 @@ final class MemberEditorPanel extends JPanel {
 
         for (int i = 0; i < memberDraft.heroTeams.size(); i++) {
             TeamDraft<Hero> teamDraft = memberDraft.heroTeams.get(i);
+            // War flag/pet: this member's other hero teams are simply the other rows here.
             TeamEditorPanel<Hero> row = new TeamEditorPanel<>(
                      heroCatalog, MemberEditorPanel::heroLabel,
                     h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), null, teamDraft,
                     LanguageService.displayName(KEY_NO_SELECTION),
-                    Comparator.comparing(MemberEditorPanel::heroLabel));
+                    Comparator.comparing(MemberEditorPanel::heroLabel), null,
+                    TeamExtras.forOtherDrafts(() -> TeamExtras.allExcept(memberDraft.heroTeams, teamDraft)));
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             rows.add(row);
         }

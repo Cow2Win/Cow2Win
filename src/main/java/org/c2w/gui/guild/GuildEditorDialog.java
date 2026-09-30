@@ -248,6 +248,9 @@ public final class GuildEditorDialog extends JDialog {
     }
 
     private void onSaveGuild() {
+        if (!TeamExtras.confirmNoConflict(this, draft)) {
+            return;
+        }
         try {
             Guild updated = GuildDraftConverter.toGuild(draft);
             GuildRepository.save(updated, context.guildFilePath());

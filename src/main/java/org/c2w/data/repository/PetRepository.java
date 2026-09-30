@@ -98,7 +98,7 @@ public class PetRepository {
         for (Pet pet : catalog) {
             cowScoresById.put(pet.id(), pet.cowScore());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), cowScoreFile());
+        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById, true), cowScoreFile());
 
         Map<String, Pet> updated = new LinkedHashMap<>();
         for (Pet pet : catalog) {
@@ -144,7 +144,7 @@ public class PetRepository {
             Map<String, Pet> masterData = parsePetsJson(petsJson);
             Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), "pet");
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "pet");
+            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "pet", true);
             Map<String, Pet> result = new LinkedHashMap<>();
             for (Pet pet : masterData.values()) {
                 result.put(pet.id(), new Pet(pet.id(), pet.imagePath(), cowScores.get(pet.id())));

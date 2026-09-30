@@ -280,9 +280,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                         Fortification presetFortification) {
         TeamDraft<T> rowDraft = new TeamDraft<>();
         if (existingDraft != null) {
-            rowDraft.members.addAll(existingDraft.members);
-            rowDraft.totalPower = existingDraft.totalPower;
-            rowDraft.lastModified = existingDraft.lastModified;
+            rowDraft.copyFrom(existingDraft);
         }
 
         FortComboBox fortCombo = new FortComboBox(fortificationCatalog, spec.fortificationType());
@@ -301,8 +299,13 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
         int rowNumber = rowStates.size() + 1;
         JLabel buffCountLabel = buildBuffCountLabel(spec.fortificationType());
+        // War flag/pet only for hero teams - see TeamExtras/otherTeamsOfRowMember.
+        TeamExtras extras = spec.teamType() == Lineup.TeamType.HERO
+                ? TeamExtras.forOtherDrafts(() -> otherTeamsOfRowMember(rowDraft, memberCombo))
+                : null;
         TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft,
-                () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber));
+                () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber),
+                extras);
         updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber);
 
         // Same convention as FortificationEntryDialog: picking "- none -" as
@@ -759,9 +762,41 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         }
     }
 
-    private TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, Runnable onChanged) {
+    private TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, Runnable onChanged, TeamExtras extras) {
         return new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, teamDraft,
-                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), onChanged);
+                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), onChanged, extras);
+    }
+
+    /**
+     * The other teams of whichever member {@code memberCombo} currently has
+     * selected for the row editing {@code rowDraft} - the source of that row's
+     * blocked war flags/pets (see {@link TeamExtras}). Mirrors
+     * {@code FortificationEntryDialog#otherTeamsOfRowMember}, with each row's
+     * current {@link RowState#boundMember}/{@link RowState#boundTeamIndex}
+     * as the slot it stands in for.
+     */
+    private List<TeamDraft<T>> otherTeamsOfRowMember(TeamDraft<T> rowDraft, JComboBox<MemberDraft> memberCombo) {
+        MemberDraft member = (MemberDraft) memberCombo.getSelectedItem();
+        if (member == null) {
+            return List.of();
+        }
+        List<TeamDraft<T>> result = new ArrayList<>();
+        Set<Integer> slotsWithRow = new HashSet<>();
+        for (RowState<T> row : rowStates) {
+            if (row.boundMember == member) {
+                slotsWithRow.add(row.boundTeamIndex);
+            }
+            if (row.teamDraft != rowDraft && row.memberCombo.getSelectedItem() == member) {
+                result.add(row.teamDraft);
+            }
+        }
+        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
+        for (int i = 0; i < teams.size(); i++) {
+            if (!slotsWithRow.contains(i)) {
+                result.add(teams.get(i));
+            }
+        }
+        return result;
     }
 
     /** Mirrors {@code FortificationEntryDialog#resolveTeamIndex} exactly - see there. */
@@ -843,10 +878,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private void applyResolutions(List<RowResolution<T>> resolutions) {
         for (RowResolution<T> resolution : resolutions) {
             TeamDraft<T> target = spec.teamsOf().apply(resolution.member()).get(resolution.teamIndex());
-            target.members.clear();
-            target.members.addAll(resolution.sourceDraft().members);
-            target.totalPower = resolution.sourceDraft().totalPower;
-            target.lastModified = resolution.sourceDraft().lastModified;
+            target.copyFrom(resolution.sourceDraft());
             // Re-point this row at the (member, teamIndex) slot it was just
             // written into - see RowState#boundMember. Without this, a row not
             // restored from a lineup entry keeps boundMember == null, so the
@@ -877,6 +909,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         }
 
         applyResolutions(resolutions);
+        if (!TeamExtras.confirmNoConflict(this, draft)) {
+            return;
+        }
 
         // This dialog's own type's entries are regenerated wholesale from the
         // current rows (rather than diffed against the previous lineup) -

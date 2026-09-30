@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GuildRepository {
 
@@ -122,8 +124,12 @@ public class GuildRepository {
 
         List<HeroTeam> heroTeams = new ArrayList<>();
         JsonArray heroTeamsArr = JsonSupport.getArray(obj, "heroTeams");
+        // Shared across this member's hero teams - see heroTeamFromJson: a pet/war flag used twice is dropped from
+        // the later team instead of failing the whole load on GuildMember's "at most once per member" rule.
+        Set<String> usedPetIds = new HashSet<>();
+        Set<String> usedWarFlagIds = new HashSet<>();
         for (int i = 0; i < heroTeamsArr.size(); i++) {
-            heroTeams.add(heroTeamFromJson(heroTeamsArr.get(i).getAsJsonObject(), id, i));
+            heroTeams.add(heroTeamFromJson(heroTeamsArr.get(i).getAsJsonObject(), id, i, usedPetIds, usedWarFlagIds));
         }
 
         List<TitanTeam> titanTeams = new ArrayList<>();
@@ -155,17 +161,54 @@ public class GuildRepository {
         return obj;
     }
 
-    private static HeroTeam heroTeamFromJson(JsonObject obj, String memberId, int index) {
+    /**
+     * Reads one hero team. "petId"/"warFlagId" are optional - missing (guild
+     * files saved before pets/war flags existed) or null both mean "none".
+     * An unknown id is logged and treated as "none", same as an unknown hero
+     * id. A pet/war flag already used by an earlier hero team of the same
+     * member (tracked via {@code usedPetIds}/{@code usedWarFlagIds}) is
+     * logged and dropped from this team, so a hand-edited file can't make
+     * the whole guild unloadable via {@link GuildMember}'s "at most once per
+     * member" rule.
+     */
+    private static HeroTeam heroTeamFromJson(JsonObject obj, String memberId, int index,
+                                             Set<String> usedPetIds, Set<String> usedWarFlagIds) {
         List<Hero> heroes = new ArrayList<>();
         for (String heroId : JsonSupport.getStringList(obj, "heroIds")) {
             HeroRepository.findById(heroId).ifPresentOrElse(heroes::add,
                     () -> Logger.log("Unknown hero id in guild file, skipping: " + heroId));
         }
 
+        Pet pet = null;
+        String petId = JsonSupport.getStringOrNull(obj, "petId");
+        if (petId != null) {
+            pet = PetRepository.findById(petId).orElse(null);
+            if (pet == null) {
+                Logger.log("Unknown pet id in guild file, skipping: " + petId);
+            } else if (!usedPetIds.add(petId)) {
+                Logger.log("Pet '" + petId + "' used in more than one hero team of member '" + memberId
+                        + "' in guild file, dropping it from team " + (index + 1));
+                pet = null;
+            }
+        }
+
+        WarFlag warFlag = null;
+        String warFlagId = JsonSupport.getStringOrNull(obj, "warFlagId");
+        if (warFlagId != null) {
+            warFlag = WarFlagRepository.findById(warFlagId).orElse(null);
+            if (warFlag == null) {
+                Logger.log("Unknown war flag id in guild file, skipping: " + warFlagId);
+            } else if (!usedWarFlagIds.add(warFlagId)) {
+                Logger.log("War flag '" + warFlagId + "' used in more than one hero team of member '" + memberId
+                        + "' in guild file, dropping it from team " + (index + 1));
+                warFlag = null;
+            }
+        }
+
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);
         LocalDate lastModified = JsonSupport.getLocalDate(obj, "lastModified");
 
-        return new HeroTeam(memberId, index, heroes, totalPower, lastModified);
+        return new HeroTeam(memberId, index, heroes, pet, warFlag, totalPower, lastModified);
     }
 
     private static JsonObject heroTeamToTree(HeroTeam team) {
@@ -176,6 +219,8 @@ public class GuildRepository {
             heroIds.add(hero.id());
         }
         obj.add("heroIds", JsonSupport.toStringArray(heroIds));
+        JsonSupport.putNullable(obj, "petId", team.pet() == null ? null : team.pet().id());
+        JsonSupport.putNullable(obj, "warFlagId", team.warFlag() == null ? null : team.warFlag().id());
 
         obj.addProperty("totalPower", team.totalPower());
         JsonSupport.putNullable(obj, "lastModified", team.lastModified() == null ? null : team.lastModified().toString());

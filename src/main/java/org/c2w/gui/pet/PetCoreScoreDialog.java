@@ -36,9 +36,13 @@ import java.util.Map;
  * never listed. Unlike heroes, pets have no roles, so there is no
  * role-match column.
  *
- * <p>Picking {@link CowScoreTier#GOOD} in a fortification row is equivalent
- * to having no override: it removes the entry from the pet's working scores
- * (see {@link #buildFortificationRow}). Saving writes every pet to the
+ * <p>Every fortification row starts with a "(general score)" entry meaning
+ * "no override": the pet then uses its generalScore there too (see
+ * {@link CowScore#buffFitScoreOrGeneral(String)}) - picking it removes the
+ * entry from the pet's working scores, while any tier - GOOD included - is
+ * stored as an explicit override (see {@link #buildFortificationRow}). Every
+ * tier is shown with its {@link CowScoreTier#petWarFlagValue()}, the value it
+ * is actually worth for a pet. Saving writes every pet to the
  * workspace copy of {@code petCowScore.json} (never {@code pets.json} - see
  * {@link PetRepository}'s class Javadoc). The "restore defaults" button
  * resets every pet to the defaults shipped inside the jar - see {@link
@@ -55,6 +59,9 @@ public final class PetCoreScoreDialog extends JDialog {
     private static final String KEY_BUFF_FIT_SCORES_HEADER = "heroBuffFitScores.buffFitScoresHeader";
     private static final String KEY_SAVE_ERROR = "heroBuffFitScores.saveError";
     private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
+
+    /** Shared with the other pet/war flag dialog: the "no override, use the general score" entry of a fortification row. */
+    private static final String KEY_USE_GENERAL_SCORE = "petWarFlagScores.useGeneralScore";
 
     /** Pet-specific confirmation question of {@link #onRestoreDefaults()}. */
     private static final String KEY_RESTORE_DEFAULTS_CONFIRM = "petBuffFitScores.restoreDefaultsConfirm";
@@ -219,9 +226,9 @@ public final class PetCoreScoreDialog extends JDialog {
 
     /**
      * One (pet, fortification) row: the fortification's display name and a
-     * {@link CowScoreTier} combo box pre-selected to the pet's current
-     * override (or {@link CowScoreTier#GOOD} if none). Selecting {@link
-     * CowScoreTier#GOOD} removes the override instead of storing it.
+     * combo box pre-selected to the pet's current override, or to the
+     * leading "(general score)" entry (null) if there is none. Selecting that
+     * entry removes the override, any tier - GOOD included - is stored.
      */
     private JPanel buildFortificationRow(Fortification fortification, Map<String, CowScoreTier> petScores) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
@@ -231,10 +238,11 @@ public final class PetCoreScoreDialog extends JDialog {
         row.add(nameLabel);
 
         JComboBox<CowScoreTier> combo = buildScoreTierCombo();
-        combo.setSelectedItem(petScores.getOrDefault(fortification.id(), CowScoreTier.GOOD));
+        combo.insertItemAt(null, 0);
+        combo.setSelectedItem(petScores.get(fortification.id()));
         combo.addActionListener(e -> {
             CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
-            if (selected == null || selected == CowScoreTier.GOOD) {
+            if (selected == null) {
                 petScores.remove(fortification.id());
             } else {
                 petScores.put(fortification.id(), selected);
@@ -244,7 +252,12 @@ public final class PetCoreScoreDialog extends JDialog {
         return row;
     }
 
-    /** A {@link CowScoreTier} combo box listing all tiers, rendered as e.g. "Good (0.8)". */
+    /**
+     * A {@link CowScoreTier} combo box listing all tiers, rendered with their
+     * {@link CowScoreTier#petWarFlagValue()}, e.g. "Good (0.3)"; a null entry
+     * (only in fortification rows, see {@link #buildFortificationRow}) is
+     * rendered as "(general score)".
+     */
     private static JComboBox<CowScoreTier> buildScoreTierCombo() {
         JComboBox<CowScoreTier> combo = new JComboBox<>(CowScoreTier.values());
         combo.setRenderer(new DefaultListCellRenderer() {
@@ -253,7 +266,9 @@ public final class PetCoreScoreDialog extends JDialog {
                                                            boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof CowScoreTier tier) {
-                    setText(LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.value() + ")");
+                    setText(LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.petWarFlagValue() + ")");
+                } else if (value == null) {
+                    setText(LanguageService.displayName(KEY_USE_GENERAL_SCORE));
                 }
                 return this;
             }
@@ -280,13 +295,8 @@ public final class PetCoreScoreDialog extends JDialog {
         for (Pet pet : petCatalog) {
             CowScore cowScore = defaults.getOrDefault(pet.id(), CowScore.DEFAULT);
             workingGeneralScores.put(pet.id(), cowScore.generalScore());
-            // GOOD means "no override" in this dialog - see buildFortificationRow.
-            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>();
-            cowScore.buffFitScores().forEach((fortificationId, tier) -> {
-                if (tier != CowScoreTier.GOOD) {
-                    buffFitScores.put(fortificationId, tier);
-                }
-            });
+            // Every tier - GOOD included - is a real override here, see buildFortificationRow.
+            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>(cowScore.buffFitScores());
             workingScores.put(pet.id(), buffFitScores);
         }
         onPetSelected(petList.getSelectedValue());

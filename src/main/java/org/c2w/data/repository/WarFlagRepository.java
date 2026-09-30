@@ -102,7 +102,7 @@ public class WarFlagRepository {
         for (WarFlag warFlag : catalog) {
             cowScoresById.put(warFlag.id(), warFlag.cowScore());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), cowScoreFile());
+        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById, true), cowScoreFile());
 
         Map<String, WarFlag> updated = new LinkedHashMap<>();
         for (WarFlag warFlag : catalog) {
@@ -149,7 +149,7 @@ public class WarFlagRepository {
             Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson);
             Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), ENTITY_LABEL);
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, ENTITY_LABEL);
+            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, ENTITY_LABEL, true);
             Map<String, WarFlag> result = new LinkedHashMap<>();
             for (WarFlag warFlag : masterData.values()) {
                 result.put(warFlag.id(), new WarFlag(warFlag.id(), warFlag.imagePath(), cowScores.get(warFlag.id())));

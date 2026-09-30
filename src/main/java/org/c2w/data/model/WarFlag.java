@@ -62,13 +62,13 @@ public record WarFlag(
     }
 
     /**
-     * This flag's buff-specific fit score for the fortification with the
-     * given id (which must have a buff) - delegates to {@link #cowScore()},
-     * see {@link CowScore#buffFitScore(String, boolean)} for the resolution
-     * order. War flags have no role/element, so {@code buffMatches} is up to
-     * the caller (typically {@code false}).
+     * This war flag's fit score for the fortification with the given id (which
+     * must have a buff) - its explicit override for that fortification if
+     * present, otherwise its {@link #generalScore()}: war flags have no
+     * role/element, so there is no match to default on - see {@link
+     * CowScore#buffFitScoreOrGeneral(String)}.
      */
-    public CowScoreTier buffFitScore(String fortificationId, boolean buffMatches) {
-        return cowScore.buffFitScore(fortificationId, buffMatches);
+    public CowScoreTier buffFitScore(String fortificationId) {
+        return cowScore.buffFitScoreOrGeneral(fortificationId);
     }
 }

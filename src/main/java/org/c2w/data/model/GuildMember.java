@@ -2,7 +2,9 @@ package org.c2w.data.model;
 
 import org.c2w.util.LanguageService;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A guild member with their fielded teams. Per Clash of Worlds rules, up to 3
@@ -16,6 +18,10 @@ import java.util.List;
  * here (0-based) - enforced below - so a team can be looked up/referenced by
  * memberId + index alone (see {@link Lineup.Entry#teamIndex()}) without
  * depending on callers to track list position separately.
+ *
+ * Per Clash of Worlds rules, a member can field each {@link Pet} and each
+ * {@link WarFlag} in at most ONE of their hero teams - enforced below
+ * (both are optional per team, so teams without one are not affected).
  */
 public record GuildMember(
         String id,
@@ -45,6 +51,18 @@ public record GuildMember(
             if (team.index() != i) {
                 throw new IllegalArgumentException("Hero team at position " + i + " must have index " + i
                         + ", was: " + team.index());
+            }
+        }
+        Set<String> usedPetIds = new HashSet<>();
+        Set<String> usedWarFlagIds = new HashSet<>();
+        for (HeroTeam team : heroTeams) {
+            if (team.pet() != null && !usedPetIds.add(team.pet().id())) {
+                throw new IllegalArgumentException("Pet '" + team.pet().id()
+                        + "' is used in more than one hero team of member '" + id + "'");
+            }
+            if (team.warFlag() != null && !usedWarFlagIds.add(team.warFlag().id())) {
+                throw new IllegalArgumentException("War flag '" + team.warFlag().id()
+                        + "' is used in more than one hero team of member '" + id + "'");
             }
         }
         for (int i = 0; i < titanTeams.size(); i++) {

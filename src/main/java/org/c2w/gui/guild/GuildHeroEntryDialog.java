@@ -46,7 +46,8 @@ public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {
 
     /** Mirrors {@code FortificationEntryDialog#heroScoreBreakdown} - see {@link TeamScoreCalculator#scoreFor(HeroTeam, Fortification)}. */
     private static TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft, Fortification fortification) {
-        HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.totalPower);
+        HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.pet, teamDraft.warFlag,
+                teamDraft.totalPower, null);
         return TeamScoreCalculator.scoreFor(heroTeam, fortification);
     }
 }

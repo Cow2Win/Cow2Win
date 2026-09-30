@@ -154,7 +154,8 @@ public final class FortificationEntryDialog extends JDialog {
      * totalPower term either way).
      */
     private TeamScoreCalculator.Breakdown heroScoreBreakdown(TeamDraft<Hero> teamDraft) {
-        HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.totalPower);
+        HeroTeam heroTeam = new HeroTeam(null, 0, teamDraft.members, teamDraft.pet, teamDraft.warFlag,
+                teamDraft.totalPower, null);
         return TeamScoreCalculator.scoreFor(heroTeam, fortification);
     }
 
@@ -191,9 +192,7 @@ public final class FortificationEntryDialog extends JDialog {
                     originalMember = member;
                     originalTeamIndex = entry.teamIndex();
                     TeamDraft<T> existingDraft = teams.get(originalTeamIndex);
-                    rowDraft.members.addAll(existingDraft.members);
-                    rowDraft.totalPower = existingDraft.totalPower;
-                    rowDraft.lastModified = existingDraft.lastModified;
+                    rowDraft.copyFrom(existingDraft);
                     combo.setSelectedItem(member);
                 } else {
                     Logger.log("Could not restore an assigned team for " + LanguageService.displayName(fortification.id())
@@ -203,8 +202,13 @@ public final class FortificationEntryDialog extends JDialog {
 
             int rowNumber = i + 1;
             JLabel buffCountLabel = buildBuffCountLabel();
+            // War flag/pet only for hero teams - see TeamExtras/otherTeamsOfRowMember.
+            TeamExtras extras = teamType == Lineup.TeamType.HERO
+                    ? TeamExtras.forOtherDrafts(() -> otherTeamsOfRowMember(rowDraft, combo, rowStates, teamsOf))
+                    : null;
             TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
-                    () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber));
+                    () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber),
+                    extras);
             updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
             // Picking "- none -" (null, see KEY_NO_SELECTION) here means this
             // slot's team should lose its assignment to this fortification -
@@ -398,9 +402,45 @@ public final class FortificationEntryDialog extends JDialog {
     }
 
     private <T> TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, List<T> catalog, Function<T, String> label,
-                                            Function<T, Icon> icon, Comparator<T> catalogOrder, Runnable onChanged) {
+                                            Function<T, Icon> icon, Comparator<T> catalogOrder, Runnable onChanged,
+                                            TeamExtras extras) {
         return new TeamEditorPanel<>(catalog, label, icon, null, teamDraft,
-                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged);
+                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged, extras);
+    }
+
+    /**
+     * The other teams of whichever member {@code memberCombo} currently has
+     * selected for the row editing {@code rowDraft} - the source of that row's
+     * blocked war flags/pets (see {@link TeamExtras}): every other row of this
+     * dialog assigned to the same member, plus that member's teams from the
+     * guild draft that no row of this dialog stands in for (a row restored
+     * from a lineup entry edits a COPY of its team, see {@link TeamDraft#copyFrom},
+     * so the original must not count twice).
+     */
+    private static <T> List<TeamDraft<T>> otherTeamsOfRowMember(TeamDraft<T> rowDraft, JComboBox<MemberDraft> memberCombo,
+                                                              List<RowState<T>> rowStates,
+                                                              Function<MemberDraft, List<TeamDraft<T>>> teamsOf) {
+        MemberDraft member = (MemberDraft) memberCombo.getSelectedItem();
+        if (member == null) {
+            return List.of();
+        }
+        List<TeamDraft<T>> result = new ArrayList<>();
+        Set<Integer> slotsWithRow = new HashSet<>();
+        for (RowState<T> row : rowStates) {
+            if (row.originalMember == member) {
+                slotsWithRow.add(row.originalTeamIndex);
+            }
+            if (row.teamDraft != rowDraft && row.combo.getSelectedItem() == member) {
+                result.add(row.teamDraft);
+            }
+        }
+        List<TeamDraft<T>> teams = teamsOf.apply(member);
+        for (int i = 0; i < teams.size(); i++) {
+            if (!slotsWithRow.contains(i)) {
+                result.add(teams.get(i));
+            }
+        }
+        return result;
     }
 
     private static <T> int resolveTeamIndex(List<TeamDraft<T>> teams, Set<String> boundKeys, String memberId,
@@ -478,10 +518,10 @@ public final class FortificationEntryDialog extends JDialog {
 
         for (RowResolution<T> resolution : resolutions) {
             TeamDraft<T> target = teamsOf.apply(resolution.member()).get(resolution.teamIndex());
-            target.members.clear();
-            target.members.addAll(resolution.sourceDraft().members);
-            target.totalPower = resolution.sourceDraft().totalPower;
-            target.lastModified = resolution.sourceDraft().lastModified;
+            target.copyFrom(resolution.sourceDraft());
+        }
+        if (!TeamExtras.confirmNoConflict(this, draft)) {
+            return;
         }
 
         Set<String> reassigned = new HashSet<>();

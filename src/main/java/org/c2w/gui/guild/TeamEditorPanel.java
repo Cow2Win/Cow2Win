@@ -1,11 +1,19 @@
 package org.c2w.gui.guild;
 
 
+import org.c2w.data.model.Pet;
+import org.c2w.data.model.WarFlag;
+import org.c2w.data.repository.PetRepository;
+import org.c2w.data.repository.WarFlagRepository;
 import org.c2w.gui.common.GuiUtils;
+import org.c2w.gui.common.IconLoader;
+import org.c2w.util.LanguageService;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
@@ -16,9 +24,17 @@ import java.awt.event.FocusEvent;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 
+/**
+ * One team row: power field, then - for hero teams only, see
+ * {@link TeamExtras} - a war flag and a pet combo box, then
+ * {@value #SLOT_COUNT} member slot combo boxes, all in one FlowLayout row
+ * (in exactly this order: power, war flag, pet, members).
+ */
 public final class TeamEditorPanel<T> extends JPanel {
 
     private static final int SLOT_COUNT = 5;
@@ -28,12 +44,16 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     /**
      * Milliseconds within which consecutive keystrokes are treated as one
-     * continued type-ahead search (see {@link #buildLabelKeySelectionManager()}) -
+     * continued type-ahead search (see {@link #buildLabelKeySelectionManager(Function, boolean)}) -
      * a keystroke arriving later than this starts a fresh search instead of
      * extending the previous one, matching the informal convention most
      * desktop combo boxes/list controls use for "type to jump".
      */
     private static final long TYPEAHEAD_TIMEOUT_MS = 1000;
+
+    /** Language file keys for what the war flag/pet combo boxes show while nothing is selected, and as their tooltip prefix. */
+    private static final String KEY_WAR_FLAG = "teamEditor.warFlag";
+    private static final String KEY_PET = "teamEditor.pet";
 
     private final List<T> sortedCatalog;
     private final Function<T, String> label;
@@ -45,6 +65,14 @@ public final class TeamEditorPanel<T> extends JPanel {
     private final List<JLabel> roleLabels = new ArrayList<>(SLOT_COUNT);
     private final Runnable onChanged;
     private JTextField powerField;
+
+    /** Optional war flag/pet combo boxes - both null unless a {@link TeamExtras} was given (hero teams only). */
+    private JComboBox<WarFlag> warFlagCombo;
+    private JComboBox<Pet> petCombo;
+
+    /** Guards the war flag/pet combo boxes' own listeners while their model/selection is changed programmatically. */
+    private boolean updatingExtras;
+
     private boolean refreshing;
     private boolean formattingPowerField;
 
@@ -68,6 +96,20 @@ public final class TeamEditorPanel<T> extends JPanel {
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                     Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
                     Comparator<T> catalogOrder, Runnable onChanged) {
+        this(catalog, label, icon, roleDescriber, teamDraft, emptyLabel, catalogOrder, onChanged, null);
+    }
+
+    /**
+     * Same as {@link #TeamEditorPanel(List, Function, Function, Function, TeamDraft, String, Comparator, Runnable)},
+     * plus - if {@code extras} is not null - a war flag and a pet combo box
+     * between the power field and the member slots, bound to
+     * {@code teamDraft.warFlag}/{@code teamDraft.pet} (hero teams only, see
+     * {@link TeamExtras}). A change there counts as a real user change just
+     * like a slot change: it touches lastModified and fires {@code onChanged}.
+     */
+    public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
+                    Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
+                    Comparator<T> catalogOrder, Runnable onChanged, TeamExtras extras) {
         super(new FlowLayout(FlowLayout.LEFT, 6, 4));
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         setOpaque(false);
@@ -84,9 +126,20 @@ public final class TeamEditorPanel<T> extends JPanel {
         this.powerField = buildPowerField(teamDraft);
         add(powerField);
 
+        if (extras != null) {
+            warFlagCombo = buildExtraCombo(WarFlagRepository.findAll(), WarFlag::id, WarFlag::imagePath,
+                    teamDraft.warFlag, extras.blockedWarFlagIds(), KEY_WAR_FLAG, true,
+                    selected -> teamDraft.warFlag = selected);
+            add(warFlagCombo);
+            petCombo = buildExtraCombo(PetRepository.findAll(), Pet::id, Pet::imagePath,
+                    teamDraft.pet, extras.blockedPetIds(), KEY_PET, false,
+                    selected -> teamDraft.pet = selected);
+            add(petCombo);
+        }
+
         for (int i = 0; i < SLOT_COUNT; i++) {
             JComboBox<T> combo = new JComboBox<>();
-            combo.setKeySelectionManager(buildLabelKeySelectionManager());
+            combo.setKeySelectionManager(buildLabelKeySelectionManager(label, false));
             combo.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> l, Object value, int index,
@@ -169,11 +222,12 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     /**
      * Builds a fresh {@link JComboBox.KeySelectionManager} for one slot
-     * combo box (see class Javadoc) that jumps to the first entry whose
-     * DISPLAY name (via {@link #label}, e.g. "Yasmine") - not
+     * combo box (see class Javadoc) - or one of the war flag/pet combo
+     * boxes, see {@link #buildExtraCombo} - that jumps to the first entry whose
+     * DISPLAY name (via {@code labelOf}, e.g. "Yasmine") - not
      * {@link Object#toString()} - starts with what was typed, so typing "y"
      * while a slot combo has focus (dropdown open or not) selects
-     * "Yasmine" even though T (Hero/Titan, both records) has no meaningful
+     * "Yasmine" even though E (Hero/Titan/Pet/WarFlag, all records) has no meaningful
      * toString() of its own and this combo may be showing only an icon
      * rather than the name (see class Javadoc on icon). Consecutive
      * keystrokes within {@value #TYPEAHEAD_TIMEOUT_MS}ms accumulate into
@@ -183,8 +237,15 @@ public final class TeamEditorPanel<T> extends JPanel {
      * built per combo box (rather than one manager shared across all 5
      * slots) so each slot's typed-so-far buffer is independent of the
      * others'. {@code null} (the "- none -" entry) is never matched.
+     *
+     * With {@code matchAnyWord}, an entry also matches if ANY word of its
+     * display name starts with what was typed - used for war flags, whose
+     * names all share the same leading words ("Kriegsflagge der/des ...",
+     * "War Flag of ..."), so matching only the start of the name could never
+     * tell them apart.
      */
-    private JComboBox.KeySelectionManager buildLabelKeySelectionManager() {
+    private static <E> JComboBox.KeySelectionManager buildLabelKeySelectionManager(Function<E, String> labelOf,
+                                                                                   boolean matchAnyWord) {
         return new JComboBox.KeySelectionManager() {
             private String typed = "";
             private long lastKeystrokeAt = 0;
@@ -216,17 +277,155 @@ public final class TeamEditorPanel<T> extends JPanel {
                         continue;
                     }
                     @SuppressWarnings("unchecked")
-                    T typedElement = (T) element;
-                    String display = label.apply(typedElement);
-                    if (display != null && display.toLowerCase().startsWith(prefix)) {
+                    E typedElement = (E) element;
+                    String display = labelOf.apply(typedElement);
+                    if (display != null && matches(display.toLowerCase(), prefix)) {
                         return i;
                     }
                 }
                 return -1;
             }
+
+            private boolean matches(String display, String prefix) {
+                if (display.startsWith(prefix)) {
+                    return true;
+                }
+                if (matchAnyWord) {
+                    for (String word : display.split("\\s+")) {
+                        if (word.startsWith(prefix)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
         };
     }
 
+
+    /**
+     * Builds one of the optional war flag/pet combo boxes (see {@link TeamExtras}):
+     * "- none -" plus the catalog sorted by display name, icon-only like the
+     * member slots (display name as tooltip). While nothing is selected, the
+     * closed combo box shows its kind ("War flag"/"Pet") instead of
+     * "- none -", so the two are told apart at a glance. Its model is rebuilt
+     * every time the dropdown opens, hiding every id {@code blockedIds}
+     * currently returns (used by another hero team of the same member)
+     * except the current selection.
+     */
+    private <E> JComboBox<E> buildExtraCombo(List<E> catalog, Function<E, String> idOf, Function<E, String> imagePathOf,
+                                             E initial, Supplier<Set<String>> blockedIds, String kindKey,
+                                             boolean typeAheadMatchesAnyWord, Consumer<E> onSelected) {
+        Function<E, String> labelOf = e -> LanguageService.displayName(idOf.apply(e));
+        List<E> sortedEntries = catalog.stream()
+                .sorted(Comparator.comparing(labelOf, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+        String kindLabel = LanguageService.displayName(kindKey);
+
+        // Match the draft's value against the catalog by id, not equals(): a
+        // Pet/WarFlag record also carries its CowScore, so an instance loaded
+        // before a CowScore edit is no longer equal to the catalog's current one.
+        E selected = initial == null ? null : sortedEntries.stream()
+                .filter(e -> idOf.apply(e).equals(idOf.apply(initial)))
+                .findFirst()
+                .orElse(initial);
+
+        JComboBox<E> combo = new JComboBox<>();
+        // Same "type to jump" behavior as the member slots, e.g. "o" selects "Oliver" - for war flags
+        // matching any word of the name, see buildLabelKeySelectionManager.
+        combo.setKeySelectionManager(buildLabelKeySelectionManager(labelOf, typeAheadMatchesAnyWord));
+        combo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> l, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(l, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    setText(index == -1 ? kindLabel : emptyLabel);
+                    setIcon(null);
+                    setToolTipText(null);
+                } else {
+                    @SuppressWarnings("unchecked")
+                    E typed = (E) value;
+                    setText(null);
+                    setIcon(IconLoader.iconFor(imagePathOf.apply(typed), TeamExtras.ICON_SIZE));
+                    setToolTipText(labelOf.apply(typed));
+                }
+                return this;
+            }
+        });
+
+        updatingExtras = true;
+        try {
+            combo.setModel(extraModel(sortedEntries, idOf, Set.of(), selected));
+            combo.setSelectedItem(selected);
+        } finally {
+            updatingExtras = false;
+        }
+        updateExtraTooltip(combo, kindLabel, labelOf);
+
+        combo.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                updatingExtras = true;
+                try {
+                    @SuppressWarnings("unchecked")
+                    E current = (E) combo.getSelectedItem();
+                    combo.setModel(extraModel(sortedEntries, idOf, blockedIds.get(), current));
+                    combo.setSelectedItem(current);
+                } finally {
+                    updatingExtras = false;
+                }
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+            }
+        });
+        combo.addActionListener(e -> {
+            if (updatingExtras) {
+                return;
+            }
+            @SuppressWarnings("unchecked")
+            E current = (E) combo.getSelectedItem();
+            onSelected.accept(current);
+            updateExtraTooltip(combo, kindLabel, labelOf);
+            touchLastModified();
+            if (onChanged != null) {
+                onChanged.run();
+            }
+        });
+        return combo;
+    }
+
+    /** "- none -" (null) plus every entry whose id is not blocked - {@code current} is always kept, even if blocked or not in the catalog. */
+    private static <E> DefaultComboBoxModel<E> extraModel(List<E> sortedEntries, Function<E, String> idOf,
+                                                         Set<String> blockedIds, E current) {
+        DefaultComboBoxModel<E> model = new DefaultComboBoxModel<>();
+        model.addElement(null);
+        boolean currentAdded = current == null;
+        for (E entry : sortedEntries) {
+            boolean isCurrent = current != null && idOf.apply(entry).equals(idOf.apply(current));
+            if (isCurrent || !blockedIds.contains(idOf.apply(entry))) {
+                model.addElement(isCurrent ? current : entry);
+                currentAdded |= isCurrent;
+            }
+        }
+        if (!currentAdded) {
+            model.addElement(current);
+        }
+        return model;
+    }
+
+    /** Tooltip of a closed war flag/pet combo box: its kind plus the selected entry's display name, e.g. "Pet: Albus". */
+    private static <E> void updateExtraTooltip(JComboBox<E> combo, String kindLabel, Function<E, String> labelOf) {
+        @SuppressWarnings("unchecked")
+        E selected = (E) combo.getSelectedItem();
+        combo.setToolTipText(selected == null ? kindLabel : kindLabel + ": " + labelOf.apply(selected));
+    }
 
     private JTextField buildPowerField(TeamDraft<T> teamDraft) {
         JTextField powerField = new JTextField(GuiUtils.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
@@ -342,6 +541,10 @@ public final class TeamEditorPanel<T> extends JPanel {
         }
         setPowerFieldText(powerField, GuiUtils.NUMBER_FORMAT.format(0));
         teamDraft.totalPower = 0;
+        teamDraft.pet = null;
+        teamDraft.warFlag = null;
+        clearExtraCombo(warFlagCombo, KEY_WAR_FLAG);
+        clearExtraCombo(petCombo, KEY_PET);
         syncDraftFromCombos();
         refreshComboOptions();
         updateRoleLabels();
@@ -350,6 +553,20 @@ public final class TeamEditorPanel<T> extends JPanel {
         if (onChanged != null) {
             onChanged.run();
         }
+    }
+
+    /** Resets an optional war flag/pet combo box (null if not shown) to "- none -" without firing its own listener - see {@link #clear()}. */
+    private void clearExtraCombo(JComboBox<?> combo, String kindKey) {
+        if (combo == null) {
+            return;
+        }
+        updatingExtras = true;
+        try {
+            combo.setSelectedItem(null);
+        } finally {
+            updatingExtras = false;
+        }
+        combo.setToolTipText(LanguageService.displayName(kindKey));
     }
 
     /** Recomputes which entries are selectable in which slot (see class Javadoc). */

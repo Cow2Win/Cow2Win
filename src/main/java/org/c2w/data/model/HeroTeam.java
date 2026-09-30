@@ -3,6 +3,7 @@ package org.c2w.data.model;
 import org.c2w.util.TeamScoreCalculator;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,11 +24,23 @@ import java.util.List;
  * teams that have (still) never been created/edited via the GUI (e.g.
  * programmatically created teams like in the Main demo, or legacy data from
  * a guild file without this field).
+ *
+ * pet: this team's optional {@link Pet}, null if the team fields none.
+ * warFlag: this team's optional {@link WarFlag}, null if the team fields
+ * none. Both only exist for hero teams (titan teams have neither). Per
+ * Clash of Worlds rules, a member can field each pet and each war flag in
+ * at most ONE of their hero teams - enforced by {@link GuildMember}, not
+ * here, since a single team cannot see its siblings. Both are already
+ * included in {@link #totalPower()} as shown in-game. Their CowScore adds
+ * to the team's score on top of the heroes', at the lower {@link
+ * CowScoreTier#petWarFlagValue()} - see {@link #petWarFlagScores(Fortification)}.
  */
 public record HeroTeam(
         String memberId,
         int index,
         List<Hero> heroes,
+        Pet pet,
+        WarFlag warFlag,
         int totalPower,
         LocalDate lastModified
 ) {
@@ -50,14 +63,19 @@ public record HeroTeam(
         }
     }
 
-    /** Convenience constructor for hero teams without lastModified. */
-    public HeroTeam(String memberId, int index, List<Hero> heroes, int totalPower) {
-        this(memberId, index, heroes, totalPower, null);
+    /** Convenience constructor for hero teams without pet and war flag. */
+    public HeroTeam(String memberId, int index, List<Hero> heroes, int totalPower, LocalDate lastModified) {
+        this(memberId, index, heroes, null, null, totalPower, lastModified);
     }
 
-    /** Convenience constructor for an empty hero team at slot 0, without lastModified. */
+    /** Convenience constructor for hero teams without pet, war flag and lastModified. */
+    public HeroTeam(String memberId, int index, List<Hero> heroes, int totalPower) {
+        this(memberId, index, heroes, null, null, totalPower, null);
+    }
+
+    /** Convenience constructor for an empty hero team at slot 0, without pet, war flag and lastModified. */
     public HeroTeam() {
-        this(null, 0, null, 0, null);
+        this(null, 0, null, null, null, 0, null);
     }
 
     /**
@@ -93,6 +111,34 @@ public record HeroTeam(
      */
     public double sortScore() {
         double generalScoreSum = heroes.stream().mapToDouble(h -> h.generalScore().value()).sum();
-        return generalScoreSum + totalPower() / TeamScoreCalculator.POWER_DIVISOR;
+        double petWarFlagSum = petWarFlagScores(null).stream().mapToDouble(Double::doubleValue).sum();
+        return generalScoreSum + petWarFlagSum + totalPower() / TeamScoreCalculator.POWER_DIVISOR;
+    }
+
+    /**
+     * The war flag's and the pet's contribution to this team's score at
+     * {@code fortification}, in row order (war flag, then pet) - an absent
+     * war flag/pet is simply left out, i.e. counts 0 (per the user's
+     * decision, 2026-09-29). Each is its {@link CowScoreTier#petWarFlagValue()}
+     * of: its {@link WarFlag#buffFitScore(String)}/{@link Pet#buffFitScore(String)}
+     * if {@code fortification} has a buff, otherwise (also for a null
+     * {@code fortification}, see {@link #sortScore()}) its generalScore.
+     * Used on top of the heroes' own scores by {@link #sortScore()} and
+     * {@code TeamScoreCalculator#scoreFor(HeroTeam, Fortification)}; never
+     * part of {@link #buffFitScore(Buff)}, which only counts heroes whose
+     * role matches.
+     */
+    public List<Double> petWarFlagScores(Fortification fortification) {
+        boolean buffed = fortification != null && fortification.buff() != null;
+        List<Double> scores = new ArrayList<>(2);
+        if (warFlag != null) {
+            CowScoreTier tier = buffed ? warFlag.buffFitScore(fortification.id()) : warFlag.generalScore();
+            scores.add(tier.petWarFlagValue());
+        }
+        if (pet != null) {
+            CowScoreTier tier = buffed ? pet.buffFitScore(fortification.id()) : pet.generalScore();
+            scores.add(tier.petWarFlagValue());
+        }
+        return scores;
     }
 }

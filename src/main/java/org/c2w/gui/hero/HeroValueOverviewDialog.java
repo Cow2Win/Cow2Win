@@ -347,7 +347,8 @@ public class HeroValueOverviewDialog extends JDialog {
         Lineup currentLineup = appContext.lineup();
         row.matchCounts = matchCountsFor(heroValueColumns, row.teamMemberId, row.teamType, row.teamIndex,
                 currentGuild, currentLineup);
-        HeroTeam syntheticTeam = new HeroTeam(row.teamMemberId, row.teamIndex, row.members, newPower, LocalDate.now());
+        HeroTeam syntheticTeam = new HeroTeam(row.teamMemberId, row.teamIndex, row.members, row.pet, row.warFlag,
+                newPower, LocalDate.now());
         row.scores = scoresFor(syntheticTeam, heroValueColumns);
         GuiUtils.editedGuild = true;
         return true;
@@ -389,7 +390,8 @@ public class HeroValueOverviewDialog extends JDialog {
             for (HeroTeam team : member.heroTeams()) {
                 HeroValueTableModel.Row row = heroRows.get(heroIndex);
                 LocalDate lastModified = row.totalPower != team.totalPower() ? LocalDate.now() : team.lastModified();
-                updatedHeroTeams.add(new HeroTeam(team.memberId(), team.index(), team.heroes(), row.totalPower, lastModified));
+                updatedHeroTeams.add(new HeroTeam(team.memberId(), team.index(), team.heroes(), team.pet(), team.warFlag(),
+                        row.totalPower, lastModified));
                 heroIndex++;
             }
             updatedMembers.add(new GuildMember(member.id(), member.name(), updatedHeroTeams, member.titanTeams()));
@@ -412,8 +414,8 @@ public class HeroValueOverviewDialog extends JDialog {
                 int[] matchCounts = matchCountsFor(heroValueColumns, member.id(), Lineup.TeamType.HERO, i,
                         currentGuild, currentLineup);
                 double[] scores = scoresFor(team, heroValueColumns);
-                heroRows.add(new HeroValueTableModel.Row(memberLabel, team.heroes(), team.totalPower(),
-                        member.id(), Lineup.TeamType.HERO, i, assigned, matchCounts, scores));
+                heroRows.add(new HeroValueTableModel.Row(memberLabel, team.heroes(), team.pet(), team.warFlag(),
+                        team.totalPower(), member.id(), Lineup.TeamType.HERO, i, assigned, matchCounts, scores));
             }
         }
         heroModel.setRows(heroRows);
@@ -667,6 +669,8 @@ public class HeroValueOverviewDialog extends JDialog {
         static final class Row {
             final String memberLabel;
             final List<Hero> members;
+            final Pet pet;
+            final WarFlag warFlag;
             int totalPower;
             final String teamMemberId;
             final Lineup.TeamType teamType;
@@ -675,11 +679,13 @@ public class HeroValueOverviewDialog extends JDialog {
             int[] matchCounts;
             double[] scores;
 
-            Row(String memberLabel, List<Hero> members, int totalPower,
+            Row(String memberLabel, List<Hero> members, Pet pet, WarFlag warFlag, int totalPower,
                 String teamMemberId, Lineup.TeamType teamType, int teamIndex, Fortification assignedFortification,
                 int[] matchCounts, double[] scores) {
                 this.memberLabel = memberLabel;
                 this.members = members;
+                this.pet = pet;
+                this.warFlag = warFlag;
                 this.totalPower = totalPower;
                 this.teamMemberId = teamMemberId;
                 this.teamType = teamType;
