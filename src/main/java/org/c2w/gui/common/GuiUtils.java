@@ -7,8 +7,6 @@ import java.util.Locale;
 
 public class GuiUtils {
     public static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.GERMANY);
-    public static boolean editedGuild = false;
-    public static boolean editedLineup = false;
 
     public static final Color VALUE_HIGHLIGHT_BACKGROUND = IconLoader.GREEN;
 

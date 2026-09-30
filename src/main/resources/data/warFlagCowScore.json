@@ -1,1 +1,55 @@
-[]
+[
+  {
+    "id": "flag-bastion"
+  },
+  {
+    "id": "flag-pet-strength"
+  },
+  {
+    "id": "flag-readiness"
+  },
+  {
+    "id": "flag-false-immortality",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "flag-swift-warriors",
+    "fortMarks": {
+      "bastion": "POSITIVE"
+    }
+  },
+  {
+    "id": "flag-fervor",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "flag-recovery",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "flag-vanguard",
+    "fortMarks": {
+      "city-hall": "POSITIVE",
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "flag-frost"
+  },
+  {
+    "id": "flag-decline"
+  },
+  {
+    "id": "flag-steel-storm",
+    "fortMarks": {
+      "bastion": "POSITIVE",
+      "shooting-range": "POSITIVE"
+    }
+  }
+]

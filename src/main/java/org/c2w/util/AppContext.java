@@ -7,26 +7,57 @@ import org.c2w.data.repository.FortificationRepository;
 
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * The guild and lineup currently open in the application, the files they
+ * belong to, and whether either of them has unsaved changes.
+ *
+ * <p>Observable: every change fires the matching {@link Listener} callback,
+ * so views (fortification map, toolbar combo boxes, window title, ...)
+ * update themselves instead of every caller having to remember to refresh
+ * them. Changes should go through the services in {@code org.c2w.service},
+ * which also persist to disk and keep the dirty state right - this class
+ * itself only holds state and notifies.
+ */
 public class AppContext {
+
+    /** Callbacks for changes to an {@link AppContext}; every method defaults to doing nothing. */
+    public interface Listener {
+        /** The guild and/or its file changed. */
+        default void guildChanged() {
+        }
+
+        /** The lineup and/or its file changed. */
+        default void lineupChanged() {
+        }
+
+        /** {@link #isGuildDirty()} and/or {@link #isLineupDirty()} changed. */
+        default void dirtyStateChanged() {
+        }
+    }
+
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+
     private Guild guild;
     private Path guildFilePath;
     private Lineup lineup;
     private Path lineupFilePath;
+    private boolean guildDirty;
+    private boolean lineupDirty;
 
     /**
      * Snapshot of totalPower/buffMemberCount PER FORTIFICATION (keyed by
      * {@link Fortification#id()}), for the lineup exactly as it was loaded
-     * from {@link #lineupFilePath}, taken by {@link #set(Lineup, Path)} -
-     * see {@link LineupBaseline} (added 2026-09-10; changed the same day
-     * from one combined value for the whole lineup to one entry per
-     * fortification). Deliberately NOT touched by {@link #setLineup} alone,
-     * since that is used for in-memory edits to the SAME file (team
-     * assignments, algorithm runs, "clear lineup", ...), so this always
-     * keeps reflecting what is currently saved on disk. Only contains an
-     * entry for fortifications that have at least one team assigned in the
-     * loaded lineup. See {@link #loadedFortificationBaselines()}/
+     * from {@link #lineupFilePath}, taken by {@link #set(Lineup, Path)} /
+     * {@link #switchTo} - see {@link LineupBaseline}. Deliberately NOT
+     * touched by {@link #setLineup} alone, since that is used for in-memory
+     * edits to the SAME file (team assignments, algorithm runs, "clear
+     * lineup", ...). Only contains an entry for fortifications that have at
+     * least one team assigned in the loaded lineup. See
+     * {@link #loadedFortificationBaselines()}/
      * {@link #fortificationDiffFromLoaded(String)}.
      */
     private Map<String, LineupBaseline> loadedFortificationBaselines = Map.of();
@@ -43,6 +74,7 @@ public class AppContext {
             throw new IllegalArgumentException("guild must not be null");
         }
         this.guild = guild;
+        fireGuildChanged();
     }
 
     /** File this guild was loaded from / should be saved to. */
@@ -54,9 +86,7 @@ public class AppContext {
      * Replaces both the currently open guild and the file it belongs to, in
      * one call - use this (rather than {@link #setGuild} alone) whenever the
      * guild being set was loaded from a DIFFERENT file than
-     * {@link #guildFilePath()} currently holds (e.g.
-     * {@code org.c2w.gui.ToolbarPanel}'s guild combo box switching to
-     * another guild folder under workspace/), so the two fields always
+     * {@link #guildFilePath()} currently holds, so the two fields always
      * describe the same file and never drift apart.
      */
     public void set(Guild guild, Path guildFilePath) {
@@ -68,6 +98,7 @@ public class AppContext {
         }
         this.guild = guild;
         this.guildFilePath = guildFilePath;
+        fireGuildChanged();
     }
 
     /** The lineup currently open in the application. */
@@ -81,6 +112,7 @@ public class AppContext {
             throw new IllegalArgumentException("lineup must not be null");
         }
         this.lineup = lineup;
+        fireLineupChanged();
     }
 
     /** File this lineup was loaded from / should be saved to. */
@@ -92,10 +124,9 @@ public class AppContext {
      * Replaces both the currently open lineup and the file it belongs to, in
      * one call - use this (rather than {@link #setLineup} alone) whenever
      * the lineup being set was loaded from a DIFFERENT file than
-     * {@link #lineupFilePath()} currently holds (e.g. {@code org.c2w.gui.ToolbarPanel}'s
-     * lineup combo box switching to another ".lineup" file in the guild
-     * folder), so the two fields always describe the same file and never
-     * drift apart.
+     * {@link #lineupFilePath()} currently holds, so the two fields always
+     * describe the same file and never drift apart. Also retakes
+     * {@link #loadedFortificationBaselines()}.
      */
     public void set(Lineup lineup, Path lineupFilePath) {
         if (lineup == null) {
@@ -109,7 +140,92 @@ public class AppContext {
         // guild is always set before the first lineup (see C2WApp#main), so
         // it is safe to use here for the buffMemberCount half of each baseline.
         this.loadedFortificationBaselines = computeFortificationBaselines(lineup, guild);
+        fireLineupChanged();
     }
+
+    /**
+     * Replaces guild AND lineup (and both files) in one step - for switching
+     * to another guild, so listeners are only notified once everything is
+     * consistent again, instead of seeing the new guild together with the
+     * previous guild's lineup in between.
+     */
+    public void switchTo(Guild guild, Path guildFilePath, Lineup lineup, Path lineupFilePath) {
+        if (guild == null || guildFilePath == null) {
+            throw new IllegalArgumentException("guild and guildFilePath must not be null");
+        }
+        if (lineup == null || lineupFilePath == null) {
+            throw new IllegalArgumentException("lineup and lineupFilePath must not be null");
+        }
+        this.guild = guild;
+        this.guildFilePath = guildFilePath;
+        this.lineup = lineup;
+        this.lineupFilePath = lineupFilePath;
+        this.loadedFortificationBaselines = computeFortificationBaselines(lineup, guild);
+        fireGuildChanged();
+        fireLineupChanged();
+    }
+
+    // --- dirty state ---
+
+    /**
+     * True if the guild has changes that are not saved yet - either in
+     * {@link #guild()} itself or still pending in an open editor (e.g. a
+     * power edit in a value overview dialog).
+     */
+    public boolean isGuildDirty() {
+        return guildDirty;
+    }
+
+    /** True if {@link #lineup()} has changes that are not saved to {@link #lineupFilePath()} yet. */
+    public boolean isLineupDirty() {
+        return lineupDirty;
+    }
+
+    /** True if the guild or the lineup has unsaved changes. */
+    public boolean hasUnsavedChanges() {
+        return guildDirty || lineupDirty;
+    }
+
+    public void setGuildDirty(boolean guildDirty) {
+        if (this.guildDirty != guildDirty) {
+            this.guildDirty = guildDirty;
+            fireDirtyStateChanged();
+        }
+    }
+
+    public void setLineupDirty(boolean lineupDirty) {
+        if (this.lineupDirty != lineupDirty) {
+            this.lineupDirty = lineupDirty;
+            fireDirtyStateChanged();
+        }
+    }
+
+    // --- listeners ---
+
+    public void addListener(Listener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener must not be null");
+        }
+        listeners.add(listener);
+    }
+
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
+    }
+
+    private void fireGuildChanged() {
+        listeners.forEach(Listener::guildChanged);
+    }
+
+    private void fireLineupChanged() {
+        listeners.forEach(Listener::lineupChanged);
+    }
+
+    private void fireDirtyStateChanged() {
+        listeners.forEach(Listener::dirtyStateChanged);
+    }
+
+    // --- baselines ---
 
     /**
      * totalPower/buffMemberCount, per fortification id, as they stood at the

@@ -5,6 +5,8 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.Cow2Frame;
+import org.c2w.service.GuildService;
+import org.c2w.service.LineupService;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -13,14 +15,11 @@ import mdlaf.themes.MaterialOceanicTheme;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class C2WApp {
 
     private static final String DEFAULT_GUILD_NAME = "Demo";
-    public static final String GUILD_FILE_NAME = "guild.json";
-    public static final String LINEUP_FILE_NAME = "default.lineup";
     // See JsonSupport#resolveDataFile for how these resolve in the IDE vs. the packaged app.
     private static final Path DEMO_GUILD_PATH = JsonSupport.resolveDataFile("data", "guild.json");
     private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
@@ -114,8 +113,8 @@ public class C2WApp {
     private static void runInitialSetup()  {
 
         Path guildDir = Config.getWorkspaceDir().resolve(DEFAULT_GUILD_NAME);
-        Path guildFilePath = createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
-        Path lineupFilePath = createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
+        Path guildFilePath = GuildService.createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
+        Path lineupFilePath = LineupService.createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 
         Config.setLanguage("english");
         Config.setLastGuildPath(guildFilePath.toString());
@@ -159,7 +158,7 @@ public class C2WApp {
         try {
             Lineup demoLineup = LineupRepository.load(DEMO_GUILD_LINEUP);
             LineupRepository.save(demoLineup, context.lineupFilePath());
-            context.setLineup(demoLineup);
+            context.set(demoLineup, context.lineupFilePath());
         } catch (IOException e) {
             Logger.logException("Could not load demo lineup from " + DEMO_GUILD_LINEUP, e);
         }
@@ -215,35 +214,5 @@ public class C2WApp {
         }
         context.set(lineup, lineupFilePath);
         Config.setLastLineUpPath(lineupFilePath.toString());
-    }
-
-    public static Path createInitialGuildFile(String guildName, Path guildDir) {
-        Path guildFile = guildDir.resolve(GUILD_FILE_NAME);
-        Guild guild = new Guild(slugify(guildName), guildName, List.of());
-        try {
-            GuildRepository.save(guild, guildFile);
-        } catch (IOException e) {
-            Logger.logException("Could not create " + guildFile, e);
-        }
-        return guildFile;
-    }
-
-    public static Path createInitialLineupFile(String guildName, Path guildDir) {
-        Path lineupFile = guildDir.resolve(LINEUP_FILE_NAME);
-        Lineup lineup = new Lineup(slugify(guildName), guildName, "", LocalDateTime.now(), List.of());
-        try {
-            LineupRepository.save(lineup, lineupFile);
-        } catch (IOException e) {
-            Logger.logException("Could not create " + lineupFile, e);
-        }
-        return lineupFile;
-    }
-
-    /** Builds a simple, URL-/filesystem-friendly id from the guild name (analogous to the catalog JSONs). */
-    public static String slugify(String name) {
-        String slug = name.trim().toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-+|-+$", "");
-        return slug.isEmpty() ? "guild" : slug;
     }
 }

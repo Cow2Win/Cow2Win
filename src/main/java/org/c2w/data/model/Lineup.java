@@ -28,7 +28,7 @@ import java.util.List;
  * feeds into the file name on save (see {@link org.c2w.data.repository.LineupRepository}).
  * Empty ("") means no algorithm has (yet) produced this lineup - e.g. the
  * default lineup created together with a new guild (see
- * {@link org.c2w.C2WApp#createInitialLineupFile}) or one built purely from
+ * {@link org.c2w.service.LineupService#createInitialLineupFile}) or one built purely from
  * manual picks (e.g. the "Fortification" column of {@link
  * org.c2w.gui.hero.HeroValueOverviewDialog}/{@link
  * org.c2w.gui.titan.TitanValueOverviewDialog}), never run through an

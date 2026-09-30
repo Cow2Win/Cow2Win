@@ -2,17 +2,16 @@ package org.c2w.gui.titan;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
-import org.c2w.data.repository.GuildRepository;
 import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
+import org.c2w.service.GuildService;
+import org.c2w.service.LineupService;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffCalculationService;
 import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
 import org.c2w.util.TeamScoreCalculator;
 
 import javax.swing.*;
@@ -108,8 +107,6 @@ public class TitanValueOverviewDialog extends JDialog {
 
     private final AppContext appContext;
 
-    private final FortificationMapPanel fortificationMapPanel;
-
     private final List<Fortification> titanFortifications = sortedFortifications(FortificationType.TITAN);
 
     /** This dialog's own value-table columns - one per buffed TITAN fortification plus one shared "no buff" column (see {@link ValueColumn}/class Javadoc). */
@@ -123,17 +120,12 @@ public class TitanValueOverviewDialog extends JDialog {
                     this::handlePowerEdited, () -> valueMode);
     private final JTable titanTable = new JTable(titanModel);
 
-    public TitanValueOverviewDialog(Frame owner, AppContext appContext,
-                                   FortificationMapPanel fortificationMapPanel) {
+    public TitanValueOverviewDialog(Frame owner, AppContext appContext) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("TitanValueOverviewDialog needs a guildContext");
         }
-        if (fortificationMapPanel == null) {
-            throw new IllegalArgumentException("TitanValueOverviewDialog needs a fortificationMapPanel");
-        }
         this.appContext = appContext;
-        this.fortificationMapPanel = fortificationMapPanel;
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         JComboBox<Fortification> titanFortificationCombo = buildFortificationCombo(titanFortifications);
@@ -286,38 +278,15 @@ public class TitanValueOverviewDialog extends JDialog {
     }
 
     private boolean handleFortificationSelected(TitanValueTableModel.Row row, Fortification fortification) {
-        Lineup currentLineup = appContext.lineup();
-        List<Lineup.Entry> otherEntries = new ArrayList<>();
-        for (Lineup.Entry entry : currentLineup.entries()) {
-            boolean sameTeam = entry.teamMemberId().equals(row.teamMemberId) && entry.teamType() == row.teamType
-                    && entry.teamIndex() == row.teamIndex;
-            if (!sameTeam) {
-                otherEntries.add(entry);
-            }
+        LineupService.AssignResult result = new LineupService(appContext)
+                .assignTeam(row.teamMemberId, row.teamType, row.teamIndex, fortification);
+        if (!result.assigned()) {
+            JOptionPane.showMessageDialog(this,
+                    LanguageService.displayName("teamsOverview.fortificationFull",
+                            LanguageService.displayName(fortification.id()), result.filledSlots(), fortification.capacity()),
+                    LanguageService.displayName("teamsOverview.fortificationFullTitle"), JOptionPane.WARNING_MESSAGE);
+            return false;
         }
-
-        if (fortification != null) {
-            long filledSlots = otherEntries.stream()
-                    .filter(entry -> entry.fortificationId().equals(fortification.id()))
-                    .count();
-            if (filledSlots >= fortification.capacity()) {
-                JOptionPane.showMessageDialog(this,
-                        LanguageService.displayName("teamsOverview.fortificationFull",
-                                LanguageService.displayName(fortification.id()), filledSlots, fortification.capacity()),
-                        LanguageService.displayName("teamsOverview.fortificationFullTitle"), JOptionPane.WARNING_MESSAGE);
-                return false;
-            }
-        }
-
-        List<Lineup.Entry> updatedEntries = new ArrayList<>(otherEntries);
-        if (fortification != null) {
-            updatedEntries.add(new Lineup.Entry(fortification.id(), row.teamMemberId, row.teamType, row.teamIndex));
-        }
-        Lineup updatedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
-                currentLineup.algorithmName(), currentLineup.createdAt(), updatedEntries);
-        appContext.setLineup(updatedLineup);
-        GuiUtils.editedLineup = true;
-        fortificationMapPanel.refresh(updatedLineup);
         return true;
     }
 
@@ -343,7 +312,7 @@ public class TitanValueOverviewDialog extends JDialog {
                 currentGuild, currentLineup);
         TitanTeam syntheticTeam = new TitanTeam(row.teamMemberId, row.teamIndex, row.members, newPower, LocalDate.now());
         row.scores = scoresFor(syntheticTeam, titanValueColumns);
-        GuiUtils.editedGuild = true;
+        new GuildService(appContext).markGuildEdited();
         return true;
     }
 
@@ -356,10 +325,7 @@ public class TitanValueOverviewDialog extends JDialog {
     private void saveGuild() {
         try {
             Guild updated = guildWithCurrentSelection();
-            GuildRepository.save(updated, appContext.guildFilePath());
-            appContext.setGuild(updated);
-            GuiUtils.editedGuild = false;
-            Logger.log("Saved: " + appContext.guildFilePath());
+            new GuildService(appContext).saveGuild(updated);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);

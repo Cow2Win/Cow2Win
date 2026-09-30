@@ -1,10 +1,5 @@
 package org.c2w.gui;
 
-import org.c2w.C2WApp;
-import org.c2w.data.model.Guild;
-import org.c2w.data.model.Lineup;
-import org.c2w.data.repository.GuildRepository;
-import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCoreScoreDialog;
@@ -13,6 +8,8 @@ import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroCoreScoreDialog;
 import org.c2w.gui.pet.PetCoreScoreDialog;
 import org.c2w.gui.titan.TitanCoreScoreDialog;
+import org.c2w.service.GuildService;
+import org.c2w.service.LineupService;
 import org.c2w.util.*;
 
 import javax.swing.*;
@@ -23,10 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,7 +56,7 @@ public class Cow2Frame extends JFrame {
     /** Language file key for the message shown instead of the confirmation when the selected guild is the only one left (see {@link #onRemoveGuild()}). */
     private static final String KEY_REMOVE_GUILD_LAST_MESSAGE = "toolbar.removeGuild.lastMessage";
 
-    /** Language file key for the title of the error dialog shown when {@link GuildRepository#delete} fails in {@link #onRemoveGuild()}. */
+    /** Language file key for the title of the error dialog shown when {@link GuildService#deleteGuild} fails in {@link #onRemoveGuild()}. */
     private static final String KEY_REMOVE_GUILD_ERROR_TITLE = "toolbar.removeGuild.errorTitle";
 
     /** Language file key for the message prefix (followed by the exception's own message) of that same error dialog. */
@@ -82,6 +76,8 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_CLEAR_LINEUP = "/images/app/lineup-clean.png";
 
     private final AppContext appContext;
+    private final GuildService guildService;
+    private final LineupService lineupService;
     /** Background image painted by {@link #getContentPane()} (a {@link BackgroundPanel}) - loaded once in the constructor, see {@link IconLoader#getBackgroundImage()}. */
     private final Image background;
     private final FortificationMapPanel fortificationMapPanel;
@@ -107,13 +103,21 @@ public class Cow2Frame extends JFrame {
             }
         });
         this.appContext = appContext;
+        this.guildService = new GuildService(appContext);
+        this.lineupService = new LineupService(appContext);
         this.background = IconLoader.getBackgroundImage();
         updateTitle();
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
         setJMenuBar(buildMenuBar());
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void guildChanged() {
+                updateTitle();
+            }
+        });
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
-        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, this::onGuildSwitched);
+        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel);
         this.logPanel = new LogPanel();
 
         JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
@@ -211,12 +215,10 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Creates a new guild folder and switches to it - moved here 2026-09-19
-     * from {@code ToolbarPanel} together with {@link #onRemoveGuild()} (see
-     * {@link #buildGuildMenu()}). {@link #toolbarPanel} still owns {@code
-     * guildCombo} and the guild-switching mechanics, so this delegates to
-     * its (package-visible) {@link ToolbarPanel#workspaceDir()}/
-     * {@link ToolbarPanel#confirmDiscardUnsavedChanges()}/
+     * Creates a new guild folder and switches to it (see {@link
+     * GuildService#createGuild}). {@link #toolbarPanel} owns the
+     * "unsaved changes" prompt and the error handling of a guild switch, so
+     * this reuses its {@link ToolbarPanel#confirmDiscardUnsavedChanges()}/
      * {@link ToolbarPanel#switchToGuild} instead of duplicating them.
      */
     private void onNewGuild() {
@@ -238,9 +240,7 @@ public class Cow2Frame extends JFrame {
                     LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        Path guildDir = toolbarPanel.workspaceDir().resolve(name);
-        if (Files.exists(guildDir)) {
+        if (guildService.guildExists(name)) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newGuild.alreadyExists", name),
                     LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
@@ -249,28 +249,22 @@ public class Cow2Frame extends JFrame {
             return;
         }
 
-        Path guildFilePath = C2WApp.createInitialGuildFile(name, guildDir);
-        C2WApp.createInitialLineupFile(name, guildDir);
-        if (toolbarPanel.switchToGuild(guildDir, guildFilePath)) {
-            Logger.log("Created guild: " + guildFilePath);
-        }
+        guildService.createGuild(name);
+        toolbarPanel.switchToGuild(name);
     }
 
     /**
-     * Deletes the currently selected guild folder from disk (see
-     * {@link GuildRepository#delete}) and switches to whichever guild takes
-     * its place - moved here 2026-09-19 from {@code ToolbarPanel} together
-     * with {@link #onNewGuild()}, see that method's Javadoc and
-     * {@link #buildGuildMenu()}. Mirrors {@code ToolbarPanel#onRemoveLineup()}:
-     * a confirmation dialog and a guard against removing the last guild left
-     * in the workspace.
+     * Deletes the currently open guild folder from disk (see
+     * {@link GuildService#deleteGuild}) and switches to whichever guild takes
+     * its place. Mirrors {@link #onRemoveLineup()}: a confirmation dialog and
+     * a guard against removing the last guild left in the workspace.
      */
     private void onRemoveGuild() {
-        String folderName = toolbarPanel.selectedGuildFolderName();
+        String folderName = guildService.currentGuildFolderName();
         if (folderName == null) {
             return;
         }
-        List<String> folderNames = toolbarPanel.listGuildFolderNames();
+        List<String> folderNames = guildService.listGuildFolderNames();
         int index = folderNames.indexOf(folderName);
         if (folderNames.size() <= 1) {
             JOptionPane.showMessageDialog(this,
@@ -287,24 +281,18 @@ public class Cow2Frame extends JFrame {
             return;
         }
 
-        Path guildDir = toolbarPanel.workspaceDir().resolve(folderName);
         try {
-            GuildRepository.delete(guildDir);
+            guildService.deleteGuild(folderName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName(KEY_REMOVE_GUILD_ERROR) + "\n" + e.getMessage(),
                     LanguageService.displayName(KEY_REMOVE_GUILD_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
             return;
         }
-        Logger.log("Removed guild: " + guildDir);
 
-        List<String> remaining = toolbarPanel.listGuildFolderNames();
-        int nextIndex = Math.min(index, remaining.size() - 1);
-        String nextFolderName = remaining.get(nextIndex);
-        Path nextGuildDir = toolbarPanel.workspaceDir().resolve(nextFolderName);
-        Path nextGuildFilePath = nextGuildDir.resolve(C2WApp.GUILD_FILE_NAME);
-        if (toolbarPanel.switchToGuild(nextGuildDir, nextGuildFilePath)) {
-            Logger.log("Switched to guild: " + nextGuildFilePath);
+        String nextFolderName = guildService.guildAfterRemoval(index);
+        if (nextFolderName != null) {
+            toolbarPanel.switchToGuild(nextFolderName);
         }
     }
 
@@ -338,22 +326,13 @@ public class Cow2Frame extends JFrame {
         return lineupMenu;
     }
 
-    /**
-     * Creates a new ".lineup" file and switches to it - moved here
-     * 2026-09-19 from {@code ToolbarPanel} together with
-     * {@link #onRemoveLineup()}/{@link #onClearLineup()} (see
-     * {@link #buildLineupMenu()}). {@link #toolbarPanel} still owns {@code
-     * lineupCombo}, so this delegates to its (package-visible)
-     * {@link ToolbarPanel#populateLineupCombo()} to refresh it, instead of
-     * duplicating that mechanic.
-     */
+    /** Creates a new ".lineup" file in the current guild folder and opens it - see {@link LineupService#createLineup}. */
     private void onNewLineup() {
         // Pre-filled with today's date rather than left empty, still a plain,
         // freely editable text field though (selectionValues == null, see
         // JOptionPane's 7-arg showInputDialog javadoc: a null
         // selectionValues array with a non-null initialSelectionValue
-        // renders as a JTextField seeded with that value) - unchanged from
-        // ToolbarPanel#onNewLineup()'s original behavior.
+        // renders as a JTextField seeded with that value).
         Object result = JOptionPane.showInputDialog(this, LanguageService.displayName("mainFrame.newLineup.prompt"),
                 LanguageService.displayName("mainFrame.newLineup.title"),
                 JOptionPane.PLAIN_MESSAGE, null, null, LocalDate.now().toString());
@@ -374,32 +353,21 @@ public class Cow2Frame extends JFrame {
             return;
         }
 
-        String fileName = name.endsWith(ToolbarPanel.LINEUP_FILE_SUFFIX) ? name : name + ToolbarPanel.LINEUP_FILE_SUFFIX;
+        String fileName = LineupService.toLineupFileName(name);
         if (LineupFiles.isOriginalFileName(fileName)) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("mainFrame.newLineup.reservedName"),
                     LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path lineupPath = guildDir.resolve(fileName);
-        if (Files.exists(lineupPath)) {
+        if (lineupService.lineupExists(fileName)) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newLineup.alreadyExists", fileName),
                     LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        Guild currentGuild = appContext.guild();
-        Lineup lineup = new Lineup(currentGuild.id(), currentGuild.name(), "", LocalDateTime.now(), List.of());
         try {
-            LineupRepository.save(lineup, lineupPath);
-            appContext.set(lineup, lineupPath);
-            Config.setLastLineUpPath(lineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
-            fortificationMapPanel.refresh(lineup);
-            toolbarPanel.populateLineupCombo();
-            Logger.log("Created: " + lineupPath);
+            lineupService.createLineup(fileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newLineup.createError") + "\n" + e.getMessage(),
                     LanguageService.displayName("mainFrame.newLineup.createErrorTitle"), JOptionPane.ERROR_MESSAGE);
@@ -407,26 +375,20 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Deletes the currently selected ".lineup" file from disk (see
-     * {@link LineupRepository#delete}) and loads whichever file takes its
-     * place - moved here 2026-09-19 from {@code ToolbarPanel} together with
-     * {@link #onNewLineup()}, see that method's Javadoc and
-     * {@link #buildLineupMenu()}. A confirmation dialog and a guard against
-     * removing the last lineup left in the guild folder, mirroring
-     * {@link #onRemoveGuild()}.
+     * Deletes the currently open ".lineup" file from disk (see
+     * {@link LineupService#deleteLineup}) and opens whichever file takes its
+     * place. A confirmation dialog and a guard against removing the last
+     * lineup left in the guild folder, mirroring {@link #onRemoveGuild()}.
      */
     private void onRemoveLineup() {
-        String fileName = toolbarPanel.selectedLineupFileName();
-        if (fileName == null) {
-            return;
-        }
+        String fileName = appContext.lineupFilePath().getFileName().toString();
         if (LineupFiles.isOriginalFileName(fileName)) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("mainFrame.removeLineup.originalMessage"),
                     LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        List<String> fileNames = toolbarPanel.listLineupFileNames();
+        List<String> fileNames = lineupService.listLineupFileNames();
         int index = fileNames.indexOf(fileName);
         if (fileNames.size() <= 1) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.removeLineup.lastMessage"),
@@ -441,29 +403,20 @@ public class Cow2Frame extends JFrame {
             return;
         }
 
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path lineupPath = guildDir.resolve(fileName);
         try {
-            LineupRepository.delete(lineupPath);
+            lineupService.deleteLineup(fileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.removeLineup.deleteError") + "\n" + e.getMessage(),
                     LanguageService.displayName("mainFrame.removeLineup.deleteErrorTitle"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        List<String> remaining = toolbarPanel.listLineupFileNames();
-        int nextIndex = Math.min(index, remaining.size() - 1);
-        String nextFileName = remaining.get(nextIndex);
-        Path nextLineupPath = guildDir.resolve(nextFileName);
+        String nextFileName = lineupService.lineupAfterRemoval(index);
+        if (nextFileName == null) {
+            return;
+        }
         try {
-            Lineup lineup = LineupRepository.load(nextLineupPath);
-            appContext.set(lineup, nextLineupPath);
-            Config.setLastLineUpPath(nextLineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
-            fortificationMapPanel.refresh(lineup);
-            toolbarPanel.populateLineupCombo();
-            Logger.log("Removed: " + fileName);
+            lineupService.selectLineup(nextFileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("mainFrame.removeLineup.loadNextError", nextFileName) + "\n" + e.getMessage(),
@@ -473,37 +426,28 @@ public class Cow2Frame extends JFrame {
 
     /**
      * Clears every team assignment from the currently open lineup (in
-     * memory only, not saved to disk until the lineup is saved) - moved
-     * here 2026-09-19 from {@code ToolbarPanel}, see
-     * {@link #buildLineupMenu()}. Self-contained (needs neither {@code
-     * lineupCombo} nor any other {@link #toolbarPanel} state), unlike
-     * {@link #onNewLineup()}/{@link #onRemoveLineup()}.
+     * memory only, not saved to disk until the lineup is saved) - see
+     * {@link LineupService#clearLineup()}.
      */
     private void onClearLineup() {
-        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+        if (lineupService.isOriginalOpen()) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("common.originalReadOnly"),
                     LanguageService.displayName(KEY_CLEAR_LINEUP), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        Lineup currentLineup = appContext.lineup();
-        if (currentLineup.entries().isEmpty()) {
+        int entryCount = appContext.lineup().entries().size();
+        if (entryCount == 0) {
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                LanguageService.displayName("mainFrame.clearLineup.confirmMessage", currentLineup.entries().size()),
+                LanguageService.displayName("mainFrame.clearLineup.confirmMessage", entryCount),
                 LanguageService.displayName(KEY_CLEAR_LINEUP), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
-
-        Lineup clearedLineup = new Lineup(currentLineup.guildId(), currentLineup.guildName(),
-                currentLineup.algorithmName(), currentLineup.createdAt(), List.of());
-        appContext.setLineup(clearedLineup);
-        GuiUtils.editedLineup = true;
-        fortificationMapPanel.refresh(clearedLineup);
-        Logger.log("Cleared: " + appContext.lineupFilePath());
+        lineupService.clearLineup();
     }
 
     /** Opens {@link SettingsDialog} (currently: choosing the display language). */
@@ -614,24 +558,15 @@ public class Cow2Frame extends JFrame {
     }
 
     private void onOpenGuildEditor() {
-        GuildEditorDialog dialog = new GuildEditorDialog(this, appContext, this::onGuildSaved);
+        GuildEditorDialog dialog = new GuildEditorDialog(this, appContext);
         dialog.setVisible(true);
-    }
-
-    /** Called after {@link GuildEditorDialog} saves a change to the current guild. */
-    private void onGuildSaved() {
-        updateTitle();
-    }
-
-    private void onGuildSwitched() {
-        updateTitle();
     }
 
 
     private void onWindowClosing() {
-        if (GuiUtils.editedGuild || GuiUtils.editedLineup) {
-            String messageKey = GuiUtils.editedGuild && GuiUtils.editedLineup ? "mainFrame.unsaved.closeGuildAndLineup"
-                    : GuiUtils.editedGuild ? "mainFrame.unsaved.closeGuild" : "mainFrame.unsaved.closeLineup";
+        if (appContext.hasUnsavedChanges()) {
+            String messageKey = appContext.isGuildDirty() && appContext.isLineupDirty() ? "mainFrame.unsaved.closeGuildAndLineup"
+                    : appContext.isGuildDirty() ? "mainFrame.unsaved.closeGuild" : "mainFrame.unsaved.closeLineup";
             int choice = JOptionPane.showConfirmDialog(this,
                     LanguageService.displayName(messageKey),
                     LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);

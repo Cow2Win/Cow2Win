@@ -3,14 +3,13 @@ package org.c2w.gui.guild;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Titan;
-import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.HeroRepository;
 import org.c2w.data.repository.TitanRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.service.GuildService;
 import org.c2w.util.AppContext;
 import org.c2w.util.LanguageService;
-import org.c2w.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +42,6 @@ public final class GuildEditorDialog extends JDialog {
    private static final DateTimeFormatter LAST_SAVED_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final AppContext context;
-    private final Runnable onGuildSaved;
     private final List<Hero> heroCatalog = HeroRepository.findAll();
     private final List<Titan> titanCatalog = TitanRepository.findAll();
 
@@ -59,13 +57,12 @@ public final class GuildEditorDialog extends JDialog {
     /** Shows the guild file's last-saved timestamp - see {@link #buildMemberInfoPanel()}/class Javadoc. */
     private final JLabel lastSavedLabel = new JLabel();
 
-    public GuildEditorDialog(Frame owner, AppContext context, Runnable onGuildSaved) {
+    public GuildEditorDialog(Frame owner, AppContext context) {
         super(owner, LanguageService.displayTitle(KEY_TITLE), false);
         if (context == null) {
             throw new IllegalArgumentException("GuildEditorDialog needs a AppContext");
         }
         this.context = context;
-        this.onGuildSaved = onGuildSaved;
         this.draft = GuildDraftConverter.fromGuild(context.guild());
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -253,13 +250,8 @@ public final class GuildEditorDialog extends JDialog {
         }
         try {
             Guild updated = GuildDraftConverter.toGuild(draft);
-            GuildRepository.save(updated, context.guildFilePath());
-            context.setGuild(updated);
-            Logger.log("Saved: " + context.guildFilePath());
+            new GuildService(context).saveGuild(updated);
             updateLastSavedLabel();
-            if (onGuildSaved != null) {
-                onGuildSaved.run();
-            }
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);

@@ -18,57 +18,42 @@ import java.util.Map;
 public class FortificationMapPanel extends GridPanel {
 
     private final AppContext appContext;
-    private Lineup lineup;
-    private Guild guild;
 
-    private Runnable onGuildChangedElsewhere;
     private boolean showHeroFortifications = true;
     private boolean showTitanFortifications = true;
 
     /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
     private boolean showChanges = false;
 
+    /**
+     * Always shows {@code appContext}'s current guild/lineup - rebuilt
+     * automatically whenever either of them changes (see
+     * {@link AppContext.Listener}), so nobody has to refresh this panel
+     * by hand.
+     */
     public FortificationMapPanel(AppContext appContext){
         super(8,5);
 
         this.appContext = appContext;
-        this.lineup = appContext.lineup();
-        this.guild = appContext.guild();
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         init();
-    }
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void guildChanged() {
+                init();
+            }
 
-
-    public void refresh(Lineup lineup) {
-        refresh(lineup, this.guild);
-    }
-
-
-    public void setOnGuildChangedElsewhere(Runnable onGuildChangedElsewhere) {
-        this.onGuildChangedElsewhere = onGuildChangedElsewhere;
-    }
-
-    public void refreshAfterExternalSave() {
-        refresh(appContext.lineup(), appContext.guild());
-        if (onGuildChangedElsewhere != null) {
-            onGuildChangedElsewhere.run();
-        }
-    }
-
-    public void refresh(Lineup lineup, Guild guild) {
-        if (lineup == null) {
-            throw new IllegalArgumentException("lineup must not be null");
-        }
-        if (guild == null) {
-            throw new IllegalArgumentException("guild must not be null");
-        }
-        this.lineup = lineup;
-        this.guild = guild;
-        init();
+            @Override
+            public void lineupChanged() {
+                init();
+            }
+        });
     }
 
 
     private void init(){
+        Lineup lineup = appContext.lineup();
+        Guild guild = appContext.guild();
         // Transparent since 2026-09-17: the background image is now painted once,
         // higher up in the component hierarchy, by Cow2Frame's content pane -
         // see Cow2Frame.BackgroundPanel. Staying non-opaque here (and in every
@@ -104,7 +89,7 @@ public class FortificationMapPanel extends GridPanel {
                     ? 0 : (int) (loadedBaseline.buffMemberCount() * fort.buff().bonusPercent());
             int buffPercentDiff = buffPercent - loadedBuffPercent;
             setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower, totalPowerDiff,
-                    showChanges, buffPercent, buffPercentDiff, appContext, this));
+                    showChanges, buffPercent, buffPercentDiff, appContext));
         }
 
         // Hero summary top left, titan summary top right (same row) - each one

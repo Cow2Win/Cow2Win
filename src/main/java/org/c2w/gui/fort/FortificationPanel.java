@@ -32,15 +32,13 @@ public class FortificationPanel extends JPanel {
     /** Change of {@link #buffPercent} against the baseline loaded from disk (see AppContext#loadedFortificationBaseline) - only shown when {@link #showChanges} is true (see {@link #getBuffPercentLabel()}). */
     private final int buffPercentDiff;
     private final AppContext appContext;
-    private final FortificationMapPanel fortificationMapPanel;
     private ImageIcon slot_set;
     private ImageIcon slot_open;
 
 
     public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
                               boolean showChanges, int buffPercent, int buffPercentDiff,
-                              AppContext appContext,
-                              FortificationMapPanel fortificationMapPanel){
+                              AppContext appContext){
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
@@ -49,7 +47,6 @@ public class FortificationPanel extends JPanel {
         this.buffPercent = buffPercent;
         this.buffPercentDiff = buffPercentDiff;
         this.appContext = appContext;
-        this.fortificationMapPanel = fortificationMapPanel;
         init();
     }
 
@@ -98,8 +95,7 @@ public class FortificationPanel extends JPanel {
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        FortificationEntryDialog dialog = new FortificationEntryDialog(owner, fortification, appContext,
-                fortificationMapPanel::refreshAfterExternalSave);
+        FortificationEntryDialog dialog = new FortificationEntryDialog(owner, fortification, appContext);
         dialog.setVisible(true);
     }
 

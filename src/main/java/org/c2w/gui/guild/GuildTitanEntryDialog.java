@@ -25,8 +25,8 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for this dialog's window title - reused from the old combined dialog's "titan teams" section header. */
     private static final String KEY_TITLE = "guildEntry.titanTeams";
 
-    public GuildTitanEntryDialog(Frame owner, AppContext appContext, Runnable onSaved) {
-        super(owner, appContext, onSaved, KEY_TITLE, buildSpec(), MAX_TITAN_TEAMS);
+    public GuildTitanEntryDialog(Frame owner, AppContext appContext) {
+        super(owner, appContext, KEY_TITLE, buildSpec(), MAX_TITAN_TEAMS);
     }
 
     private static SectionSpec<Titan> buildSpec() {

@@ -2,15 +2,13 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
-import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.common.GuiUtils;
+import org.c2w.service.LineupService;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffTexts;
-import org.c2w.util.Config;
 import org.c2w.util.LanguageService;
 import org.c2w.util.LineupFiles;
 import org.c2w.util.Logger;
@@ -106,7 +104,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             new Fortification("__unassigned__", FortificationType.HERO, 1, 0, 0, 0, null, List.of(), 0);
 
     protected final AppContext appContext;
-    private final Runnable onSaved;
 
     /** File the {@link #originalLineup} is loaded from / saved to - the reserved per-guild "Original" lineup (see {@link LineupFiles}). */
     private final Path originalLineupPath;
@@ -152,14 +149,13 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
      */
     private Fortification lastSelectedFortification;
 
-    protected GuildTeamEntryDialog(Frame owner, AppContext appContext, Runnable onSaved,
+    protected GuildTeamEntryDialog(Frame owner, AppContext appContext,
                                    String titleKey, SectionSpec<T> spec, int maxTeams) {
         super(owner, LanguageService.displayTitle(titleKey), false);
         if (appContext == null) {
             throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
         }
         this.appContext = appContext;
-        this.onSaved = onSaved;
         this.spec = spec;
         this.maxTeams = maxTeams;
 
@@ -939,18 +935,11 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         Guild updatedGuild = GuildDraftConverter.toGuild(draft);
 
         try {
-            GuildRepository.save(updatedGuild, appContext.guildFilePath());
-            LineupRepository.save(updatedOriginal, originalLineupPath);
+            // Also switches the app over to the freshly saved Original lineup,
+            // so the toolbar lineup combo box and the fortification map
+            // immediately show the in-game deployment that was just entered.
+            new LineupService(appContext).saveOriginal(updatedGuild, updatedOriginal, originalLineupPath);
             this.originalLineup = updatedOriginal;
-            appContext.setGuild(updatedGuild);
-            // Switch the app over to the freshly saved Original lineup, so the
-            // toolbar lineup combo box and the fortification map immediately
-            // show the in-game deployment that was just entered (the onSaved
-            // callback repopulates the combo box and refreshes the map).
-            appContext.set(updatedOriginal, originalLineupPath);
-            Config.setLastLineUpPath(originalLineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
             Logger.log("Saved guild " + spec.teamType() + " teams into the Original lineup");
             // Keep every row's member combo (not just the one that triggered
             // this save) in sync with the freshly saved draft - e.g. an
@@ -958,9 +947,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             // WHEN_ANCESTOR-scoped refresh may have missed while this save
             // was still pending.
             refreshAllMemberCombos();
-            if (onSaved != null) {
-                onSaved.run();
-            }
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);

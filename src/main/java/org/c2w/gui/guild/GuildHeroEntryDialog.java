@@ -25,8 +25,8 @@ public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for this dialog's window title - reused from the old combined dialog's "hero teams" section header. */
     private static final String KEY_TITLE = "guildEntry.heroTeams";
 
-    public GuildHeroEntryDialog(Frame owner, AppContext appContext, Runnable onSaved) {
-        super(owner, appContext, onSaved, KEY_TITLE, buildSpec(), MAX_HERO_TEAMS);
+    public GuildHeroEntryDialog(Frame owner, AppContext appContext) {
+        super(owner, appContext, KEY_TITLE, buildSpec(), MAX_HERO_TEAMS);
     }
 
     private static SectionSpec<Hero> buildSpec() {

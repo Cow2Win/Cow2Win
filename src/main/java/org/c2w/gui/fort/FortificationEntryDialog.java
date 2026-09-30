@@ -5,6 +5,7 @@ import org.c2w.data.repository.*;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.*;
+import org.c2w.service.LineupService;
 import org.c2w.util.AppContext;
 import org.c2w.util.BuffTexts;
 import org.c2w.util.LanguageService;
@@ -49,7 +50,6 @@ public final class FortificationEntryDialog extends JDialog {
 
     private final Fortification fortification;
     private final AppContext appContext;
-    private final Runnable onSaved;
 
     private final GuildDraft draft;
     private final List<MemberDraft> memberOptions;
@@ -71,8 +71,7 @@ public final class FortificationEntryDialog extends JDialog {
      */
     private Runnable saveAction = () -> { };
 
-    public FortificationEntryDialog(Frame owner, Fortification fortification, AppContext appContext,
-                                     Runnable onSaved) {
+    public FortificationEntryDialog(Frame owner, Fortification fortification, AppContext appContext) {
         super(owner, LanguageService.displayTitle(fortification.id()), false);
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationEntryDialog needs a fortification");
@@ -82,7 +81,6 @@ public final class FortificationEntryDialog extends JDialog {
         }
         this.fortification = fortification;
         this.appContext = appContext;
-        this.onSaved = onSaved;
         this.infoPanel = new FortificationInfoPanel(fortification);
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
@@ -214,8 +212,8 @@ public final class FortificationEntryDialog extends JDialog {
             // out too; performSave then drops the row entirely (totalPower
             // == 0) instead of re-creating its Lineup.Entry, so the member's
             // team loses its tie to this fortification once "save" is
-            // clicked (which also refreshes the other views
-            // via onSaved, same as any other save from this dialog).
+            // clicked (the other views then refresh themselves from
+            // AppContext, same as after any other save from this dialog).
             combo.addActionListener(e -> {
                 if (combo.getSelectedItem() == null) {
                     teamEditor.clear();
@@ -544,14 +542,8 @@ public final class FortificationEntryDialog extends JDialog {
         Guild updatedGuild = GuildDraftConverter.toGuild(draft);
 
         try {
-            GuildRepository.save(updatedGuild, appContext.guildFilePath());
-            LineupRepository.save(updatedLineup, appContext.lineupFilePath());
-            appContext.setGuild(updatedGuild);
-            appContext.setLineup(updatedLineup);
+            new LineupService(appContext).saveWithGuild(updatedGuild, updatedLineup);
             Logger.log("Saved: " + LanguageService.displayName(fortification.id()));
-            if (onSaved != null) {
-                onSaved.run();
-            }
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);

@@ -1,1 +1,45 @@
-[]
+[
+  {
+    "id": "albus"
+  },
+  {
+    "id": "axel",
+    "fortMarks": {
+      "city-hall": "POSITIVE",
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "biscuit"
+  },
+  {
+    "id": "cain",
+    "fortMarks": {
+      "shooting-range": "POSITIVE"
+    }
+  },
+  {
+    "id": "fenris",
+    "fortMarks": {
+      "shooting-range": "POSITIVE"
+    }
+  },
+  {
+    "id": "khorus",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "merlin",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "oliver",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  }
+]

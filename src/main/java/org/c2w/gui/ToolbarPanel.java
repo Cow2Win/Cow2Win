@@ -1,49 +1,33 @@
 package org.c2w.gui;
 
-import org.c2w.C2WApp;
 import org.c2w.data.model.FortificationType;
-import org.c2w.data.model.Guild;
-import org.c2w.data.model.Lineup;
-import org.c2w.data.repository.GuildRepository;
-import org.c2w.data.repository.LineupRepository;
-import org.c2w.eval.LineupAlgorithm;
-import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.FlatButton;
-import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
 import org.c2w.gui.guild.GuildTitanEntryDialog;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
 import org.c2w.gui.titan.TitanValueOverviewDialog;
+import org.c2w.service.GuildService;
+import org.c2w.service.LineupService;
 import org.c2w.util.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.List;
 
 public class ToolbarPanel extends JPanel {
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the guild combo box. */
     private static final String KEY_GUILD_LABEL = "toolbar.guild";
 
-    /** Glob pattern (see {@link Files#newDirectoryStream(Path, String)}) matching lineup files in the guild folder. */
-    private static final String LINEUP_FILE_GLOB = "*.lineup";
-
     /**
      * File name suffix of a lineup file - stripped for display in the combo
-     * box (see {@link #stripLineupSuffix}) and appended when creating one
-     * (see {@code Cow2Frame#onNewLineup()}). Package-visible (not
-     * {@code private}) so {@code Cow2Frame} can reuse it there, since the
-     * "new/remove/clear lineup" logic moved to that class's own "Lineup"
-     * menu (see {@link #stripLineupSuffix}).
+     * box (see {@link #stripLineupSuffix}).
      */
-    static final String LINEUP_FILE_SUFFIX = ".lineup";
+    private static final String LINEUP_FILE_SUFFIX = LineupFiles.SUFFIX;
 
     static final String ILLEGAL_FILENAME_CHARS = "<>:\"/\\|?*";
 
@@ -126,10 +110,15 @@ public class ToolbarPanel extends JPanel {
     private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
 
     private final AppContext appContext;
+    private final GuildService guildService;
+    private final LineupService lineupService;
     private final FortificationMapPanel fortificationMapPanel;
 
-    /** Runs {@code Cow2Frame#onGuildSwitched()} after a successful guild switch/creation (see {@link #onGuildSelected()}/{@code Cow2Frame#onNewGuild()}) - passed in from the outside since this panel has no reference to the frame's window title, which also needs refreshing. */
-    private final Runnable onGuildSwitched;
+    /** Guild file {@link #guildCombo} was last populated for - it is only rebuilt when {@link AppContext#guildFilePath()} moves away from this. */
+    private Path shownGuildFilePath;
+
+    /** Lineup file {@link #lineupCombo} was last populated for - it is only rebuilt when {@link AppContext#lineupFilePath()} moves away from this. */
+    private Path shownLineupFilePath;
 
     private final JComboBox<String> lineupCombo = new JComboBox<>();
 
@@ -152,8 +141,7 @@ public class ToolbarPanel extends JPanel {
     /** {@link #guildCombo} counterpart of {@link #populatingCombo} - guards {@link #onGuildSelected()} the same way, see its Javadoc. */
     private boolean populatingGuildCombo = false;
 
-    public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel,
-                        Runnable onGuildSwitched) {
+    public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 4));
         if (appContext == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a guildContext");
@@ -161,12 +149,10 @@ public class ToolbarPanel extends JPanel {
         if (fortificationMapPanel == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a fortificationMapPanel");
         }
-        if (onGuildSwitched == null) {
-            throw new IllegalArgumentException("ToolbarPanel needs an onGuildSwitched callback");
-        }
         this.appContext = appContext;
+        this.guildService = new GuildService(appContext);
+        this.lineupService = new LineupService(appContext);
         this.fortificationMapPanel = fortificationMapPanel;
-        this.onGuildSwitched = onGuildSwitched;
 
         add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
         add(guildCombo);
@@ -252,6 +238,25 @@ public class ToolbarPanel extends JPanel {
         addMapFilterCheckboxes();
 
         add(statusLabel);
+
+        // Keeps both combo boxes in sync with whichever guild/lineup file is
+        // open, no matter who opened it (this panel, the menus in Cow2Frame,
+        // the guild team-entry dialogs, ...).
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void guildChanged() {
+                if (!appContext.guildFilePath().equals(shownGuildFilePath)) {
+                    populateGuildCombo();
+                }
+            }
+
+            @Override
+            public void lineupChanged() {
+                if (!appContext.lineupFilePath().equals(shownLineupFilePath)) {
+                    populateLineupCombo();
+                }
+            }
+        });
     }
 
 
@@ -303,56 +308,25 @@ public class ToolbarPanel extends JPanel {
 
     /**
      * Runs the hero and the titan algorithm configured as defaults in the
-     * Settings dialog (see {@link Config#getDefaultHeroAlgorithm()}/{@link
-     * Config#getDefaultTitanAlgorithm()}/{@code SettingsDialog}, added
-     * 2026-09-15 - Cow2Win todos 3.4, split per side 2026-09-24), matched
-     * against {@link LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN} by
-     * {@link LineupAlgorithm#displayName()}. Falls back to the first entry of
-     * each side if nothing is configured yet, or if a previously configured
-     * algorithm no longer exists. A side configured as "Manual" (see {@link
+     * Settings dialog - see {@link LineupService#runDefaultAlgorithms()}. A
+     * side configured as "Manual" (see {@link
      * org.c2w.eval.ManualLineupAlgorithm}) is left untouched.
      */
     private void onRunAlgorithm() {
-        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+        if (lineupService.isOriginalOpen()) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("toolbar.runAlgorithm.originalMessage"),
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        LineupAlgorithm heroAlgorithm =
-                LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
-        LineupAlgorithm titanAlgorithm =
-                LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
-
-        Lineup currentLineup = appContext.lineup();
-        Lineup afterHeroes = heroAlgorithm.run(currentLineup, appContext.guild());
-        Lineup updatedLineup = titanAlgorithm.run(afterHeroes, appContext.guild());
-        int heroesAssigned = afterHeroes.entries().size() - currentLineup.entries().size();
-        int titansAssigned = updatedLineup.entries().size() - afterHeroes.entries().size();
-
-        appContext.setLineup(updatedLineup);
-        if (heroesAssigned + titansAssigned > 0) {
-            GuiUtils.editedLineup = true;
-        }
-        fortificationMapPanel.refresh(updatedLineup);
-        Logger.log("Heroes (" + heroAlgorithm.displayName() + "): " + heroesAssigned + " team(s) newly assigned.");
-        Logger.log("Titans (" + titanAlgorithm.displayName() + "): " + titansAssigned + " team(s) newly assigned.");
+        lineupService.runDefaultAlgorithms();
     }
 
 
-    /**
-     * Saves the current guild to disk as-is - since the per-team "Power"
-     * table this used to delegate to (the removed {@code TeamsOverviewPanel})
-     * is gone, {@code appContext.guild()} already reflects every edit made
-     * via {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}
-     * (each of which updates it on its own save), so there is nothing left
-     * to merge in here.
-     */
+    /** Saves the current guild to disk as-is - see {@link GuildService#saveGuild()}. */
     private void onSaveGuild() {
         try {
-            GuildRepository.save(appContext.guild(), appContext.guildFilePath());
-            GuiUtils.editedGuild = false;
-            Logger.log("Saved: " + appContext.guildFilePath());
+            guildService.saveGuild();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
@@ -360,160 +334,86 @@ public class ToolbarPanel extends JPanel {
     }
 
 
-    /**
-     * The workspace directory, taken straight from {@link Config#getWorkspaceDir()}
-     * (the {@code workspacePath} entry in config.properties) - the single source
-     * of truth for "the workspace". Guild folders are therefore always listed and
-     * resolved under the configured workspace, rather than under whichever folder
-     * the currently loaded guild happens to live in. The old, guild-derived
-     * behaviour let a stale {@code lastGuildPath} from a previous workspace
-     * silently override the configured one (config said one directory while the
-     * app really used another). Package-visible so {@code Cow2Frame#onNewGuild()}/
-     * {@code onRemoveGuild()} can reuse it.
-     */
-    Path workspaceDir() {
-        return Config.getWorkspaceDir();
-    }
-
-
-    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
-    java.util.List<String> listGuildFolderNames() {
-        java.util.List<String> result = new ArrayList<>();
-        Path workspaceDir = workspaceDir();
-        if (!Files.isDirectory(workspaceDir)) {
-            return result;
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(workspaceDir)) {
-            for (Path path : stream) {
-                if (Files.isDirectory(path) && Files.isRegularFile(path.resolve(C2WApp.GUILD_FILE_NAME))) {
-                    result.add(path.getFileName().toString());
-                }
-            }
-        } catch (IOException e) {
-            Logger.logException("Could not list guild folders in " + workspaceDir, e);
-        }
-        result.sort(Comparator.naturalOrder());
-        return result;
-    }
-
     private void populateGuildCombo() {
         populatingGuildCombo = true;
         try {
-            java.util.List<String> folderNames = listGuildFolderNames();
+            List<String> folderNames = guildService.listGuildFolderNames();
             DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
             folderNames.forEach(model::addElement);
             guildCombo.setModel(model);
 
-            Path currentGuildDir = appContext.guildFilePath().getParent();
-            String currentFolderName = currentGuildDir == null ? null : currentGuildDir.getFileName().toString();
+            String currentFolderName = guildService.currentGuildFolderName();
             if (currentFolderName != null && folderNames.contains(currentFolderName)) {
                 guildCombo.setSelectedItem(currentFolderName);
             }
+            shownGuildFilePath = appContext.guildFilePath();
         } finally {
             populatingGuildCombo = false;
         }
     }
 
 
-    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
+    /**
+     * Asks whether unsaved guild/lineup changes may be discarded - true
+     * right away if there are none. Package-visible (not {@code private}) so
+     * {@code Cow2Frame#onNewGuild()} can reuse it.
+     */
     boolean confirmDiscardUnsavedChanges() {
-        if (!GuiUtils.editedGuild && !GuiUtils.editedLineup) {
+        if (!appContext.hasUnsavedChanges()) {
             return true;
         }
-        String messageKey = GuiUtils.editedGuild && GuiUtils.editedLineup ? "toolbar.unsaved.switchGuildAndLineup"
-                : GuiUtils.editedGuild ? "toolbar.unsaved.switchGuild" : "toolbar.unsaved.switchLineup";
+        boolean guildDirty = appContext.isGuildDirty();
+        boolean lineupDirty = appContext.isLineupDirty();
+        String messageKey = guildDirty && lineupDirty ? "toolbar.unsaved.switchGuildAndLineup"
+                : guildDirty ? "toolbar.unsaved.switchGuild" : "toolbar.unsaved.switchLineup";
         int choice = JOptionPane.showConfirmDialog(this,
                 LanguageService.displayName(messageKey),
                 LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         return choice == JOptionPane.YES_OPTION;
     }
 
-    /** Package-visible (not {@code private}) - see {@link #workspaceDir()}. */
-    boolean switchToGuild(Path guildDir, Path guildFilePath) {
-        Guild guild;
+    /**
+     * Switches to the guild in the given workspace folder (see {@link
+     * GuildService#switchToGuild}), showing an error dialog and restoring
+     * {@link #guildCombo}'s selection if that fails. Package-visible (not
+     * {@code private}) so {@code Cow2Frame#onNewGuild()}/{@code onRemoveGuild()}
+     * can reuse it.
+     */
+    boolean switchToGuild(String folderName) {
         try {
-            guild = GuildRepository.load(guildFilePath);
+            guildService.switchToGuild(folderName);
+            return true;
+        } catch (GuildService.LineupLoadException e) {
+            showGuildLoadError("toolbar.loadGuildLineupError", e);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("toolbar.loadGuildError") + "\n" + e.getMessage(),
-                    LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
-            populateGuildCombo();
-            return false;
+            showGuildLoadError("toolbar.loadGuildError", e);
         }
-
-        java.util.List<String> lineupFileNames = listLineupFileNames(guildDir);
-        Path lineupPath;
-        Lineup lineup;
-        try {
-            lineupPath = lineupFileNames.isEmpty()
-                    ? C2WApp.createInitialLineupFile(guild.name(), guildDir)
-                    : guildDir.resolve(lineupFileNames.get(0));
-            lineup = LineupRepository.load(lineupPath);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("toolbar.loadGuildLineupError") + "\n" + e.getMessage(),
-                    LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
-            populateGuildCombo();
-            return false;
-        }
-
-         appContext.set(guild, guildFilePath);
-         appContext.set(lineup, lineupPath);
-        Config.setLastGuildPath(guildFilePath.toString());
-        Config.setLastLineUpPath(lineupPath.toString());
-        Config.save();
-        GuiUtils.editedLineup = false;
-        fortificationMapPanel.refresh(lineup, guild);
         populateGuildCombo();
-        populateLineupCombo();
-        onGuildSwitched.run();
-        return true;
+        return false;
+    }
+
+    private void showGuildLoadError(String messageKey, IOException e) {
+        JOptionPane.showMessageDialog(this, LanguageService.displayName(messageKey) + "\n" + e.getMessage(),
+                LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
     }
 
 
     private void onGuildSelected() {
         String folderName = (String) guildCombo.getSelectedItem();
-        if (folderName == null) {
-            return;
-        }
-        Path guildDir = workspaceDir().resolve(folderName);
-        Path guildFilePath = guildDir.resolve(C2WApp.GUILD_FILE_NAME);
-        if (guildFilePath.equals(appContext.guildFilePath())) {
+        if (folderName == null || folderName.equals(guildService.currentGuildFolderName())) {
             return;
         }
         if (!confirmDiscardUnsavedChanges()) {
             populateGuildCombo();
             return;
         }
-        if (switchToGuild(guildDir, guildFilePath)) {
-            Logger.log("Switched to guild: " + guildFilePath);
-        }
+        switchToGuild(folderName);
     }
 
-    /**
-     * The folder name currently selected in {@link #guildCombo} (or
-     * {@code null} if nothing is selected) - package-visible (not
-     * {@code private}) so {@code Cow2Frame#onRemoveGuild()} can read it now
-     * that the "remove guild" logic (and the "new guild" logic alongside it)
-     * moved there into the new "Guild" menu, taking the {@code FlatButton}s
-     * that used to trigger them with it. {@link #guildCombo}'s selection
-     * always mirrors the currently open guild (picking a different entry
-     * already triggers an immediate {@link #onGuildSelected()} switch or
-     * reverts the selection), so the selected item can be removed without
-     * first checking it against {@link #appContext}.
-     */
-    String selectedGuildFolderName() {
-        return (String) guildCombo.getSelectedItem();
-    }
-
-    /**
-     * Package-visible (not {@code private}) so {@code Cow2Frame#onNewLineup()}/
-     * {@code onRemoveLineup()} can refresh {@link #lineupCombo} after
-     * changing which ".lineup" files exist, now that logic moved there into
-     * the new "Lineup" menu, see {@link #selectedLineupFileName()}.
-     */
-    void populateLineupCombo() {
+    private void populateLineupCombo() {
         populatingCombo = true;
         try {
-            java.util.List<String> fileNames = listLineupFileNames();
+            List<String> fileNames = lineupService.listLineupFileNames();
             DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
             fileNames.forEach(model::addElement);
             lineupCombo.setModel(model);
@@ -522,68 +422,23 @@ public class ToolbarPanel extends JPanel {
             if (fileNames.contains(currentFileName)) {
                 lineupCombo.setSelectedItem(currentFileName);
             }
+            shownLineupFilePath = appContext.lineupFilePath();
         } finally {
             populatingCombo = false;
         }
     }
 
-    /** Package-visible (not {@code private}) - see {@link #populateLineupCombo()}. */
-    java.util.List<String> listLineupFileNames() {
-        return listLineupFileNames(appContext.guildFilePath().getParent());
-    }
-
     /**
-     * The file name currently selected in {@link #lineupCombo} (or
-     * {@code null} if nothing is selected) - package-visible (not
-     * {@code private}) so {@code Cow2Frame#onRemoveLineup()} can read it,
-     * see {@link #populateLineupCombo()}. Mirrors {@link #selectedGuildFolderName()}.
-     */
-    String selectedLineupFileName() {
-        return (String) lineupCombo.getSelectedItem();
-    }
-
-    /**
-     * Lists the file names (not full paths) of every ".lineup" file
-     * directly inside the given guild folder, sorted alphabetically. Empty
-     * if the folder is null, does not exist, or cannot be read - logged,
-     * not shown as a dialog, since this runs during construction too (via
-     * {@link #listLineupFileNames()}).
-     */
-    private java.util.List<String> listLineupFileNames(Path guildDir) {
-        java.util.List<String> result = new ArrayList<>();
-        if (guildDir == null || !Files.isDirectory(guildDir)) {
-            return result;
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(guildDir, LINEUP_FILE_GLOB)) {
-            for (Path path : stream) {
-                result.add(path.getFileName().toString());
-            }
-        } catch (IOException e) {
-            Logger.logException("Could not list lineup files in " + guildDir, e);
-        }
-        result.sort(Comparator.naturalOrder());
-        return result;
-    }
-
-    /**
-     * Loads the newly picked ".lineup" file and applies it everywhere it
-     * needs to take effect (see class Javadoc) - or shows an error dialog
-     * and leaves everything unchanged if it can't be read.
+     * Loads the newly picked ".lineup" file and opens it - or shows an error
+     * dialog and leaves everything unchanged if it can't be read.
      */
     private void onLineupSelected() {
         String fileName = (String) lineupCombo.getSelectedItem();
         if (fileName == null) {
             return;
         }
-        Path guildDir = appContext.guildFilePath().getParent();
-        Path lineupPath = guildDir.resolve(fileName);
         try {
-            Lineup lineup = LineupRepository.load(lineupPath);
-            appContext.set(lineup, lineupPath);
-            Config.setLastLineUpPath(lineupPath.toString());
-            Config.save();
-            GuiUtils.editedLineup = false;
-            fortificationMapPanel.refresh(lineup);
+            lineupService.selectLineup(fileName);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
                     LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
@@ -591,16 +446,14 @@ public class ToolbarPanel extends JPanel {
     }
 
     private void onSaveLineup() {
-        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+        if (lineupService.isOriginalOpen()) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("toolbar.saveLineup.originalMessage"),
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         try {
-            LineupRepository.save(appContext.lineup(), appContext.lineupFilePath());
-            GuiUtils.editedLineup = false;
-            Logger.log("Saved: " + appContext.lineupFilePath());
+            lineupService.saveLineup();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveLineupError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
@@ -611,8 +464,7 @@ public class ToolbarPanel extends JPanel {
      * Display text for a lineup file name in the combo box - the file name
      * without its {@value #LINEUP_FILE_SUFFIX} suffix (purely cosmetic, see
      * class Javadoc). Package-visible (not {@code private}) so {@code
-     * Cow2Frame#onRemoveLineup()} can reuse it in its confirmation dialog,
-     * see {@link #populateLineupCombo()}.
+     * Cow2Frame#onRemoveLineup()} can reuse it in its confirmation dialog.
      */
     static String stripLineupSuffix(String fileName) {
         return fileName.endsWith(LINEUP_FILE_SUFFIX)
@@ -640,20 +492,19 @@ public class ToolbarPanel extends JPanel {
     /** Opens {@link HeroValueOverviewDialog} - one row per hero team, with a combo box to switch which value the per-fortification columns show. */
     private void onOpenHeroTeams() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new HeroValueOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+        new HeroValueOverviewDialog(owner, appContext).setVisible(true);
     }
 
     /** Opens {@link TitanValueOverviewDialog} - the TITAN counterpart of {@link #onOpenHeroTeams()}. */
     private void onOpenTitanTeams() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new TitanValueOverviewDialog(owner, appContext, fortificationMapPanel).setVisible(true);
+        new TitanValueOverviewDialog(owner, appContext).setVisible(true);
     }
 
     /**
      * Opens {@link LineupComparisonDialog} (added 2026-09-13) - purely a
-     * read-only preview/comparison, so unlike {@link #onOpenHeroTeams()}/{@link #onOpenTitanTeams()}
-     * it needs no {@link #fortificationMapPanel} reference (nothing here
-     * ever changes {@link #appContext}'s lineup).
+     * read-only preview/comparison (nothing here ever changes
+     * {@link #appContext}'s lineup).
      */
     private void onOpenLineupComparison() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
@@ -673,33 +524,19 @@ public class ToolbarPanel extends JPanel {
 
     /**
      * Opens {@link GuildHeroEntryDialog} - the guild-wide hero counterpart of
-     * {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog},
-     * refreshed the same way on save via {@link FortificationMapPanel#refreshAfterExternalSave()}.
+     * {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog}.
+     * Its save opens the guild's "Original" lineup, which the combo boxes
+     * and the map pick up by themselves (see {@link AppContext.Listener}).
      */
     private void onOpenGuildHeroEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new GuildHeroEntryDialog(owner, appContext, this::onGuildEntrySaved).setVisible(true);
+        new GuildHeroEntryDialog(owner, appContext).setVisible(true);
     }
 
     /** The TITAN-side counterpart of {@link #onOpenGuildHeroEntry()} - opens {@link GuildTitanEntryDialog}. */
     private void onOpenGuildTitanEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new GuildTitanEntryDialog(owner, appContext, this::onGuildEntrySaved).setVisible(true);
-    }
-
-    /**
-     * Invoked after either guild team-entry dialog saves. Those dialogs write
-     * their assignments into the guild's fixed "Original" lineup and make it
-     * the active lineup (see {@code GuildTeamEntryDialog#performSave}); on top
-     * of the map refresh the per-fortification dialog also does, this
-     * repopulates {@link #lineupCombo} so its selection switches to that
-     * freshly saved "Original" lineup (its file now exists and
-     * {@link #populateLineupCombo()} selects whatever {@link AppContext#lineupFilePath()}
-     * points at).
-     */
-    private void onGuildEntrySaved() {
-        populateLineupCombo();
-        fortificationMapPanel.refreshAfterExternalSave();
+        new GuildTitanEntryDialog(owner, appContext).setVisible(true);
     }
 
     /**
