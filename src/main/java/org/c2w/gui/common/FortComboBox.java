@@ -53,7 +53,7 @@ public class FortComboBox extends JComboBox<Fortification> {
      * first entry whose DISPLAY name (via {@link LanguageService#displayName},
      * e.g. "Wachturm") - not {@link Object#toString()} - starts with what
      * was typed, mirroring the manager used by the hero/member combo boxes
-     * (see {@code GuildTeamEntryDialog#buildMemberCombo} and
+     * (see {@code FortificationEntryDialog#buildMemberCombo} and
      * {@code TeamEditorPanel#buildLabelKeySelectionManager}). Consecutive
      * keystrokes within {@value #TYPEAHEAD_TIMEOUT_MS}ms accumulate into
      * one search (typing "wa" narrows further among names starting with

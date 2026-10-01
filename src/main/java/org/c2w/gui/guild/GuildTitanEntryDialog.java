@@ -11,24 +11,21 @@ import java.awt.*;
 import java.util.Comparator;
 
 /**
- * {@link GuildTeamEntryDialog} for titan teams only. Opened from its own
- * toolbar button - see {@code ToolbarPanel#onOpenGuildTitanEntry}.
+ * {@link GuildTeamEntryDialog} for titan teams - table-based alternative to
+ * {@link GuildTitanEntryDialog}, same spec.
  */
 public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
 
     private static final int MAX_TITAN_TEAMS = 2;
-
     private static final int ICON_SIZE = 32;
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for this dialog's window title - reused from the old combined dialog's "titan teams" section header. */
     private static final String KEY_TITLE = "guildEntry.titanTeams";
 
     public GuildTitanEntryDialog(Frame owner, AppContext appContext) {
         super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_TITAN_TEAMS);
     }
 
-    private static SectionSpec<Titan> buildSpec(Catalog catalog) {
-        return new SectionSpec<>(catalog.titans().findAll(), GuildTitanEntryDialog::titanLabel,
+    private static TeamTypeSpec<Titan> buildSpec(Catalog catalog) {
+        return new TeamTypeSpec<>(catalog.titans().findAll(), GuildTitanEntryDialog::titanLabel,
                 t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildTitanEntryDialog::titanLabel),
                 m -> m.titanTeams, FortificationType.TITAN, Lineup.TeamType.TITAN,
                 GuildTitanEntryDialog::titanMatchesBuff, GuildTitanEntryDialog::titanScoreBreakdown,
@@ -43,7 +40,6 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
         return fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element();
     }
 
-    /** The TITAN-side counterpart of {@code GuildHeroEntryDialog#heroScoreBreakdown} - see {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)}. */
     private static TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft, Fortification fortification) {
         TitanTeam titanTeam = new TitanTeam(null, 0, teamDraft.members, teamDraft.totalPower);
         return TeamScoreCalculator.scoreFor(titanTeam, fortification);

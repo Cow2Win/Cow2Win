@@ -13,5 +13,25 @@
     "id": "augustus-orion-dorian",
     "heroIds": ["augustus", "orion", "dorian"],
     "source": "C2W"
+  },
+  {
+    "id": "kayla-aidan",
+    "heroIds": ["kayla", "aidan"],
+    "source": "C2W"
+  },
+  {
+    "id": "corvus-byrna",
+    "heroIds": ["corvus", "Byrna"],
+    "source": "C2W"
+  },
+  {
+    "id": "corvus-morrigan",
+    "heroIds": ["corvus", "morrigan"],
+    "source": "C2W"
+  },
+  {
+    "id": "lyria-keira",
+    "heroIds": ["lyria", "keira"],
+    "source": "C2W"
   }
 ]

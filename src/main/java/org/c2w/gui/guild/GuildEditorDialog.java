@@ -2,6 +2,7 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.Guild;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.AppContext;
@@ -188,6 +189,8 @@ public final class GuildEditorDialog extends JDialog {
                 BorderLayout.CENTER);
         detailContainer.revalidate();
         detailContainer.repaint();
+        // Not resizable by the user - grow here if the team rows don't fit.
+        GuiUtils.widenToFit(this, detailContainer);
     }
 
     private void showEmptyDetail(String message) {

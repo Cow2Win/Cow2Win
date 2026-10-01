@@ -35,4 +35,34 @@ public class GuiUtils {
         //UIManager.put("List.selectionForeground",Color.WHITE);
 
     }
+
+    /**
+     * Sizes {@code window} to {@code height} and to at least {@code minWidth},
+     * but wide enough that its content's preferred width fits - plus room for
+     * a vertical scroll bar, since the entry dialogs keep their rows in a
+     * JScrollPane whose vertical bar only appears once the rows outgrow
+     * {@code height} and would otherwise force a horizontal scroll bar. Never
+     * larger than the usable screen area. Call once all content is added.
+     */
+    public static void sizeToContent(Window window, int minWidth, int height) {
+        window.pack(); // makes the window displayable, so getWidth() includes the frame insets
+        int scrollBarWidth = new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
+        Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int width = Math.max(minWidth, window.getWidth() + scrollBarWidth);
+        window.setSize(Math.min(width, screen.width), Math.min(height, screen.height));
+    }
+
+    /**
+     * Widens {@code window} (never narrows it) after {@code content} - a
+     * component inside it without its own scroll pane - was replaced, so that
+     * {@code content}'s preferred width fits. Never wider than the usable
+     * screen area.
+     */
+    public static void widenToFit(Window window, Component content) {
+        int needed = window.getWidth() - content.getWidth() + content.getPreferredSize().width;
+        if (needed > window.getWidth()) {
+            Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+            window.setSize(Math.min(needed, screen.width), window.getHeight());
+        }
+    }
 }

@@ -4,11 +4,11 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
-import org.c2w.data.repository.TeamTemplateRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.FortificationTypeStyle;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
@@ -17,142 +17,169 @@ import org.c2w.service.AppContext;
 import org.c2w.service.LineupService;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
- * Guild-wide counterpart of {@link org.c2w.gui.fort.FortificationEntryDialog},
- * for exactly ONE team type (hero or titan - see {@link GuildHeroEntryDialog}/
- * {@link GuildTitanEntryDialog}, the only two subclasses): lets the player
- * build/edit that type's teams for the whole guild in one place, instead of
- * one fortification at a time. Used to be a single dialog covering both
- * types side by side (see git history); split into one focused dialog per
- * type per the player's request, sharing everything type-agnostic here.
+ * Guild-wide entry dialog for exactly ONE team type (hero or titan - see
+ * {@link GuildHeroEntryDialog}/{@link GuildTitanEntryDialog}, the only two
+ * subclasses, and {@link TeamTypeSpec}): lets the player build/edit that
+ * type's teams for the whole guild in one place, instead of one
+ * fortification at a time like {@link org.c2w.gui.fort.FortificationEntryDialog}.
  *
- * <p>Differences from {@link org.c2w.gui.fort.FortificationEntryDialog}:
+ * <p>Layout: every team is ONE line of a sortable/filterable {@link JTable}
+ * (rendered only - no combo boxes per line, so it stays fast with many
+ * teams), and a single editor area below the table edits whichever line is
+ * selected: fortification, member (typing an unknown name creates the member,
+ * see {@link MemberComboEditor}) and one {@link TeamEditorPanel} incl. war
+ * flag/pet and the F1-F5 templates. A line may have no fortification - the
+ * team is then saved into the member without a {@link Lineup.Entry}.
+ *
  * <ul>
- *     <li>No {@link org.c2w.gui.fort.FortificationInfoPanel} - this dialog
- *     never edits a single fortification's catalog fields.</li>
- *     <li>Not bound to one {@link Fortification} - each row carries its own
- *     {@link FortComboBox} (placed left of the member combo) so a team can be
- *     assigned to any fortification of the matching type, or to none at all
- *     (the team is then just saved into the member's draft without a
- *     {@link Lineup.Entry}, same as editing a team via
- *     {@link GuildEditorDialog}/{@link MemberEditorPanel}).</li>
- *     <li>Rows aren't capped by a fortification's capacity - the "+" button
- *     appends a fresh, empty row for a brand new team at any time (see
- *     {@link #addRow}).</li>
+ *     <li>Adding a line does not save; unsaved changes are shown in the
+ *     status bar and the player is asked on close.</li>
+ *     <li>Shortcuts: Ctrl+N adds, Del (in the table) deletes, Ctrl+S saves,
+ *     Enter (in the table) jumps into the editor, F1-F5 (in the table) loads
+ *     a template into the selected team.</li>
+ *     <li>Problems that would make the save fail (no member, no power, too many teams
+ *     per member) and overfull fortifications are highlighted in the table
+ *     right away; a failed save selects the offending line.</li>
  * </ul>
  *
- * <p>On save, every row is resolved to a (member, teamIndex) slot exactly
- * like {@code FortificationEntryDialog} does, and the resulting
+ * <p>On save, every line is resolved to a (member, teamIndex) slot and the
  * {@link Lineup.Entry} list for {@link #spec}'s {@link Lineup.TeamType} is
- * rebuilt from scratch from the current rows - this is safe (unlike a
- * per-fortification dialog) because every row already covers either a
- * pre-existing entry of that type or a brand new team, so the full set of
- * rows is always a complete picture of that type's assignments. Entries of
- * the OTHER team type (which this dialog has no rows for at all) are simply
- * carried over unchanged from the current {@link Lineup} - see
- * {@link #performSave}.
+ * rebuilt from scratch from the current lines - safe because the lines were
+ * seeded with one line per pre-existing entry of that type, so they are
+ * always a complete picture of that type's assignments. Entries of the OTHER
+ * team type are carried over unchanged - see {@link #performSave}.
  */
 abstract class GuildTeamEntryDialog<T> extends JDialog {
 
-    /** Mirrors {@code GuildEditorDialog#MAX_MEMBERS} - enforced the same way here when {@link MemberComboEditor} creates a new member inline (see {@link #buildMemberCombo}). */
+    /** Mirrors {@code GuildEditorDialog#MAX_MEMBERS} - enforced the same way when {@link MemberComboEditor} creates a new member inline. */
     private static final int MAX_MEMBERS = 30;
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for an unselected member/fortification combo slot. */
+    /** Language file keys (see {@code resources/language/<name>/<name>.properties}). */
     private static final String KEY_NO_SELECTION = "common.none";
-
     private static final String KEY_SAVE_TEAMS = "guildEntry.saveTeams";
     private static final String KEY_ADD_ROW = "guildEntry.addRow";
+    private static final String KEY_DELETE_ROW = "guildEntry.deleteTeamTitle";
+    private static final String KEY_WAR_FLAG = "teamEditor.warFlag";
+    private static final String KEY_PET = "teamEditor.pet";
+    private static final String KEY_COLUMN_FORTIFICATION = "guildEntry.column.fortification";
+    private static final String KEY_COLUMN_MEMBER = "guildEntry.column.member";
+    private static final String KEY_COLUMN_POWER = "guildEntry.column.power";
+    private static final String KEY_COLUMN_TEAM = "guildEntry.column.team";
+    private static final String KEY_COLUMN_BUFF = "guildEntry.column.buff";
+    private static final String KEY_COLUMN_SCORE = "guildEntry.column.score";
+    private static final String KEY_FILTER_ALL = "guildEntry.filterAll";
+    private static final String KEY_SEARCH = "guildEntry.search";
+    private static final String KEY_SEARCH_HINT = "guildEntry.searchHint";
+    private static final String KEY_SELECTED_TEAM = "guildEntry.selectedTeam";
+    private static final String KEY_NOTHING_SELECTED = "guildEntry.nothingSelected";
+    private static final String KEY_STATUS = "guildEntry.status";
+    private static final String KEY_UNSAVED = "guildEntry.unsaved";
+    private static final String KEY_UNSAVED_QUESTION = "guildEntry.unsavedQuestion";
+    private static final String KEY_POWER_MISSING = "guildEntry.powerMissing";
+    private static final String KEY_SHORTCUTS = "guildEntry.shortcuts";
+    private static final String KEY_SHORTCUT_ADD = "guildEntry.shortcut.add";
+    private static final String KEY_SHORTCUT_SAVE = "guildEntry.shortcut.save";
+    private static final String KEY_SHORTCUT_DELETE = "guildEntry.shortcut.delete";
+    private static final String KEY_SHORTCUT_EDIT = "guildEntry.shortcut.edit";
+    private static final String KEY_SHORTCUT_MEMBER = "guildEntry.shortcut.member";
+    private static final String KEY_SHORTCUT_LOAD_TEMPLATE = "guildEntry.shortcut.loadTemplate";
+    private static final String KEY_SHORTCUT_SAVE_TEMPLATE = "guildEntry.shortcut.saveTemplate";
+    private static final String KEY_SHORTCUT_NEXT_FIELD = "guildEntry.shortcut.nextField";
+    private static final String KEY_SHORTCUT_TYPE_AHEAD = "guildEntry.shortcut.typeAhead";
 
-    /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
-    private static final String ICON_SAVE_TEAMS = "/images/app/save.png";
+    private static final KeyStroke SHORTCUT_ADD = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK);
+    private static final KeyStroke SHORTCUT_SAVE = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK);
+    private static final KeyStroke SHORTCUT_DELETE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
 
-    /** Classpath path of the "add row" button's icon. */
-    private static final String ICON_ADD_ROW = "/images/app/add.png";
-
-    /** Target size of the toolbar icons. */
+    private static final String ICON_SAVE = "/images/app/save.png";
+    private static final String ICON_ADD = "/images/app/add.png";
+    private static final String ICON_DELETE = "/images/app/delete.png";
     private static final int TOOLBAR_ICON_SIZE = 20;
 
-    private static final int MEMBER_COMBO_TOP_OFFSET = 6;
+    private static final int ICON_SIZE = 32;
+    private static final int TABLE_ROW_HEIGHT = ICON_SIZE + 4;
+    /** Width of the fortification/member combo boxes in the editor area - wide enough for the longest fortification name. */
+    private static final int COMBO_WIDTH = 180;
+    private static final int COMBO_HEIGHT = 41;
+    private static final int BUFF_LABEL_WIDTH = 64;
 
-    /** Height shared by the fortification/member combo boxes and the buff-member count label, so they all line up. */
-    private static final int MEMBER_COMBO_HEIGHT = 41;
-
-    /** Width of the buff-member count label - enough for a one/two-digit count plus " (" + score + ")". */
-    private static final int BUFF_COUNT_LABEL_WIDTH = 64;
-
-    /** Width shared by the fortification combo and the member combo (see {@link #addRow}). */
-    private static final int COMBO_WIDTH = 150;
+    /** Text of the fortification filter's "show only teams without fortification" entry. */
+    private static final Object FILTER_ALL = new Object();
+    private static final Object FILTER_NONE = new Object();
 
     /**
-     * Stand-in used to score a row that currently has no fortification
-     * selected (see {@link #updateBuffCountLabel}) - only its {@code buff() == null}
-     * matters to {@link TeamScoreCalculator#scoreFor}, so an unassigned row
-     * simply scores like a buff-less fortification.
+     * Stand-in used to score a line that has no fortification - only its
+     * {@code buff() == null} matters to {@link TeamScoreCalculator#scoreFor},
+     * so an unassigned team simply scores like at a buff-less fortification.
      */
     private static final Fortification UNASSIGNED_FORTIFICATION =
             new Fortification("__unassigned__", FortificationType.HERO, 1, 0, 0, 0, null, List.of(), 0);
 
-    protected final AppContext appContext;
-
-    /** File the {@link #originalLineup} is loaded from / saved to - the reserved per-guild "Original" lineup (see {@link LineupFiles}). */
+    private final AppContext appContext;
     private final Path originalLineupPath;
-
-    /**
-     * The lineup this dialog edits: the guild's fixed "Original" baseline
-     * (the actual in-game deployment), NOT whatever lineup is currently
-     * selected in the toolbar. Seeded on first use from the currently open
-     * lineup (see {@link #loadOrSeedOriginalLineup()}) and rewritten on every
-     * save (see {@link #performSave()}).
-     */
     private Lineup originalLineup;
-
-    protected final GuildDraft draft;
-
-    /** Fetched once and reused for every row's {@link FortComboBox} and for looking up a row's preset fortification, so {@link FortComboBox#setSelectedItem} always matches an item that is actually in that combo's model. */
+    private final GuildDraft draft;
     private final List<Fortification> fortificationCatalog = FortificationRepository.findAll();
-
-    /** This dialog's one and only type - which catalog/repository, team list, {@link FortificationType} and {@link Lineup.TeamType} it edits (see the two subclasses' {@code buildSpec}). */
-    private final SectionSpec<T> spec;
-
-    /** Cap on how many teams of {@link #spec}'s type a member can have - {@code GuildHeroEntryDialog.MAX_HERO_TEAMS}/{@code GuildTitanEntryDialog.MAX_TITAN_TEAMS}, passed in by the subclass. */
+    private final TeamTypeSpec<T> spec;
     private final int maxTeams;
+    private final boolean withExtras;
 
-    private final JPanel rowsPanel = new JPanel();
+    /** The table's rows, in model order (= lineup order, new rows appended). */
+    private final List<Row<T>> rows = new ArrayList<>();
 
-    private final List<RowState<T>> rowStates = new ArrayList<>();
+    private final List<Column> columns;
+    private final RowTableModel tableModel = new RowTableModel();
+    /** Created in the constructor once {@link #columns} and {@link #rows} are set - see there. */
+    private final JTable table;
+    private final TableRowSorter<TableModel> sorter;
 
-    /**
-     * Every member combo built so far (see {@link #buildMemberCombo}), so a
-     * member created inline through one row's combo (see
-     * {@link MemberComboEditor}) can be added to every other row's dropdown
-     * too via {@link #refreshAllMemberCombos} - not just the row it was
-     * typed into.
-     */
-    private final List<JComboBox<MemberDraft>> memberCombos = new ArrayList<>();
+    private final JComboBox<Object> fortFilter = new JComboBox<>();
+    private final JTextField searchField = new JTextField(16);
+    private final JLabel statusLabel = new JLabel();
 
-    /**
-     * Last fortification picked (non-null) in any row's {@link FortComboBox} -
-     * used by {@link #addRow} to prefill a brand new row's fortification
-     * combo (see {@link #preselectFortificationFor}), so the player doesn't
-     * have to re-pick the same fortification for every new row.
-     */
+    // --- editor area (one for all rows) ---
+    private final FortComboBox fortCombo;
+    private final JComboBox<MemberDraft> memberCombo = new JComboBox<>();
+    private final JLabel buffLabel = new JLabel("", JLabel.CENTER);
+    private final JPanel teamEditorHolder = new JPanel(new BorderLayout());
+    private final JPanel editorPanel = new JPanel(new BorderLayout());
+    private final JLabel nothingSelectedLabel = new JLabel();
+    private TeamEditorPanel<T> teamEditor;
+
+    /** The row shown in the editor area, or null. */
+    private Row<T> currentRow;
+
+    /** True while the editor area is (re)bound to a row - suppresses the combos' listeners. */
+    private boolean binding;
+
+    private boolean dirty;
     private Fortification lastSelectedFortification;
 
-    protected GuildTeamEntryDialog(Frame owner, AppContext appContext,
-                                   String titleKey, SectionSpec<T> spec, int maxTeams) {
+    protected GuildTeamEntryDialog(Frame owner, AppContext appContext, String titleKey,
+                                   TeamTypeSpec<T> spec, int maxTeams) {
         super(owner, LanguageService.displayTitle(titleKey), false);
         if (appContext == null) {
             throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
@@ -160,49 +187,53 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         this.appContext = appContext;
         this.spec = spec;
         this.maxTeams = maxTeams;
+        this.withExtras = spec.teamType() == Lineup.TeamType.HERO;
+        this.columns = buildColumns();
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
         for (MemberDraft member : draft.members) {
             ensureTeamCount(spec.teamsOf().apply(member), maxTeams);
         }
-
-        Path guildDir = appContext.guildFilePath().getParent();
-        this.originalLineupPath = LineupFiles.originalPathFor(guildDir);
+        this.originalLineupPath = LineupFiles.originalPathFor(appContext.guildFilePath().getParent());
         this.originalLineup = loadOrSeedOriginalLineup();
+        this.fortCombo = new FortComboBox(fortificationCatalog, spec.fortificationType());
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        loadRows();
+        // Only now: the sorter caches the model's row count when it is created.
+        this.table = new JTable(tableModel);
+        this.sorter = new TableRowSorter<>(tableModel);
+
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                onClose();
+            }
+        });
         setLayout(new BorderLayout());
 
-        rowsPanel.setLayout(new BoxLayout(rowsPanel, BoxLayout.Y_AXIS));
-        rowsPanel.setOpaque(false);
-        JPanel sectionPanel = new JPanel();
-        sectionPanel.setLayout(new BoxLayout(sectionPanel, BoxLayout.Y_AXIS));
-        sectionPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        add(buildToolbar(), BorderLayout.NORTH);
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, buildTablePane(), buildEditorArea());
+        split.setResizeWeight(1.0);
+        split.setBorder(BorderFactory.createEmptyBorder());
+        add(split, BorderLayout.CENTER);
+        add(buildStatusBar(), BorderLayout.SOUTH);
 
-        sectionPanel.add(rowsPanel);
-        sectionPanel.add(alignLeft(buildAddRowButton()));
-        // Without this, the BoxLayout above stretches its children to fill
-        // whatever extra height the JScrollPane's viewport has to offer
-        // (rowsPanel's rows use GridBagLayout, which reports an unbounded
-        // maximum size) - the rows end up spread out across the whole
-        // dialog instead of stacking tightly from the top. Glue soaks up
-        // that leftover space instead, so the rows/button stay anchored at
-        // the top like a vertical FlowLayout (see also buildRowPanel/alignLeft,
-        // which cap their own component's maximum height for the same reason).
-        sectionPanel.add(Box.createVerticalGlue());
+        bindShortcuts();
+        refreshFortFilter();
+        updateStatus();
 
-        buildSection();
-        bindDeleteRowShortcut();
+        if (!rows.isEmpty()) {
+            table.setRowSelectionInterval(0, 0);
+        } else {
+            showRow(null);
+        }
 
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(new JScrollPane(sectionPanel), BorderLayout.CENTER);
-
-        add(buildToolbarPanel(), BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
-
-        setSize(1050, 750);
+        GuiUtils.sizeToContent(this, 1150, 800);
         setLocationRelativeTo(owner);
     }
+
+    // ------------------------------------------------------------------ data
 
     private static <T> void ensureTeamCount(List<TeamDraft<T>> teams, int maxCount) {
         while (teams.size() < maxCount) {
@@ -212,13 +243,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     /**
      * Loads the guild's fixed "Original" lineup (see {@link LineupFiles}) if
-     * it already exists on disk, or seeds a fresh one from the currently open
-     * lineup otherwise. Seeding from the current lineup (rather than starting
-     * empty) means the player's existing in-game deployment isn't lost and
-     * only needs adjusting to match reality on the first pass, instead of
-     * being re-entered from scratch; it is written out as the Original
-     * baseline on the first {@link #performSave()}. An unreadable Original
-     * file is treated the same way (logged, then re-seeded).
+     * it exists, or seeds a fresh one from the currently open lineup otherwise
+     * (also if the file is unreadable) - so the existing in-game deployment
+     * only needs adjusting on the first pass. Written out on the first save.
      */
     private Lineup loadOrSeedOriginalLineup() {
         if (Files.exists(originalLineupPath)) {
@@ -233,26 +260,12 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         return new Lineup(current.guildId(), current.guildName(), "", LocalDateTime.now(), current.entries());
     }
 
-    private static JPanel alignLeft(JComponent component) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(component);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
-        return panel;
-    }
-
-    /**
-     * Builds this dialog's initial rows, one per existing {@link Lineup.Entry}
-     * of {@link #spec}'s type across every fortification (not just one) -
-     * each becomes an editable row via {@link #addRow}. Further rows can be
-     * appended later through the "+" button (see {@link #buildAddRowButton}).
-     */
-    private void buildSection() {
-        List<Lineup.Entry> existingEntries = originalLineup.entries().stream()
-                .filter(e -> e.teamType() == spec.teamType())
-                .toList();
-
-        for (Lineup.Entry entry : existingEntries) {
+    /** One line per existing lineup entry of this dialog's type, across every fortification; entries whose member/team no longer exists are logged and skipped. */
+    private void loadRows() {
+        for (Lineup.Entry entry : originalLineup.entries()) {
+            if (entry.teamType() != spec.teamType()) {
+                continue;
+            }
             MemberDraft member = findMemberDraft(entry.teamMemberId());
             List<TeamDraft<T>> teams = member == null ? null : spec.teamsOf().apply(member);
             if (member == null || teams == null || entry.teamIndex() < 0 || entry.teamIndex() >= teams.size()) {
@@ -262,447 +275,643 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             Fortification fortification = fortificationCatalog.stream()
                     .filter(f -> f.id().equals(entry.fortificationId()))
                     .findFirst().orElse(null);
-            addRow(teams.get(entry.teamIndex()), member, entry.teamIndex(), fortification);
+            Row<T> row = new Row<>(member, entry.teamIndex());
+            row.draft.copyFrom(teams.get(entry.teamIndex()));
+            row.member = member;
+            row.fortification = fortification;
+            rows.add(row);
         }
     }
 
-    /**
-     * Appends one new row to {@link #rowsPanel} - either restoring an
-     * existing team ({@code existingDraft}/{@code originalMember}/
-     * {@code originalTeamIndex}/{@code presetFortification} all non-null, from
-     * {@link #buildSection}) or starting a brand new, empty one (all four
-     * {@code null}/{@code -1}, from the "+" button - see
-     * {@link #buildAddRowButton}).
-     */
-    private void addRow(TeamDraft<T> existingDraft, MemberDraft originalMember, int originalTeamIndex,
-                        Fortification presetFortification) {
-        TeamDraft<T> rowDraft = new TeamDraft<>();
-        if (existingDraft != null) {
-            rowDraft.copyFrom(existingDraft);
-        }
-
-        FortComboBox fortCombo = new FortComboBox(fortificationCatalog, spec.fortificationType());
-        fortCombo.setPreferredSize(new Dimension(COMBO_WIDTH, MEMBER_COMBO_HEIGHT));
-        Fortification fortificationToSelect = presetFortification != null
-                ? presetFortification : preselectFortificationFor(existingDraft);
-        if (fortificationToSelect != null) {
-            fortCombo.setSelectedItem(fortificationToSelect);
-        }
-
-        JComboBox<MemberDraft> memberCombo = buildMemberCombo();
-        memberCombo.setPreferredSize(new Dimension(COMBO_WIDTH, MEMBER_COMBO_HEIGHT));
-        if (originalMember != null) {
-            memberCombo.setSelectedItem(originalMember);
-        }
-
-        int rowNumber = rowStates.size() + 1;
-        JLabel buffCountLabel = buildBuffCountLabel(spec.fortificationType());
-        // War flag/pet only for hero teams - see TeamExtras/otherTeamsOfRowMember.
-        TeamExtras extras = spec.teamType() == Lineup.TeamType.HERO
-                ? TeamExtras.forOtherDrafts(appContext.catalog(), () -> otherTeamsOfRowMember(rowDraft, memberCombo))
-                : null;
-        TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft,
-                () -> updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber),
-                extras);
-        updateBuffCountLabel(buffCountLabel, rowDraft, (Fortification) fortCombo.getSelectedItem(), rowNumber);
-
-        // Same convention as FortificationEntryDialog: picking "- none -" as
-        // the member clears this row's team, so an unwanted row is simply
-        // dropped on save (totalPower == 0) instead of ever being written out.
-        memberCombo.addActionListener(e -> {
-            if (memberCombo.getSelectedItem() == null) {
-                teamEditor.clear();
-            }
-        });
-        fortCombo.addActionListener(e -> {
-            Fortification selected = (Fortification) fortCombo.getSelectedItem();
-            if (selected != null) {
-                lastSelectedFortification = selected;
-            }
-            updateBuffCountLabel(buffCountLabel, rowDraft, selected, rowNumber);
-        });
-
-        JPanel rowPanel = buildRowPanel(fortCombo, memberCombo, teamEditor, buffCountLabel);
-        rowStates.add(new RowState<>(rowDraft, memberCombo, fortCombo, originalMember, originalTeamIndex, rowPanel));
-        rowsPanel.add(rowPanel);
-        rowsPanel.revalidate();
-        rowsPanel.repaint();
-
-        // A brand new row (from the "+" button - existingDraft == null) is
-        // appended at the very bottom, so scroll the enclosing JScrollPane all
-        // the way down to reveal it in full. Restored rows (existingDraft !=
-        // null, from buildSection) are skipped so the view stays at the top
-        // when the dialog first opens.
-        //
-        // Two-stage invokeLater on purpose: a single one fires before the
-        // scroll pane has recomputed its scroll range for the now-taller
-        // content, so the vertical scrollbar's maximum is still the OLD value
-        // and scrolling to it stops short of the new row. The first stage runs
-        // after the revalidate above lays the row out; the second, after the
-        // scroll pane has updated its range - only then is getMaximum() final.
-        if (existingDraft == null) {
-            SwingUtilities.invokeLater(() -> SwingUtilities.invokeLater(() -> {
-                JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, rowPanel);
-                if (scrollPane != null) {
-                    JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
-                    verticalBar.setValue(verticalBar.getMaximum());
-                }
-            }));
-        }
+    private MemberDraft findMemberDraft(String memberId) {
+        return draft.members.stream().filter(m -> m.id.equals(memberId)).findFirst().orElse(null);
     }
 
-    /**
-     * The fortification to preselect for a brand new (non-restored) row -
-     * {@link #lastSelectedFortification}, unless that fortification is
-     * already full (see {@link #isFortificationFull}), or there simply isn't
-     * one yet. Restored rows ({@code existingDraft != null}, from
-     * {@link #buildSection}) are left untouched - they already carry their
-     * own {@code presetFortification} - so this only ever runs for the "+"
-     * button / add-row shortcut.
-     */
-    private Fortification preselectFortificationFor(TeamDraft<T> existingDraft) {
-        if (existingDraft != null) {
-            return null;
-        }
-        return lastSelectedFortification != null && !isFortificationFull(lastSelectedFortification)
-                ? lastSelectedFortification : null;
-    }
-
-    private boolean isFortificationFull(Fortification fortification) {
-        long assignedRows = rowStates.stream()
-                .filter(row -> row.fortCombo.getSelectedItem() == fortification)
-                .count();
-        return assignedRows >= fortification.capacity();
-    }
-
-    /** The "+" button - appends one fresh, empty row for a new team (see {@link #addRow}). */
-    private FlatButton buildAddRowButton() {
-        FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD_ROW, TOOLBAR_ICON_SIZE, Color.WHITE));
-        addButton.setToolTipText(LanguageService.displayName(KEY_ADD_ROW));
-        addButton.addActionListener(e -> {
-            // Requirement: auto-save whatever is already filled in before a
-            // fresh row is appended, so it's never lost even if the player
-            // forgets to hit "save" themselves before adding more rows.
-            performSave();
-            addRow(null, null, -1, null);
-        });
-        bindAddRowShortcut(addButton);
-        return addButton;
-    }
-
-    /**
-     * Lets the "+" key (main keyboard, e.g. the dedicated "+" key on a German
-     * layout) or Numpad-Plus trigger {@code addButton} - i.e. add a new,
-     * empty row - without reaching for the mouse. Bound with
-     * {@code WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} on {@link #rowsPanel}
-     * itself, so the shortcut fires whenever the focus is anywhere among
-     * this dialog's rows.
-     */
-    private void bindAddRowShortcut(FlatButton addButton) {
-        KeyStroke plus = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0);
-        KeyStroke numpadPlus = KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0);
-
-        InputMap inputMap = rowsPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        ActionMap actionMap = rowsPanel.getActionMap();
-        Object actionKey = "addRow";
-        inputMap.put(plus, actionKey);
-        inputMap.put(numpadPlus, actionKey);
-        actionMap.put(actionKey, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addButton.doClick();
-            }
-        });
-    }
-
-    /**
-     * Lets the "-" key or Numpad-Minus delete the row the focus is currently
-     * in (see {@link #deleteFocusedRow}) - the destructive counterpart of the
-     * "+" add-row shortcut (see {@link #bindAddRowShortcut}). Bound the same
-     * way, with {@code WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} on {@link #rowsPanel}.
-     */
-    private void bindDeleteRowShortcut() {
-        KeyStroke minus = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0);
-        KeyStroke numpadMinus = KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0);
-
-        InputMap inputMap = rowsPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        ActionMap actionMap = rowsPanel.getActionMap();
-        Object actionKey = "deleteRow";
-        inputMap.put(minus, actionKey);
-        inputMap.put(numpadMinus, actionKey);
-        actionMap.put(actionKey, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteFocusedRow();
-            }
-        });
-    }
-
-    /**
-     * Deletes the row the keyboard focus is currently in - and, unlike merely
-     * clearing it, removes its team from the guild too (the {@code (memberId,
-     * teamIndex)} slot it is bound to, see {@link RowState#boundMember}), then
-     * re-saves. Confirmed first, since this is persistent and cannot be undone.
-     * A brand new row that was never saved (no bound slot yet) simply
-     * disappears. Does nothing when the focus is outside every row.
-     */
-    private void deleteFocusedRow() {
-        RowState<T> row = focusedRow();
-        if (row == null) {
-            return;
-        }
-        int choice = JOptionPane.showConfirmDialog(this,
-                LanguageService.displayName("guildEntry.deleteTeamConfirm"),
-                LanguageService.displayName("guildEntry.deleteTeamTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (choice != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        // Drop the team from the guild draft if this row was ever bound to a
-        // real slot (a never-saved row has boundMember == null and just
-        // vanishes), compacting the member's remaining teams so their list
-        // positions stay dense - i.e. keep matching their HeroTeam/TitanTeam
-        // index, which GuildMember enforces and toGuild relies on.
-        if (row.boundMember != null) {
-            deleteBoundTeam(row.boundMember, row.boundTeamIndex);
-        }
-
-        rowStates.remove(row);
-        rowsPanel.remove(row.panel);
-        rowsPanel.revalidate();
-        rowsPanel.repaint();
-
-        // performSave rebuilds this type's teams and lineup entries from the
-        // remaining rows, so the deleted team is gone from both the guild file
-        // and the Original lineup.
-        performSave();
-    }
-
-    /**
-     * The {@link RowState} whose row panel currently contains the keyboard
-     * focus, or {@code null} if the focus is outside every row (see
-     * {@link #deleteFocusedRow}).
-     */
-    private RowState<T> focusedRow() {
-        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (focusOwner == null) {
-            return null;
-        }
-        for (RowState<T> row : rowStates) {
-            if (row.panel == focusOwner || row.panel.isAncestorOf(focusOwner)) {
-                return row;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Removes the team at {@code teamIndex} from {@code member}'s team list of
-     * this dialog's type and re-pads the list back to {@link #maxTeams} empty
-     * trailing slots, so it keeps its fixed length while its non-empty entries
-     * stay contiguous from index 0. Every other row bound to a LATER slot of
-     * the same member is shifted down by one to follow its team (see
-     * {@link RowState#boundTeamIndex}).
-     */
-    private void deleteBoundTeam(MemberDraft member, int teamIndex) {
-        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
-        if (teamIndex < 0 || teamIndex >= teams.size()) {
-            return;
-        }
-        teams.remove(teamIndex);
-        ensureTeamCount(teams, maxTeams);
-        for (RowState<T> other : rowStates) {
-            if (other.boundMember == member && other.boundTeamIndex > teamIndex) {
-                other.boundTeamIndex--;
-            }
-        }
-    }
-
-    private JPanel buildRowPanel(FortComboBox fortCombo, JComboBox<MemberDraft> memberCombo, JPanel teamEditor, JLabel buffCountLabel) {
-        JPanel row = new JPanel(new GridBagLayout());
-        row.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        left.setBorder(BorderFactory.createEmptyBorder(MEMBER_COMBO_TOP_OFFSET, 0, 0, 0));
-        left.add(fortCombo);
-        left.add(memberCombo);
-
-        GridBagConstraints comboConstraints = new GridBagConstraints();
-        comboConstraints.gridx = 0;
-        comboConstraints.gridy = 0;
-        comboConstraints.anchor = GridBagConstraints.NORTHWEST;
-        comboConstraints.insets = new Insets(0, 0, 0, 8);
-        row.add(left, comboConstraints);
-
-        GridBagConstraints teamEditorConstraints = new GridBagConstraints();
-        teamEditorConstraints.gridx = 1;
-        teamEditorConstraints.gridy = 0;
-        teamEditorConstraints.weightx = 1.0;
-        teamEditorConstraints.fill = GridBagConstraints.HORIZONTAL;
-        teamEditorConstraints.anchor = GridBagConstraints.NORTHWEST;
-        row.add(teamEditor, teamEditorConstraints);
-
-        // Behind (right of) the TeamEditorPanel - shows how many of its currently selected members increase the selected fortification's buff, plus the team's score total (see buildBuffCountLabel/updateBuffCountLabel).
-        GridBagConstraints buffCountConstraints = new GridBagConstraints();
-        buffCountConstraints.gridx = 2;
-        buffCountConstraints.gridy = 0;
-        buffCountConstraints.anchor = GridBagConstraints.NORTHWEST;
-        buffCountConstraints.insets = new Insets(MEMBER_COMBO_TOP_OFFSET, 8, 0, 0);
-        row.add(buffCountLabel, buffCountConstraints);
-
-        // GridBagLayout reports an unbounded maximum size by default, which
-        // would let rowsPanel's BoxLayout stretch every row to fill leftover
-        // vertical space instead of stacking them tightly from the top (see
-        // the vertical glue added where rowsPanel is built).
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-
-        return row;
-    }
-
-    private static JLabel buildBuffCountLabel(FortificationType type) {
-        JLabel buffCountLabel = new JLabel("", JLabel.CENTER);
-        buffCountLabel.setPreferredSize(new Dimension(BUFF_COUNT_LABEL_WIDTH, MEMBER_COMBO_HEIGHT));
-        buffCountLabel.setForeground(FortificationTypeStyle.color(type));
-        return buffCountLabel;
-    }
-
-    /**
-     * Sets buffCountLabel's text to how many of teamDraft's currently
-     * selected members satisfy the selected fortification's buff (0 if no
-     * fortification is selected), followed by the team's score total in
-     * parentheses, e.g. "2 (4.5)" - see
-     * {@code FortificationEntryDialog#updateBuffCountLabel} for the original,
-     * per-fortification version of this. Also logs the breakdown to
-     * {@link Logger} for debugging.
-     */
-    private void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft, Fortification selectedFortification,
-                                      int rowNumber) {
-        long count = selectedFortification == null ? 0
-                : teamDraft.members.stream().filter(member -> spec.matchesBuff().apply(selectedFortification, member)).count();
-
-        Fortification scoringFortification = selectedFortification != null ? selectedFortification : UNASSIGNED_FORTIFICATION;
-        TeamScoreCalculator.Breakdown breakdown = spec.scoreBreakdownOf().apply(teamDraft, scoringFortification);
-        String rowLabel = selectedFortification != null ? LanguageService.displayName(selectedFortification.id())
-                : LanguageService.displayName(KEY_NO_SELECTION);
-        logSortScoreBreakdown(rowLabel, rowNumber, breakdown);
-
-        buffCountLabel.setText(count + " (" + String.format(Locale.ROOT, "%.1f", breakdown.total()) + ")");
-        buffCountLabel.setToolTipText(selectedFortification != null && selectedFortification.buff() != null
-                ? BuffTexts.describe(selectedFortification.buff()) : "");
-    }
-
-    /** Mirrors {@code FortificationEntryDialog#logSortScoreBreakdown} exactly - see there. */
-    private static void logSortScoreBreakdown(String rowLabel, int rowNumber, TeamScoreCalculator.Breakdown breakdown) {
-        List<Double> memberScores = breakdown.memberScores();
-        if (memberScores.isEmpty() && breakdown.powerTerm() == 0) {
-            return;
-        }
-        StringBuilder message = new StringBuilder();
-        message.append(rowLabel).append(": Team ").append(rowNumber).append(" : ")
-                .append(String.format(Locale.ROOT, "%.2f", breakdown.powerTerm()));
-        for (double memberScore : memberScores) {
-            message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
-        }
-        message.append(" = ").append(String.format(Locale.ROOT, "%.2f", breakdown.total()));
-        Logger.logToFile(message.toString());
-    }
-
-    /**
-     * Builds one row's member combo - unlike
-     * {@code FortificationEntryDialog#buildMemberCombo}, this one is
-     * editable (see {@link MemberComboEditor}): typing an existing member's
-     * name/id and confirming (Enter/losing focus) selects that member,
-     * exactly like picking it from the dropdown; typing a name that matches
-     * no existing member instead creates a new one on the spot (same
-     * {@code id == name} convention as {@code GuildEditorDialog#onAddMember}),
-     * so a new member no longer needs a trip through {@link GuildEditorDialog}.
-     * Every combo built here is tracked in {@link #memberCombos} so a member
-     * created through one row shows up in every other row's dropdown too
-     * (see {@link #refreshAllMemberCombos}).
-     */
-    private JComboBox<MemberDraft> buildMemberCombo() {
-        JComboBox<MemberDraft> combo = new JComboBox<>();
-        DefaultComboBoxModel<MemberDraft> model = new DefaultComboBoxModel<>();
-        model.addElement(null);
-        sortedMembers().forEach(model::addElement);
-        combo.setModel(model);
-        combo.setEditable(true);
-        combo.setEditor(new MemberComboEditor(combo));
-        combo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText(LanguageService.displayName(KEY_NO_SELECTION));
-                } else {
-                    setText(memberDisplayName((MemberDraft) value));
-                }
-                return this;
-            }
-        });
-        memberCombos.add(combo);
-        return combo;
-    }
-
-    /** Display text for a member - its name, falling back to its id if the name is blank (same convention used throughout this class and {@code FortificationEntryDialog}/{@code GuildEditorDialog}). */
     private static String memberDisplayName(MemberDraft member) {
         return member.name.isBlank() ? member.id : member.name;
     }
 
-    /** {@link #draft}'s members, sorted the same way every member-picking UI in this app sorts them (display name, case-insensitive). */
     private List<MemberDraft> sortedMembers() {
         return draft.members.stream()
                 .sorted(Comparator.comparing(GuildTeamEntryDialog::memberDisplayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
-    /** First member whose display name or id matches {@code text}, case-insensitively - used by {@link MemberComboEditor} to tell "pick an existing member" apart from "create a new one". */
     private MemberDraft findMemberByDisplayOrId(String text) {
         return draft.members.stream()
                 .filter(m -> memberDisplayName(m).equalsIgnoreCase(text) || m.id.equalsIgnoreCase(text))
                 .findFirst().orElse(null);
     }
 
+    private long occupancy(Fortification fortification) {
+        return rows.stream().filter(r -> r.fortification == fortification).count();
+    }
+
+    private boolean isOverfull(Fortification fortification) {
+        return fortification != null && occupancy(fortification) > fortification.capacity();
+    }
+
+    /** A filled-in row without a member - would abort the save. */
+    private static boolean lacksMember(Row<?> row) {
+        return row.member == null && (row.draft.totalPower > 0 || !row.draft.members.isEmpty());
+    }
+
+    /** A team with heroes/titans but power 0 - would otherwise be dropped on save without notice, so it aborts the save. */
+    private static boolean lacksPower(Row<?> row) {
+        return row.draft.totalPower == 0 && !row.draft.members.isEmpty();
+    }
+
+    /** More rows for this member than it has team slots - would abort the save. */
+    private boolean memberHasTooManyTeams(MemberDraft member) {
+        return member != null && rows.stream().filter(r -> r.member == member).count() > maxTeams;
+    }
+
+    private TeamScoreCalculator.Breakdown breakdownOf(Row<T> row) {
+        return spec.scoreBreakdownOf().apply(row.draft,
+                row.fortification != null ? row.fortification : UNASSIGNED_FORTIFICATION);
+    }
+
+    private long buffCountOf(Row<T> row) {
+        return row.fortification == null ? 0
+                : row.draft.members.stream().filter(m -> spec.matchesBuff().apply(row.fortification, m)).count();
+    }
+
+    // ----------------------------------------------------------------- table
+
+    private List<Column> buildColumns() {
+        List<Column> list = new ArrayList<>(List.of(Column.NUMBER, Column.FORTIFICATION, Column.MEMBER, Column.POWER));
+        if (withExtras) {
+            list.add(Column.WAR_FLAG);
+            list.add(Column.PET);
+        }
+        list.addAll(List.of(Column.TEAM, Column.BUFF, Column.SCORE));
+        return list;
+    }
+
+    /** The table's columns - war flag/pet only for hero teams, see {@link #buildColumns}. */
+    private enum Column {
+        NUMBER(null, Integer.class, 36),
+        FORTIFICATION(KEY_COLUMN_FORTIFICATION, String.class, 170),
+        MEMBER(KEY_COLUMN_MEMBER, String.class, 150),
+        POWER(KEY_COLUMN_POWER, Integer.class, 80),
+        WAR_FLAG(KEY_WAR_FLAG, Object.class, 48),
+        PET(KEY_PET, Object.class, 48),
+        TEAM(KEY_COLUMN_TEAM, Object.class, 5 * (ICON_SIZE + 4) + 12),
+        BUFF(KEY_COLUMN_BUFF, Long.class, 50),
+        SCORE(KEY_COLUMN_SCORE, Double.class, 60);
+
+        /** Language file key of the header, null for the "#" column. */
+        final String headerKey;
+        final Class<?> type;
+        final int width;
+
+        Column(String headerKey, Class<?> type, int width) {
+            this.headerKey = headerKey;
+            this.type = type;
+            this.width = width;
+        }
+
+        String header() {
+            return headerKey == null ? "#" : LanguageService.displayName(headerKey);
+        }
+
+        boolean sortable() {
+            return this != WAR_FLAG && this != PET && this != TEAM;
+        }
+    }
+
+    private final class RowTableModel extends AbstractTableModel {
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columns.get(column).header();
+        }
+
+        @Override
+        public Class<?> getColumnClass(int column) {
+            return columns.get(column).type;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int column) {
+            Row<T> row = rows.get(rowIndex);
+            return switch (columns.get(column)) {
+                case NUMBER -> rowIndex + 1;
+                case FORTIFICATION -> row.fortification == null
+                        ? LanguageService.displayName(KEY_NO_SELECTION) : LanguageService.displayName(row.fortification.id());
+                case MEMBER -> row.member == null ? "" : memberDisplayName(row.member);
+                case POWER -> row.draft.totalPower;
+                case WAR_FLAG -> row.draft.warFlag;
+                case PET -> row.draft.pet;
+                case TEAM -> row.draft.members;
+                case BUFF -> buffCountOf(row);
+                case SCORE -> breakdownOf(row).total();
+            };
+        }
+    }
+
+    private JComponent buildTablePane() {
+        table.setRowSorter(sorter);
+        table.setRowHeight(TABLE_ROW_HEIGHT);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setFillsViewportHeight(true);
+        table.getTableHeader().setReorderingAllowed(false);
+
+        for (int i = 0; i < columns.size(); i++) {
+            Column column = columns.get(i);
+            TableColumn tableColumn = table.getColumnModel().getColumn(i);
+            tableColumn.setPreferredWidth(column.width);
+            if (column == Column.WAR_FLAG || column == Column.PET || column == Column.TEAM) {
+                tableColumn.setMinWidth(column.width); // icons must never be cut off
+            }
+            sorter.setSortable(i, column.sortable());
+            tableColumn.setCellRenderer(switch (column) {
+                case WAR_FLAG -> new ExtraIconRenderer<>(WarFlag::id, WarFlag::imagePath);
+                case PET -> new ExtraIconRenderer<>(Pet::id, Pet::imagePath);
+                case TEAM -> new TeamRenderer();
+                case POWER -> new PowerRenderer();
+                case SCORE -> new FormattedRenderer(v -> String.format(Locale.ROOT, "%.1f", (Double) v));
+                default -> new ValidatingRenderer(column);
+            });
+        }
+
+        sorter.setRowFilter(new RowFilter<TableModel, Integer>() {
+            @Override
+            public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+                return matchesFilter(rows.get(entry.getIdentifier()));
+            }
+        });
+        sorter.setSortKeys(List.of(
+                new RowSorter.SortKey(columns.indexOf(Column.FORTIFICATION), SortOrder.ASCENDING),
+                new RowSorter.SortKey(columns.indexOf(Column.MEMBER), SortOrder.ASCENDING)));
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
+            int viewRow = table.getSelectedRow();
+            Row<T> selected = viewRow < 0 ? null : rows.get(table.convertRowIndexToModel(viewRow));
+            if (selected != currentRow) {
+                showRow(selected);
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setPreferredSize(new Dimension(900, 450));
+        return scrollPane;
+    }
+
+    private boolean matchesFilter(Row<T> row) {
+        if (row == currentRow) {
+            return true; // never hide the line being edited
+        }
+        Object fortSelection = fortFilter.getSelectedItem();
+        if (fortSelection == FILTER_NONE && row.fortification != null) {
+            return false;
+        }
+        if (fortSelection instanceof Fortification f && row.fortification != f) {
+            return false;
+        }
+        String text = searchField.getText().trim().toLowerCase(Locale.ROOT);
+        if (text.isEmpty()) {
+            return true;
+        }
+        if (row.member != null && memberDisplayName(row.member).toLowerCase(Locale.ROOT).contains(text)) {
+            return true;
+        }
+        return row.draft.members.stream()
+                .anyMatch(m -> spec.label().apply(m).toLowerCase(Locale.ROOT).contains(text));
+    }
+
+    /** Re-applies filter and sort, keeping the current row selected. */
+    private void refilter() {
+        sorter.sort();
+        selectRow(currentRow);
+    }
+
+    private void selectRow(Row<T> row) {
+        int modelIndex = rows.indexOf(row);
+        if (modelIndex < 0) {
+            return;
+        }
+        int viewIndex = table.convertRowIndexToView(modelIndex);
+        if (viewIndex < 0) {
+            return;
+        }
+        table.setRowSelectionInterval(viewIndex, viewIndex);
+        table.scrollRectToVisible(table.getCellRect(viewIndex, 0, true));
+    }
+
+    /** Repaints the current row's line plus everything derived from it (other lines' warnings, status, filter counts). */
+    private void currentRowChanged() {
+        dirty = true;
+        int modelIndex = rows.indexOf(currentRow);
+        if (modelIndex >= 0) {
+            tableModel.fireTableRowsUpdated(modelIndex, modelIndex);
+        }
+        table.repaint(); // warnings of OTHER lines (overfull fortification, too many teams per member) may change too
+        updateBuffLabel();
+        updateStatus();
+    }
+
+    /** Highlights problems that would make the save fail. */
+    private final class ValidatingRenderer extends DefaultTableCellRenderer {
+        private final Column column;
+
+        ValidatingRenderer(Column column) {
+            this.column = column;
+            if (column == Column.NUMBER || column == Column.BUFF) {
+                setHorizontalAlignment(CENTER);
+            }
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected, boolean hasFocus,
+                                                       int viewRow, int viewColumn) {
+            super.getTableCellRendererComponent(t, value, isSelected, hasFocus, viewRow, viewColumn);
+            Row<T> row = rows.get(t.convertRowIndexToModel(viewRow));
+            setToolTipText(null);
+            boolean problem = false;
+            switch (column) {
+                case FORTIFICATION -> {
+                    if (isOverfull(row.fortification)) {
+                        problem = true;
+                        setText(getText() + "  (" + occupancy(row.fortification) + "/" + row.fortification.capacity() + ")");
+                    }
+                    if (row.fortification != null && row.fortification.buff() != null) {
+                        setToolTipText(BuffTexts.describe(row.fortification.buff()));
+                    }
+                }
+                case MEMBER -> {
+                    if (lacksMember(row)) {
+                        problem = true;
+                        setText("?");
+                        setToolTipText(LanguageService.displayName("common.rowWithoutMember"));
+                    } else if (memberHasTooManyTeams(row.member)) {
+                        problem = true;
+                        setToolTipText(LanguageService.displayName("common.noFreeTeamSlot", memberDisplayName(row.member)));
+                    }
+                }
+                default -> {
+                }
+            }
+            // No setBackground here: DefaultTableCellRenderer would keep it as the default for every later cell.
+            if (problem) {
+                setForeground(isSelected ? t.getSelectionForeground() : IconLoader.RED);
+                setFont(getFont().deriveFont(Font.BOLD));
+            } else {
+                setForeground(isSelected ? t.getSelectionForeground() : t.getForeground());
+            }
+            return this;
+        }
+    }
+
+    /** Power column: formatted number, red and bold for a team with members but power 0 (see {@link #lacksPower}). */
+    private final class PowerRenderer extends DefaultTableCellRenderer {
+        PowerRenderer() {
+            setHorizontalAlignment(RIGHT);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected, boolean hasFocus,
+                                                       int viewRow, int viewColumn) {
+            super.getTableCellRendererComponent(t, value, isSelected, hasFocus, viewRow, viewColumn);
+            setText(value == null ? "" : GuiUtils.NUMBER_FORMAT.format(value));
+            Row<T> row = rows.get(t.convertRowIndexToModel(viewRow));
+            // No setBackground here - see ValidatingRenderer.
+            if (lacksPower(row)) {
+                setForeground(isSelected ? t.getSelectionForeground() : IconLoader.RED);
+                setFont(getFont().deriveFont(Font.BOLD));
+                setToolTipText(LanguageService.displayName(KEY_POWER_MISSING));
+            } else {
+                setForeground(isSelected ? t.getSelectionForeground() : t.getForeground());
+                setToolTipText(null);
+            }
+            return this;
+        }
+    }
+
+    private static final class FormattedRenderer extends DefaultTableCellRenderer {
+        private final java.util.function.Function<Object, String> format;
+
+        FormattedRenderer(java.util.function.Function<Object, String> format) {
+            this.format = format;
+            setHorizontalAlignment(RIGHT);
+        }
+
+        @Override
+        protected void setValue(Object value) {
+            setText(value == null ? "" : format.apply(value));
+        }
+    }
+
+    /** War flag / pet column: just the icon, name as tooltip. */
+    private static final class ExtraIconRenderer<E> extends DefaultTableCellRenderer {
+        private final java.util.function.Function<E, String> idOf;
+        private final java.util.function.Function<E, String> imagePathOf;
+
+        ExtraIconRenderer(java.util.function.Function<E, String> idOf, java.util.function.Function<E, String> imagePathOf) {
+            this.idOf = idOf;
+            this.imagePathOf = imagePathOf;
+            setHorizontalAlignment(CENTER);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void setValue(Object value) {
+            setText(null);
+            if (value == null) {
+                setIcon(null);
+                setToolTipText(null);
+                return;
+            }
+            E typed = (E) value;
+            String name = LanguageService.displayName(idOf.apply(typed));
+            Icon icon = IconLoader.iconFor(imagePathOf.apply(typed), ICON_SIZE);
+            setIcon(icon);
+            if (icon == null) {
+                setText(name);
+            }
+            setToolTipText(name);
+        }
+    }
+
+    /** Team column: the (up to 5) member icons side by side, names as tooltip. */
+    private final class TeamRenderer extends JPanel implements TableCellRenderer {
+        private final List<JLabel> labels = new ArrayList<>();
+
+        TeamRenderer() {
+            super(new FlowLayout(FlowLayout.LEFT, 2, 1));
+            for (int i = 0; i < 5; i++) {
+                JLabel label = new JLabel();
+                labels.add(label);
+                add(label);
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
+            setBackground(isSelected ? t.getSelectionBackground() : t.getBackground());
+            List<T> members = value == null ? List.of() : (List<T>) value;
+            List<String> names = new ArrayList<>();
+            for (int i = 0; i < labels.size(); i++) {
+                JLabel label = labels.get(i);
+                T member = i < members.size() ? members.get(i) : null;
+                Icon icon = member == null || spec.icon() == null ? null : spec.icon().apply(member);
+                label.setIcon(icon);
+                label.setText(member != null && icon == null ? spec.label().apply(member) : null);
+                label.setForeground(isSelected ? t.getSelectionForeground() : t.getForeground());
+                if (member != null) {
+                    names.add(spec.label().apply(member));
+                }
+            }
+            setToolTipText(names.isEmpty() ? null : String.join(", ", names));
+            return this;
+        }
+    }
+
+    // ---------------------------------------------------------------- editor
+
+    private JComponent buildEditorArea() {
+        fortCombo.setPreferredSize(new Dimension(COMBO_WIDTH, COMBO_HEIGHT));
+        fortCombo.addActionListener(e -> {
+            if (binding || currentRow == null) {
+                return;
+            }
+            Fortification selected = (Fortification) fortCombo.getSelectedItem();
+            if (selected == currentRow.fortification) {
+                return;
+            }
+            currentRow.fortification = selected;
+            if (selected != null) {
+                lastSelectedFortification = selected;
+            }
+            currentRowChanged();
+        });
+
+        memberCombo.setPreferredSize(new Dimension(COMBO_WIDTH, COMBO_HEIGHT));
+        memberCombo.setEditable(true);
+        memberCombo.setEditor(new MemberComboEditor());
+        memberCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? LanguageService.displayName(KEY_NO_SELECTION) : memberDisplayName((MemberDraft) value));
+                return this;
+            }
+        });
+        refreshMemberCombo();
+        memberCombo.addActionListener(e -> {
+            if (binding || currentRow == null) {
+                return;
+            }
+            applyMember((MemberDraft) memberCombo.getSelectedItem());
+        });
+
+        buffLabel.setPreferredSize(new Dimension(BUFF_LABEL_WIDTH, COMBO_HEIGHT));
+        buffLabel.setForeground(FortificationTypeStyle.color(spec.fortificationType()));
+        teamEditorHolder.setOpaque(false);
+        // Always reserve a full team editor's size - otherwise a dialog opened
+        // without any team (empty guild: only the short "nothing selected" hint
+        // in here) is sized too small, and the first real team editor ends up
+        // out of sight. Also keeps the layout from jumping between selections.
+        Dimension editorSize = buildTeamEditor(new Row<>(null, -1)).getPreferredSize();
+        teamEditorHolder.setPreferredSize(editorSize);
+        teamEditorHolder.setMinimumSize(editorSize);
+
+        JPanel line = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        line.add(fortCombo);
+        line.add(memberCombo);
+        line.add(teamEditorHolder);
+        line.add(buffLabel);
+
+        // Inside a scroll pane the line keeps its preferred width and never
+        // wraps (a wrapped second line would be cut off by the split pane);
+        // a too narrow dialog gets a horizontal scroll bar instead.
+        JScrollPane lineScroller = new JScrollPane(line,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        lineScroller.setBorder(BorderFactory.createEmptyBorder());
+        lineScroller.getViewport().setOpaque(false);
+        lineScroller.setOpaque(false);
+
+        nothingSelectedLabel.setText(LanguageService.displayName(KEY_NOTHING_SELECTED, shortcutText(SHORTCUT_ADD)));
+        nothingSelectedLabel.setBorder(BorderFactory.createEmptyBorder(12, 8, 12, 8));
+        editorPanel.setBorder(BorderFactory.createTitledBorder(LanguageService.displayName(KEY_SELECTED_TEAM)));
+        editorPanel.add(lineScroller, BorderLayout.CENTER);
+        skipArrowButtonsInTabOrder(editorPanel);
+        return editorPanel;
+    }
+
+    /** The team editor (power, war flag/pet for heroes, 5 slots, F1-F5 templates) bound to {@code row}'s draft. */
+    private TeamEditorPanel<T> buildTeamEditor(Row<T> row) {
+        TeamExtras extras = withExtras
+                ? TeamExtras.forOtherDrafts(appContext.catalog(), () -> otherTeamsOfRowMember(row))
+                : null;
+        TeamEditorPanel<T> panel = new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, row.draft,
+                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), this::currentRowChanged, extras);
+        panel.enableTemplates(spec.templates(), spec.idOf());
+        skipArrowButtonsInTabOrder(panel);
+        return panel;
+    }
+
     /**
-     * Rebuilds every tracked {@link #memberCombos}' model from
-     * {@link #sortedMembers()} (preserving each combo's current selection) -
-     * called (deferred via {@link SwingUtilities#invokeLater}) after
-     * {@link MemberComboEditor} creates a new member, so it becomes pickable
-     * from every row, not just the one it was typed into; also called after
-     * every successful {@link #performSave}, so every row stays in sync with
-     * the freshly saved draft.
+     * Takes the drop-down arrow buttons of every combo box inside
+     * {@code container} out of the Tab order - the Material look and feel
+     * makes them focusable, so every Tab would otherwise stop twice per combo
+     * box (combo, then its arrow). The arrows stay clickable.
      */
-    private void refreshAllMemberCombos() {
-        List<MemberDraft> sorted = sortedMembers();
-        for (JComboBox<MemberDraft> combo : memberCombos) {
-            Object selected = combo.getSelectedItem();
-            DefaultComboBoxModel<MemberDraft> model = new DefaultComboBoxModel<>();
-            model.addElement(null);
-            sorted.forEach(model::addElement);
-            combo.setModel(model);
-            combo.setSelectedItem(selected);
+    private static void skipArrowButtonsInTabOrder(Container container) {
+        for (Component child : container.getComponents()) {
+            if (child instanceof JComboBox<?> combo) {
+                for (Component part : combo.getComponents()) {
+                    if (part instanceof JButton arrow) {
+                        arrow.setFocusable(false);
+                    }
+                }
+            } else if (child instanceof Container nested) {
+                skipArrowButtonsInTabOrder(nested);
+            }
+        }
+    }
+
+    private void applyMember(MemberDraft member) {
+        if (member == currentRow.member) {
+            return;
+        }
+        currentRow.member = member;
+        // Same convention as FortificationEntryDialog: "- none -" as member clears the team,
+        // so an unwanted line is dropped on save (power 0).
+        if (member == null && teamEditor != null) {
+            teamEditor.clear();
+        }
+        currentRowChanged();
+    }
+
+    /** Binds the editor area to {@code row} (or disables it for null). */
+    private void showRow(Row<T> row) {
+        commitPendingMemberEdit();
+        currentRow = row;
+
+        binding = true;
+        try {
+            fortCombo.setSelectedItem(row == null ? null : row.fortification);
+            memberCombo.setSelectedItem(row == null ? null : row.member);
+        } finally {
+            binding = false;
+        }
+        fortCombo.setEnabled(row != null);
+        memberCombo.setEnabled(row != null);
+
+        teamEditorHolder.removeAll();
+        teamEditor = null;
+        if (row == null) {
+            teamEditorHolder.add(nothingSelectedLabel, BorderLayout.CENTER);
+        } else {
+            teamEditor = buildTeamEditor(row);
+            teamEditorHolder.add(teamEditor, BorderLayout.CENTER);
+        }
+        updateBuffLabel();
+        teamEditorHolder.revalidate();
+        teamEditorHolder.repaint();
+    }
+
+    /**
+     * Applies text typed into the member combo that was not confirmed with
+     * Enter yet - before the editor switches to another row, so it can't end
+     * up on the wrong one.
+     */
+    private void commitPendingMemberEdit() {
+        if (currentRow == null || !memberCombo.isEditable()) {
+            return;
+        }
+        String text = ((JTextField) memberCombo.getEditor().getEditorComponent()).getText().trim();
+        if (currentRow.member != null && (memberDisplayName(currentRow.member).equalsIgnoreCase(text)
+                || currentRow.member.id.equalsIgnoreCase(text))) {
+            return; // unchanged - also keeps the right one of two members with the same name
+        }
+        Object typed = memberCombo.getEditor().getItem();
+        if (typed != currentRow.member) {
+            applyMember((MemberDraft) typed);
+        }
+    }
+
+    private void updateBuffLabel() {
+        if (currentRow == null) {
+            buffLabel.setText("");
+            buffLabel.setToolTipText(null);
+            return;
+        }
+        buffLabel.setText(buffCountOf(currentRow) + " ("
+                + String.format(Locale.ROOT, "%.1f", breakdownOf(currentRow).total()) + ")");
+        buffLabel.setToolTipText(currentRow.fortification != null && currentRow.fortification.buff() != null
+                ? BuffTexts.describe(currentRow.fortification.buff()) : "");
+    }
+
+    /**
+     * The other teams of {@code self}'s member - the source of its blocked
+     * war flags/pets (see {@link TeamExtras}): every other line currently
+     * showing that member, plus the member's saved teams no line is bound to.
+     */
+    private List<TeamDraft<T>> otherTeamsOfRowMember(Row<T> self) {
+        MemberDraft member = self.member;
+        if (member == null) {
+            return List.of();
+        }
+        List<TeamDraft<T>> result = new ArrayList<>();
+        Set<Integer> slotsWithRow = new HashSet<>();
+        for (Row<T> row : rows) {
+            if (row.boundMember == member) {
+                slotsWithRow.add(row.boundTeamIndex);
+            }
+            if (row != self && row.member == member) {
+                result.add(row.draft);
+            }
+        }
+        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
+        for (int i = 0; i < teams.size(); i++) {
+            if (!slotsWithRow.contains(i)) {
+                result.add(teams.get(i));
+            }
+        }
+        return result;
+    }
+
+    private void refreshMemberCombo() {
+        Object selected = memberCombo.getSelectedItem();
+        DefaultComboBoxModel<MemberDraft> model = new DefaultComboBoxModel<>();
+        model.addElement(null);
+        sortedMembers().forEach(model::addElement);
+        binding = true;
+        try {
+            memberCombo.setModel(model);
+            memberCombo.setSelectedItem(selected);
+        } finally {
+            binding = false;
         }
     }
 
     /**
-     * {@link ComboBoxEditor} for a member combo (see {@link #buildMemberCombo}):
-     * shows/edits a {@link MemberDraft}'s display name as plain text instead
-     * of falling back to {@link Object#toString()} (which {@link MemberDraft}
-     * does not override), and resolves the typed text back to a
-     * {@link MemberDraft} on commit - an existing member if the text matches
-     * one (see {@link #findMemberByDisplayOrId}), a freshly created one
-     * otherwise (added to {@link #draft}, capped at {@link #MAX_MEMBERS} like
-     * {@code GuildEditorDialog#onAddMember}), or {@code null} for blank text
-     * (same as picking "{@value #KEY_NO_SELECTION}" from the dropdown).
+     * {@link ComboBoxEditor} of the member combo: shows a member's display name
+     * and resolves typed text on commit - to an existing member (by display
+     * name or id), to a freshly created one (added to {@link #draft}, capped at
+     * {@link #MAX_MEMBERS}), or to {@code null} for blank text.
      */
     private final class MemberComboEditor implements ComboBoxEditor {
-        private final JComboBox<MemberDraft> combo;
         private final JTextField textField = new JTextField();
 
-        MemberComboEditor(JComboBox<MemberDraft> combo) {
-            this.combo = combo;
+        MemberComboEditor() {
             textField.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
         }
 
@@ -730,17 +939,13 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 JOptionPane.showMessageDialog(GuildTeamEntryDialog.this,
                         LanguageService.displayName("common.maxMembers", MAX_MEMBERS), LanguageService.displayName("common.notPossibleTitle"),
                         JOptionPane.WARNING_MESSAGE);
-                return combo.getSelectedItem();
+                return memberCombo.getSelectedItem();
             }
             MemberDraft created = new MemberDraft(typed, typed);
             ensureTeamCount(spec.teamsOf().apply(created), maxTeams);
             draft.members.add(created);
             Logger.log("Created guild member: " + typed);
-            // Deferred: this combo's own model/selection is still mid-update
-            // by JComboBox at this point (it called getItem() to find out
-            // what to select next) - rebuilding models now, including this
-            // one, would step on that. Runs right after, on the same EDT turn.
-            SwingUtilities.invokeLater(GuildTeamEntryDialog.this::refreshAllMemberCombos);
+            SwingUtilities.invokeLater(GuildTeamEntryDialog.this::refreshMemberCombo);
             return created;
         }
 
@@ -760,46 +965,301 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         }
     }
 
-    private TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, Runnable onChanged, TeamExtras extras) {
-        TeamEditorPanel<T> panel = new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, teamDraft,
-                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), onChanged, extras);
-        panel.enableTemplates(spec.templates(), spec.idOf());
+    // ------------------------------------------------------- toolbar/actions
+
+    private JComponent buildToolbar() {
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        saveButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_SAVE_TEAMS), SHORTCUT_SAVE));
+        saveButton.addActionListener(e -> performSave());
+
+        FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD, TOOLBAR_ICON_SIZE, Color.WHITE));
+        addButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_ADD_ROW), SHORTCUT_ADD));
+        addButton.addActionListener(e -> addRow());
+
+        FlatButton deleteButton = new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, IconLoader.RED));
+        deleteButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_DELETE_ROW), SHORTCUT_DELETE));
+        deleteButton.addActionListener(e -> deleteCurrentRow());
+
+        fortFilter.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == FILTER_ALL) {
+                    setText(LanguageService.displayName(KEY_FILTER_ALL) + " (" + rows.size() + ")");
+                } else if (value == FILTER_NONE) {
+                    setText(LanguageService.displayName(KEY_NO_SELECTION) + " (" + occupancy(null) + ")");
+                } else if (value instanceof Fortification f) {
+                    long used = occupancy(f);
+                    setText(LanguageService.displayName(f.id()) + " (" + used + "/" + f.capacity() + ")");
+                    if (!isSelected && used > f.capacity()) {
+                        setForeground(IconLoader.RED);
+                    }
+                }
+                return this;
+            }
+        });
+        fortFilter.addActionListener(e -> refilter());
+
+        searchField.setToolTipText(LanguageService.displayName(KEY_SEARCH_HINT));
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                refilter();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                refilter();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                refilter();
+            }
+        });
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        left.add(saveButton);
+        left.add(addButton);
+        left.add(deleteButton);
+        left.add(Box.createHorizontalStrut(16));
+        left.add(fortFilter);
+        left.add(new JLabel(LanguageService.displayName(KEY_SEARCH)));
+        left.add(searchField);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 4));
+        right.add(buildShortcutsButton());
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(left, BorderLayout.CENTER);
+        panel.add(right, BorderLayout.EAST);
         return panel;
     }
 
-    /**
-     * The other teams of whichever member {@code memberCombo} currently has
-     * selected for the row editing {@code rowDraft} - the source of that row's
-     * blocked war flags/pets (see {@link TeamExtras}). Mirrors
-     * {@code FortificationEntryDialog#otherTeamsOfRowMember}, with each row's
-     * current {@link RowState#boundMember}/{@link RowState#boundTeamIndex}
-     * as the slot it stands in for.
-     */
-    private List<TeamDraft<T>> otherTeamsOfRowMember(TeamDraft<T> rowDraft, JComboBox<MemberDraft> memberCombo) {
-        MemberDraft member = (MemberDraft) memberCombo.getSelectedItem();
-        if (member == null) {
-            return List.of();
-        }
-        List<TeamDraft<T>> result = new ArrayList<>();
-        Set<Integer> slotsWithRow = new HashSet<>();
-        for (RowState<T> row : rowStates) {
-            if (row.boundMember == member) {
-                slotsWithRow.add(row.boundTeamIndex);
-            }
-            if (row.teamDraft != rowDraft && row.memberCombo.getSelectedItem() == member) {
-                result.add(row.teamDraft);
-            }
-        }
-        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
-        for (int i = 0; i < teams.size(); i++) {
-            if (!slotsWithRow.contains(i)) {
-                result.add(teams.get(i));
-            }
-        }
-        return result;
+    /** "Shortcuts" button at the right end of the toolbar - shows {@link #shortcutsHtml()} in a popup below it. */
+    private JButton buildShortcutsButton() {
+        FlatButton button = new FlatButton(null);
+        button.setText(LanguageService.displayName(KEY_SHORTCUTS));
+        button.setToolTipText(LanguageService.displayName(KEY_SHORTCUTS));
+        button.addActionListener(e -> {
+            JLabel content = new JLabel(shortcutsHtml());
+            content.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+            JPopupMenu popup = new JPopupMenu();
+            popup.add(content);
+            // Right-aligned under the button, so it doesn't stick out of the dialog's right edge.
+            popup.show(button, button.getWidth() - popup.getPreferredSize().width, button.getHeight());
+        });
+        return button;
     }
 
-    /** Mirrors {@code FortificationEntryDialog#resolveTeamIndex} exactly - see there. */
+    /** Every shortcut of this dialog as an HTML table - key texts in the JVM's language, see {@link #shortcutText}. */
+    private String shortcutsHtml() {
+        String templateKeys = KeyEvent.getKeyText(KeyEvent.VK_F1) + " – " + KeyEvent.getKeyText(KeyEvent.VK_F5);
+        String shift = InputEvent.getModifiersExText(InputEvent.SHIFT_DOWN_MASK);
+        String[][] entries = {
+                {shortcutText(SHORTCUT_ADD), KEY_SHORTCUT_ADD},
+                {shortcutText(SHORTCUT_SAVE), KEY_SHORTCUT_SAVE},
+                {shortcutText(SHORTCUT_DELETE), KEY_SHORTCUT_DELETE},
+                {KeyEvent.getKeyText(KeyEvent.VK_ENTER), KEY_SHORTCUT_EDIT},
+                {KeyEvent.getKeyText(KeyEvent.VK_ENTER), KEY_SHORTCUT_MEMBER},
+                {templateKeys, KEY_SHORTCUT_LOAD_TEMPLATE},
+                {shift + "+" + templateKeys, KEY_SHORTCUT_SAVE_TEMPLATE},
+                {KeyEvent.getKeyText(KeyEvent.VK_TAB) + " / " + shift + "+" + KeyEvent.getKeyText(KeyEvent.VK_TAB),
+                        KEY_SHORTCUT_NEXT_FIELD},
+                {"A – Z", KEY_SHORTCUT_TYPE_AHEAD},
+        };
+        StringBuilder html = new StringBuilder("<html><b>")
+                .append(escapeHtml(LanguageService.displayName(KEY_SHORTCUTS)))
+                .append("</b><table cellpadding='3'>");
+        for (String[] entry : entries) {
+            html.append("<tr><td nowrap><b>").append(escapeHtml(entry[0])).append("</b></td><td>")
+                    .append(escapeHtml(LanguageService.displayName(entry[1]))).append("</td></tr>");
+        }
+        return html.append("</table></html>").toString();
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /** Fills the fortification filter: all / none / every fortification of this type (counts are rendered live). */
+    private void refreshFortFilter() {
+        Object selected = fortFilter.getSelectedItem();
+        DefaultComboBoxModel<Object> model = new DefaultComboBoxModel<>();
+        model.addElement(FILTER_ALL);
+        model.addElement(FILTER_NONE);
+        fortificationCatalog.stream()
+                .filter(f -> f.type() == spec.fortificationType())
+                .sorted(Comparator.comparing(f -> LanguageService.displayName(f.id())))
+                .forEach(model::addElement);
+        model.setSelectedItem(selected == null ? FILTER_ALL : selected);
+        fortFilter.setModel(model);
+    }
+
+    private JComponent buildStatusBar() {
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        return statusLabel;
+    }
+
+    private void updateStatus() {
+        long withoutFort = rows.stream().filter(r -> r.fortification == null).count();
+        long withoutMember = rows.stream().filter(GuildTeamEntryDialog::lacksMember).count();
+        long withoutPower = rows.stream().filter(GuildTeamEntryDialog::lacksPower).count();
+        statusLabel.setText(LanguageService.displayName(KEY_STATUS, rows.size(), withoutFort, withoutMember, withoutPower)
+                + (dirty ? " · " + LanguageService.displayName(KEY_UNSAVED) : ""));
+        fortFilter.repaint();
+    }
+
+    private void bindShortcuts() {
+        JRootPane root = getRootPane();
+        InputMap windowKeys = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap windowActions = root.getActionMap();
+        windowKeys.put(SHORTCUT_ADD, "c2w.addRow");
+        windowKeys.put(SHORTCUT_SAVE, "c2w.save");
+        windowActions.put("c2w.addRow", action(this::addRow));
+        windowActions.put("c2w.save", action(this::performSave));
+
+        InputMap tableKeys = table.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap tableActions = table.getActionMap();
+        tableKeys.put(SHORTCUT_DELETE, "c2w.deleteRow");
+        tableKeys.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "c2w.editRow");
+        tableActions.put("c2w.deleteRow", action(this::deleteCurrentRow));
+        tableActions.put("c2w.editRow", action(() -> {
+            if (currentRow != null) {
+                memberCombo.requestFocusInWindow();
+            }
+        }));
+        // F1-F5 straight from the table: load template into the selected team.
+        for (int slot = TeamTemplate.MIN_SLOT; slot <= TeamTemplate.MAX_SLOT; slot++) {
+            int templateSlot = slot;
+            String key = "c2w.tableTemplate" + slot;
+            tableKeys.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1 + slot - 1, 0), key);
+            tableActions.put(key, action(() -> {
+                if (teamEditor != null) {
+                    teamEditor.loadTemplate(templateSlot);
+                }
+            }));
+        }
+    }
+
+    private static Action action(Runnable runnable) {
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                runnable.run();
+            }
+        };
+    }
+
+    /** A shortcut's key text in the JVM's language, e.g. "Strg+N" / "Ctrl+N". */
+    private static String shortcutText(KeyStroke shortcut) {
+        String modifiers = InputEvent.getModifiersExText(shortcut.getModifiers());
+        String key = KeyEvent.getKeyText(shortcut.getKeyCode());
+        return modifiers.isEmpty() ? key : modifiers + "+" + key;
+    }
+
+    private static String withShortcut(String text, KeyStroke shortcut) {
+        return text + " (" + shortcutText(shortcut) + ")";
+    }
+
+    /** Appends a new, empty team - no save first (see class Javadoc). */
+    private void addRow() {
+        commitPendingMemberEdit();
+        Row<T> row = new Row<>(null, -1);
+        Object filtered = fortFilter.getSelectedItem();
+        if (filtered instanceof Fortification f) {
+            row.fortification = f;
+        } else if (filtered != FILTER_NONE && lastSelectedFortification != null
+                && occupancy(lastSelectedFortification) < lastSelectedFortification.capacity()) {
+            row.fortification = lastSelectedFortification;
+        }
+        rows.add(row);
+        searchField.setText("");
+        tableModel.fireTableRowsInserted(rows.size() - 1, rows.size() - 1);
+        dirty = true;
+        selectRow(row);
+        updateStatus();
+        memberCombo.requestFocusInWindow();
+    }
+
+    /**
+     * Deletes the selected line - and removes its team from the guild too (the
+     * slot it is bound to, see {@link Row#boundMember}), then saves. Confirmed
+     * first, since this cannot be undone. A never-saved line simply disappears.
+     */
+    private void deleteCurrentRow() {
+        Row<T> row = currentRow;
+        if (row == null) {
+            return;
+        }
+        int choice = JOptionPane.showConfirmDialog(this,
+                LanguageService.displayName("guildEntry.deleteTeamConfirm"),
+                LanguageService.displayName("guildEntry.deleteTeamTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+        if (row.boundMember != null) {
+            deleteBoundTeam(row.boundMember, row.boundTeamIndex);
+        }
+        int viewIndex = table.getSelectedRow();
+        int modelIndex = rows.indexOf(row);
+        showRow(null);
+        rows.remove(modelIndex);
+        tableModel.fireTableRowsDeleted(modelIndex, modelIndex);
+        if (table.getRowCount() > 0) {
+            int next = Math.min(Math.max(viewIndex, 0), table.getRowCount() - 1);
+            table.setRowSelectionInterval(next, next);
+        }
+        performSave();
+        updateStatus();
+    }
+
+    /**
+     * Removes the team at {@code teamIndex} from {@code member}'s teams and
+     * re-pads the list to {@link #maxTeams}, so its non-empty entries stay
+     * contiguous from index 0; lines bound to a later slot of the same member
+     * shift down by one to follow their team.
+     */
+    private void deleteBoundTeam(MemberDraft member, int teamIndex) {
+        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
+        if (teamIndex < 0 || teamIndex >= teams.size()) {
+            return;
+        }
+        teams.remove(teamIndex);
+        ensureTeamCount(teams, maxTeams);
+        for (Row<T> other : rows) {
+            if (other.boundMember == member && other.boundTeamIndex > teamIndex) {
+                other.boundTeamIndex--;
+            }
+        }
+    }
+
+    private void onClose() {
+        commitPendingMemberEdit();
+        if (dirty) {
+            int choice = JOptionPane.showConfirmDialog(this, LanguageService.displayName(KEY_UNSAVED_QUESTION), LanguageService.displayName(KEY_UNSAVED),
+                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (choice == JOptionPane.CANCEL_OPTION || choice == JOptionPane.CLOSED_OPTION) {
+                return;
+            }
+            if (choice == JOptionPane.YES_OPTION && !performSave()) {
+                return;
+            }
+            if (choice == JOptionPane.NO_OPTION) {
+                Logger.log("Guild " + spec.teamType() + " entry dialog closed - unsaved changes discarded");
+            }
+        }
+        dispose();
+    }
+
+    // ------------------------------------------------------------------ save
+
+    /**
+     * The slot a line of {@code memberId} is saved into: its preferred (= bound)
+     * slot if still free, else the first free empty slot, else the first free
+     * slot at all; -1 if every slot is taken by another line.
+     */
     private static <T> int resolveTeamIndex(List<TeamDraft<T>> teams, Set<String> boundKeys, String memberId,
                                             int preferredIndex) {
         if (preferredIndex >= 0 && preferredIndex < teams.size() && !boundKeys.contains(rowKey(memberId, preferredIndex))) {
@@ -822,200 +1282,125 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         return memberId + "#" + teamIndex;
     }
 
-    private MemberDraft findMemberDraft(String memberId) {
-        return draft.members.stream().filter(m -> m.id.equals(memberId)).findFirst().orElse(null);
-    }
-
-    private JPanel buildToolbarPanel() {
-        JPanel panel = new JPanel(new BorderLayout(8, 0));
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_TEAMS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
-        saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_TEAMS));
-        saveButton.addActionListener(e -> performSave());
-        buttons.add(saveButton);
-        panel.add(buttons, BorderLayout.WEST);
-        return panel;
-    }
-
     /**
-     * Resolves every row of {@link #rowStates} to a (member, teamIndex) slot,
-     * exactly like {@code FortificationEntryDialog#performSave} does for its
-     * own rows - empty rows (totalPower == 0) are simply skipped, a filled-in
-     * row with no member selected or with no free slot left for its member
-     * aborts the whole save with a warning dialog (returning {@code null}).
+     * Resolves every line to a (member, teamIndex) slot - empty lines (power 0)
+     * are skipped; a filled-in line without member or without a free slot
+     * aborts with a warning, selects that line and returns {@code null}.
      */
-    private List<RowResolution<T>> resolveResolutions() {
+    private List<Resolution<T>> resolveResolutions() {
         Set<String> boundKeys = new HashSet<>();
-        List<RowResolution<T>> resolutions = new ArrayList<>();
-
-        for (RowState<T> row : rowStates) {
-            if (row.teamDraft.totalPower == 0) {
-                continue; // empty row - simply dropped, same convention as GuildDraftConverter#toGuild
+        List<Resolution<T>> resolutions = new ArrayList<>();
+        for (Row<T> row : rows) {
+            if (lacksPower(row)) {
+                Logger.log("Guild " + spec.teamType() + " teams not saved: a team has members but no power");
+                selectRow(row);
+                JOptionPane.showMessageDialog(this,
+                        LanguageService.displayName(KEY_POWER_MISSING),
+                        LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
+                return null;
             }
-            MemberDraft selectedMember = (MemberDraft) row.memberCombo.getSelectedItem();
-            if (selectedMember == null) {
+            if (row.draft.totalPower == 0) {
+                continue; // nothing entered at all (e.g. a fresh line) - simply dropped
+            }
+            if (row.member == null) {
+                Logger.log("Guild " + spec.teamType() + " teams not saved: a filled-in team has no member");
+                selectRow(row);
                 JOptionPane.showMessageDialog(this,
                         LanguageService.displayName("common.rowWithoutMember"),
                         LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return null;
             }
-            List<TeamDraft<T>> teams = spec.teamsOf().apply(selectedMember);
-            int preferredIndex = selectedMember == row.boundMember ? row.boundTeamIndex : -1;
-            int idx = resolveTeamIndex(teams, boundKeys, selectedMember.id, preferredIndex);
+            List<TeamDraft<T>> teams = spec.teamsOf().apply(row.member);
+            int preferredIndex = row.member == row.boundMember ? row.boundTeamIndex : -1;
+            int idx = resolveTeamIndex(teams, boundKeys, row.member.id, preferredIndex);
             if (idx < 0) {
+                Logger.log("Guild " + spec.teamType() + " teams not saved: no free team slot left for member " + row.member.id);
+                selectRow(row);
                 JOptionPane.showMessageDialog(this,
-                        LanguageService.displayName("common.noFreeTeamSlot", memberDisplayName(selectedMember)),
+                        LanguageService.displayName("common.noFreeTeamSlot", memberDisplayName(row.member)),
                         LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
                 return null;
             }
-            boundKeys.add(rowKey(selectedMember.id, idx));
-            Fortification selectedFortification = (Fortification) row.fortCombo.getSelectedItem();
-            resolutions.add(new RowResolution<>(row, selectedMember, idx, row.teamDraft, selectedFortification));
+            boundKeys.add(rowKey(row.member.id, idx));
+            resolutions.add(new Resolution<>(row, row.member, idx));
         }
         return resolutions;
     }
 
-    private void applyResolutions(List<RowResolution<T>> resolutions) {
-        for (RowResolution<T> resolution : resolutions) {
-            TeamDraft<T> target = spec.teamsOf().apply(resolution.member()).get(resolution.teamIndex());
-            target.copyFrom(resolution.sourceDraft());
-            // Re-point this row at the (member, teamIndex) slot it was just
-            // written into - see RowState#boundMember. Without this, a row not
-            // restored from a lineup entry keeps boundMember == null, so the
-            // NEXT save (e.g. the auto-save behind every "+") resolves it to a
-            // fresh free slot and duplicates the team instead of updating it.
+    /**
+     * Writes every line into its slot, rebuilds this type's entries of the
+     * guild's "Original" lineup (NOT whatever lineup is open in the toolbar)
+     * and saves guild + lineup. Returns whether it was saved.
+     */
+    private boolean performSave() {
+        commitPendingMemberEdit();
+        List<Resolution<T>> resolutions = resolveResolutions();
+        if (resolutions == null) {
+            return false;
+        }
+        for (Resolution<T> resolution : resolutions) {
+            spec.teamsOf().apply(resolution.member()).get(resolution.teamIndex()).copyFrom(resolution.row().draft);
             resolution.row().boundMember = resolution.member();
             resolution.row().boundTeamIndex = resolution.teamIndex();
         }
-    }
-
-    /** One resolution per fortification-assigned, non-empty row - a row left on "- none -" for its fortification saves its team without deploying it anywhere. */
-    private List<Lineup.Entry> buildEntries(List<RowResolution<T>> resolutions) {
-        List<Lineup.Entry> entries = new ArrayList<>();
-        for (RowResolution<T> resolution : resolutions) {
-            if (resolution.fortification() == null) {
-                continue;
-            }
-            entries.add(new Lineup.Entry(resolution.fortification().id(), resolution.member().id, spec.teamType(),
-                    resolution.teamIndex()));
-        }
-        return entries;
-    }
-
-    private void performSave() {
-        List<RowResolution<T>> resolutions = resolveResolutions();
-        if (resolutions == null) {
-            return;
-        }
-
-        applyResolutions(resolutions);
         if (!TeamExtras.confirmNoConflict(this, draft)) {
-            return;
+            Logger.log("Guild " + spec.teamType() + " teams not saved: a member uses the same pet/war flag twice");
+            return false;
         }
 
-        // This dialog's own type's entries are regenerated wholesale from the
-        // current rows (rather than diffed against the previous lineup) -
-        // safe here because buildSection seeded one row per pre-existing
-        // entry of that type across every fortification, so the rows are
-        // always a complete picture of that type's assignments, unlike
-        // FortificationEntryDialog whose rows only ever covered one
-        // fortification's slots. The OTHER type's entries have no row
-        // representation in this dialog at all, so they are simply carried
-        // over unchanged instead of being dropped.
-        //
-        // Base is the guild's fixed "Original" lineup (see loadOrSeedOriginalLineup),
-        // NOT whatever lineup happens to be selected in the toolbar - so an
-        // optimized lineup that is currently open is never touched here.
-        List<Lineup.Entry> updatedEntries = new ArrayList<>();
-        updatedEntries.addAll(originalLineup.entries().stream()
+        List<Lineup.Entry> updatedEntries = new ArrayList<>(originalLineup.entries().stream()
                 .filter(e -> e.teamType() != spec.teamType())
                 .toList());
-        updatedEntries.addAll(buildEntries(resolutions));
-
-        // algorithmName stays empty: the Original lineup is hand-maintained
-        // here, never produced by a LineupAlgorithm.
-        Lineup updatedOriginal = new Lineup(originalLineup.guildId(), originalLineup.guildName(),
-                "", originalLineup.createdAt(), updatedEntries);
-        Guild updatedGuild = GuildDraftConverter.toGuild(draft);
-
+        for (Resolution<T> resolution : resolutions) {
+            if (resolution.row().fortification != null) {
+                updatedEntries.add(new Lineup.Entry(resolution.row().fortification.id(), resolution.member().id,
+                        spec.teamType(), resolution.teamIndex()));
+            }
+        }
         try {
-            // Also switches the app over to the freshly saved Original lineup,
-            // so the toolbar lineup combo box and the fortification map
-            // immediately show the in-game deployment that was just entered.
+            Lineup updatedOriginal = new Lineup(originalLineup.guildId(), originalLineup.guildName(),
+                    "", originalLineup.createdAt(), updatedEntries);
+            Guild updatedGuild = GuildDraftConverter.toGuild(draft);
             new LineupService(appContext).saveOriginal(updatedGuild, updatedOriginal, originalLineupPath);
             this.originalLineup = updatedOriginal;
             Logger.log("Saved guild " + spec.teamType() + " teams into the Original lineup");
-            // Keep every row's member combo (not just the one that triggered
-            // this save) in sync with the freshly saved draft - e.g. an
-            // inline-created member (see MemberComboEditor) that a
-            // WHEN_ANCESTOR-scoped refresh may have missed while this save
-            // was still pending.
-            refreshAllMemberCombos();
+            dirty = false;
+            refreshMemberCombo();
+            updateStatus();
+            return true;
         } catch (IllegalArgumentException ex) {
+            Logger.logException("Guild " + spec.teamType() + " teams not saved: invalid data", ex);
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         } catch (IOException ex) {
+            Logger.logException("Guild " + spec.teamType() + " teams not saved: could not write " + originalLineupPath, ex);
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
+        return false;
     }
+
+    // ----------------------------------------------------------------- types
 
     /**
-     * Bundles everything specific to this dialog's one type (Hero or Titan)
-     * that both {@link #buildSection} and {@link #addRow} need - the generic
-     * counterpart of the separate lambdas
-     * {@code FortificationEntryDialog#buildRows} passes into
-     * {@code buildRowsGeneric} for its two branches. Built once by the
-     * subclass (see {@code GuildHeroEntryDialog}/{@code GuildTitanEntryDialog})
-     * and passed into the superclass constructor. {@code templates}/{@code idOf}
-     * enable the team templates in every row, see {@link TeamEditorPanel#enableTemplates}.
+     * One team line. {@code member}/{@code fortification} are what the line
+     * currently shows; {@code boundMember}/{@code boundTeamIndex} the slot it
+     * was last saved into, so the next save UPDATES that team instead of
+     * resolving to a free slot and inserting a duplicate.
      */
-    protected record SectionSpec<T>(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
-                                    Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
-                                    FortificationType fortificationType, Lineup.TeamType teamType,
-                                    BiFunction<Fortification, T, Boolean> matchesBuff,
-                                    BiFunction<TeamDraft<T>, Fortification, TeamScoreCalculator.Breakdown> scoreBreakdownOf,
-                                    TeamTemplateRepository templates, Function<T, String> idOf) {
-    }
-
-    private static final class RowState<T> {
-        final TeamDraft<T> teamDraft;
-        final JComboBox<MemberDraft> memberCombo;
-        final FortComboBox fortCombo;
-
-        /**
-         * The team slot this row is currently bound to - the {@code (memberId,
-         * teamIndex)} primary key of the {@link HeroTeam}/{@link TitanTeam} it
-         * edits IN PLACE (see {@link HeroTeam#index()}). Seeded from the lineup
-         * entry's slot for a row restored by {@link #buildSection} and left
-         * {@code null}/{@code -1} for a brand new row (from the "+" button)
-         * that isn't tied to an existing team yet. Crucially, it is re-pointed
-         * to whatever slot the row was written into after every
-         * {@link #performSave} (see {@link #applyResolutions}), so a subsequent
-         * save UPDATES that same team instead of resolving to the next free
-         * slot and INSERTING a duplicate - the latter is what made repeated
-         * saves (and every "+" click, which auto-saves first) pile up new
-         * teams for rows that weren't restored from a lineup entry.
-         */
+    private static final class Row<T> {
+        final TeamDraft<T> draft = new TeamDraft<>();
+        MemberDraft member;
+        Fortification fortification;
         MemberDraft boundMember;
         int boundTeamIndex;
 
-        /** This row's panel in {@link #rowsPanel} - kept so the delete shortcut can map the focused component back to its row (see {@link #focusedRow}). */
-        final JPanel panel;
-
-        RowState(TeamDraft<T> teamDraft, JComboBox<MemberDraft> memberCombo, FortComboBox fortCombo,
-                 MemberDraft boundMember, int boundTeamIndex, JPanel panel) {
-            this.teamDraft = teamDraft;
-            this.memberCombo = memberCombo;
-            this.fortCombo = fortCombo;
+        Row(MemberDraft boundMember, int boundTeamIndex) {
             this.boundMember = boundMember;
             this.boundTeamIndex = boundTeamIndex;
-            this.panel = panel;
         }
     }
 
-    /** One row's save-time resolution to a real (member, teamIndex) slot, plus which fortification (if any) it should be deployed to. */
-    private record RowResolution<T>(RowState<T> row, MemberDraft member, int teamIndex, TeamDraft<T> sourceDraft,
-                                    Fortification fortification) {
+    private record Resolution<T>(Row<T> row, MemberDraft member, int teamIndex) {
     }
 }

@@ -5,6 +5,7 @@ import org.c2w.data.repository.*;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.*;
 import org.c2w.i18n.BuffTexts;
@@ -108,7 +109,7 @@ public final class FortificationEntryDialog extends JDialog {
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
 
-        setSize(950, Math.min(820, 140 + infoPanel.getPreferredSize().height + fortification.capacity() * 60));
+        GuiUtils.sizeToContent(this, 950, Math.min(820, 140 + infoPanel.getPreferredSize().height + fortification.capacity() * 60));
         setLocationRelativeTo(owner);
     }
 

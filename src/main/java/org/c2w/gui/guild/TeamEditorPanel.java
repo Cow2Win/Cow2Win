@@ -104,13 +104,13 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     /**
      * Same as {@link #TeamEditorPanel(List, Function, Function, Function, TeamDraft, String, Comparator)},
-     * with an additional callback invoked every time a slot selection change
-     * actually updates {@code teamDraft.members} (i.e. alongside
+     * with an additional callback invoked every time a real user change
+     * updates the draft - a slot selection or the power value (i.e. alongside
      * {@link #touchLastModified()} - NOT for the initial population from the
-     * given draft, same as that method) - so a caller like
-     * {@code org.c2w.gui.fort.FortificationEntryDialog} can keep a label
-     * derived from this team's current members (e.g. a buff-member count) in
-     * sync without polling. {@code onChanged} may be null (no-op), same as
+     * given draft, nor for merely reformatting the power field) - so a caller
+     * like {@code org.c2w.gui.fort.FortificationEntryDialog} can keep a label
+     * derived from this team (e.g. a buff-member count or score) in sync
+     * without polling. {@code onChanged} may be null (no-op), same as
      * {@code roleDescriber}.
      */
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
@@ -455,8 +455,15 @@ public final class TeamEditorPanel<T> extends JPanel {
             if (formattingPowerField) {
                 return;
             }
-            teamDraft.totalPower = parsePower(powerField.getText());
+            int power = parsePower(powerField.getText());
+            if (power == teamDraft.totalPower) {
+                return;
+            }
+            teamDraft.totalPower = power;
             touchLastModified();
+            if (onChanged != null) {
+                onChanged.run();
+            }
         }));
         powerField.addFocusListener(new FocusAdapter() {
             @Override
