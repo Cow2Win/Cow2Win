@@ -4,6 +4,7 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.data.repository.TeamTemplateRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
@@ -760,8 +761,10 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     }
 
     private TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, Runnable onChanged, TeamExtras extras) {
-        return new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, teamDraft,
+        TeamEditorPanel<T> panel = new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, teamDraft,
                 LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), onChanged, extras);
+        panel.enableTemplates(spec.templates(), spec.idOf());
+        return panel;
     }
 
     /**
@@ -964,13 +967,15 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
      * {@code FortificationEntryDialog#buildRows} passes into
      * {@code buildRowsGeneric} for its two branches. Built once by the
      * subclass (see {@code GuildHeroEntryDialog}/{@code GuildTitanEntryDialog})
-     * and passed into the superclass constructor.
+     * and passed into the superclass constructor. {@code templates}/{@code idOf}
+     * enable the team templates in every row, see {@link TeamEditorPanel#enableTemplates}.
      */
     protected record SectionSpec<T>(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                                     Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
                                     FortificationType fortificationType, Lineup.TeamType teamType,
                                     BiFunction<Fortification, T, Boolean> matchesBuff,
-                                    BiFunction<TeamDraft<T>, Fortification, TeamScoreCalculator.Breakdown> scoreBreakdownOf) {
+                                    BiFunction<TeamDraft<T>, Fortification, TeamScoreCalculator.Breakdown> scoreBreakdownOf,
+                                    TeamTemplateRepository templates, Function<T, String> idOf) {
     }
 
     private static final class RowState<T> {

@@ -2,10 +2,14 @@ package org.c2w.gui.guild;
 
 
 import org.c2w.data.model.Pet;
+import org.c2w.data.model.TeamTemplate;
 import org.c2w.data.model.WarFlag;
+import org.c2w.data.repository.TeamTemplateRepository;
+import org.c2w.domain.TeamTemplates;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -17,14 +21,19 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -32,6 +41,9 @@ import java.util.function.Supplier;
  * {@link TeamExtras} - a war flag and a pet combo box, then
  * {@value #SLOT_COUNT} member slot combo boxes, all in one FlowLayout row
  * (in exactly this order: power, war flag, pet, members).
+ *
+ * <p>Optionally (see {@link #enableTemplates}) F1-F5 fills the member slots
+ * from a stored team template and Shift+F1-F5 saves the row as one.
  */
 public final class TeamEditorPanel<T> extends JPanel {
 
@@ -53,6 +65,12 @@ public final class TeamEditorPanel<T> extends JPanel {
     private static final String KEY_WAR_FLAG = "teamEditor.warFlag";
     private static final String KEY_PET = "teamEditor.pet";
 
+    /** Language file keys for the team templates (see {@link #enableTemplates}). */
+    private static final String KEY_TEMPLATE_HINT = "teamEditor.templateHint";
+    private static final String KEY_TEMPLATE_OVERWRITE_TITLE = "teamEditor.templateOverwriteTitle";
+    private static final String KEY_TEMPLATE_OVERWRITE = "teamEditor.templateOverwrite";
+    private static final String KEY_TEMPLATE_SAVE_FAILED = "teamEditor.templateSaveFailed";
+
     private final List<T> sortedCatalog;
     private final Function<T, String> label;
     private final Function<T, Icon> icon;
@@ -73,6 +91,10 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     private boolean refreshing;
     private boolean formattingPowerField;
+
+    /** Team templates of this row's kind and how to get an entry's id - both null until {@link #enableTemplates} (= no templates). */
+    private TeamTemplateRepository templates;
+    private Function<T, String> idOf;
 
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                     Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
@@ -515,6 +537,193 @@ public final class TeamEditorPanel<T> extends JPanel {
     }
 
     /**
+     * Enables the team templates for this row: F1-F5 fills the 5 slots with
+     * template 1-5 of {@code templates} (see {@link #loadTemplate}),
+     * Shift+F1-F5 saves the row's current members as that template (see
+     * {@link #saveTemplate}), and the row's tooltips mention both. The panel
+     * itself is generic and does not know whether it edits heroes or titans
+     * - the caller passes the matching repository (e.g. {@code
+     * catalog.heroTemplates()}) and how to get an entry's id ({@code
+     * Hero::id}). Not calling this (or passing a null repository) means
+     * no templates.
+     *
+     * <p>The keys are bound with {@link JComponent#WHEN_FOCUSED} directly on
+     * every focusable part of the row (power field, war flag/pet combo
+     * boxes, member slots): WHEN_FOCUSED bindings of the focused component
+     * are processed before any WHEN_ANCESTOR_OF_FOCUSED_COMPONENT binding -
+     * which is where a look and feel puts its own combo box keys (e.g. F4 =
+     * toggle popup under the Windows look and feel) - so these bindings
+     * always win. An open dropdown is closed first. Typing to jump in a
+     * combo box is unaffected: F-keys produce no key-typed character. The
+     * same bindings are also put on the panel as an ancestor binding for
+     * anything else inside the row.
+     */
+    public void enableTemplates(TeamTemplateRepository templates, Function<T, String> idOf) {
+        if (templates == null) {
+            return;
+        }
+        if (idOf == null) {
+            throw new IllegalArgumentException("idOf must not be null");
+        }
+        this.templates = templates;
+        this.idOf = idOf;
+
+        List<JComponent> focusables = new ArrayList<>();
+        focusables.add(powerField);
+        if (warFlagCombo != null) {
+            focusables.add(warFlagCombo);
+        }
+        if (petCombo != null) {
+            focusables.add(petCombo);
+        }
+        focusables.addAll(combos);
+        for (JComponent component : focusables) {
+            bindTemplateKeys(component, JComponent.WHEN_FOCUSED);
+        }
+        bindTemplateKeys(this, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        String hint = LanguageService.displayName(KEY_TEMPLATE_HINT);
+        setToolTipText(hint);
+        powerField.setToolTipText(hint);
+        updateComboTooltips();
+    }
+
+    private void bindTemplateKeys(JComponent component, int condition) {
+        InputMap inputMap = component.getInputMap(condition);
+        ActionMap actionMap = component.getActionMap();
+        for (int slot = TeamTemplate.MIN_SLOT; slot <= TeamTemplate.MAX_SLOT; slot++) {
+            int keyCode = KeyEvent.VK_F1 + slot - 1;
+            int templateSlot = slot;
+            String loadKey = "c2w.loadTeamTemplate" + slot;
+            String saveKey = "c2w.saveTeamTemplate" + slot;
+            inputMap.put(KeyStroke.getKeyStroke(keyCode, 0), loadKey);
+            inputMap.put(KeyStroke.getKeyStroke(keyCode, InputEvent.SHIFT_DOWN_MASK), saveKey);
+            actionMap.put(loadKey, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    loadTemplate(templateSlot);
+                }
+            });
+            actionMap.put(saveKey, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    saveTemplate(templateSlot);
+                }
+            });
+        }
+    }
+
+    /**
+     * Replaces all 5 member slots with template {@code slot}, in template
+     * order (fewer entries = remaining slots emptied, ids no longer in the
+     * catalog are skipped, see {@link TeamTemplates#toSlots}), without
+     * asking. Power, war flag and pet stay as they are. Counts as a real
+     * user change: touches lastModified and fires {@code onChanged}. Does
+     * nothing at all if templates are not enabled or the slot is empty.
+     */
+    void loadTemplate(int slot) {
+        if (templates == null) {
+            return;
+        }
+        Optional<TeamTemplate> template = templates.template(slot);
+        if (template.isEmpty()) {
+            return;
+        }
+        hidePopups();
+        List<T> slots = TeamTemplates.toSlots(template.get(), sortedCatalog, idOf, SLOT_COUNT);
+        refreshing = true;
+        try {
+            // Full models first - a slot's current model hides whatever another slot had selected so far.
+            for (int i = 0; i < SLOT_COUNT; i++) {
+                combos.get(i).setModel(fullModelWithout(new HashSet<>()));
+                combos.get(i).setSelectedItem(slots.get(i));
+            }
+        } finally {
+            refreshing = false;
+        }
+        syncDraftFromCombos();
+        refreshComboOptions();
+        updateRoleLabels();
+        updateComboTooltips();
+        touchLastModified();
+        if (onChanged != null) {
+            onChanged.run();
+        }
+    }
+
+    /**
+     * Saves the row's current members (non-empty slots, in slot order) as
+     * template {@code slot}, right away and independently of whether the
+     * surrounding dialog is saved later - templates are not guild data. An
+     * occupied slot is only overwritten after confirmation (showing the old
+     * and the new lineup); an empty row does nothing, as does a template
+     * that already holds exactly these members.
+     */
+    private void saveTemplate(int slot) {
+        if (templates == null) {
+            return;
+        }
+        hidePopups();
+        List<String> ids = TeamTemplates.memberIds(selectedMembers(), idOf);
+        if (ids.isEmpty()) {
+            return;
+        }
+        Optional<TeamTemplate> existing = templates.template(slot);
+        if (existing.isPresent()) {
+            if (existing.get().memberIds().equals(ids)) {
+                return;
+            }
+            int answer = JOptionPane.showConfirmDialog(this,
+                    LanguageService.displayName(KEY_TEMPLATE_OVERWRITE, slot,
+                            namesOf(existing.get().memberIds()), namesOf(ids)),
+                    LanguageService.displayName(KEY_TEMPLATE_OVERWRITE_TITLE),
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (answer != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+        try {
+            templates.save(slot, ids);
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not save team template " + slot + " to " + templates.templateFile(), e);
+            JOptionPane.showMessageDialog(this,
+                    LanguageService.displayName(KEY_TEMPLATE_SAVE_FAILED, slot, e.getMessage()),
+                    LanguageService.displayName(KEY_TEMPLATE_OVERWRITE_TITLE), JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** The selected entry of every slot (null = empty), in slot order. */
+    private List<T> selectedMembers() {
+        List<T> selected = new ArrayList<>(SLOT_COUNT);
+        for (JComboBox<T> combo : combos) {
+            @SuppressWarnings("unchecked")
+            T item = (T) combo.getSelectedItem();
+            selected.add(item);
+        }
+        return selected;
+    }
+
+    /** Display names for template ids, comma-separated - an id not in the catalog is shown as is. */
+    private String namesOf(List<String> ids) {
+        Map<String, T> byId = new HashMap<>();
+        sortedCatalog.forEach(entry -> byId.putIfAbsent(idOf.apply(entry), entry));
+        return ids.stream()
+                .map(id -> byId.containsKey(id) ? label.apply(byId.get(id)) : id)
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Closes any open dropdown of this row before its content is changed by a template key. */
+    private void hidePopups() {
+        combos.forEach(JComboBox::hidePopup);
+        if (warFlagCombo != null) {
+            warFlagCombo.hidePopup();
+        }
+        if (petCombo != null) {
+            petCombo.hidePopup();
+        }
+    }
+
+    /**
      * Resets this team back to empty: every slot combo goes back to
      * "- none -" and the power field back to 0, exactly as if each slot had
      * been cleared out by hand one at a time. Used by
@@ -649,17 +858,29 @@ public final class TeamEditorPanel<T> extends JPanel {
      * combo box itself (not just in the expanded dropdown), so it stays
      * available even while the combo box is closed, in case the renderer
      * shows only the icon instead of the name because one is available (see
-     * class Javadoc on icon). No-op if no icon function was supplied (e.g.
-     * titan teams) - there the renderer shows the name as text anyway.
+     * class Javadoc on icon). Without an icon function (e.g. titan teams)
+     * the renderer shows the name as text anyway, so no name is added then.
+     * If templates are enabled (see {@link #enableTemplates}), the template
+     * key hint is added below the name (or is the whole tooltip).
      */
     private void updateComboTooltips() {
-        if (icon == null) {
+        String hint = templates == null ? null : LanguageService.displayName(KEY_TEMPLATE_HINT);
+        if (icon == null && hint == null) {
             return;
         }
         for (JComboBox<T> combo : combos) {
             @SuppressWarnings("unchecked")
             T selected = (T) combo.getSelectedItem();
-            combo.setToolTipText(selected == null ? null : label.apply(selected));
+            String name = icon == null || selected == null ? null : label.apply(selected);
+            if (hint == null || name == null) {
+                combo.setToolTipText(name == null ? hint : name);
+            } else {
+                combo.setToolTipText("<html>" + escapeHtml(name) + "<br>" + escapeHtml(hint) + "</html>");
+            }
         }
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

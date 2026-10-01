@@ -31,7 +31,8 @@ public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {
         return new SectionSpec<>(catalog.heroes().findAll(), GuildHeroEntryDialog::heroLabel,
                 h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), Comparator.comparing(GuildHeroEntryDialog::heroLabel),
                 m -> m.heroTeams, FortificationType.HERO, Lineup.TeamType.HERO,
-                GuildHeroEntryDialog::heroMatchesBuff, GuildHeroEntryDialog::heroScoreBreakdown);
+                GuildHeroEntryDialog::heroMatchesBuff, GuildHeroEntryDialog::heroScoreBreakdown,
+                catalog.heroTemplates(), Hero::id);
     }
 
     private static String heroLabel(Hero hero) {

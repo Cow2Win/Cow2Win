@@ -1,0 +1,22 @@
+[
+  {
+    "slot": 1,
+    "titanIds": ["eden", "angus", "silva", "avalon", "verdoc-and-phyto"]
+  },
+  {
+    "slot": 2,
+    "titanIds": ["ignis", "vulcan", "aherona-and-pyro", "araji", "moloch"]
+  },
+  {
+    "slot": 3,
+    "titanIds": ["nova", "sigurd", "mairi", "hyperion", "Tidus-and-gelo"]
+  },
+  {
+    "slot": 4,
+    "titanIds": ["solaris", "amon", "iyari", "lumira", "rigel"]
+  },
+  {
+    "slot": 5,
+    "titanIds": ["tenebris", "mort", "keros", "brustar", "umbra-and-caliga"]
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "sebastian-nebula",
+    "heroIds": ["sebastian", "nebula"],
+    "source": "C2W"
+  },
+  {
+    "id": "krista-lars",
+    "heroIds": ["krista", "lars"],
+    "source": "C2W"
+  },
+  {
+    "id": "augustus-orion-dorian",
+    "heroIds": ["augustus", "orion", "dorian"],
+    "source": "C2W"
+  }
+]

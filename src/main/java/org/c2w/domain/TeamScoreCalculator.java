@@ -30,11 +30,20 @@ import java.util.List;
  *     flag is marked for this fortification, otherwise
  *     {@link #WAR_FLAG_PRESENT_PERCENT} for merely having one (its strength
  *     is not part of the power);</li>
- *     <li><b>team combos</b>: not implemented yet (planned: +1.25 % once).</li>
+ *     <li><b>team combos</b>: +{@link #COMBO_PERCENT} once if at least one
+ *     active {@link TeamCombo} matches the team (all of its heroes are in
+ *     the team) - no matter how many match, and independent of the
+ *     fortification (see {@link #matchingCombos(HeroTeam)}).</li>
  * </ul>
- * Theoretical range of B: -1.25 % ... +11.25 % (+12.5 % once combos exist).
+ * Theoretical range of B: -1.25 % ... +12.5 %.
  * Power stays the dominating factor - the bonus only decides between teams
  * of similar power.
+ *
+ * <p>The hero combos are loaded once at startup ({@code heroCombos.json},
+ * see {@code HeroComboRepository}) and registered via {@link
+ * #setHeroCombos}; until then (and in tests that do not set them) there are
+ * none. Every hero-team method also has an overload taking the combos
+ * explicitly.
  *
  * <h2>Titan teams (unchanged for now)</h2>
  * Sum of every titan's {@link CowScoreTier} value (buffFitScore at a buffed
@@ -65,28 +74,70 @@ public final class TeamScoreCalculator {
     /** Bonus in percent for merely fielding a war flag (not marked for the fortification). */
     public static final double WAR_FLAG_PRESENT_PERCENT = 0.6;
 
+    /** Bonus in percent if at least one active team combo matches the team - once per team, fortification-independent. */
+    public static final double COMBO_PERCENT = 1.25;
+
+    /** The hero combos registered at startup - see {@link #setHeroCombos}. */
+    private static volatile TeamCombos heroCombos = TeamCombos.NONE;
+
     private TeamScoreCalculator() {
+    }
+
+    /**
+     * Registers the hero combos every hero-team calculation without explicit
+     * combos uses - called once at startup ({@code WorkspaceBootstrap}).
+     * null clears them.
+     */
+    public static void setHeroCombos(TeamCombos combos) {
+        heroCombos = combos == null ? TeamCombos.NONE : combos;
+    }
+
+    /** The hero combos currently registered via {@link #setHeroCombos}. */
+    public static TeamCombos heroCombos() {
+        return heroCombos;
     }
 
     /**
      * The individual bonus components of a hero team at one fortification,
      * each in percent - see the class Javadoc for how each is determined.
      */
-    public record HeroBonus(double rolePercent, double relationPercent, double petPercent, double warFlagPercent) {
+    public record HeroBonus(double rolePercent, double relationPercent, double petPercent, double warFlagPercent,
+                            double comboPercent) {
 
         /** The bonus B in percent - the sum of all components. */
         public double totalPercent() {
-            return rolePercent + relationPercent + petPercent + warFlagPercent;
+            return rolePercent + relationPercent + petPercent + warFlagPercent + comboPercent;
         }
 
-        /** The components in a fixed order (role, relation, pet, war flag) - see {@link Breakdown#memberScores()}. */
+        /** The components in a fixed order (role, relation, pet, war flag, combo) - see {@link Breakdown#memberScores()}. */
         List<Double> asList() {
-            return List.of(rolePercent, relationPercent, petPercent, warFlagPercent);
+            return List.of(rolePercent, relationPercent, petPercent, warFlagPercent, comboPercent);
         }
     }
 
-    /** The bonus components of {@code team} at {@code fortification} - see the class Javadoc. */
+    /**
+     * The active registered hero combos (see {@link #setHeroCombos}) all of
+     * whose heroes are in {@code team}, in file order - empty if none match.
+     */
+    public static List<TeamCombo> matchingCombos(HeroTeam team) {
+        return matchingCombos(team, heroCombos);
+    }
+
+    /** Like {@link #matchingCombos(HeroTeam)}, with explicitly given {@code combos}. */
+    public static List<TeamCombo> matchingCombos(HeroTeam team, TeamCombos combos) {
+        if (team.heroes() == null || combos == null) {
+            return List.of();
+        }
+        return combos.matching(team.heroes().stream().map(Hero::id).toList());
+    }
+
+    /** The bonus components of {@code team} at {@code fortification}, with the registered hero combos - see the class Javadoc. */
     public static HeroBonus heroBonus(HeroTeam team, Fortification fortification) {
+        return heroBonus(team, fortification, heroCombos);
+    }
+
+    /** Like {@link #heroBonus(HeroTeam, Fortification)}, with explicitly given {@code combos}. */
+    public static HeroBonus heroBonus(HeroTeam team, Fortification fortification, TeamCombos combos) {
         Buff buff = fortification.buff();
         String fortificationId = fortification.id();
 
@@ -103,32 +154,49 @@ public final class TeamScoreCalculator {
         if (team.warFlag() != null) {
             warFlag = team.warFlag().isMarkedFor(fortificationId) ? WAR_FLAG_MARKED_PERCENT : WAR_FLAG_PRESENT_PERCENT;
         }
-        return new HeroBonus(role, relation, pet, warFlag);
+        double combo = matchingCombos(team, combos).isEmpty() ? 0 : COMBO_PERCENT;
+        return new HeroBonus(role, relation, pet, warFlag, combo);
     }
 
     /**
-     * Scores {@code team} against {@code fortification}: totalPower / 100 000
-     * x (1 + B) - see the class Javadoc. {@link Breakdown#memberScores()}
-     * holds the four bonus components (role, relation, pet, war flag)
-     * converted into score points (powerTerm x percent / 100), so that
-     * total = powerTerm + sum(memberScores) holds for hero and titan teams alike.
+     * Scores {@code team} against {@code fortification} with the registered
+     * hero combos: totalPower / 100 000 x (1 + B) - see the class Javadoc.
+     * {@link Breakdown#memberScores()} holds the five bonus components
+     * (role, relation, pet, war flag, combo) converted into score points
+     * (powerTerm x percent / 100), so that total = powerTerm +
+     * sum(memberScores) holds for hero and titan teams alike.
      */
     public static Breakdown scoreFor(HeroTeam team, Fortification fortification) {
-        HeroBonus bonus = heroBonus(team, fortification);
+        return scoreFor(team, fortification, heroCombos);
+    }
+
+    /** Like {@link #scoreFor(HeroTeam, Fortification)}, with explicitly given {@code combos}. */
+    public static Breakdown scoreFor(HeroTeam team, Fortification fortification, TeamCombos combos) {
+        HeroBonus bonus = heroBonus(team, fortification, combos);
         double powerTerm = team.totalPower() / POWER_DIVISOR;
         List<Double> bonusPoints = bonus.asList().stream().map(percent -> powerTerm * percent / 100.0).toList();
         return breakdownFor(bonusPoints, powerTerm);
     }
 
     /**
-     * The fortification-independent score of {@code team} - used by the
-     * lineup algorithms for fortifications without a buff and as a general
-     * ranking (see {@code HeroTeam#sortScore()}): totalPower / 100 000 x
-     * (1 + {@link #WAR_FLAG_PRESENT_PERCENT} if the team fields a war flag).
-     * Everything else in the bonus depends on a specific fortification.
+     * The fortification-independent score of {@code team} with the
+     * registered hero combos - used by the lineup algorithms for
+     * fortifications without a buff and as a general ranking (see {@code
+     * HeroTeam#sortScore()}): totalPower / 100 000 x (1 + {@link
+     * #WAR_FLAG_PRESENT_PERCENT} if the team fields a war flag + {@link
+     * #COMBO_PERCENT} if a team combo matches). Everything else in the bonus
+     * depends on a specific fortification.
      */
     public static double sortScore(HeroTeam team) {
+        return sortScore(team, heroCombos);
+    }
+
+    /** Like {@link #sortScore(HeroTeam)}, with explicitly given {@code combos}. */
+    public static double sortScore(HeroTeam team, TeamCombos combos) {
         double percent = team.warFlag() != null ? WAR_FLAG_PRESENT_PERCENT : 0;
+        if (!matchingCombos(team, combos).isEmpty()) {
+            percent += COMBO_PERCENT;
+        }
         return team.totalPower() / POWER_DIVISOR * (1 + percent / 100.0);
     }
 
@@ -154,8 +222,8 @@ public final class TeamScoreCalculator {
     /**
      * One team's score breakdown against one fortification: total =
      * powerTerm + sum(memberScores). For a titan team memberScores are the
-     * per-titan tier values; for a hero team they are the four bonus
-     * components (role, relation, pet, war flag) in score points - see
+     * per-titan tier values; for a hero team they are the five bonus
+     * components (role, relation, pet, war flag, combo) in score points - see
      * {@link #scoreFor(HeroTeam, Fortification)}.
      */
     public record Breakdown(List<Double> memberScores, double powerTerm, double total) {

@@ -31,7 +31,8 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
         return new SectionSpec<>(catalog.titans().findAll(), GuildTitanEntryDialog::titanLabel,
                 t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildTitanEntryDialog::titanLabel),
                 m -> m.titanTeams, FortificationType.TITAN, Lineup.TeamType.TITAN,
-                GuildTitanEntryDialog::titanMatchesBuff, GuildTitanEntryDialog::titanScoreBreakdown);
+                GuildTitanEntryDialog::titanMatchesBuff, GuildTitanEntryDialog::titanScoreBreakdown,
+                catalog.titanTemplates(), Titan::id);
     }
 
     private static String titanLabel(Titan titan) {

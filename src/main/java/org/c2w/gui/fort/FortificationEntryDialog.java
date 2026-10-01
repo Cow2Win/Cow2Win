@@ -125,14 +125,16 @@ public final class FortificationEntryDialog extends JDialog {
                     Comparator.comparing(FortificationEntryDialog::heroLabel),
                     m -> m.heroTeams, Lineup.TeamType.HERO,
                     hero -> fortification.buff() instanceof RoleBuff roleBuff && hero.roles().contains(roleBuff.role()),
-                    this::heroScoreBreakdown);
+                    this::heroScoreBreakdown,
+                    appContext.catalog().heroTemplates(), Hero::id);
         } else {
             buildRowsGeneric(appContext.catalog().titans().findAll(), FortificationEntryDialog::titanLabel,
                     t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE),
                     Comparator.comparing(FortificationEntryDialog::titanLabel),
                     m -> m.titanTeams, Lineup.TeamType.TITAN,
                     titan -> fortification.buff() instanceof ElementBuff elementBuff && titan.element() == elementBuff.element(),
-                    this::titanScoreBreakdown);
+                    this::titanScoreBreakdown,
+                    appContext.catalog().titanTemplates(), Titan::id);
         }
     }
 
@@ -165,7 +167,8 @@ public final class FortificationEntryDialog extends JDialog {
     private <T> void buildRowsGeneric(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                                       Comparator<T> catalogOrder, Function<MemberDraft, List<TeamDraft<T>>> teamsOf,
                                       Lineup.TeamType teamType, Function<T, Boolean> matchesBuff,
-                                      Function<TeamDraft<T>, TeamScoreCalculator.Breakdown> scoreBreakdownOf) {
+                                      Function<TeamDraft<T>, TeamScoreCalculator.Breakdown> scoreBreakdownOf,
+                                      TeamTemplateRepository templates, Function<T, String> idOf) {
         List<RowState<T>> rowStates = new ArrayList<>();
         String fortificationName = LanguageService.displayName(fortification.id());
 
@@ -207,6 +210,7 @@ public final class FortificationEntryDialog extends JDialog {
             TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
                     () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber),
                     extras);
+            teamEditor.enableTemplates(templates, idOf);
             updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
             // Picking "- none -" (null, see KEY_NO_SELECTION) here means this
             // slot's team should lose its assignment to this fortification -

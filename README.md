@@ -89,7 +89,9 @@ Implementation: `maven-shade-plugin` (executable jar) ->
 - **Workspace** - all user data: one subfolder per guild (`guild.json` plus
   any number of `.lineup` files), the editable CowScore files
   (`cowScore.json`, `titanCowScore.json`, `petCowScore.json`,
-  `warFlagCowScore.json`) and the log file. Defaults to
+  `warFlagCowScore.json`), the hand-maintained hero combos
+  (`heroCombos.json`), the team templates (`heroTemplates.json`,
+  `titanTemplates.json`) and the log file. Defaults to
   `<user.home>/.cow2Win/workspace`, configurable in the Settings dialog; a
   change takes effect after a restart.
 - **`config.properties`** - language, workspace/backup folder, default
@@ -177,7 +179,8 @@ folder (`new Catalog(tempDir)`).
   `petCowScore.json`/`warFlagCowScore.json`.
 - **CowScore** of a hero team at a fortification: `totalPower / 100 000 x
   (1 + B)`, where the bonus `B` comes from matching roles, marked heroes,
-  a marked pet and the war flag - see `TeamScoreCalculator`'s class Javadoc.
+  a marked pet, the war flag and a matching hero combo - see
+  `TeamScoreCalculator`'s class Javadoc.
   Titan teams still use the tier sum plus power.
 - **Fortification** (`id`, `type` HERO/TITAN, `capacity`, `captureBonus`,
   `row`/`column` for the map layout, `buff`, `prerequisites`,
@@ -221,6 +224,29 @@ folder (`new Catalog(tempDir)`).
   `CowScoreFiles` (`generalScore`/`buffFitScores`); a
   `generalScore`/`buffFitScores` left over in `titans.json` is ignored and
   logged.
+- Hero combos (`heroCombos.json`, see `TeamComboFiles`): heroes with
+  synergies not visible in the power -
+  `[{"id": "krista-lars", "heroIds": ["krista", "lars"], "source": "C2W", "deactivated": "2026-09-30"}, ...]`
+  (2-5 heroes, `deactivated` optional). Combo names are not in the
+  language files: a combo is displayed by its heroes' localized names
+  ("Krista + Lars", see `ComboTexts`), unless the optional `name` sets a
+  custom label, which is shown untranslated. There is no in-app editor yet - the
+  workspace copy is edited by hand. On every start the shipped `C2W` combos
+  are merged in (replaced/added/removed by `id`, the previous file backed up
+  as `heroCombos.json.before-update-<date>.bak`); `USER` combos are never
+  touched. **A shipped combo edited or deactivated by hand must get
+  `"source": "USER"`**, otherwise the next start replaces it. Invalid
+  combos are logged and ignored.
+- Team templates (`heroTemplates.json`/`titanTemplates.json`, see
+  `TeamTemplateFiles`): in any team row F1-F5 fills the 5 slots with template
+  1-5 (power, war flag and pet stay), Shift+F1-F5 saves the row as that
+  template right away (asking before overwriting) -
+  `[{"slot": 1, "titanIds": ["eden", "angus"]}, ...]` (slot 1-5, 1-5 ids).
+  Workspace-wide, not per guild. Only titans ship defaults (one per element,
+  F1 earth, F2 fire, F3 water, F4 light, F5 dark), copied once when
+  `titanTemplates.json` does not exist yet - afterwards the file belongs to
+  the user. Deleting a template: by hand in the file. Invalid entries are
+  logged and ignored; ids no longer in the catalog are skipped when applying.
 - `src/main/resources/data/catalog-version.json` records the `dataVersion`
   (a date) that the three catalog files above were last checked against,
   read via `CatalogVersion` and logged once at app startup so it's visible
@@ -303,6 +329,12 @@ folder (`new Catalog(tempDir)`).
   through `HeroRepository`.
 - `TeamScoreCalculatorHeroTest` - the hero-team CowScore formula (role
   buff, hero relation, pet and war flag bonuses).
+- `TeamScoreCalculatorComboTest` - the hero combo bonus (+1.25 % once,
+  deactivated/partial combos, effect on `sortScore`).
+- `TeamComboFilesTest` - loading/validating `heroCombos.json` and merging
+  the shipped combos into the workspace copy.
+- `ComboTextsTest` - a combo's display name (localized hero names or the
+  custom `name`).
 - `TeamScoreCalculatorTitanTest` - the titan-team score (general score
   without a buff, element-match defaults and explicit overrides with one).
 - `LineupComparisonServiceTest`, `LineupChangePlanServiceTest` - comparing

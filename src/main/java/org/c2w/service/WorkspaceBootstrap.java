@@ -5,6 +5,7 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.infra.BackupService;
 import org.c2w.infra.Config;
 import org.c2w.infra.JsonSupport;
@@ -18,7 +19,10 @@ import java.util.List;
 /**
  * Everything that has to happen before the first window opens: the first-run
  * setup, loading config.properties, the startup backup, loading the
- * catalogs and reopening the last guild/lineup - see {@link #start()}.
+ * catalogs (and handing the hero combos to {@link TeamScoreCalculator}; this also
+ * creates the titan team templates' workspace file from the shipped defaults
+ * if it is missing, see {@link org.c2w.data.repository.TeamTemplateRepository}) and
+ * reopening the last guild/lineup - see {@link #start()}.
  */
 public final class WorkspaceBootstrap {
 
@@ -46,7 +50,9 @@ public final class WorkspaceBootstrap {
 
         Config.load();
         BackupService.checkAndCreateBackups();
-        AppContext context = new AppContext(new Catalog(Config.getWorkspaceDir()));
+        Catalog catalog = new Catalog(Config.getWorkspaceDir());
+        TeamScoreCalculator.setHeroCombos(catalog.heroCombos().combos());
+        AppContext context = new AppContext(catalog);
         loadGuildContext(context);
         loadLineupContext(context);
 
