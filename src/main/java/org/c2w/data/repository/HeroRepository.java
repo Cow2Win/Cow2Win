@@ -16,8 +16,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * Loads/saves the hero catalog from two separate files (2026-09-14,
- * Trennung von heroes.json und den editierbaren Score-Werten):
+ * Loads/saves the hero catalog from two separate files:
  * <ul>
  *     <li>{@code heroes.json} - the "objective" master data (id/roles/image)
  *     that is identical for every guild and only changes when Hero Wars
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
  *     <li>{@code cowScore.json} - Thorsten's manually curated {@link
  *     org.c2w.data.model.FortMarks} per hero (see that type's Javadoc), edited exclusively via
  *     {@code HeroCoreScoreDialog} and persisted through {@link
- *     #saveCowScores}. Since 2026-09-29 the copy the app reads and writes
+ *     #saveCowScores}. The copy the app reads and writes
  *     lives in the workspace folder (see {@link #cowScoreFile()}); the copy
  *     inside the jar only holds the shipped defaults it is created from -
  *     see {@link FortMarkFiles}' class Javadoc.</li>

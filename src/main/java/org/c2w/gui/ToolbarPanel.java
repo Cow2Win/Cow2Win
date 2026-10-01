@@ -1,8 +1,13 @@
 package org.c2w.gui;
 
 import org.c2w.data.model.FortificationType;
+import org.c2w.data.model.Guild;
+import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.LineupFiles;
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.eval.ManualLineupAlgorithm;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
@@ -21,6 +26,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class ToolbarPanel extends JPanel {
 
@@ -56,15 +62,13 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_TITAN_TEAMS = "/images/app/hexagon.png";
 
-    /** Package-visible (not {@code private}) so {@code Cow2Frame} can size its "Guild" menu item icons to match (see class Javadoc on the removed guild buttons). */
+    /** Package-visible (not {@code private}) so {@code Cow2Frame} can size its "Guild" menu item icons to match. */
     static final int TOOLBAR_ICON_SIZE = 20;
 
     /**
      * Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of
-     * the "save guild" button (see {@link #onSaveGuild()}). Moved here
-     * (2026-09-09) from {@code TeamsOverviewPanel} together with every other
-     * toolbar control that used to live in that class's own toolbar - kept
-     * its "teamsOverview.*" key naming (no language file changes needed).
+     * the "save guild" button (see {@link #onSaveGuild()}). Keeps its
+     * historical "teamsOverview.*" key name.
      */
     private static final String KEY_SAVE_GUILD = "teamsOverview.saveGuild";
 
@@ -80,13 +84,13 @@ public class ToolbarPanel extends JPanel {
     /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). Added 2026-09-13. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). */
     private static final String KEY_COMPARE_LINEUPS = "toolbar.compareLineups";
 
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_HERO_TEAMS}/{@link #ICON_TITAN_TEAMS}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open in-game change plan" button (see {@link #onOpenChangePlan()}). Added 2026-09-23. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open in-game change plan" button (see {@link #onOpenChangePlan()}). */
     private static final String KEY_OPEN_CHANGE_PLAN = "toolbar.openChangePlan";
 
     /** Icon of the "open in-game change plan" button - the "box-arrow-down" icon reads as "produce a checklist/plan to apply", telling it apart from the paired-hexagon "compare" button next to it. */
@@ -104,7 +108,7 @@ public class ToolbarPanel extends JPanel {
     /** Reused rather than a dedicated icon - same "hexagon" (TITAN fortification) icon as {@link #ICON_TITAN_TEAMS}, since this button opens the guild-wide titan counterpart of a single fortification's own team-entry dialog. */
     private static final String ICON_OPEN_GUILD_TITAN_ENTRY = "/images/app/hexagon-plus.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show heroes" checkbox label - moved here from {@code FortificationMapPanel} together with the checkbox itself. */
+    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show heroes" checkbox label. */
     private static final String KEY_SHOW_HEROES = "fortificationMap.showHeroes";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the "show titans" checkbox label. */
@@ -126,8 +130,11 @@ public class ToolbarPanel extends JPanel {
 
     private final JComboBox<String> lineupCombo = new JComboBox<>();
 
-    /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - added 2026-09-05, sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
+    /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
+
+    /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
+    private final FlatButton runAlgorithmButton;
 
     /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}). */
     private final JLabel statusLabel = new JLabel(" ");
@@ -220,7 +227,7 @@ public class ToolbarPanel extends JPanel {
 
 
 
-        FlatButton runAlgorithmButton = new FlatButton(IconLoader.iconForButton(ICON_RUN_ALGORITHM));
+        runAlgorithmButton = new FlatButton(IconLoader.iconForButton(ICON_RUN_ALGORITHM));
         runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
         runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
         add(runAlgorithmButton);
@@ -273,7 +280,7 @@ public class ToolbarPanel extends JPanel {
         JCheckBox showHeroesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_HEROES),
                 fortificationMapPanel.isShowHeroFortifications());
         showHeroesCheckbox.setOpaque(false);
-        showHeroesCheckbox.setForeground(FortificationType.HERO.getColor());
+        showHeroesCheckbox.setForeground(FortificationTypeStyle.color(FortificationType.HERO));
         showHeroesCheckbox.addActionListener(e ->
                 fortificationMapPanel.setShowHeroFortifications(showHeroesCheckbox.isSelected()));
         add(showHeroesCheckbox);
@@ -290,13 +297,13 @@ public class ToolbarPanel extends JPanel {
         JCheckBox showTitansCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_TITANS),
                 fortificationMapPanel.isShowTitanFortifications());
         showTitansCheckbox.setOpaque(false);
-        showTitansCheckbox.setForeground(FortificationType.TITAN.getColor());
+        showTitansCheckbox.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
         showTitansCheckbox.addActionListener(e ->
                 fortificationMapPanel.setShowTitanFortifications(showTitansCheckbox.isSelected()));
         add(showTitansCheckbox);
 
 
-        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS,TOOLBAR_ICON_SIZE,FortificationType.TITAN.getColor()));
+        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS,TOOLBAR_ICON_SIZE,FortificationTypeStyle.color(FortificationType.TITAN)));
         titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
         titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
         add(titanTeamsButton);
@@ -312,9 +319,11 @@ public class ToolbarPanel extends JPanel {
 
     /**
      * Runs the hero and the titan algorithm configured as defaults in the
-     * Settings dialog - see {@link LineupService#runDefaultAlgorithms()}. A
-     * side configured as "Manual" (see {@link
-     * org.c2w.eval.ManualLineupAlgorithm}) is left untouched.
+     * Settings dialog on a background thread, so the window stays responsive,
+     * and applies the result on the Swing event thread once done (see
+     * {@link LineupService#computeAlgorithms}/{@link LineupService#applyAlgorithmRun}).
+     * A side configured as "Manual" (see {@link ManualLineupAlgorithm}) is left
+     * untouched.
      */
     private void onRunAlgorithm() {
         if (lineupService.isOriginalOpen()) {
@@ -323,7 +332,33 @@ public class ToolbarPanel extends JPanel {
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        lineupService.runDefaultAlgorithms();
+        Lineup lineup = appContext.lineup();
+        Guild guild = appContext.guild();
+        LineupAlgorithm heroAlgorithm = LineupService.defaultHeroAlgorithm();
+        LineupAlgorithm titanAlgorithm = LineupService.defaultTitanAlgorithm();
+
+        Window window = SwingUtilities.getWindowAncestor(this);
+        runAlgorithmButton.setEnabled(false);
+        window.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<LineupService.AlgorithmRun, Void>() {
+            @Override
+            protected LineupService.AlgorithmRun doInBackground() {
+                return LineupService.computeAlgorithms(lineup, guild, heroAlgorithm, titanAlgorithm);
+            }
+
+            @Override
+            protected void done() {
+                runAlgorithmButton.setEnabled(true);
+                window.setCursor(Cursor.getDefaultCursor());
+                try {
+                    lineupService.applyAlgorithmRun(get());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    Logger.logException("Algorithm run failed", e.getCause());
+                }
+            }
+        }.execute();
     }
 
 
@@ -478,7 +513,7 @@ public class ToolbarPanel extends JPanel {
 
     /**
      * Builds the report HTML in memory and shows it in {@link
-     * ReportViewerDialog}. As of 2026-09-23 nothing is written to disk here -
+     * ReportViewerDialog}. Nothing is written to disk here -
      * the dialog's own "Save report..." button lets the user choose where to
      * save it (see {@link ReportGenerator#buildReportHtml}).
      */
@@ -506,7 +541,7 @@ public class ToolbarPanel extends JPanel {
     }
 
     /**
-     * Opens {@link LineupComparisonDialog} (added 2026-09-13) - purely a
+     * Opens {@link LineupComparisonDialog} - purely a
      * read-only preview/comparison (nothing here ever changes
      * {@link #appContext}'s lineup).
      */

@@ -1,13 +1,15 @@
 package org.c2w.data.repository;
 
+import org.c2w.eval.LineupAlgorithm;
+
 import java.nio.file.Path;
 
 /**
  * Small helper around the reserved "Original" lineup file that every guild
- * folder can hold (added 2026-09-23). The Original lineup is a fixed record
+ * folder can hold. The Original lineup is a fixed record
  * of the guild's ACTUAL in-game deployment (the teams as they are really set
  * up on the Hero Wars side), kept separate from the optimized lineups the
- * {@link org.c2w.eval.LineupAlgorithm}s produce, so the real deployment is
+ * {@link LineupAlgorithm}s produce, so the real deployment is
  * never lost when the player experiments with optimizations - it stays
  * available for comparing the two and working out which concrete changes to
  * make in the game.

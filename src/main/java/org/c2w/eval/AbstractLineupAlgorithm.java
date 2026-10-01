@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 
 /**
  * Shared base of every "real" lineup strategy ({@link BestPossibleLineupAlgorithm},
- * {@link BalancedDefenseAlgorithm}, {@link CowScoreMaximizerAlgorithm}) -
- * extracted (2026-09-24) when the algorithms were split into separate
- * HERO-only and TITAN-only variants. Each instance is bound to one {@link
+ * {@link BalancedDefenseAlgorithm}, {@link CowScoreMaximizerAlgorithm}).
+ * Each instance is bound to one {@link
  * TeamSide}, so e.g. {@code new BestPossibleLineupAlgorithm<>(TeamSide.HERO)}
  * and {@code new BalancedDefenseAlgorithm<>(TeamSide.TITAN)} can fill the two
  * halves of the same lineup.
@@ -23,9 +22,7 @@ import java.util.stream.Collectors;
  * side's fortifications into its bridge and all others, and hand those to
  * the strategy-specific {@link #fillFortifications}. The static helpers
  * below (pool building, bridge filling, per-fortification team selection,
- * free-slot counting, unlock depths) used to live in {@link
- * BestPossibleLineupAlgorithm} and were widened to package-private there so
- * the other strategies could reuse them; they now live here instead.
+ * free-slot counting, unlock depths) are shared by all strategies.
  *
  * @param <T> {@link HeroTeam} or {@link TitanTeam}, matching {@link #side()}
  */

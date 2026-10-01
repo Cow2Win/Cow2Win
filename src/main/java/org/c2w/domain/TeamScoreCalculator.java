@@ -11,7 +11,7 @@ import java.util.List;
  * the value overview dialogs, the lineup algorithms (via {@code TeamSide})
  * and the report.
  *
- * <h2>Hero teams (CowScore concept of 2026-09-30)</h2>
+ * <h2>Hero teams (see {@code cowscore-formel-konzept.md})</h2>
  * <pre>
  *     CowScore = totalPower / 100 000 x (1 + B)
  * </pre>

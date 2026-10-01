@@ -38,9 +38,8 @@ import java.util.function.Consumer;
  *
  * <p>Besides {@link #log(String)} for ordinary entries, {@link #logException}
  * is the dedicated entry point for logging a caught exception (message plus
- * full stack trace) - used throughout the {@code org.c2w} packages wherever
- * a problem used to be reported to stderr only, so it now also shows up in
- * {@code LogPanel} and survives in the log file after the app is closed.
+ * full stack trace) - used throughout the {@code org.c2w} packages, so every
+ * caught problem shows up in {@code LogPanel} and survives in the log file after the app is closed.
  *
  * <p>A failure to write the log file itself is only reported to stderr - as
  * elsewhere in this package (see e.g. {@link Config#save()}) - since logging

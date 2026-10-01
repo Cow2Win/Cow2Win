@@ -6,7 +6,6 @@ import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
-import org.c2w.service.AppContext;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;

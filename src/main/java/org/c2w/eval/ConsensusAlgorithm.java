@@ -8,8 +8,7 @@ import org.c2w.data.model.TitanTeam;
 import java.util.*;
 
 /**
- * Fourth lineup strategy (added 2026-09-16 on Thorsten's request, see
- * Cow2Win todos 3.4 follow-up / "Meta-Algorithmus"), offered alongside
+ * Lineup strategy "Consensus picks" (a meta-algorithm), offered alongside
  * {@link BestPossibleLineupAlgorithm}, {@link BalancedDefenseAlgorithm} and
  * {@link CowScoreMaximizerAlgorithm} in {@link LineupAlgorithms}. Unlike
  * those three, this is not a fourth independent strategy for deciding which
@@ -38,7 +37,7 @@ import java.util.*;
  * run's, already). Only teams WITHOUT an existing entry go through the
  * three-way agreement check below.
  *
- * <p>Bound to one {@link TeamSide} per instance (since 2026-09-24): the
+ * <p>Bound to one {@link TeamSide} per instance: the
  * three sub-algorithms are created for that same side, so a hero consensus
  * only ever compares (and adds) hero entries, a titan consensus only titan
  * entries.

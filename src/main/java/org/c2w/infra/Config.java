@@ -52,7 +52,7 @@ public final class Config {
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
-    /** Legacy (pre-2026-09-24) single default algorithm for both sides - only read as a fallback, see {@link #getDefaultHeroAlgorithm()}. */
+    /** Legacy single default algorithm (from before the hero/titan split) for both sides - only read as a fallback, see {@link #getDefaultHeroAlgorithm()}. */
     private static final String KEY_DEFAULT_ALGORITHM = "defaultAlgorithm";
     private static final String KEY_DEFAULT_HERO_ALGORITHM = "defaultHeroAlgorithm";
     private static final String KEY_DEFAULT_TITAN_ALGORITHM = "defaultTitanAlgorithm";
@@ -142,7 +142,7 @@ public final class Config {
      * Raw configured language, e.g. {@code "deutsch"} - the name of the
      * subdirectory under {@code resources/language} (see {@link
      * LanguageService#availableLanguages()}), not a file name. May also
-     * still hold a pre-2026-09-16 value like {@code "deutsch.txt"} for a
+     * still hold a legacy value like {@code "deutsch.txt"} for a
      * config saved by an older Cow2Win version; {@link
      * LanguageService#configuredLanguage()} is what normalizes that,
      * callers that just need "the language to use" should go through it
@@ -172,7 +172,7 @@ public final class Config {
      * Display name of the default HERO lineup algorithm (see {@code
      * LineupAlgorithms#HERO}), or {@code ""} if none is configured. Falls back
      * to the legacy single {@code defaultAlgorithm} value saved before the
-     * algorithms were split into hero and titan variants (2026-09-24), since
+     * algorithms were split into hero and titan variants, since
      * every strategy kept its display name in that split.
      */
     public static String getDefaultHeroAlgorithm() {
@@ -229,10 +229,8 @@ public final class Config {
     }
 
     /**
-     * {@link #getWorkspacePath()} as a {@link Path} - this is the one to
-     * use wherever the old {@code Config.DIR} field used to be read, since
-     * unlike that field this reflects {@link #KEY_WORKSPACE_PATH} and can
-     * therefore only be trusted after {@link #load()} has run.
+     * {@link #getWorkspacePath()} as a {@link Path}. It reflects
+     * {@link #KEY_WORKSPACE_PATH} and can therefore only be trusted after {@link #load()} has run.
      */
     public static Path getWorkspaceDir() {
         return Paths.get(getWorkspacePath());

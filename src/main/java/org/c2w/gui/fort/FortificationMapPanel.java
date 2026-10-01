@@ -54,7 +54,7 @@ public class FortificationMapPanel extends GridPanel {
     private void init(){
         Lineup lineup = appContext.lineup();
         Guild guild = appContext.guild();
-        // Transparent since 2026-09-17: the background image is now painted once,
+        // Transparent: the background image is painted once,
         // higher up in the component hierarchy, by Cow2Frame's content pane -
         // see Cow2Frame.BackgroundPanel. Staying non-opaque here (and in every
         // panel/scroll pane between this one and that content pane) is what lets

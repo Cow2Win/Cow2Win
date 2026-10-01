@@ -3,6 +3,7 @@ package org.c2w.gui.fort;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.BuffTexts;
@@ -55,8 +56,8 @@ public class FortificationPanel extends JPanel {
      * Initializes the panel layout and components.
      */
     private void init(){
-        slot_open = IconLoader.iconFor(fortification.type().getSlot_open(), 24,fortification.type().getColor() );
-        slot_set = IconLoader.iconFor(fortification.type().getSlot_set(), 24,fortification.type().getColor() );
+        slot_open = IconLoader.iconFor(FortificationTypeStyle.openSlotIconPath(fortification.type()), 24,FortificationTypeStyle.color(fortification.type()) );
+        slot_set = IconLoader.iconFor(FortificationTypeStyle.filledSlotIconPath(fortification.type()), 24,FortificationTypeStyle.color(fortification.type()) );
         setLayout(new FlowLayout());
         add(getHeaderPanel());
         setOpaque(false);
@@ -145,7 +146,7 @@ public class FortificationPanel extends JPanel {
             buffPercentLbl = new JLabel("",JLabel.LEFT);
             if(fortification.buff() != null){
                 String text = showChanges ? formatPercentDiff(buffPercentDiff) : (buffPercent + "%");
-                Color color = showChanges ? diffColor(buffPercentDiff) : fortification.type().getColor();
+                Color color = showChanges ? diffColor(buffPercentDiff) : FortificationTypeStyle.color(fortification.type());
                 buffPercentLbl.setText(text);
                 buffPercentLbl.setToolTipText(BuffTexts.describe(fortification.buff()));
                 buffPercentLbl.setForeground(color);
@@ -172,7 +173,7 @@ public class FortificationPanel extends JPanel {
     private JLabel getPowerLabel(){
         if(powerlbl == null){
             String text = showChanges ? formatPowerDiff(totalPowerDiff) : GuiUtils.NUMBER_FORMAT.format(totalPower);
-            Color color = showChanges ? diffColor(totalPowerDiff) : fortification.type().getColor();
+            Color color = showChanges ? diffColor(totalPowerDiff) : FortificationTypeStyle.color(fortification.type());
             powerlbl = new JLabel(text, JLabel.RIGHT);
             powerlbl.setForeground(color);
         }
@@ -193,7 +194,7 @@ public class FortificationPanel extends JPanel {
         if (diff < 0) {
             return IconLoader.RED;
         }
-        return fortification.type().getColor();
+        return FortificationTypeStyle.color(fortification.type());
     }
 
     /**

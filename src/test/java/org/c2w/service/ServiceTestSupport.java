@@ -2,7 +2,6 @@ package org.c2w.service;
 
 import org.c2w.data.repository.Catalog;
 import org.c2w.infra.Config;
-import org.c2w.service.AppContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;

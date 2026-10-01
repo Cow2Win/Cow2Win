@@ -18,8 +18,7 @@ import java.util.Map;
  * assumption was wrong: {@code ReportGenerator} already looks up
  * fortification/hero/titan names via {@link LanguageService#displayName},
  * so a report generated in German already shows German names there. This
- * class was converted (2026-09-16) to follow that same per-language
- * properties pattern instead of a separate, non-localized file.
+ * class follows that same per-language properties pattern.
  *
  * <p>{@link LineupAlgorithm#displayName()} (e.g. "Best possible lineup") is
  * not itself a usable properties key (spaces, not namespaced under
@@ -31,7 +30,7 @@ import java.util.Map;
  * properties key into the UI/report.
  *
  * <p>The hero and the titan variant of a strategy share the same display
- * name and therefore the same description (since 2026-09-24).
+ * name and therefore the same description.
  */
 public final class AlgorithmDescriptions {
 

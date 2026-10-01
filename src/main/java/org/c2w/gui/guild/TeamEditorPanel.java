@@ -85,7 +85,7 @@ public final class TeamEditorPanel<T> extends JPanel {
      * with an additional callback invoked every time a slot selection change
      * actually updates {@code teamDraft.members} (i.e. alongside
      * {@link #touchLastModified()} - NOT for the initial population from the
-     * given draft, same as that method) - added 2026-09-10 so a caller like
+     * given draft, same as that method) - so a caller like
      * {@code org.c2w.gui.fort.FortificationEntryDialog} can keep a label
      * derived from this team's current members (e.g. a buff-member count) in
      * sync without polling. {@code onChanged} may be null (no-op), same as
@@ -517,7 +517,7 @@ public final class TeamEditorPanel<T> extends JPanel {
     /**
      * Resets this team back to empty: every slot combo goes back to
      * "- none -" and the power field back to 0, exactly as if each slot had
-     * been cleared out by hand one at a time. Added 2026-09-18 for
+     * been cleared out by hand one at a time. Used by
      * {@code org.c2w.gui.fort.FortificationEntryDialog}, which calls this
      * when its own member combo (a different combo - which guild member
      * this row belongs to, not a team slot) is reset to "no selection", so

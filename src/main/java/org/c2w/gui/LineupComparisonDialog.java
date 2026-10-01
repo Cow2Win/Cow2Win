@@ -38,9 +38,7 @@ import java.util.Locale;
  * saved ".lineup" files, or the currently open lineup against a candidate a
  * {@link LineupAlgorithm} produces on the fly. Purely read-only/preview: the
  * algorithm candidate is never saved and never applied to {@link AppContext}
- * from here - see {@link #onCompare()}. Added 2026-09-13 per the user's
- * request (see cow2win-verbesserungsvorschlaege.md, section 3,
- * "Lineup-Vergleich"). The actual diff computation lives in
+ * from here - see {@link #onCompare()}. The actual diff computation lives in
  * {@link LineupComparisonService}; this class is purely the Swing wiring
  * around it, following the same non-modal, disposable-on-close pattern as
  * {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}.
@@ -88,7 +86,7 @@ public class LineupComparisonDialog extends JDialog {
 
     private final JComboBox<String> lineupBeforeCombo = new JComboBox<>();
     private final JComboBox<String> lineupAfterCombo = new JComboBox<>();
-    /** One algorithm per side (since 2026-09-24) - see {@link LineupAlgorithms#runBoth}. */
+    /** One algorithm per side - see {@link LineupAlgorithms#runBoth}. */
     private final JComboBox<LineupAlgorithm> heroAlgorithmCombo = new JComboBox<>();
     private final JComboBox<LineupAlgorithm> titanAlgorithmCombo = new JComboBox<>();
 

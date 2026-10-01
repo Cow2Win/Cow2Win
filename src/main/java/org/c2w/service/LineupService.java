@@ -10,7 +10,6 @@ import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
-import org.c2w.service.AppContext;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -55,9 +54,19 @@ public class LineupService {
         this.recentFiles = recentFiles;
     }
 
-    /** Outcome of {@link #runAlgorithms}: how many teams each side's algorithm newly assigned. */
-    public record AlgorithmRun(LineupAlgorithm heroAlgorithm, int heroesAssigned,
+    /**
+     * Outcome of {@link #computeAlgorithms}: the lineup the algorithms started
+     * from, the lineup they produced, and how many teams each side's algorithm
+     * newly assigned.
+     */
+    public record AlgorithmRun(Lineup before, Lineup result,
+                               LineupAlgorithm heroAlgorithm, int heroesAssigned,
                                LineupAlgorithm titanAlgorithm, int titansAssigned) {
+
+        /** True if the algorithms assigned at least one team. */
+        public boolean changedAnything() {
+            return heroesAssigned + titansAssigned > 0;
+        }
     }
 
     /**
@@ -173,34 +182,65 @@ public class LineupService {
     }
 
     /**
-     * Runs the hero and the titan algorithm configured as defaults in the
-     * settings (see {@link Config#getDefaultHeroAlgorithm()}/{@link
-     * Config#getDefaultTitanAlgorithm()}), falling back to each side's first
-     * algorithm if nothing (valid) is configured - see {@link #runAlgorithms}.
+     * The hero algorithm configured as default in the settings (see {@link
+     * Config#getDefaultHeroAlgorithm()}), or the first hero algorithm if
+     * nothing (valid) is configured.
      */
-    public AlgorithmRun runDefaultAlgorithms() {
-        return runAlgorithms(
-                LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm()),
-                LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm()));
+    public static LineupAlgorithm defaultHeroAlgorithm() {
+        return LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
+    }
+
+    /** The titan counterpart of {@link #defaultHeroAlgorithm()}. */
+    public static LineupAlgorithm defaultTitanAlgorithm() {
+        return LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
+    }
+
+    /**
+     * Runs {@code heroAlgorithm}, then {@code titanAlgorithm} on {@code lineup}
+     * - a pure computation that touches no shared state, so it may run on a
+     * background thread (see {@code ToolbarPanel#onRunAlgorithm}). Both
+     * algorithms only ever add assignments. Apply the result with
+     * {@link #applyAlgorithmRun}.
+     */
+    public static AlgorithmRun computeAlgorithms(Lineup lineup, Guild guild,
+                                                 LineupAlgorithm heroAlgorithm, LineupAlgorithm titanAlgorithm) {
+        Lineup afterHeroes = heroAlgorithm.run(lineup, guild);
+        Lineup result = titanAlgorithm.run(afterHeroes, guild);
+        int heroesAssigned = afterHeroes.entries().size() - lineup.entries().size();
+        int titansAssigned = result.entries().size() - afterHeroes.entries().size();
+        return new AlgorithmRun(lineup, result, heroAlgorithm, heroesAssigned, titanAlgorithm, titansAssigned);
+    }
+
+    /**
+     * Makes {@code run}'s result the open lineup (in memory only, until
+     * saved) - unless the open lineup changed while the algorithms were
+     * running, in which case the run is discarded, so no edit made in the
+     * meantime is lost. Must be called on the Swing event thread.
+     *
+     * @return false if the run was discarded
+     */
+    public boolean applyAlgorithmRun(AlgorithmRun run) {
+        if (context.lineup() != run.before()) {
+            Logger.log("Algorithm run discarded: the lineup was changed while it was running.");
+            return false;
+        }
+        if (run.changedAnything()) {
+            update(run.result());
+        }
+        Logger.log("Heroes (" + run.heroAlgorithm().displayName() + "): " + run.heroesAssigned() + " team(s) newly assigned.");
+        Logger.log("Titans (" + run.titanAlgorithm().displayName() + "): " + run.titansAssigned() + " team(s) newly assigned.");
+        return true;
     }
 
     /**
      * Runs {@code heroAlgorithm}, then {@code titanAlgorithm} on the open
-     * lineup (in memory only, until saved). Both only ever add assignments.
+     * lineup and applies the result right away, on the calling thread - see
+     * {@link #computeAlgorithms}/{@link #applyAlgorithmRun}.
      */
     public AlgorithmRun runAlgorithms(LineupAlgorithm heroAlgorithm, LineupAlgorithm titanAlgorithm) {
-        Lineup current = context.lineup();
-        Lineup afterHeroes = heroAlgorithm.run(current, context.guild());
-        Lineup updated = titanAlgorithm.run(afterHeroes, context.guild());
-        int heroesAssigned = afterHeroes.entries().size() - current.entries().size();
-        int titansAssigned = updated.entries().size() - afterHeroes.entries().size();
-
-        if (heroesAssigned + titansAssigned > 0) {
-            update(updated);
-        }
-        Logger.log("Heroes (" + heroAlgorithm.displayName() + "): " + heroesAssigned + " team(s) newly assigned.");
-        Logger.log("Titans (" + titanAlgorithm.displayName() + "): " + titansAssigned + " team(s) newly assigned.");
-        return new AlgorithmRun(heroAlgorithm, heroesAssigned, titanAlgorithm, titansAssigned);
+        AlgorithmRun run = computeAlgorithms(context.lineup(), context.guild(), heroAlgorithm, titanAlgorithm);
+        applyAlgorithmRun(run);
+        return run;
     }
 
     /**

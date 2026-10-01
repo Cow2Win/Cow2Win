@@ -30,9 +30,9 @@ import java.util.List;
  * Clash of Worlds rules, a member can field each pet and each war flag in
  * at most ONE of their hero teams - enforced by {@link GuildMember}, not
  * here, since a single team cannot see its siblings. The pet's strength is
- * already part of {@link #totalPower()}, the war flag's is not (per the
- * user, 2026-09-30) - see {@link TeamScoreCalculator} for how each adds a
- * bonus to the team's CowScore.
+ * already part of {@link #totalPower()}, the war flag's is not - see
+ * {@link TeamScoreCalculator} for how each adds a bonus to the team's
+ * CowScore.
  */
 public record HeroTeam(
         String memberId,
@@ -102,7 +102,7 @@ public record HeroTeam(
      * fortification that has NO buff, and as the general "how good is this
      * team" measure independent of any specific fortification: see
      * {@link TeamScoreCalculator#sortScore(HeroTeam)} (power / 100 000 x
-     * (1 + fortification-independent bonus), CowScore concept of 2026-09-30).
+     * (1 + fortification-independent bonus)).
      */
     public double sortScore() {
         return TeamScoreCalculator.sortScore(this);

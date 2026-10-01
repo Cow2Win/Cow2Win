@@ -26,9 +26,7 @@ import java.util.*;
  * would only show that SOME team changed at a fortification, not which one,
  * or where the previous occupant went) - see {@link #compare}.
  *
- * <p>Added 2026-09-13 per the user's request (see
- * cow2win-verbesserungsvorschlaege.md, section 3, "Lineup-Vergleich") - the
- * "current lineup vs. algorithm" case deliberately does NOT reuse
+ * <p>The "current lineup vs. algorithm" case deliberately does NOT reuse
  * {@link AppContext#fortificationDiffFromLoaded}/{@link LineupBaseline}:
  * those are hard-wired to "loaded-from-disk vs. current in-memory lineup of
  * the SAME file" and only cover totalPower/buffMemberCount per fortification,

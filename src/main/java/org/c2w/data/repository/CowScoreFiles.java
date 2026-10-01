@@ -17,29 +17,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * <b>Since 2026-09-30 only used for {@code titanCowScore.json}</b> - heroes,
- * pets and war flags moved to {@link FortMarkFiles}.
+ * Reading and writing of the tier-based CowScore file of the titans,
+ * {@code titanCowScore.json} (see {@link TitanRepository}). Heroes, pets
+ * and war flags use {@link FortMarkFiles} instead.
  *
- * <p>Reading and writing of a CowScore file - {@code cowScore.json} for heroes
- * (see {@link HeroRepository}) and {@code titanCowScore.json} for titans
- * (see {@link TitanRepository}). Extracted (2026-09-28) when the titans got
- * the same master-data/score split the heroes already had since 2026-09-14,
- * so both repositories share one implementation of the file format instead
- * of two copies that could drift apart.
- *
- * <p>Each file exists twice (since 2026-09-29):
+ * <p>The file exists twice:
  * <ul>
  *     <li>the <b>shipped defaults</b> - a classpath resource inside the jar
- *     ({@code /data/cowScore.json}, {@code /data/titanCowScore.json}),
+ *     ({@code /data/titanCowScore.json}),
  *     read-only at runtime and only ever used as the starting point, see
  *     {@link #loadDefaults}; and</li>
  *     <li>the <b>workspace copy</b> - a plain file directly in the configured
  *     workspace folder ({@link org.c2w.infra.Config#getWorkspaceDir()}), the
  *     one the app actually reads and the CowScore dialogs save to, see
  *     {@link #loadWorkspace}. Created from the shipped defaults on the first
- *     start, so edits survive a restart and an app update (the jar copy used
- *     to be the only one ever read, which made saved edits disappear after a
- *     restart of the packaged app).</li>
+ *     start, so edits survive a restart and an app update.</li>
  * </ul>
  *
  * <p>File format (identical for both files and both copies): a JSON array
@@ -191,7 +183,7 @@ final class CowScoreFiles {
 
     /**
      * Builds the file content for {@code cowScoresById} (in its iteration
-     * order). Since 2026-09-29 every entity gets an entry with an explicit
+     * order). Every entity gets an entry with an explicit
      * {@code generalScore} - including {@link CowScoreTier#GOOD} - so the
      * workspace file is a complete, self-explanatory list and a deliberately
      * chosen default is not mistaken for "not assessed yet" (which would pull

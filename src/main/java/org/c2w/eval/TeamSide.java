@@ -17,11 +17,7 @@ import java.util.function.ToIntFunction;
  * bridge, and the accessor/scoring functions for that side's team class
  * {@code T} ({@link HeroTeam} or {@link TitanTeam}).
  *
- * <p>Introduced (2026-09-24) when the lineup algorithms were split into
- * separate HERO-only and TITAN-only algorithms: before that, every algorithm
- * ran both sides back to back inside one {@code run()} and passed these same
- * values around as a long list of method-reference parameters. A side is now
- * fixed per algorithm INSTANCE (see {@link AbstractLineupAlgorithm#side()}),
+ * <p>A side is fixed per algorithm INSTANCE (see {@link AbstractLineupAlgorithm#side()}),
  * so the hero part and the titan part of a lineup can be filled by different
  * strategies - or one of them left to manual picks entirely (see {@link
  * ManualLineupAlgorithm}).

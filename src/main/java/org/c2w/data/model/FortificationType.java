@@ -1,31 +1,11 @@
 package org.c2w.data.model;
 
-import java.awt.*;
-
-/** Whether a fortification is defended by a hero team or a titan team. */
+/**
+ * Whether a fortification is defended by a hero team or a titan team. Its
+ * look in the GUI (color, slot icons) is defined in {@code
+ * org.c2w.gui.common.FortificationTypeStyle}.
+ */
 public enum FortificationType {
-    HERO("/images/app/square.png","/images/app/square-team.png", Color.WHITE),
-    TITAN("/images/app/hexagon.png","/images/app/hexagon-team.png", new Color(215,186,89));
-
-    private String slot_open;
-    private String slot_set;
-    private Color color;
-
-    FortificationType(String slot_open, String slot_set, Color color){
-        this.slot_open = slot_open;
-        this.slot_set = slot_set;
-        this.color = color;
-    }
-
-    public String getSlot_open() {
-        return slot_open;
-    }
-
-    public String getSlot_set() {
-        return slot_set;
-    }
-
-    public Color getColor() {
-        return color;
-    }
+    HERO,
+    TITAN
 }

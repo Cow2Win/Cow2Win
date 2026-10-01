@@ -166,7 +166,7 @@ public class BuffCalculationService {
      * {@link #calculateBuffForFortification} does per fortification, just
      * summed over every TITAN-type {@link Lineup.Entry} in the lineup
      * instead of filtered down to one fortification. Used by
-     * {@code org.c2w.gui.fort.LineupSummaryPanel} (added 2026-09-03).
+     * {@code org.c2w.gui.fort.LineupSummaryPanel}.
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Titans and their elements)
@@ -201,9 +201,7 @@ public class BuffCalculationService {
      * a buffed fortification, general-score-based otherwise) -
      * deliberately WITHOUT {@link TeamScoreCalculator}'s totalPower term,
      * since {@code LineupSummaryPanel} already shows the hero power total
-     * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}
-     * (replacing its former use of {@link #countHeroesIncreasingBuff},
-     * 2026-09-15).
+     * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}.
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Heroes and their CowScores)
@@ -265,8 +263,7 @@ public class BuffCalculationService {
      * Sums the CowScore strength of every hero/titan team currently assigned
      * to ONE specific fortification (as opposed to {@link #sumHeroCowScore}/
      * {@link #sumTitanCowScore}, which sum over the whole lineup). Used by
-     * {@code org.c2w.report.ReportGenerator}'s "Fortifications" table
-     * (2026-09-15).
+     * {@code org.c2w.report.ReportGenerator}'s "Fortifications" table.
      *
      * @param fortificationId The ID of the fortification
      * @param lineup The lineup with team assignments

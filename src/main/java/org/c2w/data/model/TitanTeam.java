@@ -76,11 +76,7 @@ public record TitanTeam(
      * The TITAN-side counterpart of {@link HeroTeam#sortScore()}, used the
      * same way to pick a team for a fortification without a buff: the sum of
      * every titan's {@link Titan#generalScore()} plus {@link #totalPower()}
-     * scaled down via {@link TeamScoreCalculator#POWER_DIVISOR} - same formula, same
-     * treatment as the hero side (per the user's explicit request, 2026-09-11,
-     * see cow2win-verbesserungsvorschlaege.md: titans get "die gleiche
-     * Behandlung" as heroes here), now that {@link Titan#generalScore()}
-     * exists.
+     * scaled down via {@link TeamScoreCalculator#POWER_DIVISOR}.
      */
     public double sortScore() {
         double generalScoreSum = titans.stream().mapToDouble(t -> t.generalScore().value()).sum();

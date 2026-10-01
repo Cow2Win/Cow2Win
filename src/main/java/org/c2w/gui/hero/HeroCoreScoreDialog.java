@@ -20,10 +20,9 @@ import java.util.Map;
 /**
  * Dialog for maintaining a hero's {@link FortMarks} - one {@link FortMark}
  * (neutral / positive / negative) per fortification of type {@link
- * FortificationType#HERO}, the successor of the former tier-based
- * generalScore/buffFitScores (CowScore concept of 2026-09-30). Opened from
- * the toolbar, independent of the currently open guild/lineup, since the hero
- * catalog is shared across every guild.
+ * FortificationType#HERO}. Opened from the "File" menu, independent of the
+ * currently open guild/lineup, since the hero catalog is shared across
+ * every guild.
  *
  * <p>Left side lists every known hero; picking one shows one row per hero
  * fortification: its name, the role its {@link RoleBuff} asks for with the

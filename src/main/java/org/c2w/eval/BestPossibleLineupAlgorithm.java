@@ -12,7 +12,7 @@ import java.util.Map;
  * up in that same order. Buffed fortifications get the best buff fit,
  * unbuffed ones the weakest remaining team.
  *
- * <p>Bound to one {@link TeamSide} per instance (since 2026-09-24) - use
+ * <p>Bound to one {@link TeamSide} per instance - use
  * {@code new BestPossibleLineupAlgorithm<>(TeamSide.HERO)} for the hero part
  * and {@code new BestPossibleLineupAlgorithm<>(TeamSide.TITAN)} for the titan
  * part of a lineup (see {@link LineupAlgorithms}). All pool/assignment

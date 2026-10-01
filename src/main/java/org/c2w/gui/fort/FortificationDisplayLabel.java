@@ -1,6 +1,7 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -11,8 +12,8 @@ public class FortificationDisplayLabel extends JLabel {
 
     FortificationDisplayLabel(Fortification fortification){
         super(LanguageService.displayName(fortification.id()),JLabel.CENTER);
-       // setBackground(fortification.type().getColor());
-        setForeground(fortification.type().getColor());
+       // setBackground(FortificationTypeStyle.color(fortification.type()));
+        setForeground(FortificationTypeStyle.color(fortification.type()));
         setBorder(new MatteBorder(0, 0, 2, 0, getForeground()));
         //displayLbl.setOpaque(true);
         setPreferredSize(new Dimension(160,20));

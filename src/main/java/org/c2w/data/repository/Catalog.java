@@ -5,7 +5,7 @@ import java.nio.file.Path;
 /**
  * The catalogs whose CowScores live in the workspace - heroes, titans, pets
  * and war flags - loaded together for one workspace folder. Created once at
- * startup (see {@code C2WApp#main}) and reachable through {@code
+ * startup (see {@code WorkspaceBootstrap#start}) and reachable through {@code
  * AppContext#catalog()}; tests simply create their own for a temp folder.
  *
  * <p>{@link FortificationRepository} is not part of this: fortifications are

@@ -20,8 +20,7 @@ import java.util.Map;
 /**
  * Dialog for maintaining a titan's {@link CowScore} - {@link
  * Titan#generalScore()} and {@link Titan#buffFitScores()} - the TITAN-side
- * counterpart of {@link org.c2w.gui.hero.HeroCoreScoreDialog} (added
- * 2026-09-28, right after titans got their own {@code titanCowScore.json}).
+ * counterpart of {@link org.c2w.gui.hero.HeroCoreScoreDialog}.
  * Same layout and same behavior, with element matches instead of role
  * matches: opened from the "File" menu, independent of the currently open
  * guild/lineup, since the titan catalog is shared across every guild.

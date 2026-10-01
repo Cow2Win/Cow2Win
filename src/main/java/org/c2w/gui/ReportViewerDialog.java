@@ -13,9 +13,7 @@ import java.nio.file.Path;
 /**
  * Shows a generated lineup report and lets the user save it themselves.
  *
- * <p>Until 2026-09-23 the report was written to disk the moment it was
- * generated and this dialog just displayed that file. Per the user's
- * explicit request it is no longer auto-saved: the dialog now receives the
+ * <p>Nothing is saved automatically: the dialog receives the
  * raw report HTML (see {@link org.c2w.report.ReportGenerator#buildReportHtml})
  * plus a suggested file name, renders the HTML in a read-only pane, and
  * offers a "Save report..." toolbar button that opens a directory chooser

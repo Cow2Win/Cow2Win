@@ -40,13 +40,7 @@ public class Cow2Frame extends JFrame {
 
     /**
      * Language file keys and icon paths for the "Guild" menu (see
-     * {@link #buildGuildMenu()}) - moved here 2026-09-19 from {@code
-     * ToolbarPanel}'s {@code newGuildButton}/{@code openGuildEditorButton}/
-     * {@code removeGuildButton} {@link org.c2w.gui.common.FlatButton}s,
-     * together with the logic behind them ({@link #onNewGuild()}/
-     * {@link #onRemoveGuild()}/{@link #onOpenGuildEditor()}), so the icons
-     * shown before each menu item's text are exactly the ones those buttons
-     * used to show.
+     * {@link #buildGuildMenu()}).
      */
     private static final String KEY_NEW_GUILD = "toolbar.newGuild";
     private static final String KEY_REMOVE_GUILD = "toolbar.removeGuild";
@@ -92,7 +86,7 @@ public class Cow2Frame extends JFrame {
 
     public Cow2Frame(AppContext appContext) {
         super(BASE_TITLE);
-        // Was EXIT_ON_CLOSE until 2026-09-04: that close operation exits the
+        // Not EXIT_ON_CLOSE: that close operation exits the
         // JVM unconditionally once the window-closing event has been
         // dispatched to any listeners, regardless of what they do - so a
         // listener has no way to warn about unsaved changes and let the user
@@ -189,14 +183,8 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Builds the "Guild" menu - the three menu items here replace {@code
-     * ToolbarPanel}'s {@code newGuildButton}/{@code openGuildEditorButton}/
-     * {@code removeGuildButton} {@link org.c2w.gui.common.FlatButton}s (moved
-     * here 2026-09-19, together with {@link #onNewGuild()}/
-     * {@link #onRemoveGuild()}/{@link #onOpenGuildEditor()}), each menu item
-     * showing the same icon the corresponding button used to show, via
-     * {@link JMenuItem#setIcon} (before the item's text, like every Swing
-     * menu item icon).
+     * Builds the "Guild" menu: new guild, guild editor and remove guild,
+     * each with its icon in front of the text.
      */
     private JMenu buildGuildMenu() {
         JMenu guildMenu = new JMenu(LanguageService.displayName("menu.guild"));
@@ -302,13 +290,8 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Builds the "Lineup" menu - the three menu items here replace {@code
-     * ToolbarPanel}'s {@code newLineupButton}/{@code removeLineupButton}/
-     * {@code clearLineupButton} {@link org.c2w.gui.common.FlatButton}s
-     * (moved here 2026-09-19, together with {@link #onNewLineup()}/
-     * {@link #onRemoveLineup()}/{@link #onClearLineup()}), each menu item
-     * showing the same icon the corresponding button used to show - see
-     * {@link #buildGuildMenu()}.
+     * Builds the "Lineup" menu: new lineup, remove lineup and clear lineup,
+     * each with its icon in front of the text - see {@link #buildGuildMenu()}.
      */
     private JMenu buildLineupMenu() {
         JMenu lineupMenu = new JMenu(LanguageService.displayName("menu.lineup"));
@@ -494,12 +477,18 @@ public class Cow2Frame extends JFrame {
      * log panel/file if needed.
      */
     private void checkForUpdatesAtStartup() {
-        UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, false));
+        checkForUpdates(false);
     }
 
     /** "File" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup()}, always reports back, including "already up to date" and a failed check. */
     private void onCheckForUpdates() {
-        UpdateChecker.checkAsync(result -> handleUpdateCheckResult(result, true));
+        checkForUpdates(true);
+    }
+
+    /** Runs {@link UpdateChecker#checkAsync()} and handles its result back on the Swing event thread. */
+    private void checkForUpdates(boolean alwaysShowDialog) {
+        UpdateChecker.checkAsync().thenAccept(result ->
+                SwingUtilities.invokeLater(() -> handleUpdateCheckResult(result, alwaysShowDialog)));
     }
 
     /**
@@ -601,13 +590,10 @@ public class Cow2Frame extends JFrame {
     /**
      * The frame's content pane (installed in the constructor via
      * {@code setContentPane}): paints {@link #background} scaled to its own
-     * current size, once, before any child is painted. Moved up here from
-     * FortificationMapPanel on 2026-09-17 so the same background shows behind
-     * the whole window instead of just behind the fortification map - every
-     * panel/scroll pane in between (see the constructor and
-     * FortificationMapPanel) is kept non-opaque so it is actually visible
-     * through them, the same way FortificationMapPanel used to paint
-     * directly over its own opaque black background.
+     * current size, once, before any child is painted, so the same background
+     * shows behind the whole window - every panel/scroll pane in between
+     * (see the constructor and FortificationMapPanel) is kept non-opaque so it
+     * is actually visible through them.
      */
     private static final class BackgroundPanel extends JPanel {
 

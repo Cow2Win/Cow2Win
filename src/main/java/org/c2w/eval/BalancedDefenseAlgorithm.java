@@ -6,8 +6,7 @@ import org.c2w.domain.TeamScoreCalculator;
 import java.util.*;
 
 /**
- * Second lineup strategy (added 2026-09-15 on Thorsten's request, see
- * Cow2Win todos 3.4/"Ausgewogene Verteidigung") - same overall shape as
+ * Lineup strategy "Balanced defense" - same overall shape as
  * {@link BestPossibleLineupAlgorithm} (bridge special case, additive), but a
  * genuinely different strategy for every fortification OTHER than the
  * bridge: instead of statically ranking fortifications by {@link
@@ -20,7 +19,7 @@ import java.util.*;
  * {@code strategicImportance}/unlock depth only survive as a TIEBREAKER for
  * forts that are exactly equally (usually: both still empty) strong.
  *
- * <p>Bound to one {@link TeamSide} per instance (since 2026-09-24). Reuses
+ * <p>Bound to one {@link TeamSide} per instance. Reuses
  * {@link AbstractLineupAlgorithm}'s bridge-filling ({@link #assignStrongestFirst})
  * and per-fortification team selection ({@link #assignOne} - buff fit still
  * decides WHICH team a buffed fortification gets, only WHICH fortification

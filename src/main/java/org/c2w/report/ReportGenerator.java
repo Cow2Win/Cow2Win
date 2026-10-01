@@ -21,9 +21,9 @@ public final class ReportGenerator {
     private static final String REPORT_FILE_SUFFIX = ".html";
 
     /**
-     * Cap on how many rows the "Used heroes"/"Used titans" tables show - per
-     * the user's explicit request (added 2026-09-23): only the most-used 15
-     * units, so a large guild's report does not grow an overlong tail. Rows
+     * Cap on how many rows the "Used heroes"/"Used titans" tables show: only
+     * the most-used 15 units, so a large guild's report does not grow an
+     * overlong tail. Rows
      * are already sorted most-used first (see {@link #usedUnitsTableHtml}),
      * so this simply keeps the top of that list; a note under the table says
      * how many further units were omitted.
@@ -37,7 +37,7 @@ public final class ReportGenerator {
     // rule in the style block, or an inline style on the cell) instead of
     // being left to the renderer's defaults, and the old CSS3
     // "tr:nth-child(even)" zebra rule is emitted per row (see #tdOpen) rather
-    // than as a selector - added 2026-09-23 at the user's request so the
+    // than as a selector, so the
     // report looks the same in a web browser and in the app's Swing preview.
     // Swing's JEditorPane HTML engine supports only a limited CSS subset and
     // ignores nth-child, so leaving these to CSS made the two diverge.
@@ -57,9 +57,7 @@ public final class ReportGenerator {
 
     /**
      * Builds and returns the report HTML for the given lineup/guild WITHOUT
-     * writing it anywhere - added 2026-09-23 when report generation stopped
-     * auto-saving per the user's explicit request. {@code
-     * ToolbarPanel#onGenerateReport()} now hands this HTML straight to
+     * writing it anywhere. {@code ToolbarPanel#onGenerateReport()} hands this HTML straight to
      * {@code ReportViewerDialog}, whose "Save report..." toolbar button lets
      * the user pick a directory and write it there. {@code reportFileName}
      * only feeds the report's "Lineup" meta row (see {@link
@@ -81,9 +79,8 @@ public final class ReportGenerator {
     /**
      * The default file name the report viewer's Save button offers for this
      * lineup: its file name with the {@value #LINEUP_FILE_SUFFIX} suffix (if
-     * any) swapped for {@value #REPORT_FILE_SUFFIX}, i.e. the very name the
-     * old auto-saving {@code generate} used to write - just the file name,
-     * not a full path, since the directory is now the user's choice (see
+     * any) swapped for {@value #REPORT_FILE_SUFFIX} - just the file name, not a
+     * full path, since the directory is the user's choice (see
      * {@link #buildReportHtml} and {@code ReportViewerDialog}).
      */
     public static String suggestedReportFileName(Path lineupFilePath) {
@@ -189,8 +186,7 @@ public final class ReportGenerator {
 
     /**
      * Adds an "Algorithm" row (and, if one is on file, an "Algorithm
-     * description" row right below it) to the meta table - per the user's
-     * explicit request (added 2026-09-16): whenever a lineup was (at least
+     * description" row right below it) to the meta table: whenever a lineup was (at least
      * partly) filled by an algorithm run, the report's very first section
      * ("Lineup Report") should name that algorithm and explain how it
      * works, not just leave it implicit in the raw lineup data further
@@ -205,7 +201,7 @@ public final class ReportGenerator {
             return;
         }
         int pos = startPosition;
-        // Since 2026-09-24 heroes and titans can be filled by different algorithms, and
+        // Heroes and titans can be filled by different algorithms, and
         // algorithmName combines both ("Heroes: ...; Titans: ...") - one row pair per side.
         // A legacy single-algorithm name (older lineup files) is shown as-is, like before.
         Map<Lineup.TeamType, String> bySide = LineupAlgorithms.parseAlgorithmName(algorithmName);
@@ -278,8 +274,7 @@ public final class ReportGenerator {
     /**
      * One row per fortification actually used in this lineup (i.e. that has
      * at least one {@link Lineup.Entry}) AND has a buff, sorted by
-     * fortification display name - per the user's explicit follow-up request
-     * (added 2026-09-04): the fortification's own buff display text and the
+     * fortification display name: the fortification's own buff display text and the
      * buff percentage {@link BuffCalculationService#calculateBuffForFortification}
      * currently computes for it, plus a count broken out of that same
      * calculation - how many deployed heroes/titans satisfy the buff's
@@ -340,8 +335,7 @@ public final class ReportGenerator {
     /**
      * One row per distinct hero (for {@code teamType} HERO) or titan (TITAN)
      * that appears in at least one team deployed by this lineup, with how
-     * many teams across the whole lineup it shows up in - per the user's
-     * explicit request (added 2026-09-23): a "used heroes"/"used titans"
+     * many teams across the whole lineup it shows up in: a "used heroes"/"used titans"
      * breakdown that makes it easy to see e.g. that Galahad is fielded 5
      * times overall, regardless of which member or fortification the team
      * sits at. Rows are sorted by that count (most-used first), then by

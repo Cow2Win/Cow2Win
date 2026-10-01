@@ -4,6 +4,7 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.*;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.*;
 import org.c2w.i18n.BuffTexts;
@@ -275,7 +276,7 @@ public final class FortificationEntryDialog extends JDialog {
     private JLabel buildBuffCountLabel() {
         JLabel buffCountLabel = new JLabel("", JLabel.CENTER);
         buffCountLabel.setPreferredSize(new Dimension(BUFF_COUNT_LABEL_WIDTH, MEMBER_COMBO_HEIGHT));
-        buffCountLabel.setForeground(fortification.type().getColor());
+        buffCountLabel.setForeground(FortificationTypeStyle.color(fortification.type()));
         if (fortification.buff() != null) {
             buffCountLabel.setToolTipText(BuffTexts.describe(fortification.buff()));
         }

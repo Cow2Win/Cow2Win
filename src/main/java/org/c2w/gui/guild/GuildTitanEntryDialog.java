@@ -11,9 +11,7 @@ import java.awt.*;
 import java.util.Comparator;
 
 /**
- * {@link GuildTeamEntryDialog} for titan teams only - the titan-side half of
- * what used to be a single combined {@code GuildEntryDialog} (see that
- * class's replacement, {@link GuildTeamEntryDialog}). Opened from its own
+ * {@link GuildTeamEntryDialog} for titan teams only. Opened from its own
  * toolbar button - see {@code ToolbarPanel#onOpenGuildTitanEntry}.
  */
 public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {

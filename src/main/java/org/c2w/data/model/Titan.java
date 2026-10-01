@@ -5,12 +5,6 @@ import java.util.Map;
 /**
  * Catalog entry of a titan: master data, identical for all guild members.
  *
- * Used to also have a buffAffinities field, analogous to {@link Hero} - that
- * was removed in favor of a per-buff buffProfits list on the respective
- * Fortification buff, which was itself later removed again (2026-09-11) in
- * favor of the two scores now bundled in {@link #cowScore()} - see the
- * Javadoc on {@link Hero} for the full reasoning, identical here.
- *
  * displayName is no longer stored in this class - that information now lives
  * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
  * displayName can be retrieved at runtime via the LanguageService.
@@ -23,16 +17,13 @@ import java.util.Map;
  * "image"), it automatically falls back to the placeholder at
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
- * cowScore: this titan's manually curated {@link CowScore} - the TITAN-side
- * counterpart of {@link Hero#cowScore()}, same {@link CowScoreTier} grid,
- * same defaults. Kept in {@code titanCowScore.json}, deliberately SEPARATE
- * from this record's "objective" fields (id/element/imagePath), which live
- * in {@code titans.json} (2026-09-28, same split the heroes got on
- * 2026-09-14 - see {@code TitanRepository}'s class Javadoc): a future
- * master-data refresh can overwrite {@code titans.json} wholesale without
- * risking the manually maintained scores. {@link #generalScore()}/{@link
- * #buffFitScores()}/{@link #buffFitScore(String, boolean)} remain as
- * convenience delegates so every other caller keeps working unchanged.
+ * cowScore: this titan's manually curated {@link CowScore}, kept in
+ * {@code titanCowScore.json}, deliberately SEPARATE from this record's
+ * "objective" fields (id/element/imagePath) in {@code titans.json} (see
+ * {@code TitanRepository}'s class Javadoc): a master-data refresh can
+ * overwrite {@code titans.json} wholesale without risking the manually
+ * maintained scores. {@link #generalScore()}/{@link #buffFitScores()}/
+ * {@link #buffFitScore(String, boolean)} are convenience delegates.
  */
 public record Titan(
         String id,

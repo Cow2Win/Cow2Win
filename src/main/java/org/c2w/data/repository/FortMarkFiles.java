@@ -23,11 +23,10 @@ import java.util.TreeMap;
  * Reading and writing of a fortification-mark file - {@code cowScore.json}
  * for heroes (see {@link HeroRepository}), {@code petCowScore.json} (see
  * {@link PetRepository}) and {@code warFlagCowScore.json} (see {@link
- * WarFlagRepository}). Successor of {@link CowScoreFiles} for these three
- * entity types (CowScore concept of 2026-09-30); titans still use {@link
- * CowScoreFiles}.
+ * WarFlagRepository}). Titans use {@link CowScoreFiles}
+ * instead.
  *
- * <p>Like before, each file exists twice: the <b>shipped defaults</b> (a
+ * <p>Each file exists twice: the <b>shipped defaults</b> (a
  * read-only classpath resource, see {@link #loadDefaults}) and the
  * <b>workspace copy</b> the app actually reads and the dialogs save to (see
  * {@link #loadWorkspace}), created from the defaults on the first start.
@@ -40,7 +39,7 @@ import java.util.TreeMap;
  * <h2>Migration of the former tier-based format</h2>
  * An entry in the former format ({@code generalScore} / {@code buffFitScores}
  * with {@code CowScoreTier} names, no {@code fortMarks}) is converted on
- * reading, per the user's rule of 2026-09-30:
+ * reading:
  * <ul>
  *     <li>{@code buffFitScores} entry {@code GREAT} -&gt; {@link FortMark#POSITIVE};</li>
  *     <li>{@code buffFitScores} entry {@code NEGATIVE} -&gt; {@link FortMark#NEGATIVE}

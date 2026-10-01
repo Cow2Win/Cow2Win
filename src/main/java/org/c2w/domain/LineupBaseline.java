@@ -7,9 +7,8 @@ import org.c2w.service.AppContext;
 
 /**
  * Snapshot of ONE fortification's total power and buff-member count within
- * a lineup, at one point in time (added 2026-09-10; changed the same day to
- * be per-fortification instead of one combined value for the whole lineup -
- * see {@link AppContext#loadedFortificationBaselines()}). AppContext takes
+ * a lineup, at one point in time (see
+ * {@link AppContext#loadedFortificationBaselines()}). AppContext takes
  * one of these per fortification that has at least one team assigned, the
  * moment a ".lineup" file is (re)loaded (see
  * {@link AppContext#set(Lineup, java.nio.file.Path)}), so that later - once

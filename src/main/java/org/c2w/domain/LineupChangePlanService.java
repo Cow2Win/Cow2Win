@@ -12,8 +12,7 @@ import java.util.List;
 /**
  * Turns a {@link LineupComparison} (Original lineup vs. a target lineup) into
  * an ordered list of concrete, actionable change steps - the "what do I
- * actually have to re-arrange on the Hero Wars side" guide (added
- * 2026-09-23). Purely a projection of {@link LineupComparisonService}'s
+ * actually have to re-arrange on the Hero Wars side" guide. Purely a projection of {@link LineupComparisonService}'s
  * per-team diff: every {@link TeamDiff} that isn't {@link TeamDiff.Status#UNCHANGED}
  * becomes exactly one {@link ChangeStep}; unchanged teams produce none.
  *

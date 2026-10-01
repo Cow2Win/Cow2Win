@@ -19,9 +19,7 @@ import java.util.Map;
 /**
  * Shared Gson setup, plus small helpers for reading typed values out of a
  * generic {@link JsonObject}/{@link JsonArray} tree and for writing one back
- * out. Centralized here (added 2026-09-10, replacing gson for the
- * hand-rolled, dependency-free JSON parsers/writers every repository used to
- * carry its own copy of) so every repository under
+ * out. Centralized here so every repository under
  * {@code org.c2w.data.repository} reads/writes JSON the same way.
  */
 public final class JsonSupport {
@@ -55,8 +53,8 @@ public final class JsonSupport {
     /**
      * Resolves the on-disk location of a writable catalog/demo data file - used where a real
      * {@link Path} is needed (via {@link Files}/{@link #writeJsonFile}), not just a classpath
-     * resource: {@code C2WApp}'s first-run demo guild/lineup. (The CowScore files no longer
-     * go through here - since 2026-09-29 they live in the workspace folder, see {@code
+     * resource: {@code WorkspaceBootstrap}'s first-run demo guild/lineup. (The CowScore files no longer
+     * go through here - they live in the workspace folder, see {@code
      * CowScoreFiles} - and {@code fortifications.json} is read-only, see {@code
      * FortificationRepository}.)
      *

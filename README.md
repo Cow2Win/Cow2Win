@@ -100,7 +100,7 @@ Implementation: `maven-shade-plugin` (executable jar) ->
 - **Backups** - a daily and a weekly ZIP of the workspace, checked once at
   startup (`org.c2w.infra.BackupService`), by default in
   `<user.home>/.cow2Win/backup`.
-- **First start** - creates a "Demo" guild pre-filled from
+- **First start** (`org.c2w.service.WorkspaceBootstrap`) - creates a "Demo" guild pre-filled from
   `data/guild.json`/`data/default.lineup` (read from the packaged
   `resources/` folder, or from `src/main/resources` in the IDE).
 
@@ -111,8 +111,8 @@ roughly from top to bottom:
 
 | Package | Contents |
 |---|---|
-| `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
-| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. |
+| `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
 | `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
 | `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
 | `report` | `ReportGenerator` - the HTML lineup report. |
@@ -303,6 +303,13 @@ folder (`new Catalog(tempDir)`).
   through `HeroRepository`.
 - `TeamScoreCalculatorHeroTest` - the hero-team CowScore formula (role
   buff, hero relation, pet and war flag bonuses).
+- `TeamScoreCalculatorTitanTest` - the titan-team score (general score
+  without a buff, element-match defaults and explicit overrides with one).
+- `LineupComparisonServiceTest`, `LineupChangePlanServiceTest` - comparing
+  two lineups (per-team status, per-fortification and summary figures) and
+  turning the difference into ordered in-game change steps.
+- `ReportGeneratorTest` - report file naming and the main content of the
+  HTML report (HTML escaping, algorithm, used heroes).
 - `GuildMemberTest`, `GuildRepositoryPetWarFlagTest`,
   `GuildDraftConverterPetWarFlagTest`, `TeamEditorPanelExtrasTest` - a hero
   team's optional pet/war flag: the "at most once per member" rule, guild
@@ -311,7 +318,8 @@ folder (`new Catalog(tempDir)`).
 - `AppContextTest` - change notifications and the unsaved-changes state.
 - `GuildServiceTest`, `LineupServiceTest` - the guild/lineup use cases
   against a temp workspace: files on disk, the open guild/lineup and the
-  unsaved-changes state stay consistent.
+  unsaved-changes state stay consistent. Also checks that a background
+  algorithm run is discarded if the lineup changed in the meantime.
 
 ## More context
 

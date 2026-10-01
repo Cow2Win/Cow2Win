@@ -3,7 +3,6 @@ package org.c2w.infra;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,7 +11,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,12 +67,13 @@ public final class UpdateChecker {
 
     /**
      * Runs the check on a background thread (never on the caller's thread,
-     * so this is safe to call directly from the Swing event thread) and
-     * calls {@code onResult} back on the Swing event thread once done.
+     * so this is safe to call from the Swing event thread). The future
+     * completes on that background thread - a GUI caller has to hop back to
+     * its own event thread itself (see {@code Cow2Frame}). Never completes
+     * exceptionally: every failure is reported as {@link UpdateCheckResult.Status#CHECK_FAILED}.
      */
-    public static void checkAsync(Consumer<UpdateCheckResult> onResult) {
-        CompletableFuture.supplyAsync(UpdateChecker::checkNow)
-                .thenAccept(result -> SwingUtilities.invokeLater(() -> onResult.accept(result)));
+    public static CompletableFuture<UpdateCheckResult> checkAsync() {
+        return CompletableFuture.supplyAsync(UpdateChecker::checkNow);
     }
 
     private static UpdateCheckResult checkNow() {

@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Third lineup strategy (added 2026-09-16 on Thorsten's request, see
- * Cow2Win todos 3.4 follow-up / "CowScore-Maximierer statt
- * Power-Maximierer").
+ * Lineup strategy "CowScore maximizer" - maximizes CowScore instead of
+ * raw power.
  *
  * <p>{@link BestPossibleLineupAlgorithm} actually uses THREE different,
  * inconsistent metrics depending on the decision: raw {@code totalPower} for
@@ -29,7 +28,7 @@ import java.util.Map;
  * capacity, strategicImportance/unlockDepth/id decide fortification
  * VISITATION order - only WHICH candidate wins a given fortification
  * changes) and additive in the same way. Bound to one {@link TeamSide} per
- * instance (since 2026-09-24). {@link #assignStrongestFirst}/{@link
+ * instance. {@link #assignStrongestFirst}/{@link
  * #assignOne} are deliberately NOT used here, since their whole point is the
  * metric this algorithm replaces.
  *

@@ -8,10 +8,8 @@ import java.util.List;
  * that differs per player and, for other guilds' teams, is known only as an
  * aggregated team total anyway (see HeroTeam.totalPower()).
  *
- * The hero's manually curated assessment used to be a CowScore
- * (generalScore + tier-based buffFitScores); since the CowScore concept of
- * 2026-09-30 it is a set of per-fortification {@link FortMark}s instead, see
- * {@link #fortMarks()}.
+ * The hero's manually curated assessment is a set of per-fortification
+ * {@link FortMark}s, see {@link #fortMarks()}.
  *
  * displayName is no longer stored in this class - that information now lives
  * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The

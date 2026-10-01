@@ -66,9 +66,7 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<String> languageComboBox = new JComboBox<>();
 
     /**
-     * Lists {@link LineupAlgorithms#HERO} by {@link LineupAlgorithm#displayName()}
-     * (added 2026-09-15, see Cow2Win todos 3.4; split into a hero and a titan
-     * combo box 2026-09-24) - a plain {@code JComboBox<String>} like {@link
+     * Lists {@link LineupAlgorithms#HERO} by {@link LineupAlgorithm#displayName()} - a plain {@code JComboBox<String>} like {@link
      * #languageComboBox} rather than a {@code JComboBox<LineupAlgorithm>}, since
      * {@link LineupAlgorithm} has no {@code toString()} of its own. The selected
      * display name is what actually gets persisted via {@link
@@ -189,7 +187,7 @@ public class SettingsDialog extends JDialog {
      * if none matches (e.g. no config saved yet); selects whichever {@link
      * LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN} entry matches {@link
      * Config#getDefaultHeroAlgorithm()}/{@link Config#getDefaultTitanAlgorithm()}
-     * the same way (added 2026-09-15, see Cow2Win todos 3.4); and fills in
+     * the same way; and fills in
      * the currently configured backup directory (see {@link Config#getBackupDir()})
      * and workspace directory (see {@link Config#getWorkspacePath()}).
      */

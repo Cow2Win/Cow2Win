@@ -27,10 +27,9 @@ import java.util.Set;
  * Dialog for maintaining a war flag's {@link FortMarks}: for every fortification of
  * type {@link FortificationType#HERO} a "marked" checkbox - a war flag marked for a
  * fortification adds a bonus to its team's CowScore there (see {@code
- * TeamScoreCalculator}). Successor of the former tier-based
- * generalScore/buffFitScores (CowScore concept of 2026-09-30). Opened from the
- * toolbar, independent of the currently open guild/lineup. Saving writes the
- * workspace copy of {@code warFlagCowScore.json} (see {@code FortMarkFiles}).
+ * TeamScoreCalculator}). Opened from the "File" menu, independent of the
+ * currently open guild/lineup. Saving writes the workspace copy of
+ * {@code warFlagCowScore.json} (see {@code FortMarkFiles}).
  */
 public final class WarFlagCoreScoreDialog extends JDialog {
 

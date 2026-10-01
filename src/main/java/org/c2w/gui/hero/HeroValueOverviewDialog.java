@@ -6,6 +6,7 @@ import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.titan.TitanValueOverviewDialog;
@@ -33,21 +34,12 @@ import java.util.function.Supplier;
  * HERO counterpart of {@link TitanValueOverviewDialog} - one row per hero
  * team, same editable "Fortification" assignment column, same per-fortification
  * extra columns whose displayed value (score or role-match count) is toggled
- * via {@link ValueMode} (see {@link #buildValueModeCombo()}). Split
- * 2026-09-20 out of the former (now removed) {@code TeamsValueOverviewDialog},
- * which held both hero and titan tables behind a {@link JTabbedPane} - each
- * team type now gets its own toolbar button/dialog instead of a tab (see
- * {@code ToolbarPanel}). Deliberately a near-duplicate of
- * {@link TitanValueOverviewDialog}, matching this codebase's own "redundant
- * copy" convention (see e.g. the removed {@code AllTeamsOverviewDialog}'s
- * cell renderer Javadocs) rather than sharing code across two otherwise-
- * independent dialogs.
+ * via {@link ValueMode} (see {@link #buildValueModeCombo()}). Opened from
+ * its own toolbar button (see {@code ToolbarPanel}).
  *
- * <p>Column 0 ("Power") is editable, the same way the former {@code TeamsOverviewPanel} (removed 2026-09-20)'s
- * own table makes it editable (see {@link HeroValueTableModel#isCellEditable}) -
- * unlike that panel, this dialog has no toolbar of its own to host a "save
- * guild" button, so {@link #buildSaveButton()} puts an equivalent
- * {@link FlatButton} directly in the dialog's top panel instead, ahead of the
+ * <p>Column 0 ("Power") is editable (see {@link HeroValueTableModel#isCellEditable});
+ * {@link #buildSaveButton()} puts a "save guild" {@link FlatButton} in the
+ * dialog's top panel, ahead of the
  * {@link ValueMode} combo box (see {@link #saveGuild()}).
  */
 public class HeroValueOverviewDialog extends JDialog {
@@ -232,7 +224,7 @@ public class HeroValueOverviewDialog extends JDialog {
     private static void configureTable(JTable table, Function<Hero, Icon> iconResolver, Function<Hero, String> nameResolver,
                                        JComboBox<Fortification> fortificationCombo) {
         table.setRowHeight(ROW_HEIGHT);
-        table.setForeground(FortificationType.HERO.getColor());
+        table.setForeground(FortificationTypeStyle.color(FortificationType.HERO));
         table.setSelectionForeground(table.getForeground());
         table.setGridColor(Color.BLACK);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
@@ -704,7 +696,7 @@ public class HeroValueOverviewDialog extends JDialog {
                                                        boolean hasFocus, int row, int column) {
             JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
-            label.setForeground(FortificationType.HERO.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.HERO));
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -719,7 +711,7 @@ public class HeroValueOverviewDialog extends JDialog {
             JLabel label = new JLabel(fortification == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
                     : LanguageService.displayName(fortification.id()));
             label.setOpaque(true);
-            label.setForeground(FortificationType.HERO.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.HERO));
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -745,7 +737,7 @@ public class HeroValueOverviewDialog extends JDialog {
                     : String.valueOf(Math.round(numericValue));
             JLabel label = new JLabel(text, JLabel.CENTER);
             label.setOpaque(true);
-            label.setForeground(FortificationType.HERO.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.HERO));
             label.setBackground(backgroundFor(table, isSelected, row, column));
             return label;
         }
@@ -768,8 +760,7 @@ public class HeroValueOverviewDialog extends JDialog {
      * BUFFED fortification, or the single column shared by every buff-less
      * fortification of this type. A buff-less fortification's role-match
      * count is always 0, so the shared column is scored against
-     * {@link #representative()}. Known limitation since the CowScore concept
-     * of 2026-09-30: fortification marks (hero relation, pet, war flag) of a
+     * {@link #representative()}. Known limitation of the CowScore concept: fortification marks (hero relation, pet, war flag) of a
      * specific buff-less fortification other than the representative are
      * not reflected in this shared column.
      */

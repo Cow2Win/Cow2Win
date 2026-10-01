@@ -6,6 +6,7 @@ import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
@@ -33,21 +34,12 @@ import java.util.function.Supplier;
  * TITAN counterpart of {@link HeroValueOverviewDialog} - one row per titan
  * team, same editable "Fortification" assignment column, same per-fortification
  * extra columns whose displayed value (score or role-match count) is toggled
- * via {@link ValueMode} (see {@link #buildValueModeCombo()}). Split
- * 2026-09-20 out of the former (now removed) {@code TeamsValueOverviewDialog},
- * which held both hero and titan tables behind a {@link JTabbedPane} - each
- * team type now gets its own toolbar button/dialog instead of a tab (see
- * {@code ToolbarPanel}). Deliberately a near-duplicate of
- * {@link HeroValueOverviewDialog}, matching this codebase's own "redundant
- * copy" convention (see e.g. the removed {@code AllTeamsOverviewDialog}'s
- * cell renderer Javadocs) rather than sharing code across two otherwise-
- * independent dialogs.
+ * via {@link ValueMode} (see {@link #buildValueModeCombo()}). Opened from
+ * its own toolbar button (see {@code ToolbarPanel}).
  *
- * <p>Column 0 ("Power") is editable, the same way the former {@code TeamsOverviewPanel} (removed 2026-09-20)'s
- * own table makes it editable (see {@link TitanValueTableModel#isCellEditable}) -
- * unlike that panel, this dialog has no toolbar of its own to host a "save
- * guild" button, so {@link #buildSaveButton()} puts an equivalent
- * {@link FlatButton} directly in the dialog's top panel instead, ahead of the
+ * <p>Column 0 ("Power") is editable (see {@link TitanValueTableModel#isCellEditable});
+ * {@link #buildSaveButton()} puts a "save guild" {@link FlatButton} in the
+ * dialog's top panel, ahead of the
  * {@link ValueMode} combo box (see {@link #saveGuild()}).
  */
 public class TitanValueOverviewDialog extends JDialog {
@@ -226,7 +218,7 @@ public class TitanValueOverviewDialog extends JDialog {
     private static void configureTable(JTable table, Function<Titan, Icon> iconResolver, Function<Titan, String> nameResolver,
                                        JComboBox<Fortification> fortificationCombo) {
         table.setRowHeight(ROW_HEIGHT);
-        table.setForeground(FortificationType.TITAN.getColor());
+        table.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
         table.setSelectionForeground(table.getForeground());
         table.setGridColor(Color.BLACK);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
@@ -692,7 +684,7 @@ public class TitanValueOverviewDialog extends JDialog {
                                                        boolean hasFocus, int row, int column) {
             JLabel label = new JLabel(GuiUtils.NUMBER_FORMAT.format((Integer) value), JLabel.RIGHT);
             label.setOpaque(true);
-            label.setForeground(FortificationType.TITAN.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -707,7 +699,7 @@ public class TitanValueOverviewDialog extends JDialog {
             JLabel label = new JLabel(fortification == null ? LanguageService.displayName(KEY_NO_FORTIFICATION)
                     : LanguageService.displayName(fortification.id()));
             label.setOpaque(true);
-            label.setForeground(FortificationType.TITAN.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
             label.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return label;
         }
@@ -735,7 +727,7 @@ public class TitanValueOverviewDialog extends JDialog {
                     : String.valueOf(Math.round(numericValue));
             JLabel label = new JLabel(text, JLabel.CENTER);
             label.setOpaque(true);
-            label.setForeground(FortificationType.TITAN.getColor());
+            label.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
             label.setBackground(backgroundFor(table, isSelected, row, column));
             return label;
         }

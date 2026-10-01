@@ -5,7 +5,6 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.ManualLineupAlgorithm;
-import org.c2w.service.AppContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -142,6 +141,18 @@ class LineupServiceTest extends ServiceTestSupport {
         assertEquals(0, run.heroesAssigned());
         assertEquals(0, run.titansAssigned());
         assertFalse(context.isLineupDirty());
+    }
+
+    @Test
+    @DisplayName("a background algorithm run is discarded if the lineup changed while it was computing")
+    void staleAlgorithmRunIsDiscarded() {
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithms(context.lineup(), context.guild(),
+                new ManualLineupAlgorithm(Lineup.TeamType.HERO), new ManualLineupAlgorithm(Lineup.TeamType.TITAN));
+        lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, firstFortification());
+        Lineup edited = context.lineup();
+
+        assertFalse(lineupService.applyAlgorithmRun(run));
+        assertSame(edited, context.lineup(), "the edit made in the meantime must survive");
     }
 
     @Test

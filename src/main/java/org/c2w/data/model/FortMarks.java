@@ -5,8 +5,7 @@ import java.util.Map;
 
 /**
  * The manually curated {@link FortMark}s of one hero, pet or war flag, keyed
- * by {@link Fortification#id()} - replaces {@link CowScore} for these three
- * entity types (CowScore concept of 2026-09-30). Sparse by design: a
+ * by {@link Fortification#id()}. Sparse by design: a
  * fortification without an entry is "neutral" (unmarked).
  *
  * <p>Persisted in {@code cowScore.json} (heroes), {@code petCowScore.json}

@@ -17,7 +17,7 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Creates a daily and a weekly backup (ZIP) of the workspace folder. Checked
- * once at program start (see {@code C2WApp#main}) - never during normal
+ * once at program start (see {@code WorkspaceBootstrap#start}) - never during normal
  * operation, and never in a background thread, since the workspace folder
  * only holds small JSON/properties files.
  *
@@ -53,7 +53,7 @@ public class BackupService {
     static void checkAndCreateBackups(Path workspaceDir, Path backupDir) {
         if (!Files.isDirectory(workspaceDir)) {
             // Nothing to back up yet - e.g. the very first start, before the
-            // initial setup has created the workspace folder (see C2WApp#runInitialSetup).
+            // initial setup has created the workspace folder (see WorkspaceBootstrap#runInitialSetup).
             return;
         }
         checkAndCreateBackup(workspaceDir, backupDir.resolve(DAILY_BACKUP_FILE_NAME), BackupService::isDueDaily);

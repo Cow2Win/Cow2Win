@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Loads/saves the titan catalog from two separate files (2026-09-28, the
- * same split {@link HeroRepository} got on 2026-09-14):
+ * Loads/saves the titan catalog from two separate files - the same split
+ * {@link HeroRepository} uses:
  * <ul>
  *     <li>{@code titans.json} - the "objective" master data (id/element/image)
  *     that is identical for every guild and only changes when Hero Wars
@@ -194,7 +194,7 @@ public class TitanRepository {
             return null;
         }
 
-        // Scores used to live directly in titans.json (before 2026-09-28) - they are no longer
+        // Scores used to live directly in titans.json - they are no longer
         // read from there, so point out any leftovers instead of dropping them silently.
         if (obj.has("generalScore") || obj.has("buffFitScores")) {
             Logger.log("titans.json: titan '" + id + "' still carries generalScore/buffFitScores - these are "

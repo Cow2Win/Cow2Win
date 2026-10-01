@@ -27,8 +27,7 @@ public class LanguageService {
      * Classpath folder (no leading/trailing slash) holding one subdirectory
      * per language, e.g. {@code language/deutsch/deutsch.properties} - see
      * {@link #availableLanguages()} and {@link #loadLanguageFile(String)}.
-     * Restructured 2026-09-16 from a flat {@code language/deutsch.txt} layout
-     * so that a language can also carry longer, non-properties content
+     * One folder per language so that a language can also carry longer, non-properties content
      * later (HTML/XML help texts etc.) alongside its {@code .properties}
      * file, without cluttering a single shared folder.
      */
@@ -76,9 +75,9 @@ public class LanguageService {
      * The language {@link #availableLanguages()} name that is actually
      * active right now: whatever {@link Config#getLanguage()} has saved, or
      * {@link #DEFAULT_LANGUAGE} if nothing/blank is configured yet (e.g.
-     * first start before {@link C2WApp}'s initial setup runs). Also
+     * first start before {@code WorkspaceBootstrap}'s initial setup runs). Also
      * transparently upgrades a language file name saved by a version of
-     * Cow2Win from before the 2026-09-16 per-language-folder restructuring
+     * Cow2Win from before the per-language-folder layout
      * (e.g. a stored {@code "deutsch.txt"}) to the new plain name
      * ({@code "deutsch"}), so an existing {@code workspace/config.properties}
      * keeps working without the user having to touch it.

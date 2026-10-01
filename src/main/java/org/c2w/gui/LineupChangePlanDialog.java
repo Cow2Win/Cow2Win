@@ -77,7 +77,7 @@ public class LineupChangePlanDialog extends JDialog {
     private final JRadioButton savedLineupRadio = new JRadioButton(LanguageService.displayName(KEY_TARGET_SAVED));
     private final JRadioButton algorithmRadio = new JRadioButton(LanguageService.displayName(KEY_TARGET_ALGORITHM));
     private final JComboBox<String> targetLineupCombo = new JComboBox<>();
-    /** One algorithm per side (since 2026-09-24) - see {@link LineupAlgorithms#runBoth}. */
+    /** One algorithm per side - see {@link LineupAlgorithms#runBoth}. */
     private final JComboBox<LineupAlgorithm> heroAlgorithmCombo = new JComboBox<>();
     private final JComboBox<LineupAlgorithm> titanAlgorithmCombo = new JComboBox<>();
     private final JPanel savedLineupPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));

@@ -68,7 +68,7 @@ public class GuildRepository {
 
     /**
      * Deletes the given guild folder and everything in it (see
-     * {@code org.c2w.gui.ToolbarPanel#onRemoveGuild}, added 2026-09-18) -
+     * {@code org.c2w.service.GuildService#deleteGuild}) -
      * recursive, unlike {@link LineupRepository#delete}, since a guild
      * folder holds more than just the guild file itself (its
      * {@code *.lineup} files, generated reports, etc.).

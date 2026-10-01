@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 /**
  * Read-only access to the fortification catalog ({@code fortifications.json}
- * inside the jar). All values in it are fixed (decided 2026-09-29): the app
+ * inside the jar). All values in it are fixed: the app
  * offers no way to edit or save the catalog, it can only be changed in the
  * source tree and shipped with a new build.
  */

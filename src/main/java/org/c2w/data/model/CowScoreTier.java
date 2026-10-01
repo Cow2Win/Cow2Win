@@ -24,14 +24,13 @@ package org.c2w.data.model;
  * tier means there.
  *
  * Pets and war flags use the same 5 tiers, but each tier is worth less for
- * them than for a hero - see {@link #petWarFlagValue()} (per the user's
- * decision, 2026-09-29: they are weaker than heroes and get values of their
- * own, GOOD = 0.3).
+ * them than for a hero - see {@link #petWarFlagValue()} (they are weaker
+ * than heroes and get values of their own, GOOD = 0.3).
  */
-// Since 2026-09-30 only used by titans - heroes, pets and war flags use FortMark/FortMarks.
+// Only used by titans - heroes, pets and war flags use FortMark/FortMarks.
 public enum CowScoreTier {
-    // PLACEHOLDER pet/war flag values: only GOOD = 0.3 is the user's own
-    // decision (2026-09-29), the other four are provisional - same order,
+    // PLACEHOLDER pet/war flag values: only GOOD = 0.3 is a deliberate
+    // value, the other four are provisional - same order,
     // roughly half the hero spacing - until the user settles on real ones.
     NEGATIVE(0.4, 0.1),
     AVERAGE(0.6, 0.2),

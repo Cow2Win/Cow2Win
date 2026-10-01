@@ -4,6 +4,7 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.domain.BuffCalculationService;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.i18n.LanguageService;
 
@@ -16,7 +17,7 @@ import java.util.Locale;
  * Common base for the lineup summary shown in the fortification map's top
  * row: total power and summed CowScore of one team type. Split into
  * {@link HeroLineupSummaryPanel} (top left) and {@link TitanLineupSummaryPanel}
- * (top right) on 2026-09-25, so each summary can be shown/hidden together with
+ * (top right), so each summary can be shown/hidden together with
  * its fortifications (see FortificationMapPanel).
  */
 public abstract class LineupSummaryPanel extends JPanel {
@@ -56,8 +57,8 @@ public abstract class LineupSummaryPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         setOpaque(false);
 
-        powerLbl.setForeground(fortificationType.getColor());
-        cowScoreLbl.setForeground(fortificationType.getColor());
+        powerLbl.setForeground(FortificationTypeStyle.color(fortificationType));
+        cowScoreLbl.setForeground(FortificationTypeStyle.color(fortificationType));
 
         // Static tooltip text, set once here rather than in refresh(Lineup),
         // since it never changes with the lineup. A summed CowScore total is

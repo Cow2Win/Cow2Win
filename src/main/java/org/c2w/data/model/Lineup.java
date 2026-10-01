@@ -1,22 +1,23 @@
 package org.c2w.data.model;
 
+import org.c2w.eval.LineupAlgorithm;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * Persisted result of ONE assignment run (see
- * {@link org.c2w.eval.LineupAlgorithm}, added 2026-09-03): which team was
+ * {@link LineupAlgorithm}): which team was
  * assigned to which fortification. Purely data-holding like {@link Guild} -
  * references teams/fortifications only via ids (see Entry), no object
  * references, so that this file stays independent of a particular Guild
  * instance in memory and can later be read back in by other modules (see
  * {@link org.c2w.data.repository.LineupRepository}).
  *
- * A team is identified via teamMemberId + teamType + teamIndex alone - per
- * the user's explicit request (2026-09-20), an {@link Entry} is a pure
- * reference/primary key into the guild, not a snapshot of the team's values
- * (totalPower etc. used to be cached here "at the time of assignment", which
- * could go stale the moment the team itself changed afterwards). Anything
+ * A team is identified via teamMemberId + teamType + teamIndex alone - an
+ * {@link Entry} is a pure reference/primary key into the guild, not a
+ * snapshot of the team's values, so it can never go stale when the team
+ * itself changes. Anything
  * about the team itself (totalPower, buff fit, score, ...) is looked up
  * fresh from the current {@link Guild} whenever it is needed (see e.g.
  * {@link org.c2w.domain.BuffCalculationService#totalPowerOf}) - teams have no
@@ -24,7 +25,7 @@ import java.util.List;
  * (heroTeams/titanTeams) is enough (see {@link GuildMember#teamLabel(int)}).
  *
  * algorithmName is the displayName() of the algorithm that produced this
- * result (see {@link org.c2w.eval.LineupAlgorithm#displayName()}) - additionally
+ * result (see {@link LineupAlgorithm#displayName()}) - additionally
  * feeds into the file name on save (see {@link org.c2w.data.repository.LineupRepository}).
  * Empty ("") means no algorithm has (yet) produced this lineup - e.g. the
  * default lineup created together with a new guild (see
@@ -33,14 +34,14 @@ import java.util.List;
  * org.c2w.gui.hero.HeroValueOverviewDialog}/{@link
  * org.c2w.gui.titan.TitanValueOverviewDialog}), never run through an
  * algorithm. Since an algorithm (see {@link
- * org.c2w.eval.LineupAlgorithm#run}) only ADDS entries for teams that
+ * LineupAlgorithm#run}) only ADDS entries for teams that
  * had none yet, algorithmName really means "produced/last extended by",
  * not "every entry in here came from this one algorithm" - a lineup can mix
  * manual picks and algorithm-added entries; this field just names whichever
  * algorithm ran most recently. createdAt is the time this was created
  * (informational).
  *
- * Since 2026-09-24 every algorithm only fills ONE side (heroes or titans),
+ * Every algorithm only fills ONE side (heroes or titans),
  * so algorithmName combines both sides' algorithm names, e.g. "Heroes: Best
  * possible lineup; Titans: Balanced defense" (format owned by
  * org.c2w.eval.LineupAlgorithms#combinedAlgorithmName) - a side that has

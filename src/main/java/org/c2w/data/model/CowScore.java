@@ -3,43 +3,24 @@ package org.c2w.data.model;
 import java.util.Map;
 
 /**
- * The umbrella term (Thorsten's own naming, 2026-09-14) for a hero's (or,
- * later, titan's) two editable {@link CowScoreTier}-based assessments -
- * {@link #generalScore()} and {@link #buffFitScores()} - as opposed to a
- * catalog entry's own objective master data (id/roles/image, see
- * {@link Hero}). Bundling both into one type is what makes it possible to
- * hold "the CowScore" for a hero as a single value and persist it in a file
- * of its own, separate from that hero's master data - see
- * {@code HeroRepository}'s class Javadoc for why that separation exists
- * ({@code cowScore.json} vs. {@code heroes.json}).
- *
- * <p>Used by both {@link Hero#cowScore()} and (since 2026-09-28) {@link
- * Titan#cowScore()} - heroes persist theirs in {@code cowScore.json}, titans
- * in {@code titanCowScore.json}, both in the same format (see {@code
- * CowScoreFiles}), each separate from its master-data file.
- *
- * <p><b>Since 2026-09-30 only used by titans.</b> Heroes, pets and war flags
- * use {@link FortMarks} instead (CowScore concept of 2026-09-30); titans will
- * follow separately.
+ * A titan's two editable {@link CowScoreTier}-based assessments -
+ * {@link #generalScore()} and {@link #buffFitScores()} - kept separate from
+ * its objective master data (id/element/image, see {@link Titan}) and
+ * persisted in {@code titanCowScore.json} (see {@code CowScoreFiles}).
+ * Heroes, pets and war flags use {@link FortMarks} instead.
  *
  * @param generalScore this entity's general quality/usefulness on {@link
  *         CowScoreTier}'s shared grid, independent of any specific
- *         fortification/buff ("some heroes are simply better or worse than
+ *         fortification/buff ("some titans are simply better or worse than
  *         others") - used for fortifications WITHOUT a buff, where there is
  *         no role/element match to score against. {@link CowScoreTier#GOOD}
  *         is the default for an entity without an explicit, deliberate
- *         assessment - most heroes are expected to stay at the default.
- *         (Since 2026-09-29 the workspace copy of cowScore.json lists every
- *         hero explicitly, see {@code CowScoreFiles}.)
+ *         assessment.
  * @param buffFitScores this entity's buff-specific fit, keyed by {@link
- *         Fortification#id()} - the buffProfits successor (Stufe 3, added
- *         2026-09-11, see cow2win-verbesserungsvorschlaege.md). An n:m
- *         relationship (one hero can have an override for several
- *         fortifications, one fortification can have overrides from several
- *         heroes). Sparse by design - see {@link #buffFitScore(String,
+ *         Fortification#id()}. Sparse by design - see {@link #buffFitScore(String,
  *         boolean)} for how a missing entry defaults. Used INSTEAD OF (not in
  *         addition to) {@link #generalScore()} for fortifications WITH a
- *         buff - see {@link HeroTeamBuffFitScore}.
+ *         buff - see {@link TitanTeamBuffFitScore}.
  */
 public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buffFitScores) {
 
@@ -53,19 +34,18 @@ public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buff
 
     /**
      * This entity's buff-specific fit score for the fortification with the
-     * given id (which must have a buff) - the buffProfits successor. Used
+     * given id (which must have a buff). Used
      * INSTEAD OF {@link #generalScore()} for fortifications WITH a buff (see
-     * {@link HeroTeamBuffFitScore#of(HeroTeam, Fortification)}, which is the
-     * intended caller and resolves {@code roleMatches} against the
-     * fortification's {@link RoleBuff#role()}).
+     * {@link TitanTeamBuffFitScore#of(TitanTeam, Fortification)}, which is the
+     * intended caller and resolves {@code roleOrElementMatches} against the
+     * fortification's {@link ElementBuff#element()}).
      *
      * Resolution order: (1) an explicit override in {@link #buffFitScores()}
      * for this fortification id, if present; (2) otherwise
      * {@link CowScoreTier#GOOD} if {@code roleOrElementMatches}; (3)
      * otherwise {@link CowScoreTier#AVERAGE} - a role/element match is only the
      * DEFAULT floor, not a hard one: an explicit override for a
-     * role/element-matching entity may still be set below STANDARD (per the
-     * user's own decision, 2026-09-11).
+     * role/element-matching entity may still be set below STANDARD.
      */
     public CowScoreTier buffFitScore(String fortificationId, boolean roleOrElementMatches) {
         CowScoreTier override = buffFitScores.get(fortificationId);
@@ -79,7 +59,7 @@ public record CowScore(CowScoreTier generalScore, Map<String, CowScoreTier> buff
      * The buff-specific fit score for an entity WITHOUT role/element - pets
      * and war flags: an explicit override in {@link #buffFitScores()} for
      * this fortification id if present, otherwise {@link #generalScore()}
-     * (per the user's decision, 2026-09-29) - unlike {@link
+     * - unlike {@link
      * #buffFitScore(String, boolean)}, there is no role/element match that
      * could pick a default here.
      */

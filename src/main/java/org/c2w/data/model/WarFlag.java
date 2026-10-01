@@ -23,8 +23,7 @@ package org.c2w.data.model;
  * fortMarks: the fortifications this war flag is marked as a good fit for
  * ({@link FortMark#POSITIVE} only - war flags carry no negative marks). Kept in
  * {@code warFlagCowScore.json}, deliberately SEPARATE from this record's
- * "objective" fields (id/imagePath), the same split heroes have. Replaces
- * the former tier-based CowScore (CowScore concept of 2026-09-30).
+ * "objective" fields (id/imagePath), the same split heroes have.
  */
 public record WarFlag(
         String id,

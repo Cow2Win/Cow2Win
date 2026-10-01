@@ -11,9 +11,7 @@ import java.awt.*;
 import java.util.Comparator;
 
 /**
- * {@link GuildTeamEntryDialog} for hero teams only - the hero-side half of
- * what used to be a single combined {@code GuildEntryDialog} (see that
- * class's replacement, {@link GuildTeamEntryDialog}). Opened from its own
+ * {@link GuildTeamEntryDialog} for hero teams only. Opened from its own
  * toolbar button - see {@code ToolbarPanel#onOpenGuildHeroEntry}.
  */
 public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {

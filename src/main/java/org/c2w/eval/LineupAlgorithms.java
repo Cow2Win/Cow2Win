@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Registry of every available {@link LineupAlgorithm}, split by side (since
- * 2026-09-24): {@link #HERO} only fills hero fortifications, {@link #TITAN}
+ * Registry of every available {@link LineupAlgorithm}, split by side:
+ * {@link #HERO} only fills hero fortifications, {@link #TITAN}
  * only titan fortifications, so both parts of a lineup can use different
  * strategies - or one of them {@link ManualLineupAlgorithm manual picks}
  * only. {@link #runBoth} applies one algorithm per side to a lineup.
@@ -90,7 +90,7 @@ public final class LineupAlgorithms {
      * The {@link Lineup#algorithmName()} to store after {@code algorithmName}
      * ran for {@code side} on a lineup whose name was {@code existingName}:
      * the part for {@code side} is replaced, the other side's part is kept.
-     * A legacy (pre-2026-09-24, single-algorithm) name that cannot be parsed
+     * A legacy (single-algorithm) name that cannot be parsed
      * is dropped, since it no longer describes either side reliably.
      */
     public static String combinedAlgorithmName(String existingName, Lineup.TeamType side, String algorithmName) {

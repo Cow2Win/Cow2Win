@@ -151,7 +151,7 @@ public class AppContext {
         }
         this.lineup = lineup;
         this.lineupFilePath = lineupFilePath;
-        // guild is always set before the first lineup (see C2WApp#main), so
+        // guild is always set before the first lineup (see WorkspaceBootstrap#start), so
         // it is safe to use here for the buffMemberCount half of each baseline.
         this.loadedFortificationBaselines = computeFortificationBaselines(lineup, guild);
         fireLineupChanged();
