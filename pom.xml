@@ -16,6 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gson.version>2.13.2</gson.version>
         <junit.version>5.14.4</junit.version>
+        <h2.version>2.5.252</h2.version>
         <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
 
         <!-- Windows app-image packaging (bundled JRE + resources folder) - see the
@@ -47,6 +48,16 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+        <!-- Embedded SQL database (file mode) for the Weltenschlacht journal - added
+             2026-10-03 (Schlachtplan phase 0.3). Pure-Java JDBC driver, registered via
+             META-INF/services/java.sql.Driver (hence the ServicesResourceTransformer in
+             the shade plugin) and needing extra JDK modules in the bundled runtime (see
+             the jpackage addModules below). -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
         </dependency>
         <!-- Test framework (added 2026-09-10, first tests: BestPossibleLineupAlgorithmTest). -->
         <dependency>
@@ -157,13 +168,27 @@
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
                                         <exclude>module-info.class</exclude>
+                                        <!-- gson's versioned module descriptor: with Multi-Release
+                                             (below) it would make the fat jar look like the
+                                             "com.google.gson" module. -->
+                                        <exclude>META-INF/versions/*/module-info.class</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>${app.mainClass}</mainClass>
+                                    <manifestEntries>
+                                        <!-- H2 is a multi-release jar (META-INF/versions/21/...).
+                                             The merged manifest is our own, so the flag has to be
+                                             set again here or the versioned classes are ignored. -->
+                                        <Multi-Release>true</Multi-Release>
+                                    </manifestEntries>
                                 </transformer>
+                                <!-- Merges META-INF/services/* of all jars instead of keeping
+                                     only the first one - H2 registers its JDBC driver via
+                                     META-INF/services/java.sql.Driver. -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
@@ -210,9 +235,28 @@
                                  in-app frame icon, see Cow2Frame#FRAME_ICON_PATH). Without this,
                                  jpackage falls back to the default Java coffee-cup icon. -->
                             <icon>${project.basedir}/src/main/resources/images/app/cow.ico</icon>
+                            <!-- JDK modules of the bundled runtime - check with
+                                 `jdeps -print-module-deps` on the shaded jar (README
+                                 "Distribution package"). A missing module only shows up in the
+                                 installed app, never in the IDE (full JDK there).
+                                 - java.net.http: org.c2w.infra.UpdateChecker (HttpClient)
+                                 H2 (determined with `jdeps -verbose:class` on the H2 jar):
+                                 - java.sql: JDBC itself (pulls in java.logging, java.xml and
+                                   java.transaction.xa transitively)
+                                 - java.naming: org.h2.util.JdbcUtils / JdbcDataSource
+                                 - java.management: org.h2.util.Utils (memory/GC info), JMX
+                                 (a plain embedded file DB also runs with java.sql alone; the two
+                                 above are kept as cheap insurance for less common code paths)
+                                 Not added (H2 features we don't use): java.compiler (Java source
+                                 functions), java.scripting (script triggers), java.instrument
+                                 (Profiler agent), jdk.net (TCP server socket options). -->
                             <addModules>
                                 <addModule>java.base</addModule>
                                 <addModule>java.desktop</addModule>
+                                <addModule>java.net.http</addModule>
+                                <addModule>java.sql</addModule>
+                                <addModule>java.naming</addModule>
+                                <addModule>java.management</addModule>
                             </addModules>
                             <appContentPaths>
                                 <appContentPath>${project.build.directory}/app-content/resources</appContentPath>

@@ -34,7 +34,7 @@ into in-game steps (`LineupChangePlanDialog`) is built in as well.
   needs those to build the bundled runtime.
 - Maven. No wrapper is committed (`.mvn/` exists but is empty), so a locally
   installed `mvn` is required.
-- Network access on first build - Gson and JUnit Jupiter, and (for the
+- Network access on first build - Gson, H2 and JUnit Jupiter, and (for the
   distribution package) the shade/assembly/jpackage plugins, are pulled from
   Maven Central (see `pom.xml`).
 
@@ -62,16 +62,23 @@ under `target/dist/Cow2Win/`, and zips it into
 `target/Cow2Win-<version>-windows-app.zip`:
 
 - `Cow2Win.exe` - launches the app, no separately installed Java needed.
-- `runtime/` - a bundled JRE, built by `jpackage`/`jlink` just for this app
-  (`java.desktop` + `java.base`).
+- `runtime/` - a bundled JRE, built by `jpackage`/`jlink` just for this app,
+  containing only the JDK modules listed under `addModules` in `pom.xml`
+  (`java.base`, `java.desktop`, `java.net.http` for the update check, and
+  `java.sql`/`java.naming`/`java.management` for H2) plus their
+  dependencies. `runtime/release` lists what actually ended up in there.
 - `resources/` - a plain, on-disk copy of `src/main/resources` (images, the
   catalog JSONs, the language files) alongside the app, in addition to the
   same files being on the jar's classpath as usual. Exception:
   `app-version.properties` is left out there - it is only read from the
   (filtered) copy inside the jar, and an on-disk copy would just show the
   unresolved `${app.version}` placeholder.
-- `app/` - the executable jar (all dependencies, i.e. Gson, merged in via
-  `maven-shade-plugin`) and jpackage's own launcher config.
+- `app/` - the executable jar (all dependencies, e.g. Gson and H2, merged in
+  via `maven-shade-plugin`) and jpackage's own launcher config. The shade
+  plugin also merges `META-INF/services/*` (`ServicesResourceTransformer`,
+  so `META-INF/services/java.sql.Driver` -> `org.h2.Driver` survives) and
+  sets `Multi-Release: true` in the manifest (H2 ships Java-21-specific
+  classes under `META-INF/versions/21/`).
 
 The zip is attached as a secondary artifact, so `mvn deploy` uploads it to
 the repository in `distributionManagement` alongside the plain project jar.
@@ -83,6 +90,24 @@ Implementation: `maven-shade-plugin` (executable jar) ->
 `jpackage`) -> `maven-assembly-plugin` (zips `target/dist/Cow2Win/`, see
 `src/assembly/windows-app.xml`) - all three bound to the `package` phase in
 `pom.xml`.
+
+**Adding a dependency or JDK API:** the IDE runs on the full JDK, the
+installed app only on the trimmed `runtime/` - a missing module only shows
+up there (`NoClassDefFoundError`, e.g. `java/sql/DriverManager`). After
+`mvn package`, check the shaded jar and compare with `addModules`:
+
+```
+jdeps --multi-release 24 --print-module-deps --ignore-missing-deps target/jpackage-input/Cow2Win.jar
+```
+
+Modules that jdeps lists but `addModules` deliberately leaves out (H2
+features not used: `java.compiler`, `java.scripting`, `java.instrument`,
+`jdk.net`) are explained in the comment there. Afterwards check
+`target/dist/Cow2Win/runtime/release` (`MODULES=...`).
+
+If `mvn clean` fails with "Failed to delete ...\Cow2Win.exe", the exe from
+the previous jpackage run is read-only - `attrib -R target\dist\* /S /D`
+fixes it.
 
 ## Workspace, configuration & backups
 
@@ -355,6 +380,11 @@ folder (`new Catalog(tempDir)`).
   against a temp workspace: files on disk, the open guild/lineup and the
   unsaved-changes state stay consistent. Also checks that a background
   algorithm run is discarded if the lineup changed in the meantime.
+- `H2SmokeTest` - the H2 dependency: driver registered via
+  `META-INF/services`, a file database in a temp directory, a Unicode round
+  trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting
+  the database files after the last connection is closed (no Windows file
+  lock left).
 
 ## More context
 
