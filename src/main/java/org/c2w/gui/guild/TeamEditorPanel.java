@@ -391,8 +391,8 @@ public final class TeamEditorPanel<T> extends JPanel {
         String kindLabel = LanguageService.displayName(kindKey);
 
         // Match the draft's value against the catalog by id, not equals(): a
-        // Pet/WarFlag record also carries its CowScore, so an instance loaded
-        // before a CowScore edit is no longer equal to the catalog's current one.
+        // Pet/WarFlag record also carries its fortification marks, so an instance loaded
+        // before a marks edit is no longer equal to the catalog's current one.
         E selected = initial == null ? null : sortedEntries.stream()
                 .filter(e -> idOf.apply(e).equals(idOf.apply(initial)))
                 .findFirst()

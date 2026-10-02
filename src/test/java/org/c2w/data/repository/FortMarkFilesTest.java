@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Covers {@link FortMarkFiles} - the fortification-mark file format of
- * {@code cowScore.json}, {@code petCowScore.json} and {@code
+ * {@code cowScore.json}, {@code titanCowScore.json}, {@code petCowScore.json} and {@code
  * warFlagCowScore.json} (CowScore concept of 2026-09-30), including the
  * migration of the former tier-based format.
  */

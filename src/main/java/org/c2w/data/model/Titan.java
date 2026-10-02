@@ -1,7 +1,5 @@
 package org.c2w.data.model;
 
-import java.util.Map;
-
 /**
  * Catalog entry of a titan: master data, identical for all guild members.
  *
@@ -17,19 +15,19 @@ import java.util.Map;
  * "image"), it automatically falls back to the placeholder at
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
- * cowScore: this titan's manually curated {@link CowScore}, kept in
- * {@code titanCowScore.json}, deliberately SEPARATE from this record's
+ * fortMarks: this titan's manually curated {@link FortMarks} (positive /
+ * negative relation to individual TITAN fortifications), kept in {@code
+ * titanCowScore.json}, deliberately SEPARATE from this record's
  * "objective" fields (id/element/imagePath) in {@code titans.json} (see
  * {@code TitanRepository}'s class Javadoc): a master-data refresh can
  * overwrite {@code titans.json} wholesale without risking the manually
- * maintained scores. {@link #generalScore()}/{@link #buffFitScores()}/
- * {@link #buffFitScore(String, boolean)} are convenience delegates.
+ * maintained marks - the same split as {@link Hero#fortMarks()}.
  */
 public record Titan(
         String id,
         TitanElement element,
         String imagePath,
-        CowScore cowScore
+        FortMarks fortMarks
 ) {
     /** Avatar for titans that don't have their own icon under images/titans yet. */
     public static final String PLACEHOLDER_IMAGE_PATH = "/images/titans/placeholder.png";
@@ -42,39 +40,21 @@ public record Titan(
             throw new IllegalArgumentException("Titan '" + id + "' needs an element");
         }
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
-        cowScore = cowScore == null ? CowScore.DEFAULT : cowScore;
+        fortMarks = fortMarks == null ? FortMarks.NONE : fortMarks;
     }
 
-    /** Convenience constructor for titans without an avatar and without an explicit CowScore (e.g. in tests). */
+    /** Convenience constructor for titans without an avatar and without fortification marks (e.g. in tests). */
     public Titan(String id, TitanElement element) {
         this(id, element, null, null);
     }
 
-    /**
-     * This titan's general quality/usefulness - delegates to {@link #cowScore()},
-     * see {@link CowScore#generalScore()}. Used by {@link TitanTeam#sortScore()}
-     * for fortifications without a buff, exactly as {@link Hero#generalScore()}
-     * is used by {@link HeroTeam#sortScore()}.
-     */
-    public CowScoreTier generalScore() {
-        return cowScore.generalScore();
+    /** True if this titan's element matches the given {@link Buff} - the automatic BUFF mark (only {@link ElementBuff}s can match). */
+    public boolean matchesBuff(Buff buff) {
+        return buff instanceof ElementBuff elementBuff && element == elementBuff.element();
     }
 
-    /** This titan's buff-specific fit overrides - delegates to {@link #cowScore()}, see {@link CowScore#buffFitScores()}. */
-    public Map<String, CowScoreTier> buffFitScores() {
-        return cowScore.buffFitScores();
-    }
-
-    /**
-     * This titan's buff-specific fit score for the fortification with the
-     * given id (which must have a buff) - delegates to {@link #cowScore()},
-     * see {@link CowScore#buffFitScore(String, boolean)} for the resolution
-     * order (element match instead of role match here). Intended caller:
-     * {@link TitanTeamBuffFitScore#of(TitanTeam, Fortification)}, which
-     * resolves {@code elementMatches} against the fortification's
-     * {@link ElementBuff#element()}.
-     */
-    public CowScoreTier buffFitScore(String fortificationId, boolean elementMatches) {
-        return cowScore.buffFitScore(fortificationId, elementMatches);
+    /** This titan's mark for the given fortification, or null if unmarked - see {@link FortMarks#markFor(String)}. */
+    public FortMark fortMark(String fortificationId) {
+        return fortMarks.markFor(fortificationId);
     }
 }

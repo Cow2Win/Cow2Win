@@ -58,7 +58,7 @@ public final class FortificationEntryDialog extends JDialog {
 
     /**
      * Read-only catalog information (buff, prerequisites, strategic
-     * importance, hero scores) shown above {@link #rowsPanel} - the
+     * importance, marked heroes/titans) shown above {@link #rowsPanel} - the
      * fortification's own values are fixed and never saved from here.
      */
     private final FortificationInfoPanel infoPanel;
@@ -83,7 +83,8 @@ public final class FortificationEntryDialog extends JDialog {
         }
         this.fortification = fortification;
         this.appContext = appContext;
-        this.infoPanel = new FortificationInfoPanel(fortification, appContext.catalog().heroes().findAll());
+        this.infoPanel = new FortificationInfoPanel(fortification, appContext.catalog().heroes().findAll(),
+                appContext.catalog().titans().findAll());
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
         for (MemberDraft member : draft.members) {
@@ -316,24 +317,21 @@ public final class FortificationEntryDialog extends JDialog {
      * Logs breakdown for one row: power term + each component of
      * {@link TeamScoreCalculator.Breakdown#memberScores()} = total, e.g.
      * "Wachturm: Team 1 : 10.00 + 0.30 + 0.13 + 0.00 + 0.06 = 10.49" for a
-     * hero team (role, relation, pet, war flag bonus in score points); for a
-     * titan team with totems, the totem points
-     * ({@link TeamScoreCalculator.Breakdown#bonusPoints()}) follow the power
-     * term, then the per-titan values. Skipped for a still-empty row (no members and
-     * no power) - it carries no information and would just spam the log once
+     * hero team (role, relation, pet, war flag, combo bonus in score points);
+     * for a titan team the three components element, relation and totems,
+     * e.g. "Mondtempel: Team 1 : 5.00 + 0.15 + 0.00 + 0.00 = 5.15". Skipped
+     * for a row without power (still empty) - every bonus is relative to the
+     * power, so it carries no information and would just spam the log once
      * per row every time the dialog opens.
      */
     private static void logSortScoreBreakdown(String fortificationName, int rowNumber, TeamScoreCalculator.Breakdown breakdown) {
         List<Double> memberScores = breakdown.memberScores();
-        if (memberScores.isEmpty() && breakdown.powerTerm() == 0) {
+        if (breakdown.powerTerm() == 0) {
             return;
         }
         StringBuilder message = new StringBuilder();
         message.append(fortificationName).append(": Team ").append(rowNumber).append(" : ")
                 .append(String.format(Locale.ROOT, "%.2f", breakdown.powerTerm()));
-        if (breakdown.bonusPoints() != 0) {
-            message.append(" + ").append(String.format(Locale.ROOT, "%.2f", breakdown.bonusPoints()));
-        }
         for (double memberScore : memberScores) {
             message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
         }

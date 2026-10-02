@@ -4,12 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * The manually curated {@link FortMark}s of one hero, pet or war flag, keyed
+ * The manually curated {@link FortMark}s of one hero, titan, pet or war flag, keyed
  * by {@link Fortification#id()}. Sparse by design: a
  * fortification without an entry is "neutral" (unmarked).
  *
- * <p>Persisted in {@code cowScore.json} (heroes), {@code petCowScore.json}
- * and {@code warFlagCowScore.json}, see {@code FortMarkFiles}.
+ * <p>Persisted in {@code cowScore.json} (heroes), {@code titanCowScore.json}
+ * (titans), {@code petCowScore.json} and {@code warFlagCowScore.json}, see
+ * {@code FortMarkFiles}.
  *
  * @param marks fortification id -&gt; mark; never null, unmodifiable
  */

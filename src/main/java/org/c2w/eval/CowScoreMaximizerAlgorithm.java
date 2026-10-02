@@ -16,7 +16,7 @@ import java.util.Map;
  * the bridge, a simple integer role/element MATCH COUNT ({@link
  * HeroTeam#buffFitScore}/{@link TitanTeam#buffFitScore}) for a buffed
  * fortification - notably NOT the manually curated CowScore bonus
- * (hero fortification marks, titan tiers) - and {@link HeroTeam#sortScore()}/
+ * (hero/titan fortification marks, pets, war flags, totems) - and {@link HeroTeam#sortScore()}/
  * {@link TitanTeam#sortScore()} for an unbuffed fortification. This
  * algorithm instead uses exactly ONE metric for every single decision,
  * bridge included: {@link TeamScoreCalculator#scoreFor}'s {@code total()} -

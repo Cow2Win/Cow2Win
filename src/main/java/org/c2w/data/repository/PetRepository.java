@@ -110,8 +110,8 @@ public class PetRepository {
     }
 
     /**
-     * The shipped default CowScore of every known pet (from the {@code
-     * petCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a pet
+     * The shipped default fortification marks of every known pet (from the {@code
+     * petCowScore.json} inside the jar, {@link FortMarks#NONE} for a pet
      * without an entry there). Only reads, never writes.
      */
     public Map<String, FortMarks> loadDefaultCowScores() {

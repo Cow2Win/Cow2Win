@@ -58,8 +58,8 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         return new Hero(id, List.of(roles));
     }
 
-    private static Titan titan(String id, CowScoreTier generalScore, TitanElement element) {
-        return new Titan(id, element, null, new CowScore(generalScore, null));
+    private static Titan titan(String id, TitanElement element) {
+        return new Titan(id, element);
     }
 
     private static Candidate<HeroTeam> candidate(String memberId, HeroTeam team, int teamIndex) {
@@ -199,9 +199,9 @@ class BestPossibleLineupAlgorithmAssignmentTest {
             Buff fireBuff = new ElementBuff(TitanElement.FIRE, BuffEffect.HEALTH_INCREASE, 8.0);
             Fortification bastionOfFire = fort("bastion-of-fire", FortificationType.TITAN, 4, fireBuff);
 
-            TitanTeam noFireTitans = new TitanTeam("p", 0, List.of(titan("t1", CowScoreTier.GOOD, TitanElement.WATER)), 1000);
+            TitanTeam noFireTitans = new TitanTeam("p", 0, List.of(titan("t1", TitanElement.WATER)), 1000);
             TitanTeam twoFireTitans = new TitanTeam("q", 0, List.of(
-                    titan("t2", CowScoreTier.GOOD, TitanElement.FIRE), titan("t3", CowScoreTier.GOOD, TitanElement.FIRE)), 400);
+                    titan("t2", TitanElement.FIRE), titan("t3", TitanElement.FIRE)), 400);
             List<Candidate<TitanTeam>> pool = new ArrayList<>(List.of(candidate("p", noFireTitans, 0), candidate("q", twoFireTitans, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
@@ -286,7 +286,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         }
 
         private static GuildMember titanMember(String id, int totalPower) {
-            TitanTeam team = new TitanTeam(id, 0, List.of(titan(id + "-titan", CowScoreTier.GOOD, TitanElement.WATER)), totalPower);
+            TitanTeam team = new TitanTeam(id, 0, List.of(titan(id + "-titan", TitanElement.WATER)), totalPower);
             return new GuildMember(id, id, List.of(), List.of(team));
         }
 

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * The totem bonus of a titan team: {@link TeamScoreCalculator#TOTEM_PERCENT}
  * per totem, relative to the power term, fortification-independent - in
  * {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} and
- * {@link TitanTeam#sortScore()}.
+ * {@link TitanTeam#sortScore()} - as the third component of the titan bonus.
  */
 class TeamScoreCalculatorTotemTest {
 
@@ -49,7 +49,7 @@ class TeamScoreCalculatorTotemTest {
 
     @ParameterizedTest(name = "{0} totem(s)")
     @ValueSource(ints = {0, 1, 2})
-    @DisplayName("scoreFor: bonus = powerTerm x 0 / 1.25 / 2.5 %, powerTerm and memberScores unchanged")
+    @DisplayName("scoreFor: totem component = powerTerm x 0 / 1.25 / 2.5 %, powerTerm and other components unchanged")
     void scoreFor(int totemCount) {
         for (Fortification fortification : List.of(FIRE_FORT, PLAIN_FORT)) {
             TeamScoreCalculator.Breakdown without = TeamScoreCalculator.scoreFor(team(0), fortification);
@@ -57,10 +57,10 @@ class TeamScoreCalculatorTotemTest {
 
             double expectedBonus = 10.0 * totemCount * 1.25 / 100;
             assertEquals(10.0, with.powerTerm(), EPS);
-            assertEquals(without.memberScores(), with.memberScores());
-            assertEquals(expectedBonus, with.bonusPoints(), EPS);
+            assertEquals(without.memberScores().subList(0, 2), with.memberScores().subList(0, 2));
+            assertEquals(expectedBonus, with.memberScores().get(2), EPS);
             assertEquals(without.total() + expectedBonus, with.total(), EPS);
-            assertEquals(with.total(), with.powerTerm() + with.bonusPoints()
+            assertEquals(with.total(), with.powerTerm()
                     + with.memberScores().stream().mapToDouble(Double::doubleValue).sum(), EPS);
             assertEquals(with.total() - with.powerTerm(), with.scoreWithoutPower(), EPS);
         }
@@ -68,25 +68,25 @@ class TeamScoreCalculatorTotemTest {
 
     @ParameterizedTest(name = "{0} totem(s)")
     @ValueSource(ints = {0, 1, 2})
-    @DisplayName("sortScore: sum(generalScore) + powerTerm x (1 + n x 1.25 %)")
+    @DisplayName("sortScore: powerTerm x (1 + n x 1.25 %)")
     void sortScore(int totemCount) {
-        double generalScoreSum = TITANS.stream().mapToDouble(t -> t.generalScore().value()).sum();
-        assertEquals(generalScoreSum + 10.0 * (1 + totemCount * 1.25 / 100), team(totemCount).sortScore(), EPS);
+        assertEquals(10.0 * (1 + totemCount * 1.25 / 100), team(totemCount).sortScore(), EPS);
     }
 
     @Test
     @DisplayName("totems do not count as buff matches")
     void buffFitScoreUnaffected() {
         assertEquals(team(0).buffFitScore(FIRE_FORT.buff()), team(2).buffFitScore(FIRE_FORT.buff()));
+        assertEquals(TeamScoreCalculator.titanBonus(team(0), FIRE_FORT).elementPercent(),
+                TeamScoreCalculator.titanBonus(team(2), FIRE_FORT).elementPercent(), EPS);
     }
 
     @Test
-    @DisplayName("hero teams: bonusPoints is 0, total unchanged")
+    @DisplayName("hero teams: total unchanged")
     void heroTeamsUnaffected() {
         HeroTeam heroTeam = new HeroTeam("m1", 0, List.of(new Hero("h1", List.of(Role.TANK))), 1_000_000);
         Fortification heroFort = new Fortification("hero-fort", FortificationType.HERO, 5, 0, 0, 0, null, List.of(), 0);
         TeamScoreCalculator.Breakdown breakdown = TeamScoreCalculator.scoreFor(heroTeam, heroFort, TeamCombos.NONE);
-        assertEquals(0.0, breakdown.bonusPoints(), EPS);
         assertEquals(10.0, breakdown.total(), EPS);
     }
 }

@@ -120,8 +120,8 @@ public class HeroRepository {
     }
 
     /**
-     * The shipped default CowScore of every known hero (from the {@code
-     * cowScore.json} inside the jar, {@link CowScore#DEFAULT} for a hero
+     * The shipped default fortification marks of every known hero (from the {@code
+     * cowScore.json} inside the jar, {@link FortMarks#NONE} for a hero
      * without an entry there) - what {@code HeroCoreScoreDialog}'s "restore
      * defaults" button resets its values to. Only reads, never writes: the
      * workspace copy is not touched until the dialog is saved.

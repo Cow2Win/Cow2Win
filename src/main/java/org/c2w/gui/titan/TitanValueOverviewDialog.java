@@ -763,14 +763,12 @@ public class TitanValueOverviewDialog extends JDialog {
     /**
      * One value-table column (see class Javadoc): either one specific
      * BUFFED fortification, or the single column shared by every buff-less
-     * fortification of this type. A buff-less fortification's
-     * {@link TeamScoreCalculator} score always uses the generalScore-based
-     * branch, and its role-match count is always 0 - never that specific
-     * fortification's (non-existent) buff - so both are numerically
-     * identical no matter which buff-less fortification is actually
-     * assigned; {@link #representative()} is therefore only ever used to
-     * drive that shared calculation, never to tell two buff-less
-     * fortifications apart.
+     * fortification of this type. A buff-less fortification's element-match
+     * count is always 0, so the shared column is scored against
+     * {@link #representative()}. Known limitation of the CowScore concept:
+     * fortification marks (titan relation) of a specific buff-less
+     * fortification other than the representative are not reflected in
+     * this shared column.
      */
     static final class ValueColumn {
 

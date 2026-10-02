@@ -114,8 +114,8 @@ public class WarFlagRepository {
     }
 
     /**
-     * The shipped default CowScore of every known war flag (from the {@code
-     * warFlagCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a
+     * The shipped default fortification marks of every known war flag (from the {@code
+     * warFlagCowScore.json} inside the jar, {@link FortMarks#NONE} for a
      * war flag without an entry there). Only reads, never writes.
      */
     public Map<String, FortMarks> loadDefaultCowScores() {

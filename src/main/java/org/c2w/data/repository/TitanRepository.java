@@ -3,7 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.c2w.data.model.CowScore;
+import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.infra.JsonSupport;
@@ -23,12 +23,14 @@ import java.util.stream.Collectors;
  *     itself changes (new titans, a changed element/avatar). Never written
  *     by this class.</li>
  *     <li>{@code titanCowScore.json} - Thorsten's manually curated {@link
- *     CowScore} per titan (see that type's Javadoc), persisted through
- *     {@link #saveCowScores}. Same file format as the heroes'
- *     {@code cowScore.json}, see {@link CowScoreFiles}.</li>
+ *     FortMarks} per titan (positive and negative marks, see that type's
+ *     Javadoc), edited via {@code TitanCoreScoreDialog} and persisted
+ *     through {@link #saveCowScores}. Same file format as the heroes'
+ *     {@code cowScore.json}, see {@link FortMarkFiles} (which also migrates
+ *     the former tier-based format).</li>
  * </ul>
  * Keeping these in two files means a future wholesale refresh of {@code
- * titans.json} can never accidentally clobber the scores in {@code
+ * titans.json} can never accidentally clobber the marks in {@code
  * titanCowScore.json}, and vice versa. {@link #findById}/{@link #findAll}
  * merge both files back into the combined {@link Titan} view the rest of the
  * app uses.
@@ -37,19 +39,26 @@ public class TitanRepository {
     private static final String TITANS_JSON_PATH = "/data/titans.json";
     private static final String COW_SCORE_JSON_PATH = "/data/titanCowScore.json";
 
-    /** File name of the workspace copy of the titan CowScores - see {@link #cowScoreFile()}. */
+    /** File name of the workspace copy of the titan fortification marks - see {@link #cowScoreFile()}. */
     private static final String COW_SCORE_FILE_NAME = "titanCowScore.json";
 
     /** Classpath-relative folder every titan's "image" JSON field is resolved against - see {@link #parseTitanObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/titans/";
+
+    /** Titans may carry negative marks, like heroes - see {@link FortMarkFiles}. */
+    private static final boolean ALLOW_NEGATIVE = true;
+
+    /** Used in {@link FortMarkFiles}' log messages. */
+    private static final String ENTITY_LABEL = "titan";
 
     private final Path workspaceDir;
     private volatile Map<String, Titan> titansById;
 
     /**
      * Loads the catalog right away: the master data from the classpath,
-     * the CowScores from the workspace copy in {@code workspaceDir} (created
-     * from the shipped defaults if it does not exist yet).
+     * the fortification marks from the workspace copy in {@code
+     * workspaceDir} (created from the shipped defaults if it does not exist
+     * yet, migrated if it is still in the former tier-based format).
      *
      * @throws RuntimeException if the master data cannot be read
      */
@@ -96,24 +105,24 @@ public class TitanRepository {
     }
 
     /**
-     * Persists every titan's current {@link Titan#cowScore()} to the
+     * Persists every titan's current {@link Titan#fortMarks()} to the
      * workspace copy of {@code titanCowScore.json} (see {@link
      * #cowScoreFile()}; pretty-printed, see {@link JsonSupport#writeJsonFile}) and makes {@code catalog} the in-memory
      * catalog for subsequent {@link #findById}/{@link #findAll} calls - the
      * TITAN-side counterpart of {@link HeroRepository#saveCowScores}.
      * Deliberately does NOT touch {@code titans.json}. Every titan in {@code
-     * catalog} gets an entry, see {@link CowScoreFiles#toTree}.
+     * catalog} gets an entry, see {@link FortMarkFiles#toTree}.
      */
     public synchronized void saveCowScores(List<Titan> catalog) throws IOException {
         if (catalog == null) {
             throw new IllegalArgumentException("catalog must not be null");
         }
 
-        Map<String, CowScore> cowScoresById = new LinkedHashMap<>();
+        Map<String, FortMarks> fortMarksById = new LinkedHashMap<>();
         for (Titan titan : catalog) {
-            cowScoresById.put(titan.id(), titan.cowScore());
+            fortMarksById.put(titan.id(), titan.fortMarks());
         }
-        JsonSupport.writeJsonFile(CowScoreFiles.toTree(cowScoresById), cowScoreFile());
+        JsonSupport.writeJsonFile(FortMarkFiles.toTree(fortMarksById), cowScoreFile());
 
         Map<String, Titan> updated = new LinkedHashMap<>();
         for (Titan titan : catalog) {
@@ -123,14 +132,15 @@ public class TitanRepository {
     }
 
     /**
-     * The shipped default CowScore of every known titan (from the {@code
-     * titanCowScore.json} inside the jar, {@link CowScore#DEFAULT} for a
+     * The shipped default fortification marks of every known titan (from the
+     * {@code titanCowScore.json} inside the jar, {@link FortMarks#NONE} for a
      * titan without an entry there) - what {@code TitanCoreScoreDialog}'s
      * "restore defaults" button resets its values to. Only reads, never
      * writes: the workspace copy is not touched until the dialog is saved.
      */
-    public Map<String, CowScore> loadDefaultCowScores() {
-        return CowScoreFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH, titansById.keySet(), "titan");
+    public Map<String, FortMarks> loadDefaultCowScores() {
+        return FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH, titansById.keySet(),
+                ALLOW_NEGATIVE, ENTITY_LABEL);
     }
 
     /**
@@ -146,13 +156,14 @@ public class TitanRepository {
     private Map<String, Titan> loadTitans() {
         try {
             String titansJson = JsonSupport.readClasspathResource(TitanRepository.class, TITANS_JSON_PATH);
-            Map<String, Titan> masterData = parseTitansJson(titansJson, Map.of());
-            Map<String, CowScore> defaults = CowScoreFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH,
-                    masterData.keySet(), "titan");
-            Map<String, CowScore> cowScores = CowScoreFiles.loadWorkspace(cowScoreFile(), defaults, "titan");
+            Map<String, Titan> masterData = parseTitansJson(titansJson);
+            Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH,
+                    masterData.keySet(), ALLOW_NEGATIVE, ENTITY_LABEL);
+            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, ALLOW_NEGATIVE,
+                    ENTITY_LABEL);
             Map<String, Titan> result = new LinkedHashMap<>();
             for (Titan titan : masterData.values()) {
-                result.put(titan.id(), new Titan(titan.id(), titan.element(), titan.imagePath(), cowScores.get(titan.id())));
+                result.put(titan.id(), new Titan(titan.id(), titan.element(), titan.imagePath(), fortMarks.get(titan.id())));
             }
             return result;
         } catch (IOException e) {
@@ -160,14 +171,14 @@ public class TitanRepository {
         }
     }
 
-    private static Map<String, Titan> parseTitansJson(String json, Map<String, CowScore> cowScores) {
+    private static Map<String, Titan> parseTitansJson(String json) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "element": "...", "image": "..." }, ...] - purely the
-        // "objective" master data; generalScore/buffFitScores live in titanCowScore.json.
+        // "objective" master data; fortification marks live in titanCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Titan titan = parseTitanObject(element.getAsJsonObject(), cowScores);
+            Titan titan = parseTitanObject(element.getAsJsonObject());
             if (titan != null) {
                 result.put(titan.id(), titan);
             }
@@ -176,7 +187,7 @@ public class TitanRepository {
         return result;
     }
 
-    private static Titan parseTitanObject(JsonObject obj, Map<String, CowScore> cowScores) {
+    private static Titan parseTitanObject(JsonObject obj) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String elementStr = JsonSupport.getStringOrNull(obj, "element");
         String image = JsonSupport.getStringOrNull(obj, "image");
@@ -194,14 +205,14 @@ public class TitanRepository {
             return null;
         }
 
-        // Scores used to live directly in titans.json - they are no longer
-        // read from there, so point out any leftovers instead of dropping them silently.
+        // Scores used to live directly in titans.json (as generalScore/buffFitScores) - they are no
+        // longer read from there, so point out any leftovers instead of dropping them silently.
         if (obj.has("generalScore") || obj.has("buffFitScores")) {
             Logger.log("titans.json: titan '" + id + "' still carries generalScore/buffFitScores - these are "
-                    + "ignored now, move them to titanCowScore.json");
+                    + "ignored now, maintain the titan's fortification marks (fortMarks) in titanCowScore.json "
+                    + "instead (via the titan CowScore dialog)");
         }
 
-        CowScore cowScore = cowScores.getOrDefault(id, CowScore.DEFAULT);
-        return new Titan(id, element, image != null ? IMAGE_PATH_PREFIX + image : null, cowScore);
+        return new Titan(id, element, image != null ? IMAGE_PATH_PREFIX + image : null, null);
     }
 }

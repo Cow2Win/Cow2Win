@@ -55,7 +55,7 @@ public final class JsonSupport {
      * {@link Path} is needed (via {@link Files}/{@link #writeJsonFile}), not just a classpath
      * resource: {@code WorkspaceBootstrap}'s first-run demo guild/lineup. (The CowScore files no longer
      * go through here - they live in the workspace folder, see {@code
-     * CowScoreFiles} - and {@code fortifications.json} is read-only, see {@code
+     * FortMarkFiles} - and {@code fortifications.json} is read-only, see {@code
      * FortificationRepository}.)
      *
      * <p>Always a path relative to the current working directory, never absolute or tied to
@@ -144,7 +144,7 @@ public final class JsonSupport {
 
     /**
      * Reads a flat object-valued property as a String-to-String map (e.g.
-     * {@code "buffFitScores": {"bastion": "ELEVATED", "city-hall": "LOW"}}) -
+     * {@code "fortMarks": {"bastion-of-fire": "POSITIVE", "city-hall": "NEGATIVE"}}) -
      * insertion order preserved, missing/null property yields an empty map.
      * Non-string values are read via {@code getAsString()} (fine for the
      * enum-name-valued maps this is currently used for).

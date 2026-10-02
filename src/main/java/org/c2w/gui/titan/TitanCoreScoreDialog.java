@@ -18,25 +18,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dialog for maintaining a titan's {@link CowScore} - {@link
- * Titan#generalScore()} and {@link Titan#buffFitScores()} - the TITAN-side
- * counterpart of {@link org.c2w.gui.hero.HeroCoreScoreDialog}.
- * Same layout and same behavior, with element matches instead of role
- * matches: opened from the "File" menu, independent of the currently open
- * guild/lineup, since the titan catalog is shared across every guild.
+ * Dialog for maintaining a titan's {@link FortMarks} - one {@link FortMark}
+ * (neutral / positive / negative) per fortification of type {@link
+ * FortificationType#TITAN} - the TITAN-side counterpart of {@link
+ * org.c2w.gui.hero.HeroCoreScoreDialog}, with the same layout and behavior
+ * (element matches instead of role matches). Opened from the "File" menu,
+ * independent of the currently open guild/lineup, since the titan catalog
+ * is shared across every guild.
  *
- * <p>Left side lists every known titan; picking one shows its {@link
- * Titan#generalScore()} combo box (used for buff-less fortifications),
- * followed by one row per fortification of type {@link
- * FortificationType#TITAN} that has a buff, each with its own {@link
- * CowScoreTier} combo box for that (titan, fortification) pair's {@link
- * Titan#buffFitScores()} entry.
+ * <p>Left side lists every known titan; picking one shows one row per titan
+ * fortification (with and without a buff): its name, the element its {@link
+ * ElementBuff} asks for with the automatic, read-only BUFF marker when the
+ * titan's element matches, and a combo box for the manual mark. "Neutral"
+ * means no entry at all. Saving writes every titan to the workspace copy of
+ * {@code titanCowScore.json} (see {@code FortMarkFiles} for the format).
  *
- * <p>{@link CowScoreTier#GOOD} is the default and never written to disk:
- * picking it in a fortification row removes the override from the working
- * map, and {@link TitanRepository#saveCowScores} drops any remaining GOOD
- * value on save regardless - so {@code titanCowScore.json} only ever grows an
- * entry for a deliberately set, non-default tier.
+ * <p>The toolbar's "restore defaults" button resets the marks of every titan
+ * to the defaults shipped inside the jar - see {@link #onRestoreDefaults()}.
  */
 public final class TitanCoreScoreDialog extends JDialog {
 
@@ -45,44 +43,46 @@ public final class TitanCoreScoreDialog extends JDialog {
 
     // The remaining texts are identical to the hero dialog's, so its language file keys are reused.
     private static final String KEY_SAVE_SCORES = "heroBuffFitScores.saveScores";
-    private static final String KEY_GENERAL_SCORE = "heroBuffFitScores.generalScore";
-    private static final String KEY_BUFF_FIT_SCORES_HEADER = "heroBuffFitScores.buffFitScoresHeader";
     private static final String KEY_SAVE_ERROR = "heroBuffFitScores.saveError";
     private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
     private static final String KEY_RESTORE_DEFAULTS_CONFIRM = "titanBuffFitScores.restoreDefaultsConfirm";
 
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
+
     private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
+
     private static final int TOOLBAR_ICON_SIZE = 20;
 
-    /** Avatar size for the titan name label in {@link #buildDetailPanel}. */
+    /** Avatar size for the {@link #buildDetailPanel}'s {@code titanNameLabel} icon. */
     private static final int TITAN_ICON_SIZE = 32;
 
-    /** Width reserved for a row's name label, so every combo box in the list lines up. */
+    /** Language file key for the small header above the per-fortification rows (see {@link #buildDetailPanel}). */
+    private static final String KEY_FORT_MARKS_HEADER = "fortMarks.header";
+
+    /** Width reserved for a row's fortification-name label, so every combo box in the list lines up (see {@link #buildFortificationRow}). */
     private static final int NAME_LABEL_WIDTH = 170;
 
     /** Width reserved for a row's element-match label (see {@link #buildFortificationRow}). */
-    private static final int ELEMENT_LABEL_WIDTH = 120;
+    private static final int ELEMENT_LABEL_WIDTH = 150;
 
     /** Every known titan, sorted by display name - the catalog never changes while this dialog is open. */
     private final TitanRepository repository;
     private final List<Titan> titanCatalog;
 
-    /** Every fortification a titan's {@link Titan#buffFitScores()} can meaningfully apply to - see class Javadoc. */
-    private final List<Fortification> buffedFortifications = FortificationRepository.findAll().stream()
-            .filter(f -> f.type() == FortificationType.TITAN && f.buff() != null)
+    /** Every fortification a titan can be marked for: all fortifications of type {@link FortificationType#TITAN}. */
+    private final List<Fortification> titanFortifications = FortificationRepository.findAll().stream()
+            .filter(f -> f.type() == FortificationType.TITAN)
             .sorted(Comparator.comparing((Fortification f) -> LanguageService.displayName(f.id()), String.CASE_INSENSITIVE_ORDER))
             .toList();
 
     /**
-     * In-progress buff-fit edits, keyed by titan id, populated lazily for
-     * every titan the user has actually opened. A titan never selected in
-     * this dialog session keeps its original map untouched on save.
+     * In-progress edits, keyed by titan id, populated lazily (one entry per
+     * titan the user has actually looked at - see {@link #buildDetailPanel})
+     * from that titan's current {@link Titan#fortMarks()}. A titan never
+     * selected in this dialog session therefore keeps its original marks
+     * completely untouched on {@link #onSaveScores()}.
      */
-    private final Map<String, Map<String, CowScoreTier>> workingScores = new LinkedHashMap<>();
-
-    /** In-progress {@link Titan#generalScore()} edits, keyed by titan id - populated lazily like {@link #workingScores}. */
-    private final Map<String, CowScoreTier> workingGeneralScores = new LinkedHashMap<>();
+    private final Map<String, Map<String, FortMark>> workingMarks = new LinkedHashMap<>();
 
     private final DefaultListModel<Titan> titanListModel = new DefaultListModel<>();
     private final JList<Titan> titanList = new JList<>(titanListModel);
@@ -106,7 +106,7 @@ public final class TitanCoreScoreDialog extends JDialog {
         if (!titanListModel.isEmpty()) {
             titanList.setSelectedIndex(0);
         }
-        setSize(740, 420);
+        setSize(740, 520);
         setLocationRelativeTo(owner);
     }
 
@@ -145,6 +145,7 @@ public final class TitanCoreScoreDialog extends JDialog {
             }
         });
         left.add(new JScrollPane(titanList), BorderLayout.CENTER);
+
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, new JScrollPane(detailContainer));
         split.setDividerLocation(220);
         return split;
@@ -153,109 +154,79 @@ public final class TitanCoreScoreDialog extends JDialog {
     private void onTitanSelected(Titan titan) {
         detailContainer.removeAll();
         if (titan != null) {
-            // NORTH, not CENTER: keeps the rows at their natural height instead of spreading them over the whole dialog.
-            detailContainer.add(buildDetailPanel(titan), BorderLayout.NORTH);
+            detailContainer.add(buildDetailPanel(titan), BorderLayout.CENTER);
         }
         detailContainer.revalidate();
         detailContainer.repaint();
     }
 
     /**
-     * The selected titan's header (avatar, name and element), its {@link
-     * Titan#generalScore()} row, and one row per {@link
-     * #buffedFortifications} entry - see {@link #buildFortificationRow}.
+     * Builds the given titan's header (avatar plus {@link #titanLabel(Titan)}),
+     * a small header, and one row per {@link #titanFortifications} entry, each
+     * wired into {@link #workingMarks} - see {@link #buildFortificationRow}.
      */
     private JPanel buildDetailPanel(Titan titan) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        JLabel titanNameLabel = new JLabel(titanLabel(titan) + "  (" + elementLabel(titan.element()) + ")",
-                IconLoader.iconFor(titan.imagePath(), TITAN_ICON_SIZE), JLabel.LEFT);
+        JLabel titanNameLabel = new JLabel(titanLabel(titan), IconLoader.iconFor(titan.imagePath(), TITAN_ICON_SIZE), JLabel.LEFT);
         titanNameLabel.setForeground(Color.WHITE);
         titanNameLabel.setFont(titanNameLabel.getFont().deriveFont(Font.BOLD, 14f));
         titanNameLabel.setIconTextGap(8);
         titanNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(titanNameLabel);
-
-        JPanel generalScoreRow = buildGeneralScoreRow(titan);
-        generalScoreRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(generalScoreRow);
         panel.add(Box.createVerticalStrut(12));
 
-        JLabel buffFitScoresHeader = new JLabel(LanguageService.displayName(KEY_BUFF_FIT_SCORES_HEADER));
-        buffFitScoresHeader.setForeground(Color.WHITE);
-        buffFitScoresHeader.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
-        buffFitScoresHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(buffFitScoresHeader);
+        JLabel fortificationsHeader = new JLabel(LanguageService.displayName(KEY_FORT_MARKS_HEADER));
+        fortificationsHeader.setForeground(Color.WHITE);
+        fortificationsHeader.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
+        fortificationsHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(fortificationsHeader);
         panel.add(Box.createVerticalStrut(4));
 
-        Map<String, CowScoreTier> titanScores = workingScores.computeIfAbsent(titan.id(),
-                id -> new LinkedHashMap<>(titan.buffFitScores()));
+        Map<String, FortMark> titanMarks = workingMarks.computeIfAbsent(titan.id(),
+                id -> new LinkedHashMap<>(titan.fortMarks().marks()));
 
-        for (Fortification fortification : buffedFortifications) {
-            JPanel row = buildFortificationRow(titan, fortification, titanScores);
+        for (Fortification fortification : titanFortifications) {
+            JPanel row = buildFortificationRow(titan, fortification, titanMarks);
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(row);
         }
         return panel;
     }
 
-    /** The titan's {@link Titan#generalScore()} row: label plus {@link CowScoreTier} combo box, wired into {@link #workingGeneralScores}. */
-    private JPanel buildGeneralScoreRow(Titan titan) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        JLabel label = new JLabel(LanguageService.displayName(KEY_GENERAL_SCORE));
-        label.setForeground(Color.WHITE);
-        label.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, label.getPreferredSize().height));
-        row.add(label);
-
-        JLabel spacer = new JLabel("");
-        spacer.setPreferredSize(new Dimension(ELEMENT_LABEL_WIDTH, spacer.getPreferredSize().height));
-        row.add(spacer);
-
-        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
-        combo.setSelectedItem(workingGeneralScores.computeIfAbsent(titan.id(), id -> titan.generalScore()));
-        combo.addActionListener(e -> {
-            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
-            workingGeneralScores.put(titan.id(), selected == null ? CowScoreTier.GOOD : selected);
-        });
-        row.add(combo);
-
-        return row;
-    }
-
     /**
-     * One (titan, fortification) row: the fortification's name, the element
-     * its {@link ElementBuff} asks for (with a check mark if this titan has
-     * it - purely informational, an override may still go below {@link
-     * CowScoreTier#GOOD}), and the {@link CowScoreTier} combo box.
-     * Selecting {@link CowScoreTier#GOOD} removes the override again.
+     * One (titan, fortification) row: the fortification's display name, the
+     * element its {@link ElementBuff} asks for (if any) plus the automatic,
+     * read-only BUFF marker when the titan's element matches, and the mark
+     * combo box, pre-selected to titanMarks' current entry (null = neutral).
+     * Selecting neutral removes the entry.
      */
-    private JPanel buildFortificationRow(Titan titan, Fortification fortification, Map<String, CowScoreTier> titanScores) {
+    private JPanel buildFortificationRow(Titan titan, Fortification fortification, Map<String, FortMark> titanMarks) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-
-
         JLabel nameLabel = new JLabel(LanguageService.displayName(fortification.id()));
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setPreferredSize(new Dimension(NAME_LABEL_WIDTH, nameLabel.getPreferredSize().height));
         row.add(nameLabel);
 
         ElementBuff elementBuff = fortification.buff() instanceof ElementBuff eb ? eb : null;
-        boolean elementMatches = elementBuff != null && titan.element() == elementBuff.element();
-        JLabel elementTextLabel = new JLabel(elementBuff == null ? ""
-                : elementLabel(elementBuff.element()) + (elementMatches ? " ✓" : ""));
+        boolean elementMatches = titan.matchesBuff(fortification.buff());
+        String elementText = elementBuff == null ? ""
+                : elementLabel(elementBuff.element()) + (elementMatches ? "  " + LanguageService.displayName("fortMark.buffMarker") : "");
+        JLabel elementTextLabel = new JLabel(elementText);
         elementTextLabel.setForeground(elementMatches ? IconLoader.GREEN : Color.WHITE);
         elementTextLabel.setPreferredSize(new Dimension(ELEMENT_LABEL_WIDTH, elementTextLabel.getPreferredSize().height));
         row.add(elementTextLabel);
 
-        JComboBox<CowScoreTier> combo = buildScoreTierCombo();
-        combo.setSelectedItem(titanScores.getOrDefault(fortification.id(), CowScoreTier.GOOD));
+        JComboBox<FortMark> combo = buildFortMarkCombo();
+        combo.setSelectedItem(titanMarks.get(fortification.id()));
         combo.addActionListener(e -> {
-            CowScoreTier selected = (CowScoreTier) combo.getSelectedItem();
-            if (selected == null || selected == CowScoreTier.GOOD) {
-                titanScores.remove(fortification.id());
+            FortMark selected = (FortMark) combo.getSelectedItem();
+            if (selected == null) {
+                titanMarks.remove(fortification.id());
             } else {
-                titanScores.put(fortification.id(), selected);
+                titanMarks.put(fortification.id(), selected);
             }
         });
         row.add(combo);
@@ -263,24 +234,28 @@ public final class TitanCoreScoreDialog extends JDialog {
         return row;
     }
 
-    /** A {@link CowScoreTier} combo box listing all tiers, rendered e.g. as "Good (0.8)" - same as the hero dialog. */
-    private static JComboBox<CowScoreTier> buildScoreTierCombo() {
-        JComboBox<CowScoreTier> combo = new JComboBox<>(CowScoreTier.values());
+    /** A combo box offering neutral (null), {@link FortMark#POSITIVE} and {@link FortMark#NEGATIVE}, rendered via language keys {@code fortMark.<NAME>}. */
+    private static JComboBox<FortMark> buildFortMarkCombo() {
+        JComboBox<FortMark> combo = new JComboBox<>(FortMark.values());
+        combo.insertItemAt(null, 0);
         combo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                            boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof CowScoreTier tier) {
-                    setText(LanguageService.displayName("scoreTier." + tier.name()) + " (" + tier.value() + ")");
-                }
+                setText(LanguageService.displayName("fortMark." + (value instanceof FortMark mark ? mark.name() : "NONE")));
                 return this;
             }
         });
         return combo;
     }
 
-    /** Localized element name (language file key {@code titanElement.<NAME>}). */
+    /**
+     * The localized display name for a {@link TitanElement} (language file
+     * key {@code titanElement.<NAME>}) - used instead of {@link
+     * TitanElement#name()} so this element indicator is translated like every
+     * other UI string.
+     */
     private static String elementLabel(TitanElement element) {
         return LanguageService.displayName("titanElement." + element.name());
     }
@@ -303,21 +278,12 @@ public final class TitanCoreScoreDialog extends JDialog {
             return;
         }
 
-        Map<String, CowScore> defaults = repository.loadDefaultCowScores();
+        Map<String, FortMarks> defaults = repository.loadDefaultCowScores();
         for (Titan titan : titanCatalog) {
-            CowScore cowScore = defaults.getOrDefault(titan.id(), CowScore.DEFAULT);
-            workingGeneralScores.put(titan.id(), cowScore.generalScore());
-            // GOOD means "no override" in this dialog - see buildFortificationRow.
-            Map<String, CowScoreTier> buffFitScores = new LinkedHashMap<>();
-            cowScore.buffFitScores().forEach((fortificationId, tier) -> {
-                if (tier != CowScoreTier.GOOD) {
-                    buffFitScores.put(fortificationId, tier);
-                }
-            });
-            workingScores.put(titan.id(), buffFitScores);
+            workingMarks.put(titan.id(), new LinkedHashMap<>(defaults.getOrDefault(titan.id(), FortMarks.NONE).marks()));
         }
         onTitanSelected(titanList.getSelectedValue());
-        Logger.log("CowScore dialog: restored the default values for every titan (not saved yet)");
+        Logger.log("Titan CowScore dialog: restored the default values for every titan (not saved yet)");
     }
 
     private static String titanLabel(Titan titan) {
@@ -325,18 +291,18 @@ public final class TitanCoreScoreDialog extends JDialog {
     }
 
     /**
-     * Rebuilds every titan with its working scores (untouched for titans
-     * never opened in this session) and saves the whole catalog via {@link
+     * Writes every titan's current {@link #workingMarks} entry back into a
+     * fresh {@link Titan} (untouched for a titan never opened in this dialog
+     * session) and saves the whole catalog via {@link
      * TitanRepository#saveCowScores} - which only writes {@code
      * titanCowScore.json}, never {@code titans.json}.
      */
     private void onSaveScores() {
         List<Titan> updatedCatalog = titanCatalog.stream()
                 .map(titan -> {
-                    Map<String, CowScoreTier> scores = workingScores.get(titan.id());
-                    Map<String, CowScoreTier> buffFitScores = scores == null ? titan.buffFitScores() : scores;
-                    CowScoreTier generalScore = workingGeneralScores.getOrDefault(titan.id(), titan.generalScore());
-                    return new Titan(titan.id(), titan.element(), titan.imagePath(), new CowScore(generalScore, buffFitScores));
+                    Map<String, FortMark> marks = workingMarks.get(titan.id());
+                    FortMarks fortMarks = marks == null ? titan.fortMarks() : new FortMarks(marks);
+                    return new Titan(titan.id(), titan.element(), titan.imagePath(), fortMarks);
                 })
                 .toList();
 

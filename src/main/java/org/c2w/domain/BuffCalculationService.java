@@ -198,13 +198,13 @@ public class BuffCalculationService {
      * counterpart of {@link #countHeroesIncreasingBuff} (which counts
      * role/element MATCHES, not CowScore). Per team this is {@link
      * TeamScoreCalculator}'s {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}
-     * (for heroes the bonus in score points) -
+     * (the bonus in score points) -
      * deliberately WITHOUT {@link TeamScoreCalculator}'s totalPower term,
      * since {@code LineupSummaryPanel} already shows the hero power total
      * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}.
      *
      * @param lineup The lineup with team assignments
-     * @param guild The guild with the team data (Heroes and their CowScores)
+     * @param guild The guild with the team data (Heroes and their fortification marks)
      * @return The summed CowScore strength of every hero team in the lineup
      */
     public static double sumHeroCowScore(Lineup lineup, Guild guild) {
@@ -231,11 +231,11 @@ public class BuffCalculationService {
      * The TITAN-side counterpart of {@link #sumHeroCowScore} - identical
      * reasoning, {@link TitanTeam}/{@link
      * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} instead of
-     * the hero side; the totem points count, like the hero bonus does (see
+     * the hero side; per team the titan bonus (element, relation, totems) in score points (see
      * {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}).
      *
      * @param lineup The lineup with team assignments
-     * @param guild The guild with the team data (Titans and their CowScores)
+     * @param guild The guild with the team data (Titans and their fortification marks)
      * @return The summed CowScore strength of every titan team in the lineup
      */
     public static double sumTitanCowScore(Lineup lineup, Guild guild) {
@@ -266,7 +266,7 @@ public class BuffCalculationService {
      *
      * @param fortificationId The ID of the fortification
      * @param lineup The lineup with team assignments
-     * @param guild The guild with the team data (Heroes/Titans and their CowScores)
+     * @param guild The guild with the team data (Heroes/Titans and their fortification marks)
      * @param fortification The fortification the CowScore should be resolved against
      * @return The summed CowScore strength of every team assigned to this fortification
      */

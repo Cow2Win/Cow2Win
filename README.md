@@ -171,9 +171,10 @@ folder (`new Catalog(tempDir)`).
   `NEGATIVE`, unmarked = neutral) live in a separate file, `cowScore.json` -
   see "Canonical data files" below.
 - **Titan** (`id`, `element`, `image`) - see `TitanElement.java`, which
-  includes the rare `DISTORTION` element used by some event titans. Its
-  curated score still uses the older tier-based `CowScore`
-  (`generalScore`/`buffFitScores`) and lives in `titanCowScore.json`.
+  includes the rare `DISTORTION` element used by some event titans. Like
+  heroes, its curated fortification marks (`FortMarks`: per titan
+  fortification `POSITIVE` or `NEGATIVE`, unmarked = neutral) live in a
+  separate file, `titanCowScore.json`.
 - **Pet** / **War flag** (`id`, `image`) - optional per hero team, each at
   most once per member. Their `FortMarks` (positive only) live in
   `petCowScore.json`/`warFlagCowScore.json`.
@@ -181,7 +182,9 @@ folder (`new Catalog(tempDir)`).
   (1 + B)`, where the bonus `B` comes from matching roles, marked heroes,
   a marked pet, the war flag and a matching hero combo - see
   `TeamScoreCalculator`'s class Javadoc.
-  Titan teams still use the tier sum plus power.
+  Titan teams use the same formula, with `B` from matching elements
+  (1.5 % per titan), marked titans (+/-1.25 % once per team) and totems
+  (1.25 % per totem).
 - **Fortification** (`id`, `type` HERO/TITAN, `capacity`, `captureBonus`,
   `row`/`column` for the map layout, `buff`, `prerequisites`,
   `strategicImportance`) - `prerequisites` is an **OR-relation**: capturing
@@ -217,11 +220,11 @@ folder (`new Catalog(tempDir)`).
   "CowScore - Heroes/Titans/Pets/War Flags" (`HeroCoreScoreDialog`,
   `TitanCoreScoreDialog`, `PetCoreScoreDialog`, `WarFlagCoreScoreDialog`),
   whose "restore defaults" button resets to the shipped values.
-- Formats: heroes, pets and war flags use `FortMarkFiles`
+- Format: all four files use `FortMarkFiles`
   (`[{"id": "corvus", "fortMarks": {"foundry": "POSITIVE"}}, ...]`; a
-  workspace copy still in the former tier-based format is backed up as
-  `<name>.legacy-<date>.bak` and migrated on load). Titans still use
-  `CowScoreFiles` (`generalScore`/`buffFitScores`); a
+  workspace copy still in the former tier-based format
+  (`generalScore`/`buffFitScores`) is backed up as
+  `<name>.legacy-<date>.bak` and migrated on load). A
   `generalScore`/`buffFitScores` left over in `titans.json` is ignored and
   logged.
 - Hero combos (`heroCombos.json`, see `TeamComboFiles`): heroes with
@@ -320,11 +323,11 @@ folder (`new Catalog(tempDir)`).
   `algorithmName` records both.
 - `UpdateCheckerVersionTest` - version parsing/comparison of
   `UpdateChecker`, without touching the network.
-- `CowScoreFilesTest` - the tier-based `titanCowScore.json` format
-  (parsing, tolerance for unknown tiers, sparse writing, round trip) and
-  loading the real titan catalog.
+- `TitanRepositoryTest` - the titan marks in `titanCowScore.json`
+  (positive/negative round trip, migration of the former tier-based
+  format including the `.legacy-<date>.bak` backup).
 - `FortMarkFilesTest` - the fortification-mark format of
-  `cowScore.json`/`petCowScore.json`/`warFlagCowScore.json`, including the
+  `cowScore.json`/`titanCowScore.json`/`petCowScore.json`/`warFlagCowScore.json`, including the
   migration of the former tier-based format and a save/reload round trip
   through `HeroRepository`.
 - `TeamScoreCalculatorHeroTest` - the hero-team CowScore formula (role
@@ -335,8 +338,8 @@ folder (`new Catalog(tempDir)`).
   the shipped combos into the workspace copy.
 - `ComboTextsTest` - a combo's display name (localized hero names or the
   custom `name`).
-- `TeamScoreCalculatorTitanTest` - the titan-team score (general score
-  without a buff, element-match defaults and explicit overrides with one).
+- `TeamScoreCalculatorTitanTest` - the titan-team CowScore formula
+  (element buff, titan relation, totems, breakdown).
 - `LineupComparisonServiceTest`, `LineupChangePlanServiceTest` - comparing
   two lineups (per-team status, per-fortification and summary figures) and
   turning the difference into ordered in-game change steps.

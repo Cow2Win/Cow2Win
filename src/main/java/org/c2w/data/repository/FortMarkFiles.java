@@ -21,10 +21,10 @@ import java.util.TreeMap;
 
 /**
  * Reading and writing of a fortification-mark file - {@code cowScore.json}
- * for heroes (see {@link HeroRepository}), {@code petCowScore.json} (see
- * {@link PetRepository}) and {@code warFlagCowScore.json} (see {@link
- * WarFlagRepository}). Titans use {@link CowScoreFiles}
- * instead.
+ * for heroes (see {@link HeroRepository}), {@code titanCowScore.json} (see
+ * {@link TitanRepository}), {@code petCowScore.json} (see {@link
+ * PetRepository}) and {@code warFlagCowScore.json} (see {@link
+ * WarFlagRepository}).
  *
  * <p>Each file exists twice: the <b>shipped defaults</b> (a
  * read-only classpath resource, see {@link #loadDefaults}) and the
@@ -38,12 +38,12 @@ import java.util.TreeMap;
  *
  * <h2>Migration of the former tier-based format</h2>
  * An entry in the former format ({@code generalScore} / {@code buffFitScores}
- * with {@code CowScoreTier} names, no {@code fortMarks}) is converted on
+ * with tier names such as {@code GOOD}/{@code GREAT}, no {@code fortMarks}) is converted on
  * reading:
  * <ul>
  *     <li>{@code buffFitScores} entry {@code GREAT} -&gt; {@link FortMark#POSITIVE};</li>
  *     <li>{@code buffFitScores} entry {@code NEGATIVE} -&gt; {@link FortMark#NEGATIVE}
- *     (heroes only - pets and war flags carry no negative marks, the entry is dropped);</li>
+ *     (heroes and titans only - pets and war flags carry no negative marks, the entry is dropped);</li>
  *     <li>every other tier -&gt; unmarked (neutral);</li>
  *     <li>{@code generalScore} -&gt; dropped.</li>
  * </ul>

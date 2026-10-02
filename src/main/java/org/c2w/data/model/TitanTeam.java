@@ -34,8 +34,10 @@ import java.util.function.Consumer;
  * </ul>
  * The order is irrelevant - the set is kept in {@link TitanElement} order,
  * which is also the order totems are stored and displayed in. null means no
- * totems. Each totem adds a bonus to the team's score, see
- * {@link TeamScoreCalculator#TOTEM_PERCENT}.
+ * totems. Each totem adds a fortification-independent bonus to the team's
+ * CowScore ({@link TeamScoreCalculator#TOTEM_PERCENT}), see {@link
+ * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} and {@link
+ * #sortScore()}.
  */
 public record TitanTeam(
         String memberId,
@@ -188,14 +190,12 @@ public record TitanTeam(
 
     /**
      * The TITAN-side counterpart of {@link HeroTeam#sortScore()}, used the
-     * same way to pick a team for a fortification without a buff: the sum of
-     * every titan's {@link Titan#generalScore()} plus {@link #totalPower()}
-     * scaled down via {@link TeamScoreCalculator#POWER_DIVISOR}, the latter
-     * raised by {@link TeamScoreCalculator#TOTEM_PERCENT} per totem.
+     * same way to pick a team for a fortification without a buff and as the
+     * general "how good is this team" measure independent of any specific
+     * fortification: see {@link TeamScoreCalculator#sortScore(TitanTeam)}
+     * (power / 100 000 x (1 + totem bonus)).
      */
     public double sortScore() {
-        double generalScoreSum = titans.stream().mapToDouble(t -> t.generalScore().value()).sum();
-        double powerTerm = totalPower() / TeamScoreCalculator.POWER_DIVISOR;
-        return generalScoreSum + powerTerm * (1 + totems.size() * TeamScoreCalculator.TOTEM_PERCENT / 100.0);
+        return TeamScoreCalculator.sortScore(this);
     }
 }
