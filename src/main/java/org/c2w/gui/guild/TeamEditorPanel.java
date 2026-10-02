@@ -3,12 +3,16 @@ package org.c2w.gui.guild;
 
 import org.c2w.data.model.Pet;
 import org.c2w.data.model.TeamTemplate;
+import org.c2w.data.model.Titan;
+import org.c2w.data.model.TitanElement;
+import org.c2w.data.model.TitanTeam;
 import org.c2w.data.model.WarFlag;
 import org.c2w.data.repository.TeamTemplateRepository;
 import org.c2w.domain.TeamTemplates;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 import org.c2w.infra.Logger;
 
 import javax.swing.*;
@@ -39,8 +43,11 @@ import java.util.stream.Collectors;
 /**
  * One team row: power field, then - for hero teams only, see
  * {@link TeamExtras} - a war flag and a pet combo box, then
- * {@value #SLOT_COUNT} member slot combo boxes, all in one FlowLayout row
- * (in exactly this order: power, war flag, pet, members).
+ * {@value #SLOT_COUNT} member slot combo boxes, then - for titan teams only,
+ * see {@link TitanTeamExtras} - two totem combo boxes, all in one FlowLayout
+ * row (in exactly this order: power, war flag, pet, members, totem 1,
+ * totem 2). The totems come last so that, in focus order, the titans they
+ * depend on are already entered.
  *
  * <p>Optionally (see {@link #enableTemplates}) F1-F5 fills the member slots
  * from a stored team template and Shift+F1-F5 saves the row as one.
@@ -65,6 +72,11 @@ public final class TeamEditorPanel<T> extends JPanel {
     private static final String KEY_WAR_FLAG = "teamEditor.warFlag";
     private static final String KEY_PET = "teamEditor.pet";
 
+    /** Language file keys for the totem combo boxes: "Totem {0}" while nothing is selected / as tooltip prefix, the "none" entry, the rule hint. */
+    private static final String KEY_TOTEM = "teamEditor.totem";
+    private static final String KEY_NO_TOTEM = "teamEditor.noTotem";
+    private static final String KEY_TOTEM_HINT = "teamEditor.totemHint";
+
     /** Language file keys for the team templates (see {@link #enableTemplates}). */
     private static final String KEY_TEMPLATE_HINT = "teamEditor.templateHint";
     private static final String KEY_TEMPLATE_OVERWRITE_TITLE = "teamEditor.templateOverwriteTitle";
@@ -86,7 +98,13 @@ public final class TeamEditorPanel<T> extends JPanel {
     private JComboBox<WarFlag> warFlagCombo;
     private JComboBox<Pet> petCombo;
 
-    /** Guards the war flag/pet combo boxes' own listeners while their model/selection is changed programmatically. */
+    /** Optional totem combo boxes - empty unless a {@link TitanTeamExtras} was given (titan teams only). */
+    private final List<JComboBox<TitanElement>> totemCombos = new ArrayList<>(TitanTeam.MAX_TOTEMS);
+
+    /** What the totem combo boxes offer at most - see {@link TitanTeamExtras#totems()}. */
+    private List<TitanElement> offeredTotems = List.of();
+
+    /** Guards the war flag/pet/totem combo boxes' own listeners while their model/selection is changed programmatically. */
     private boolean updatingExtras;
 
     private boolean refreshing;
@@ -130,6 +148,22 @@ public final class TeamEditorPanel<T> extends JPanel {
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
                     Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
                     Comparator<T> catalogOrder, Runnable onChanged, TeamExtras extras) {
+        this(catalog, label, icon, roleDescriber, teamDraft, emptyLabel, catalogOrder, onChanged, extras, null);
+    }
+
+    /**
+     * Same as {@link #TeamEditorPanel(List, Function, Function, Function, TeamDraft, String, Comparator, Runnable, TeamExtras)},
+     * plus - if {@code titanExtras} is not null - two totem combo boxes
+     * after the member slots, bound to
+     * {@code teamDraft.totems} (titan teams only - T must be {@link Titan},
+     * see {@link TitanTeamExtras}). A totem change counts as a real user
+     * change just like a slot change. A slot change (by hand or via a
+     * template) that leaves a selected totem without enough titans of its
+     * element removes that totem again, see {@link #dropIneligibleTotems()}.
+     */
+    public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
+                    Function<T, String> roleDescriber, TeamDraft<T> teamDraft, String emptyLabel,
+                    Comparator<T> catalogOrder, Runnable onChanged, TeamExtras extras, TitanTeamExtras titanExtras) {
         super(new FlowLayout(FlowLayout.LEFT, 6, 4));
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         setOpaque(false);
@@ -196,6 +230,19 @@ public final class TeamEditorPanel<T> extends JPanel {
             }
         }
 
+        // Totems AFTER the slots: in focus order the titans are entered first, so the totem
+        // dropdowns can already be filtered by them (see refreshTotemModel).
+        if (titanExtras != null) {
+            offeredTotems = titanExtras.totems();
+            List<TitanElement> initialTotems = new ArrayList<>(teamDraft.totems);
+            for (int i = 0; i < TitanTeam.MAX_TOTEMS; i++) {
+                JComboBox<TitanElement> totemCombo = buildTotemCombo(i + 1,
+                        i < initialTotems.size() ? initialTotems.get(i) : null);
+                totemCombos.add(totemCombo);
+                add(totemCombo);
+            }
+        }
+
         // Take over the pre-selection from the given draft (list order = slot order).
         for (int i = 0; i < SLOT_COUNT; i++) {
             T initial = i < teamDraft.members.size() ? teamDraft.members.get(i) : null;
@@ -229,6 +276,7 @@ public final class TeamEditorPanel<T> extends JPanel {
                     return;
                 }
                 syncDraftFromCombos();
+                dropIneligibleTotems();
                 refreshComboOptions();
                 updateRoleLabels();
                 updateComboTooltips();
@@ -447,6 +495,170 @@ public final class TeamEditorPanel<T> extends JPanel {
         combo.setToolTipText(selected == null ? kindLabel : kindLabel + ": " + labelOf.apply(selected));
     }
 
+    /**
+     * Builds totem combo box {@code number} (1 or 2, see {@link TitanTeamExtras}):
+     * "no totem" plus the totems the row currently allows, by name (there
+     * are no element icons). While nothing is selected, the closed combo box
+     * shows "Totem 1"/"Totem 2". Its model is rebuilt every time the dropdown
+     * opens, see {@link #refreshTotemModel}.
+     */
+    private JComboBox<TitanElement> buildTotemCombo(int number, TitanElement initial) {
+        String kindLabel = LanguageService.displayName(KEY_TOTEM, number);
+        String noTotemLabel = LanguageService.displayName(KEY_NO_TOTEM);
+
+        JComboBox<TitanElement> combo = new JComboBox<>();
+        combo.setKeySelectionManager(buildLabelKeySelectionManager(TotemTexts::name, false));
+        combo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> l, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(l, value, index, isSelected, cellHasFocus);
+                setIcon(null);
+                setToolTipText(null);
+                if (value == null) {
+                    setText(index == -1 ? kindLabel : noTotemLabel);
+                } else {
+                    setText(TotemTexts.name((TitanElement) value));
+                }
+                return this;
+            }
+        });
+        // Keeps the closed combo box from changing its width with the selection.
+        combo.setPrototypeDisplayValue(TitanElement.DISTORTION);
+
+        setTotemSelection(combo, number, initial);
+
+        combo.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                refreshTotemModel(combo);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+            }
+        });
+        combo.addActionListener(e -> {
+            if (updatingExtras) {
+                return;
+            }
+            syncTotemsFromCombos();
+            updateTotemTooltip(combo, number);
+            touchLastModified();
+            if (onChanged != null) {
+                onChanged.run();
+            }
+        });
+        return combo;
+    }
+
+    /**
+     * Rebuilds {@code combo}'s model: "no totem" (null) plus every offered
+     * totem the row's current titans allow (see
+     * {@link TitanTeam#eligibleTotems}) that is not selected in the other
+     * totem combo box - the own selection is always kept.
+     */
+    void refreshTotemModel(JComboBox<TitanElement> combo) {
+        TitanElement current = (TitanElement) combo.getSelectedItem();
+        Set<TitanElement> selectedElsewhere = EnumSet.noneOf(TitanElement.class);
+        for (JComboBox<TitanElement> other : totemCombos) {
+            if (other != combo && other.getSelectedItem() != null) {
+                selectedElsewhere.add((TitanElement) other.getSelectedItem());
+            }
+        }
+        Set<TitanElement> eligible = TitanTeam.eligibleTotems(titanMembers());
+
+        DefaultComboBoxModel<TitanElement> model = new DefaultComboBoxModel<>();
+        model.addElement(null);
+        for (TitanElement totem : offeredTotems) {
+            if (totem == current || (eligible.contains(totem) && !selectedElsewhere.contains(totem))) {
+                model.addElement(totem);
+            }
+        }
+        if (current != null && model.getIndexOf(current) < 0) {
+            model.addElement(current);
+        }
+        updatingExtras = true;
+        try {
+            combo.setModel(model);
+            combo.setSelectedItem(current);
+        } finally {
+            updatingExtras = false;
+        }
+    }
+
+    /** Selects {@code totem} in totem combo box {@code number} without firing its own listener (the draft is not touched). */
+    private void setTotemSelection(JComboBox<TitanElement> combo, int number, TitanElement totem) {
+        updatingExtras = true;
+        try {
+            DefaultComboBoxModel<TitanElement> model = new DefaultComboBoxModel<>();
+            model.addElement(null);
+            if (totem != null) {
+                model.addElement(totem);
+            }
+            combo.setModel(model);
+            combo.setSelectedItem(totem);
+        } finally {
+            updatingExtras = false;
+        }
+        updateTotemTooltip(combo, number);
+    }
+
+    /** Tooltip of a totem combo box: e.g. "Totem 1: Feuer" (or just "Totem 1"), plus the rule hint. */
+    private static void updateTotemTooltip(JComboBox<TitanElement> combo, int number) {
+        String kindLabel = LanguageService.displayName(KEY_TOTEM, number);
+        TitanElement selected = (TitanElement) combo.getSelectedItem();
+        String text = selected == null ? kindLabel : kindLabel + ": " + TotemTexts.name(selected);
+        combo.setToolTipText("<html>" + escapeHtml(text) + "<br>" + escapeHtml(LanguageService.displayName(KEY_TOTEM_HINT))
+                + "</html>");
+    }
+
+    /** Writes the totem combo boxes' selections into {@code teamDraft.totems}. */
+    private void syncTotemsFromCombos() {
+        if (totemCombos.isEmpty()) {
+            return;
+        }
+        teamDraft.totems.clear();
+        for (JComboBox<TitanElement> combo : totemCombos) {
+            if (combo.getSelectedItem() != null) {
+                teamDraft.totems.add((TitanElement) combo.getSelectedItem());
+            }
+        }
+    }
+
+    /**
+     * After the members changed: every selected totem the row's titans no
+     * longer allow (fewer than {@link TitanTeam#MIN_TITANS_PER_TOTEM} of its
+     * element) is reset to "no totem" without asking, logged, and removed
+     * from the draft. A totem that becomes allowed again later is NOT
+     * selected again automatically. No-op without totem combo boxes.
+     */
+    private void dropIneligibleTotems() {
+        if (totemCombos.isEmpty()) {
+            return;
+        }
+        Set<TitanElement> eligible = TitanTeam.eligibleTotems(titanMembers());
+        for (int i = 0; i < totemCombos.size(); i++) {
+            JComboBox<TitanElement> combo = totemCombos.get(i);
+            TitanElement selected = (TitanElement) combo.getSelectedItem();
+            if (selected != null && !eligible.contains(selected)) {
+                Logger.log("Totem " + selected + " removed from the titan team - it requires at least "
+                        + TitanTeam.MIN_TITANS_PER_TOTEM + " titans of its element");
+                setTotemSelection(combo, i + 1, null);
+            }
+        }
+        syncTotemsFromCombos();
+    }
+
+    /** The draft's members as titans - only meaningful with totem combo boxes, i.e. for a titan team (see {@link TitanTeamExtras}). */
+    private List<Titan> titanMembers() {
+        return teamDraft.members.stream().filter(Titan.class::isInstance).map(Titan.class::cast).toList();
+    }
+
     private JTextField buildPowerField(TeamDraft<T> teamDraft) {
         JTextField powerField = new JTextField(GuiUtils.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
         powerField.setHorizontalAlignment(JTextField.RIGHT);
@@ -583,6 +795,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         if (petCombo != null) {
             focusables.add(petCombo);
         }
+        focusables.addAll(totemCombos);
         focusables.addAll(combos);
         for (JComponent component : focusables) {
             bindTemplateKeys(component, JComponent.WHEN_FOCUSED);
@@ -624,7 +837,9 @@ public final class TeamEditorPanel<T> extends JPanel {
      * Replaces all 5 member slots with template {@code slot}, in template
      * order (fewer entries = remaining slots emptied, ids no longer in the
      * catalog are skipped, see {@link TeamTemplates#toSlots}), without
-     * asking. Power, war flag and pet stay as they are. Counts as a real
+     * asking. Power, war flag and pet stay as they are, so do the totems as
+     * long as the new titans still allow them (see
+     * {@link #dropIneligibleTotems()}). Counts as a real
      * user change: touches lastModified and fires {@code onChanged}. Does
      * nothing at all if templates are not enabled or the slot is empty.
      */
@@ -649,6 +864,7 @@ public final class TeamEditorPanel<T> extends JPanel {
             refreshing = false;
         }
         syncDraftFromCombos();
+        dropIneligibleTotems();
         refreshComboOptions();
         updateRoleLabels();
         updateComboTooltips();
@@ -728,6 +944,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         if (petCombo != null) {
             petCombo.hidePopup();
         }
+        totemCombos.forEach(JComboBox::hidePopup);
     }
 
     /**
@@ -757,8 +974,12 @@ public final class TeamEditorPanel<T> extends JPanel {
         teamDraft.totalPower = 0;
         teamDraft.pet = null;
         teamDraft.warFlag = null;
+        teamDraft.totems.clear();
         clearExtraCombo(warFlagCombo, KEY_WAR_FLAG);
         clearExtraCombo(petCombo, KEY_PET);
+        for (int i = 0; i < totemCombos.size(); i++) {
+            setTotemSelection(totemCombos.get(i), i + 1, null);
+        }
         syncDraftFromCombos();
         refreshComboOptions();
         updateRoleLabels();

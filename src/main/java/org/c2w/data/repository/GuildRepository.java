@@ -233,6 +233,16 @@ public class GuildRepository {
         return obj;
     }
 
+    /**
+     * Reads one titan team. "totems" is optional - missing (guild files
+     * saved before totems existed, or a team without totems) means none.
+     * Never fails on it: the titans are read first, then the totems are
+     * cleaned up against them - an unknown element name (e.g. the removed
+     * "WIND"), a duplicate, a totem without enough titans of its element
+     * (e.g. because a titan is no longer in the catalog) and every valid
+     * totem beyond {@link TitanTeam#MAX_TOTEMS} are logged and dropped (see
+     * {@link TitanTeam#validTotems}).
+     */
     private static TitanTeam titanTeamFromJson(JsonObject obj, String memberId, int index, Catalog catalog) {
         List<Titan> titans = new ArrayList<>();
         for (String titanId : JsonSupport.getStringList(obj, "titanIds")) {
@@ -240,10 +250,21 @@ public class GuildRepository {
                     () -> Logger.log("Unknown titan id in guild file, skipping: " + titanId));
         }
 
+        List<TitanElement> requestedTotems = new ArrayList<>();
+        for (String totemName : JsonSupport.getStringList(obj, "totems")) {
+            try {
+                requestedTotems.add(TitanElement.valueOf(totemName));
+            } catch (IllegalArgumentException e) {
+                Logger.log("Unknown totem in guild file, skipping: " + totemName);
+            }
+        }
+        Set<TitanElement> totems = TitanTeam.validTotems(requestedTotems, titans,
+                message -> Logger.log(message + " (guild file, member '" + memberId + "', titan team " + (index + 1) + ")"));
+
         int totalPower = JsonSupport.getInt(obj, "totalPower", 0);
         LocalDate lastModified = JsonSupport.getLocalDate(obj, "lastModified");
 
-        return new TitanTeam(memberId, index, titans, totalPower, lastModified);
+        return new TitanTeam(memberId, index, titans, totalPower, lastModified, totems);
     }
 
     private static JsonObject titanTeamToTree(TitanTeam team) {
@@ -254,6 +275,10 @@ public class GuildRepository {
             titanIds.add(titan.id());
         }
         obj.add("titanIds", JsonSupport.toStringArray(titanIds));
+        // No totems = no field at all, so such teams look exactly like those of files saved before totems existed.
+        if (!team.totems().isEmpty()) {
+            obj.add("totems", JsonSupport.toStringArray(team.totems().stream().map(TitanElement::name).toList()));
+        }
 
         obj.addProperty("totalPower", team.totalPower());
         JsonSupport.putNullable(obj, "lastModified", team.lastModified() == null ? null : team.lastModified().toString());

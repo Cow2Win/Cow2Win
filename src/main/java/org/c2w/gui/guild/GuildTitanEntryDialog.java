@@ -41,7 +41,7 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
     }
 
     private static TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft, Fortification fortification) {
-        TitanTeam titanTeam = new TitanTeam(null, 0, teamDraft.members, teamDraft.totalPower);
+        TitanTeam titanTeam = GuildDraftConverter.toTitanTeam(null, 0, teamDraft, null);
         return TeamScoreCalculator.scoreFor(titanTeam, fortification);
     }
 }

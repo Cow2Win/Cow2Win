@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 
 public final class GuildDraftConverter {
@@ -33,7 +34,9 @@ public final class GuildDraftConverter {
                 memberDraft.heroTeams.add(teamDraft);
             }
             for (TitanTeam team : member.titanTeams()) {
-                memberDraft.titanTeams.add(toTeamDraft(team.titans(), team.totalPower(), team.lastModified()));
+                TeamDraft<Titan> teamDraft = toTeamDraft(team.titans(), team.totalPower(), team.lastModified());
+                teamDraft.totems.addAll(team.totems());
+                memberDraft.titanTeams.add(teamDraft);
             }
             draft.members.add(memberDraft);
         }
@@ -46,6 +49,19 @@ public final class GuildDraftConverter {
         teamDraft.totalPower = totalPower;
         teamDraft.lastModified = lastModified;
         return teamDraft;
+    }
+
+    /**
+     * Builds a titan team from {@code teamDraft} - the one way every caller
+     * turns a titan team draft into a {@link TitanTeam}, so the draft's
+     * totems are never lost. Totems the draft's titans no longer allow are
+     * dropped instead of failing (see {@link TitanTeam#validTotems}), each
+     * reported via {@code onDroppedTotem} (may be null).
+     */
+    public static TitanTeam toTitanTeam(String memberId, int index, TeamDraft<Titan> teamDraft,
+                                        Consumer<String> onDroppedTotem) {
+        return new TitanTeam(memberId, index, teamDraft.members, teamDraft.totalPower, teamDraft.lastModified,
+                TitanTeam.validTotems(teamDraft.totems, teamDraft.members, onDroppedTotem));
     }
 
     /** A member using the pet/war flag with id {@code itemId} in more than one (non-empty) hero team - see {@link #findPetWarFlagConflict}. */
@@ -122,8 +138,9 @@ public final class GuildDraftConverter {
                 if (teamDraft.totalPower == 0) {
                     continue;
                 }
-                titanTeams.add(new TitanTeam(memberDraft.id, titanTeams.size(), teamDraft.members, teamDraft.totalPower,
-                        teamDraft.lastModified));
+                String teamLabel = "member '" + memberDraft.id + "', titan team " + (titanTeams.size() + 1);
+                titanTeams.add(toTitanTeam(memberDraft.id, titanTeams.size(), teamDraft,
+                        message -> Logger.log(message + " (" + teamLabel + ")")));
             }
             members.add(new GuildMember(memberDraft.id, memberDraft.name, heroTeams, titanTeams));
         }

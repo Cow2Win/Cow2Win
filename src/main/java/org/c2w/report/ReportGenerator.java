@@ -7,6 +7,7 @@ import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
@@ -544,8 +545,9 @@ public final class ReportGenerator {
                 return "?";
             }
             TitanTeam team = member.get().titanTeams().get(entry.teamIndex());
-            return team.titans().stream().map(t -> LanguageService.displayName(t.id()))
+            String titans = team.titans().stream().map(t -> LanguageService.displayName(t.id()))
                     .collect(java.util.stream.Collectors.joining(", "));
+            return team.totems().isEmpty() ? titans : titans + " · " + TotemTexts.list(team.totems());
         }
     }
 

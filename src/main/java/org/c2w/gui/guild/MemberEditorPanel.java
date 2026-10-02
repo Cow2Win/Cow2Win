@@ -122,7 +122,8 @@ final class MemberEditorPanel extends JPanel {
                      titanCatalog, MemberEditorPanel::titanLabel,
                     t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), null, teamDraft,
                     LanguageService.displayName(KEY_NO_SELECTION),
-                    Comparator.comparing(Titan::element).thenComparing(MemberEditorPanel::titanLabel));
+                    Comparator.comparing(Titan::element).thenComparing(MemberEditorPanel::titanLabel), null,
+                    null, TitanTeamExtras.ALL);
             row.enableTemplates(catalog.titanTemplates(), Titan::id);
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
             rows.add(row);

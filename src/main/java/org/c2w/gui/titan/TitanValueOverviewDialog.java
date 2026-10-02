@@ -11,6 +11,7 @@ import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -225,7 +227,7 @@ public class TitanValueOverviewDialog extends JDialog {
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer());
         table.getColumnModel().getColumn(1).setPreferredWidth(140);
-        table.getColumnModel().getColumn(2).setPreferredWidth(260);
+        table.getColumnModel().getColumn(2).setPreferredWidth(360); // room for the totems behind the titans
         table.getColumnModel().getColumn(2).setCellRenderer(new MembersCellRenderer(iconResolver, nameResolver));
         table.getColumnModel().getColumn(3).setPreferredWidth(180);
         table.getColumnModel().getColumn(3).setCellRenderer(new FortificationCellRenderer());
@@ -302,7 +304,8 @@ public class TitanValueOverviewDialog extends JDialog {
         Lineup currentLineup = appContext.lineup();
         row.matchCounts = matchCountsFor(titanValueColumns, row.teamMemberId, row.teamType, row.teamIndex,
                 currentGuild, currentLineup);
-        TitanTeam syntheticTeam = new TitanTeam(row.teamMemberId, row.teamIndex, row.members, newPower, LocalDate.now());
+        TitanTeam syntheticTeam = new TitanTeam(row.teamMemberId, row.teamIndex, row.members, newPower, LocalDate.now(),
+                row.totems);
         row.scores = scoresFor(syntheticTeam, titanValueColumns);
         new GuildService(appContext).markGuildEdited();
         return true;
@@ -341,7 +344,8 @@ public class TitanValueOverviewDialog extends JDialog {
             for (TitanTeam team : member.titanTeams()) {
                 TitanValueTableModel.Row row = titanRows.get(titanIndex);
                 LocalDate lastModified = row.totalPower != team.totalPower() ? LocalDate.now() : team.lastModified();
-                updatedTitanTeams.add(new TitanTeam(team.memberId(), team.index(), team.titans(), row.totalPower, lastModified));
+                updatedTitanTeams.add(new TitanTeam(team.memberId(), team.index(), team.titans(), row.totalPower, lastModified,
+                        team.totems()));
                 titanIndex++;
             }
             updatedMembers.add(new GuildMember(member.id(), member.name(), member.heroTeams(), updatedTitanTeams));
@@ -364,7 +368,7 @@ public class TitanValueOverviewDialog extends JDialog {
                 int[] matchCounts = matchCountsFor(titanValueColumns, member.id(), Lineup.TeamType.TITAN, i,
                         currentGuild, currentLineup);
                 double[] scores = scoresFor(team, titanValueColumns);
-                titanRows.add(new TitanValueTableModel.Row(memberLabel, team.titans(), team.totalPower(),
+                titanRows.add(new TitanValueTableModel.Row(memberLabel, team.titans(), team.totems(), team.totalPower(),
                         member.id(), Lineup.TeamType.TITAN, i, assigned, matchCounts, scores));
             }
         }
@@ -619,6 +623,7 @@ public class TitanValueOverviewDialog extends JDialog {
         static final class Row {
             final String memberLabel;
             final List<Titan> members;
+            final Set<TitanElement> totems;
             int totalPower;
             final String teamMemberId;
             final Lineup.TeamType teamType;
@@ -627,11 +632,12 @@ public class TitanValueOverviewDialog extends JDialog {
             int[] matchCounts;
             double[] scores;
 
-            Row(String memberLabel, List<Titan> members, int totalPower,
+            Row(String memberLabel, List<Titan> members, Set<TitanElement> totems, int totalPower,
                 String teamMemberId, Lineup.TeamType teamType, int teamIndex, Fortification assignedFortification,
                 int[] matchCounts, double[] scores) {
                 this.memberLabel = memberLabel;
                 this.members = members;
+                this.totems = totems;
                 this.totalPower = totalPower;
                 this.teamMemberId = teamMemberId;
                 this.teamType = teamType;
@@ -671,6 +677,15 @@ public class TitanValueOverviewDialog extends JDialog {
                         label.setToolTipText(nameResolver.apply(member));
                     }
                     panel.add(label);
+                }
+            }
+            // The cell value is just the titans (the column sorts by them) - the totems come from the row itself.
+            if (row >= 0 && table.getModel() instanceof TitanValueTableModel model) {
+                Set<TitanElement> totems = model.rows().get(table.convertRowIndexToModel(row)).totems;
+                if (totems != null && !totems.isEmpty()) {
+                    JLabel totemLabel = new JLabel(TotemTexts.list(totems));
+                    totemLabel.setForeground(table.getForeground());
+                    panel.add(totemLabel);
                 }
             }
             return panel;

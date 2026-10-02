@@ -197,8 +197,8 @@ public class BuffCalculationService {
      * team currently placed on a fortification - the CowScore-side
      * counterpart of {@link #countHeroesIncreasingBuff} (which counts
      * role/element MATCHES, not CowScore). Per team this is {@link
-     * TeamScoreCalculator}'s per-member score sum (buff-fit-score-based for
-     * a buffed fortification, general-score-based otherwise) -
+     * TeamScoreCalculator}'s {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}
+     * (for heroes the bonus in score points) -
      * deliberately WITHOUT {@link TeamScoreCalculator}'s totalPower term,
      * since {@code LineupSummaryPanel} already shows the hero power total
      * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}.
@@ -222,8 +222,7 @@ public class BuffCalculationService {
                 continue;
             }
             HeroTeam team = member.heroTeams().get(entry.teamIndex());
-            total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
-                    .mapToDouble(Double::doubleValue).sum();
+            total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
         }
         return total;
     }
@@ -232,7 +231,8 @@ public class BuffCalculationService {
      * The TITAN-side counterpart of {@link #sumHeroCowScore} - identical
      * reasoning, {@link TitanTeam}/{@link
      * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} instead of
-     * the hero side.
+     * the hero side; the totem points count, like the hero bonus does (see
+     * {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}).
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Titans and their CowScores)
@@ -253,8 +253,7 @@ public class BuffCalculationService {
                 continue;
             }
             TitanTeam team = member.titanTeams().get(entry.teamIndex());
-            total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
-                    .mapToDouble(Double::doubleValue).sum();
+            total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
         }
         return total;
     }
@@ -290,15 +289,13 @@ public class BuffCalculationService {
                     continue;
                 }
                 HeroTeam team = member.heroTeams().get(entry.teamIndex());
-                total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
-                        .mapToDouble(Double::doubleValue).sum();
+                total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
             } else {
                 if (entry.teamIndex() >= member.titanTeams().size()) {
                     continue;
                 }
                 TitanTeam team = member.titanTeams().get(entry.teamIndex());
-                total += TeamScoreCalculator.scoreFor(team, fortification).memberScores().stream()
-                        .mapToDouble(Double::doubleValue).sum();
+                total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
             }
         }
         return total;

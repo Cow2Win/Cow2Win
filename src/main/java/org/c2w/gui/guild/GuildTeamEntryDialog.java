@@ -12,6 +12,7 @@ import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 import org.c2w.service.LineupService;
@@ -84,6 +85,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private static final String KEY_DELETE_ROW = "guildEntry.deleteTeamTitle";
     private static final String KEY_WAR_FLAG = "teamEditor.warFlag";
     private static final String KEY_PET = "teamEditor.pet";
+    private static final String KEY_TOTEMS = "teamEditor.totems";
     private static final String KEY_COLUMN_FORTIFICATION = "guildEntry.column.fortification";
     private static final String KEY_COLUMN_MEMBER = "guildEntry.column.member";
     private static final String KEY_COLUMN_POWER = "guildEntry.column.power";
@@ -146,6 +148,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private final TeamTypeSpec<T> spec;
     private final int maxTeams;
     private final boolean withExtras;
+    /** Totems (see {@link TitanTeamExtras}) - titan teams only. */
+    private final boolean withTotems;
 
     /** The table's rows, in model order (= lineup order, new rows appended). */
     private final List<Row<T>> rows = new ArrayList<>();
@@ -188,6 +192,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         this.spec = spec;
         this.maxTeams = maxTeams;
         this.withExtras = spec.teamType() == Lineup.TeamType.HERO;
+        this.withTotems = spec.teamType() == Lineup.TeamType.TITAN;
         this.columns = buildColumns();
 
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
@@ -344,11 +349,14 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             list.add(Column.WAR_FLAG);
             list.add(Column.PET);
         }
+        if (withTotems) {
+            list.add(Column.TOTEMS);
+        }
         list.addAll(List.of(Column.TEAM, Column.BUFF, Column.SCORE));
         return list;
     }
 
-    /** The table's columns - war flag/pet only for hero teams, see {@link #buildColumns}. */
+    /** The table's columns - war flag/pet only for hero teams, totems only for titan teams, see {@link #buildColumns}. */
     private enum Column {
         NUMBER(null, Integer.class, 36),
         FORTIFICATION(KEY_COLUMN_FORTIFICATION, String.class, 170),
@@ -356,6 +364,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         POWER(KEY_COLUMN_POWER, Integer.class, 80),
         WAR_FLAG(KEY_WAR_FLAG, Object.class, 48),
         PET(KEY_PET, Object.class, 48),
+        TOTEMS(KEY_TOTEMS, String.class, 120),
         TEAM(KEY_COLUMN_TEAM, Object.class, 5 * (ICON_SIZE + 4) + 12),
         BUFF(KEY_COLUMN_BUFF, Long.class, 50),
         SCORE(KEY_COLUMN_SCORE, Double.class, 60);
@@ -412,6 +421,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 case POWER -> row.draft.totalPower;
                 case WAR_FLAG -> row.draft.warFlag;
                 case PET -> row.draft.pet;
+                case TOTEMS -> TotemTexts.names(row.draft.totems);
                 case TEAM -> row.draft.members;
                 case BUFF -> buffCountOf(row);
                 case SCORE -> breakdownOf(row).total();
@@ -754,13 +764,14 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         return editorPanel;
     }
 
-    /** The team editor (power, war flag/pet for heroes, 5 slots, F1-F5 templates) bound to {@code row}'s draft. */
+    /** The team editor (power, war flag/pet for heroes, totems for titans, 5 slots, F1-F5 templates) bound to {@code row}'s draft. */
     private TeamEditorPanel<T> buildTeamEditor(Row<T> row) {
         TeamExtras extras = withExtras
                 ? TeamExtras.forOtherDrafts(appContext.catalog(), () -> otherTeamsOfRowMember(row))
                 : null;
         TeamEditorPanel<T> panel = new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, row.draft,
-                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), this::currentRowChanged, extras);
+                LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), this::currentRowChanged, extras,
+                withTotems ? TitanTeamExtras.ALL : null);
         panel.enableTemplates(spec.templates(), spec.idOf());
         skipArrowButtonsInTabOrder(panel);
         return panel;

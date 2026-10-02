@@ -161,7 +161,7 @@ public final class FortificationEntryDialog extends JDialog {
 
     /** The TITAN-side counterpart of {@link #heroScoreBreakdown} - delegates to {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)}. */
     private TeamScoreCalculator.Breakdown titanScoreBreakdown(TeamDraft<Titan> teamDraft) {
-        TitanTeam titanTeam = new TitanTeam(null, 0, teamDraft.members, teamDraft.totalPower);
+        TitanTeam titanTeam = GuildDraftConverter.toTitanTeam(null, 0, teamDraft, null);
         return TeamScoreCalculator.scoreFor(titanTeam, fortification);
     }
 
@@ -208,9 +208,11 @@ public final class FortificationEntryDialog extends JDialog {
                     ? TeamExtras.forOtherDrafts(appContext.catalog(),
                             () -> otherTeamsOfRowMember(rowDraft, combo, rowStates, teamsOf))
                     : null;
+            // Totems only for titan teams - see TitanTeamExtras.
+            TitanTeamExtras titanExtras = teamType == Lineup.TeamType.TITAN ? TitanTeamExtras.ALL : null;
             TeamEditorPanel<T> teamEditor = buildTeamEditorPanel(rowDraft, catalog, label, icon, catalogOrder,
                     () -> updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber),
-                    extras);
+                    extras, titanExtras);
             teamEditor.enableTemplates(templates, idOf);
             updateBuffCountLabel(buffCountLabel, rowDraft, matchesBuff, scoreBreakdownOf, fortificationName, rowNumber); // initial value - rowDraft.members is already populated by the TeamEditorPanel constructor above.
             // Picking "- none -" (null, see KEY_NO_SELECTION) here means this
@@ -314,7 +316,10 @@ public final class FortificationEntryDialog extends JDialog {
      * Logs breakdown for one row: power term + each component of
      * {@link TeamScoreCalculator.Breakdown#memberScores()} = total, e.g.
      * "Wachturm: Team 1 : 10.00 + 0.30 + 0.13 + 0.00 + 0.06 = 10.49" for a
-     * hero team (role, relation, pet, war flag bonus in score points). Skipped for a still-empty row (no members and
+     * hero team (role, relation, pet, war flag bonus in score points); for a
+     * titan team with totems, the totem points
+     * ({@link TeamScoreCalculator.Breakdown#bonusPoints()}) follow the power
+     * term, then the per-titan values. Skipped for a still-empty row (no members and
      * no power) - it carries no information and would just spam the log once
      * per row every time the dialog opens.
      */
@@ -326,6 +331,9 @@ public final class FortificationEntryDialog extends JDialog {
         StringBuilder message = new StringBuilder();
         message.append(fortificationName).append(": Team ").append(rowNumber).append(" : ")
                 .append(String.format(Locale.ROOT, "%.2f", breakdown.powerTerm()));
+        if (breakdown.bonusPoints() != 0) {
+            message.append(" + ").append(String.format(Locale.ROOT, "%.2f", breakdown.bonusPoints()));
+        }
         for (double memberScore : memberScores) {
             message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
         }
@@ -405,9 +413,9 @@ public final class FortificationEntryDialog extends JDialog {
 
     private <T> TeamEditorPanel<T> buildTeamEditorPanel(TeamDraft<T> teamDraft, List<T> catalog, Function<T, String> label,
                                             Function<T, Icon> icon, Comparator<T> catalogOrder, Runnable onChanged,
-                                            TeamExtras extras) {
+                                            TeamExtras extras, TitanTeamExtras titanExtras) {
         return new TeamEditorPanel<>(catalog, label, icon, null, teamDraft,
-                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged, extras);
+                LanguageService.displayName(KEY_NO_SELECTION), catalogOrder, onChanged, extras, titanExtras);
     }
 
     /**

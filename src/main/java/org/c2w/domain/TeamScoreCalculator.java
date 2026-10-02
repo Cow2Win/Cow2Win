@@ -45,10 +45,20 @@ import java.util.List;
  * none. Every hero-team method also has an overload taking the combos
  * explicitly.
  *
- * <h2>Titan teams (unchanged for now)</h2>
- * Sum of every titan's {@link CowScoreTier} value (buffFitScore at a buffed
- * fortification, generalScore otherwise) plus totalPower / {@link #POWER_DIVISOR}.
- * Titans will be moved to the new model separately.
+ * <h2>Titan teams</h2>
+ * <pre>
+ *     CowScore    = powerTerm + totemPoints + sum(titan tier values)
+ *     powerTerm   = totalPower / 100 000
+ *     totemPoints = powerTerm x number of totems x TOTEM_PERCENT / 100
+ * </pre>
+ * A titan's tier value is the {@link CowScoreTier} value of its buffFitScore
+ * at a buffed fortification, of its generalScore otherwise. The totem bonus
+ * ({@link #TOTEM_PERCENT} per totem, at most 2 totems = +2.5 %, see
+ * {@link TitanTeam#totems()}) is independent of the fortification and - as
+ * with hero teams - relative to the power term. Totems do not count as buff
+ * matches ({@link TitanTeamBuffFitScore} is unaffected).
+ * Titans will be moved to the new model separately - the totem bonus has to
+ * be carried over then.
  */
 public final class TeamScoreCalculator {
 
@@ -76,6 +86,9 @@ public final class TeamScoreCalculator {
 
     /** Bonus in percent if at least one active team combo matches the team - once per team, fortification-independent. */
     public static final double COMBO_PERCENT = 1.25;
+
+    /** Bonus in percent per totem of a titan team - fortification-independent, see {@link TitanTeam#totems()}. */
+    public static final double TOTEM_PERCENT = 1.25;
 
     /** The hero combos registered at startup - see {@link #setHeroCombos}. */
     private static volatile TeamCombos heroCombos = TeamCombos.NONE;
@@ -164,7 +177,8 @@ public final class TeamScoreCalculator {
      * {@link Breakdown#memberScores()} holds the five bonus components
      * (role, relation, pet, war flag, combo) converted into score points
      * (powerTerm x percent / 100), so that total = powerTerm +
-     * sum(memberScores) holds for hero and titan teams alike.
+     * sum(memberScores) holds ({@link Breakdown#bonusPoints()} is always 0
+     * for hero teams).
      */
     public static Breakdown scoreFor(HeroTeam team, Fortification fortification) {
         return scoreFor(team, fortification, heroCombos);
@@ -200,7 +214,12 @@ public final class TeamScoreCalculator {
         return team.totalPower() / POWER_DIVISOR * (1 + percent / 100.0);
     }
 
-    /** The TITAN-side counterpart of {@link #scoreFor(HeroTeam, Fortification)} - still the tier-based formula, see class Javadoc. */
+    /**
+     * The TITAN-side counterpart of {@link #scoreFor(HeroTeam, Fortification)} -
+     * still the tier-based formula, plus the totem bonus, see class Javadoc.
+     * {@link Breakdown#memberScores()} holds the per-titan tier values,
+     * {@link Breakdown#bonusPoints()} the totem points.
+     */
     public static Breakdown scoreFor(TitanTeam team, Fortification fortification) {
         List<Double> memberScores;
         if (fortification.buff() != null) {
@@ -211,21 +230,33 @@ public final class TeamScoreCalculator {
         } else {
             memberScores = team.titans().stream().map(t -> t.generalScore().value()).toList();
         }
-        return breakdownFor(memberScores, team.totalPower() / POWER_DIVISOR);
+        double powerTerm = team.totalPower() / POWER_DIVISOR;
+        double totemPoints = powerTerm * team.totems().size() * TOTEM_PERCENT / 100.0;
+        return breakdownFor(memberScores, powerTerm, totemPoints);
     }
 
     private static Breakdown breakdownFor(List<Double> memberScores, double powerTerm) {
-        double total = powerTerm + memberScores.stream().mapToDouble(Double::doubleValue).sum();
-        return new Breakdown(memberScores, powerTerm, total);
+        return breakdownFor(memberScores, powerTerm, 0);
+    }
+
+    private static Breakdown breakdownFor(List<Double> memberScores, double powerTerm, double bonusPoints) {
+        double total = powerTerm + bonusPoints + memberScores.stream().mapToDouble(Double::doubleValue).sum();
+        return new Breakdown(memberScores, powerTerm, bonusPoints, total);
     }
 
     /**
      * One team's score breakdown against one fortification: total =
-     * powerTerm + sum(memberScores). For a titan team memberScores are the
-     * per-titan tier values; for a hero team they are the five bonus
+     * powerTerm + bonusPoints + sum(memberScores). For a titan team
+     * memberScores are the per-titan tier values and bonusPoints are the
+     * totem points; for a hero team memberScores are the five bonus
      * components (role, relation, pet, war flag, combo) in score points - see
-     * {@link #scoreFor(HeroTeam, Fortification)}.
+     * {@link #scoreFor(HeroTeam, Fortification)} - and bonusPoints is 0.
      */
-    public record Breakdown(List<Double> memberScores, double powerTerm, double total) {
+    public record Breakdown(List<Double> memberScores, double powerTerm, double bonusPoints, double total) {
+
+        /** Everything except the power term: bonusPoints + sum(memberScores) (= total - powerTerm). */
+        public double scoreWithoutPower() {
+            return bonusPoints + memberScores.stream().mapToDouble(Double::doubleValue).sum();
+        }
     }
 }
