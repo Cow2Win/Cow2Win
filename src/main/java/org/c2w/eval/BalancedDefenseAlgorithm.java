@@ -14,8 +14,16 @@ import java.util.*;
  * order, this algorithm repeatedly hands the NEXT available team to
  * whichever open fortification is currently WEAKEST - its "current
  * strength" being the sum of {@link TeamScoreCalculator#scoreFor} over every
- * team already assigned there (recomputed after every pick) - aiming for an
- * evenly-defended map instead of a small number of heavily reinforced hubs.
+ * team already assigned there divided by the fortification's
+ * {@link Fortification#capacity() capacity} (CowScore per slot, recomputed
+ * after every pick) - aiming for an evenly-defended map instead of a small
+ * number of heavily reinforced hubs. A plain sum would only even out the
+ * NUMBER of teams per fortification, filling the small (3-slot) forts with
+ * strong teams and leaving the big ones the weak rest; dividing by the
+ * OCCUPIED slots instead would be self-reinforcing (every further team from
+ * the strongest-first pool lowers that average, so the same fortification
+ * would stay weakest and soak up teams until full), whereas with the
+ * capacity as divisor every additional team raises the value.
  * {@code strategicImportance}/unlock depth only survive as a TIEBREAKER for
  * forts that are exactly equally (usually: both still empty) strong.
  *
@@ -52,13 +60,13 @@ public class BalancedDefenseAlgorithm<T> extends AbstractLineupAlgorithm<T> {
             assignStrongestFirst(bridge, pool, updatedEntries, teamType);
         }
 
-        // Current CowScore-sum "strength" of every non-bridge fortification of this side,
-        // seeded from whatever is ALREADY assigned there (manual picks, an earlier run), not
+        // Current "strength" (CowScore per slot, see strengthPerSlot) of every non-bridge
+        // fortification of this side, seeded from whatever is ALREADY assigned there (manual picks, an earlier run), not
         // just from what this run itself adds - a fortification that a human already reinforced
         // by hand starts this algorithm's competition for the next team at a real disadvantage.
         Map<String, Double> strength = new HashMap<>();
         for (Fortification fortification : others) {
-            strength.put(fortification.id(), currentStrength(fortification, updatedEntries, guild));
+            strength.put(fortification.id(), strengthPerSlot(fortification, updatedEntries, guild));
         }
 
         Comparator<Fortification> tiebreak = byImportanceThenDepth(unlockDepth);
@@ -80,14 +88,31 @@ public class BalancedDefenseAlgorithm<T> extends AbstractLineupAlgorithm<T> {
                 break;
             }
             assignOne(target, pool, updatedEntries, teamType, side().buffFitScoreOf());
-            strength.put(target.id(), currentStrength(target, updatedEntries, guild));
+            strength.put(target.id(), strengthPerSlot(target, updatedEntries, guild));
         }
     }
 
     /**
+     * This fortification's "current strength" for the balancing loop: the sum
+     * of {@link TeamSide#cowScoreOf()} over every team of this side assigned
+     * there ({@link #currentScoreSum}) divided by the fortification's
+     * {@link Fortification#capacity() capacity} (always &gt; 0). Divided by the
+     * capacity rather than by the occupied slots, because an average over the
+     * occupied slots drops with every further (weaker) team and would keep the
+     * same fortification the weakest until it is full - with the capacity as
+     * divisor, every additional team (score &gt;= 0) raises the value, so the
+     * loop stays balancing.
+     *
+     * <p>Package-private so {@code BalancedDefenseAlgorithmTest} can check it directly.
+     */
+    double strengthPerSlot(Fortification fortification, List<Lineup.Entry> updatedEntries, Guild guild) {
+        return currentScoreSum(fortification, updatedEntries, guild) / fortification.capacity();
+    }
+
+    /**
      * Sums {@link TeamSide#cowScoreOf()} over every team of this side
-     * currently assigned to {@code fortification} - this fortification's
-     * "current strength" for the balancing loop. Resolves each entry's actual
+     * currently assigned to {@code fortification} - the numerator of
+     * {@link #strengthPerSlot}. Resolves each entry's actual
      * team object from {@code guild} rather than tracking scores
      * incrementally, so it correctly picks up pre-existing (e.g. manually
      * made) entries too. An entry that can no longer be resolved (unknown
@@ -95,7 +120,7 @@ public class BalancedDefenseAlgorithm<T> extends AbstractLineupAlgorithm<T> {
      * throwing, same defensive handling as {@code BuffCalculationService}'s
      * sum methods.
      */
-    private double currentStrength(Fortification fortification, List<Lineup.Entry> updatedEntries, Guild guild) {
+    private double currentScoreSum(Fortification fortification, List<Lineup.Entry> updatedEntries, Guild guild) {
         double total = 0;
         for (Lineup.Entry entry : updatedEntries) {
             if (!entry.fortificationId().equals(fortification.id()) || entry.teamType() != side().teamType()) {
