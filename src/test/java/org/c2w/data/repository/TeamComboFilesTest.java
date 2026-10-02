@@ -108,13 +108,15 @@ class TeamComboFilesTest {
                     .map(org.c2w.data.model.Hero::id).toList();
             HeroComboRepository repository = new HeroComboRepository(workspace, heroIds);
 
-            assertEquals(List.of("sebastian-nebula", "krista-lars", "augustus-orion-dorian"), ids(repository.combos()));
+            List<String> shipped = ids(TeamComboFiles.loadDefaults(HeroComboRepository.class, "/data/heroCombos.json"));
+            assertFalse(shipped.isEmpty(), "combos are shipped");
+            assertEquals(shipped, ids(repository.combos()), "no shipped combo is dropped by the validation");
             assertTrue(repository.combos().combos().stream()
                     .allMatch(c -> c.source() == ComboSource.C2W && c.isActive() && !c.hasCustomName()),
                     "shipped combos are named by their (localized) heroes");
             assertTrue(Files.isRegularFile(repository.comboFile()), "workspace copy created");
             String written = Files.readString(repository.comboFile(), StandardCharsets.UTF_8);
-            assertTrue(written.contains("\n    \"id\": \"sebastian-nebula\""), "pretty-printed: " + written);
+            assertTrue(written.contains("\n    \"id\": \"" + shipped.get(0) + "\""), "pretty-printed: " + written);
         }
 
         @Test
