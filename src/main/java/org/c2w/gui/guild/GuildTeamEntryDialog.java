@@ -58,7 +58,7 @@ import java.util.List;
  * <ul>
  *     <li>Adding a line does not save; unsaved changes are shown in the
  *     status bar and the player is asked on close.</li>
- *     <li>Shortcuts: Ctrl+N adds, Del (in the table) deletes, Ctrl+S saves,
+ *     <li>Shortcuts: Ctrl+Plus adds, Del (in the table) deletes, Shift+Enter saves,
  *     Enter (in the table) jumps into the editor, F1-F5 (in the table) loads
  *     a template into the selected team.</li>
  *     <li>Problems that would make the save fail (no member, no power, too many teams
@@ -112,8 +112,20 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private static final String KEY_SHORTCUT_NEXT_FIELD = "guildEntry.shortcut.nextField";
     private static final String KEY_SHORTCUT_TYPE_AHEAD = "guildEntry.shortcut.typeAhead";
 
-    private static final KeyStroke SHORTCUT_ADD = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK);
-    private static final KeyStroke SHORTCUT_SAVE = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK);
+    /**
+     * Same convention as Microsoft Access (Ctrl+Plus = new record, Shift+Enter
+     * = save record) - deliberately NOT Ctrl+N/Ctrl+S: those open a new window
+     * / a "save page" dialog when the focus is still in a browser by mistake,
+     * while Ctrl+Plus there only zooms and Shift+Enter does nothing.
+     */
+    private static final KeyStroke SHORTCUT_ADD = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK);
+    private static final KeyStroke SHORTCUT_SAVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
+
+    /** Further keys for {@link #SHORTCUT_ADD}: numpad plus, and Ctrl+= / Ctrl+Shift+= where "+" is Shift+= (e.g. US layout). */
+    private static final List<KeyStroke> SHORTCUT_ADD_ALTERNATIVES = List.of(
+            KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK),
+            KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, InputEvent.CTRL_DOWN_MASK),
+            KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
     private static final KeyStroke SHORTCUT_DELETE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
 
     private static final String ICON_SAVE = "/images/app/save.png";
@@ -1127,12 +1139,16 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         InputMap windowKeys = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap windowActions = root.getActionMap();
         windowKeys.put(SHORTCUT_ADD, "c2w.addRow");
+        SHORTCUT_ADD_ALTERNATIVES.forEach(key -> windowKeys.put(key, "c2w.addRow"));
         windowKeys.put(SHORTCUT_SAVE, "c2w.save");
         windowActions.put("c2w.addRow", action(this::addRow));
         windowActions.put("c2w.save", action(this::performSave));
 
         InputMap tableKeys = table.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap tableActions = table.getActionMap();
+        // The table's own Shift+Enter (select previous row) would win over the window binding above.
+        tableKeys.put(SHORTCUT_SAVE, "c2w.save");
+        tableActions.put("c2w.save", action(this::performSave));
         tableKeys.put(SHORTCUT_DELETE, "c2w.deleteRow");
         tableKeys.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "c2w.editRow");
         tableActions.put("c2w.deleteRow", action(this::deleteCurrentRow));
@@ -1163,7 +1179,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         };
     }
 
-    /** A shortcut's key text in the JVM's language, e.g. "Strg+N" / "Ctrl+N". */
+    /** A shortcut's key text in the JVM's language, e.g. "Strg+Plus" / "Ctrl+Plus". */
     private static String shortcutText(KeyStroke shortcut) {
         String modifiers = InputEvent.getModifiersExText(shortcut.getModifiers());
         String key = KeyEvent.getKeyText(shortcut.getKeyCode());

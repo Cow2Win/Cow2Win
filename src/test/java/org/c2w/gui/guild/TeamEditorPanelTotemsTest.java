@@ -177,6 +177,49 @@ class TeamEditorPanelTotemsTest {
     }
 
     @Test
+    @DisplayName("the totem combo boxes are as high as the member slots")
+    void heightMatchesSlots() {
+        TeamEditorPanel<Titan> panel = panel(draft(), null);
+        int slotHeight = slot(panel, 0).getPreferredSize().height;
+        assertEquals(slotHeight, totemCombo(panel, TOTEM_1).getPreferredSize().height);
+        assertEquals(slotHeight, totemCombo(panel, TOTEM_2).getPreferredSize().height);
+    }
+
+    @Test
+    @DisplayName("type-ahead without opening the dropdown: the first letter selects an allowed totem")
+    void typeAheadSelectsTotem() {
+        TeamDraft<Titan> draft = new TeamDraft<>();
+        draft.members.addAll(List.of(titan("eden"), titan("angus"), titan("ignis"), titan("vulcan")));
+        TeamEditorPanel<Titan> panel = panel(draft, null);
+
+        char earthKey = Character.toLowerCase(org.c2w.i18n.TotemTexts.name(EARTH).charAt(0)); // "e" for Erde/Earth
+        assertTrue(totemCombo(panel, TOTEM_1).selectWithKeyChar(earthKey));
+        assertEquals(EARTH, totemCombo(panel, TOTEM_1).getSelectedItem());
+        assertEquals(Set.of(EARTH), draft.totems);
+
+        // Earth is now taken by totem 1 - totem 2 can't pick it, but fire.
+        assertFalse(totemCombo(panel, TOTEM_2).selectWithKeyChar(earthKey));
+        char fireKey = Character.toLowerCase(org.c2w.i18n.TotemTexts.name(FIRE).charAt(0));
+        assertTrue(totemCombo(panel, TOTEM_2).selectWithKeyChar(fireKey));
+        assertEquals(Set.of(FIRE, EARTH), draft.totems);
+    }
+
+    @Test
+    @DisplayName("a titan change makes a newly allowed totem selectable by key right away")
+    void slotChangeUpdatesClosedModel() {
+        TeamDraft<Titan> draft = new TeamDraft<>();
+        draft.members.add(titan("eden"));
+        TeamEditorPanel<Titan> panel = panel(draft, null);
+        char earthKey = Character.toLowerCase(org.c2w.i18n.TotemTexts.name(EARTH).charAt(0));
+        assertFalse(totemCombo(panel, TOTEM_1).selectWithKeyChar(earthKey), "only one earth titan");
+
+        slot(panel, 1).setSelectedItem(titan("angus"));
+
+        assertTrue(totemCombo(panel, TOTEM_1).selectWithKeyChar(earthKey));
+        assertEquals(Set.of(EARTH), draft.totems);
+    }
+
+    @Test
     @DisplayName("clear() also removes the totems")
     void clearResetsTotems() {
         TeamDraft<Titan> draft = draft(FIRE, WATER);

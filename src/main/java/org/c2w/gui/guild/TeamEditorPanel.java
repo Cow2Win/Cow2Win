@@ -241,6 +241,7 @@ public final class TeamEditorPanel<T> extends JPanel {
                 totemCombos.add(totemCombo);
                 add(totemCombo);
             }
+            refreshTotemModels(); // full models right away, so type-ahead (e.g. "e" = Erde) works without opening the dropdown
         }
 
         // Take over the pre-selection from the given draft (list order = slot order).
@@ -270,6 +271,10 @@ public final class TeamEditorPanel<T> extends JPanel {
         Dimension comboSize = combos.get(0).getPreferredSize();
         Dimension powerFieldSize = powerField.getPreferredSize();
         powerField.setPreferredSize(new Dimension(powerFieldSize.width, comboSize.height));
+        // Same for the totem combo boxes - text-only entries would otherwise make them shorter than the icon slots.
+        for (JComboBox<TitanElement> totemCombo : totemCombos) {
+            totemCombo.setPreferredSize(new Dimension(totemCombo.getPreferredSize().width, comboSize.height));
+        }
         for (JComboBox<T> combo : combos) {
             combo.addActionListener(e -> {
                 if (refreshing) {
@@ -499,8 +504,10 @@ public final class TeamEditorPanel<T> extends JPanel {
      * Builds totem combo box {@code number} (1 or 2, see {@link TitanTeamExtras}):
      * "no totem" plus the totems the row currently allows, by name (there
      * are no element icons). While nothing is selected, the closed combo box
-     * shows "Totem 1"/"Totem 2". Its model is rebuilt every time the dropdown
-     * opens, see {@link #refreshTotemModel}.
+     * shows "Totem 1"/"Totem 2". Its model is kept current on every titan or
+     * totem change (see {@link #refreshTotemModels()}), so typing the first
+     * letter of a name selects it, and is rebuilt once more when the dropdown
+     * opens. Height: matched to the member slots in the constructor.
      */
     private JComboBox<TitanElement> buildTotemCombo(int number, TitanElement initial) {
         String kindLabel = LanguageService.displayName(KEY_TOTEM, number);
@@ -548,6 +555,7 @@ public final class TeamEditorPanel<T> extends JPanel {
             }
             syncTotemsFromCombos();
             updateTotemTooltip(combo, number);
+            refreshOtherTotemModels(combo);
             touchLastModified();
             if (onChanged != null) {
                 onChanged.run();
@@ -588,6 +596,25 @@ public final class TeamEditorPanel<T> extends JPanel {
             combo.setSelectedItem(current);
         } finally {
             updatingExtras = false;
+        }
+    }
+
+    /**
+     * Rebuilds every totem combo box's model (see {@link #refreshTotemModel}) -
+     * called whenever the titans or the totems change, so a closed combo box
+     * always holds exactly the selectable totems: type-ahead (e.g. "e" =
+     * Erde) only searches the current model.
+     */
+    private void refreshTotemModels() {
+        totemCombos.forEach(this::refreshTotemModel);
+    }
+
+    /** Like {@link #refreshTotemModels()}, except {@code changed} itself - for its own action listener. */
+    private void refreshOtherTotemModels(JComboBox<TitanElement> changed) {
+        for (JComboBox<TitanElement> combo : totemCombos) {
+            if (combo != changed) {
+                refreshTotemModel(combo);
+            }
         }
     }
 
@@ -652,6 +679,7 @@ public final class TeamEditorPanel<T> extends JPanel {
             }
         }
         syncTotemsFromCombos();
+        refreshTotemModels();
     }
 
     /** The draft's members as titans - only meaningful with totem combo boxes, i.e. for a titan team (see {@link TitanTeamExtras}). */
@@ -981,6 +1009,7 @@ public final class TeamEditorPanel<T> extends JPanel {
             setTotemSelection(totemCombos.get(i), i + 1, null);
         }
         syncDraftFromCombos();
+        refreshTotemModels();
         refreshComboOptions();
         updateRoleLabels();
         updateComboTooltips();
