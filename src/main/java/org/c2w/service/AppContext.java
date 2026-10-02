@@ -53,13 +53,15 @@ public class AppContext {
 
     /**
      * Snapshot of totalPower/buffMemberCount PER FORTIFICATION (keyed by
-     * {@link Fortification#id()}), for the lineup exactly as it was loaded
-     * from {@link #lineupFilePath}, taken by {@link #set(Lineup, Path)} /
-     * {@link #switchTo} - see {@link LineupBaseline}. Deliberately NOT
-     * touched by {@link #setLineup} alone, since that is used for in-memory
-     * edits to the SAME file (team assignments, algorithm runs, "clear
-     * lineup", ...). Only contains an entry for fortifications that have at
-     * least one team assigned in the loaded lineup. See
+     * {@link Fortification#id()}), for the lineup exactly as it stands in
+     * {@link #lineupFilePath} - i.e. as it was loaded or last saved - taken by
+     * {@link #set(Lineup, Path)} / {@link #switchTo} on load and retaken by
+     * {@link #markLineupSaved()} after every successful save - see
+     * {@link LineupBaseline}. Deliberately NOT touched by {@link #setLineup}
+     * alone, since that is used for in-memory edits to the SAME file (team
+     * assignments, algorithm runs, "clear lineup", ...). Only contains an
+     * entry for fortifications that have at least one team assigned in the
+     * loaded/saved lineup. See
      * {@link #loadedFortificationBaselines()}/
      * {@link #fortificationDiffFromLoaded(String)}.
      */
@@ -214,6 +216,21 @@ public class AppContext {
         }
     }
 
+    /**
+     * Marks the open lineup as saved to {@link #lineupFilePath()}: retakes
+     * {@link #loadedFortificationBaselines()} from the current
+     * {@link #lineup()}/{@link #guild()} (so every fortification diffs to 0
+     * again), clears {@link #isLineupDirty()} and notifies listeners - the
+     * fortification map via {@link Listener#lineupChanged()}, the dirty state
+     * via {@link Listener#dirtyStateChanged()} (only if it was dirty). Call
+     * this only after the lineup was written successfully.
+     */
+    public void markLineupSaved() {
+        this.loadedFortificationBaselines = computeFortificationBaselines(lineup, guild);
+        fireLineupChanged();
+        setLineupDirty(false);
+    }
+
     // --- listeners ---
 
     public void addListener(Listener listener) {
@@ -243,7 +260,7 @@ public class AppContext {
 
     /**
      * totalPower/buffMemberCount, per fortification id, as they stood at the
-     * moment the currently open lineup was (re)loaded from
+     * moment the currently open lineup was (re)loaded from or last saved to
      * {@link #lineupFilePath()} - see the field Javadoc. Empty (never null)
      * before any lineup has ever been loaded, or for a lineup with no
      * entries.
@@ -254,7 +271,8 @@ public class AppContext {
 
     /**
      * {@link #loadedFortificationBaselines()} for one fortification, or null
-     * if that fortification had no team assigned when the lineup was loaded.
+     * if that fortification had no team assigned when the lineup was loaded
+     * or last saved.
      */
     public LineupBaseline loadedFortificationBaseline(String fortificationId) {
         return loadedFortificationBaselines.get(fortificationId);
@@ -262,26 +280,21 @@ public class AppContext {
 
     /**
      * How far the CURRENT in-memory lineup ({@link #lineup()}) has drifted,
-     * for ONE fortification, from what was loaded (see
+     * for ONE fortification, from what was loaded or last saved (see
      * {@link #loadedFortificationBaseline(String)}) - positive values mean
      * the current lineup is now stronger / has more buff members at this
-     * fortification than what is saved on disk. Not wired into the GUI yet
-     * (planned for later); callers can use this once needed instead of
-     * hand-rolling the comparison.
+     * fortification than what is saved on disk. Used by the fortification
+     * map's "Changes" view and tooltips. A fortification without a baseline
+     * (no team assigned when loaded/saved) counts as a baseline of (0, 0), so
+     * anything assigned there now shows up as a full gain.
      *
-     * @throws IllegalStateException if this fortification had no team
-     *         assigned in the loaded lineup (nothing to diff against)
      * @throws IllegalArgumentException if fortificationId is not a known
      *         fortification (see {@link FortificationRepository#findById})
      */
     public LineupBaseline.Diff fortificationDiffFromLoaded(String fortificationId) {
-        LineupBaseline loaded = loadedFortificationBaselines.get(fortificationId);
-        if (loaded == null) {
-            throw new IllegalStateException(
-                    "No baseline was loaded for fortification '" + fortificationId + "'");
-        }
         Fortification fortification = FortificationRepository.findById(fortificationId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown fortification id: " + fortificationId));
+        LineupBaseline loaded = loadedFortificationBaselines.getOrDefault(fortificationId, new LineupBaseline(0, 0));
         LineupBaseline current = LineupBaseline.forFortification(fortification, lineup, guild);
         return loaded.diffFrom(current);
     }

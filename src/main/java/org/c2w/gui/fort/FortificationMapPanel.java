@@ -22,7 +22,7 @@ public class FortificationMapPanel extends GridPanel {
     private boolean showHeroFortifications = true;
     private boolean showTitanFortifications = true;
 
-    /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel) is selected - then every {@link FortificationPanel} shows its power change against the baseline loaded from disk instead of its current total power (see AppContext#loadedFortificationBaseline). */
+    /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel) is selected - then every {@link FortificationPanel} shows its power change against the lineup as loaded or last saved instead of its current total power (see AppContext#fortificationDiffFromLoaded). */
     private boolean showChanges = false;
 
     /**
@@ -81,15 +81,12 @@ public class FortificationMapPanel extends GridPanel {
                     fort.id(), lineup, guild, fort);
             int filledSlots = filledSlotsMap.getOrDefault(fort.id(), 0);
             int totalPower = totalPowerMap.getOrDefault(fort.id(), 0);
-            // No baseline entry means this fortification had no team assigned when the lineup was loaded (see AppContext#set(Lineup, Path)) - treat that as a loaded totalPower/buffMemberCount of 0, so anything now assigned here shows up as a full gain.
-            LineupBaseline loadedBaseline = appContext.loadedFortificationBaseline(fort.id());
-            int totalPowerDiff = totalPower - (loadedBaseline == null ? 0 : loadedBaseline.totalPower());
-            // buffPercent = matching members x buff.bonusPercent() (see BuffCalculationService#calculateBuffForFortification) - the loaded side of the diff is derived from the baseline's buffMemberCount the same way, rather than caching buffPercent itself.
-            int loadedBuffPercent = (loadedBaseline == null || fort.buff() == null)
-                    ? 0 : (int) (loadedBaseline.buffMemberCount() * fort.buff().bonusPercent());
-            int buffPercentDiff = buffPercent - loadedBuffPercent;
-            setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower, totalPowerDiff,
-                    showChanges, buffPercent, buffPercentDiff, appContext));
+            // Change since the lineup was loaded or last saved - a fortification that was empty
+            // back then counts as a baseline of 0 (see AppContext#fortificationDiffFromLoaded).
+            LineupBaseline.Diff diff = appContext.fortificationDiffFromLoaded(fort.id());
+            setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower,
+                    diff.totalPowerDiff(), showChanges, buffPercent, buffPercentDiff(fort, diff),
+                    diff.buffMemberCountDiff(), appContext));
         }
 
         // Hero summary top left, titan summary top right (same row) - each one
@@ -102,6 +99,19 @@ public class FortificationMapPanel extends GridPanel {
         if (showTitanFortifications) {
             setComponentAt(0, columns() - 1, new TitanLineupSummaryPanel(lineup, guild));
         }
+    }
+
+    /**
+     * Buff percentage change of {@code fortification} for {@code diff}: the
+     * buff-member change times {@code buff.bonusPercent()}, the same way
+     * {@link BuffCalculationService#calculateBuffForFortification} derives the
+     * percentage itself. 0 for a fortification without a buff.
+     */
+    static int buffPercentDiff(Fortification fortification, LineupBaseline.Diff diff) {
+        if (fortification.buff() == null) {
+            return 0;
+        }
+        return (int) (diff.buffMemberCountDiff() * fortification.buff().bonusPercent());
     }
 
     /**

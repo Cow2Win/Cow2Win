@@ -24,11 +24,19 @@
     "image": "Khorus.png"
   },
   {
+    "id": "mara",
+    "image": "Mara.png"
+  },
+  {
     "id": "merlin",
     "image": "Merlin.png"
   },
   {
     "id": "oliver",
     "image": "Oliver.png"
+  },
+  {
+    "id": "vex",
+    "image": "Vex.png"
   }
 ]

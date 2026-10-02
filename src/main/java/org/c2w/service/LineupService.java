@@ -164,10 +164,14 @@ public class LineupService {
         return remaining.get(Math.max(0, Math.min(removedIndex, remaining.size() - 1)));
     }
 
-    /** Saves the currently open lineup to its file. */
+    /**
+     * Saves the currently open lineup to its file and makes it the new
+     * baseline of the "Changes" view (see {@link AppContext#markLineupSaved()}).
+     * On failure nothing changes - old baseline, still dirty.
+     */
     public void saveLineup() throws IOException {
         LineupRepository.save(context.lineup(), context.lineupFilePath());
-        context.setLineupDirty(false);
+        context.markLineupSaved();
         Logger.log("Saved: " + context.lineupFilePath());
     }
 
@@ -278,7 +282,8 @@ public class LineupService {
     /**
      * Saves {@code guild} and {@code lineup} to the current guild/lineup
      * files and makes them the open ones - e.g. after editing one
-     * fortification's teams, which can change both.
+     * fortification's teams, which can change both. The saved lineup becomes the new
+     * baseline of the "Changes" view (see {@link AppContext#markLineupSaved()}).
      */
     public void saveWithGuild(Guild guild, Lineup lineup) throws IOException {
         GuildRepository.save(guild, context.guildFilePath());
@@ -286,7 +291,7 @@ public class LineupService {
         context.setGuild(guild);
         context.setLineup(lineup);
         context.setGuildDirty(false);
-        context.setLineupDirty(false);
+        context.markLineupSaved();
     }
 
     /**

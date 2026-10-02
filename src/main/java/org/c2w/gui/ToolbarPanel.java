@@ -47,6 +47,9 @@ public class ToolbarPanel extends JPanel {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "save lineup" button (see {@link #onSaveLineup()}). */
     private static final String KEY_SAVE_LINEUP = "toolbar.saveLineup";
 
+    /** Language file key of the suffix appended to a save button's tooltip while there is something unsaved (see {@link #updateSaveButtons()}). */
+    private static final String KEY_UNSAVED_SUFFIX = "toolbar.unsavedSuffix";
+
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
 
     private static final String KEY_GENERATE_REPORT = "toolbar.generateReport";
@@ -133,6 +136,12 @@ public class ToolbarPanel extends JPanel {
     /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
 
+    /** "Save guild" button - red icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
+    private final FlatButton saveGuildButton;
+
+    /** "Save lineup" button - red icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
+    private final FlatButton saveLineupButton;
+
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
     private final FlatButton runAlgorithmButton;
 
@@ -175,8 +184,7 @@ public class ToolbarPanel extends JPanel {
         });
 
 
-        FlatButton saveGuildButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE,IconLoader.BLUE));
-        saveGuildButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
+        saveGuildButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         saveGuildButton.addActionListener(e -> onSaveGuild());
         add(saveGuildButton);
 
@@ -214,8 +222,7 @@ public class ToolbarPanel extends JPanel {
             }
         });
 
-        FlatButton saveLineupButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
-        saveLineupButton.setToolTipText(LanguageService.displayName(KEY_SAVE_LINEUP));
+        saveLineupButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         saveLineupButton.addActionListener(e -> onSaveLineup());
         add(saveLineupButton);
 
@@ -268,8 +275,35 @@ public class ToolbarPanel extends JPanel {
                 }
             }
         });
+
+        // Shows on the two save buttons WHICH part (guild and/or lineup) has unsaved changes.
+        updateSaveButtons();
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void dirtyStateChanged() {
+                updateSaveButtons();
+            }
+        });
     }
 
+
+    /**
+     * Colors the "save guild"/"save lineup" icons {@link IconLoader#RED}
+     * while {@link AppContext#isGuildDirty()}/{@link AppContext#isLineupDirty()}
+     * respectively (otherwise {@link IconLoader#BLUE}) and appends
+     * "unsaved changes" to their tooltips - only icon and tooltip are reset,
+     * the buttons themselves stay.
+     */
+    private void updateSaveButtons() {
+        updateSaveButton(saveGuildButton, ICON_SAVE_GUILD, KEY_SAVE_GUILD, appContext.isGuildDirty());
+        updateSaveButton(saveLineupButton, ICON_SAVE_LINEUP, KEY_SAVE_LINEUP, appContext.isLineupDirty());
+    }
+
+    private static void updateSaveButton(FlatButton button, String iconPath, String tooltipKey, boolean dirty) {
+        button.setIcon(IconLoader.iconFor(iconPath, TOOLBAR_ICON_SIZE, dirty ? IconLoader.RED : IconLoader.BLUE));
+        String tooltip = LanguageService.displayName(tooltipKey);
+        button.setToolTipText(dirty ? tooltip + " – " + LanguageService.displayName(KEY_UNSAVED_SUFFIX) : tooltip);
+    }
 
     /**
      * Adds the "show heroes"/"show titans"/"changes" checkboxes that used to

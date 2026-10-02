@@ -11,13 +11,14 @@ import org.c2w.service.AppContext;
  * {@link AppContext#loadedFortificationBaselines()}). AppContext takes
  * one of these per fortification that has at least one team assigned, the
  * moment a ".lineup" file is (re)loaded (see
- * {@link AppContext#set(Lineup, java.nio.file.Path)}), so that later - once
- * the user has changed the in-memory lineup via
- * the value overview dialogs/ToolbarPanel (team assignments, algorithm runs, "clear
- * lineup", ...) - the difference to what is currently saved on disk can be
- * computed per fortification on demand via {@link #diffFrom}, without
- * re-reading/re-parsing the file. Not yet surfaced in the GUI; that is
- * planned for later.
+ * {@link AppContext#set(Lineup, java.nio.file.Path)}) or saved (see
+ * {@link AppContext#markLineupSaved()}), so that later - once the user has
+ * changed the in-memory lineup via the value overview dialogs/ToolbarPanel
+ * (team assignments, algorithm runs, "clear lineup", ...) - the difference
+ * to what is currently saved on disk can be computed per fortification on
+ * demand via {@link #diffFrom}, without re-reading/re-parsing the file.
+ * Shown in the fortification map's "Changes" view and tooltips (see
+ * {@link AppContext#fortificationDiffFromLoaded}).
  *
  * totalPower is the sum of every entry's current team totalPower (see
  * {@link BuffCalculationService#totalPowerOf}) across every entry currently

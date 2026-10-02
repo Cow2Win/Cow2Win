@@ -1,13 +1,14 @@
 package org.c2w.service;
 
-import org.c2w.data.model.Fortification;
-import org.c2w.data.model.Lineup;
+import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.domain.LineupBaseline;
 import org.c2w.eval.ManualLineupAlgorithm;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -160,5 +161,62 @@ class LineupServiceTest extends ServiceTestSupport {
     void toLineupFileName() {
         assertEquals("x.lineup", LineupService.toLineupFileName("x"));
         assertEquals("x.lineup", LineupService.toLineupFileName("x.lineup"));
+    }
+
+    // --- baseline of the "Changes" view after saving ---
+
+    /** Makes the open guild one member "m1" with a single 1000-power hero team (one MAGE). */
+    private void useGuildWithTeam() {
+        Guild current = context.guild();
+        HeroTeam team = new HeroTeam("m1", 0, List.of(new Hero("h1", List.of(Role.MAGE))), 1000);
+        context.setGuild(new Guild(current.id(), current.name(),
+                List.of(new GuildMember("m1", "m1", List.of(team), List.of()))));
+    }
+
+    private void assignToAlchemyTower() {
+        Fortification alchemyTower = FortificationRepository.findById("alchemy-tower").orElseThrow();
+        lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, alchemyTower);
+        assertEquals(new LineupBaseline.Diff(1000, 1), context.fortificationDiffFromLoaded("alchemy-tower"));
+    }
+
+    @Test
+    @DisplayName("saveLineup retakes the baseline - every fortification diffs to 0 right after saving")
+    void saveLineupRetakesBaseline() throws Exception {
+        useGuildWithTeam();
+        assignToAlchemyTower();
+
+        lineupService.saveLineup();
+
+        assertFalse(context.isLineupDirty());
+        for (Fortification fortification : FortificationRepository.findAll()) {
+            assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded(fortification.id()));
+        }
+    }
+
+    @Test
+    @DisplayName("saveWithGuild retakes the baseline too")
+    void saveWithGuildRetakesBaseline() throws Exception {
+        useGuildWithTeam();
+        assignToAlchemyTower();
+
+        lineupService.saveWithGuild(context.guild(), context.lineup());
+
+        assertFalse(context.hasUnsavedChanges());
+        assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded("alchemy-tower"));
+    }
+
+    @Test
+    @DisplayName("a failed saveLineup keeps the old baseline and the dirty state")
+    void failedSaveKeepsBaselineAndDirtyState() throws Exception {
+        useGuildWithTeam();
+        assignToAlchemyTower();
+        // A directory where the lineup file should be makes writing it fail.
+        Files.delete(context.lineupFilePath());
+        Files.createDirectory(context.lineupFilePath());
+
+        assertThrows(IOException.class, () -> lineupService.saveLineup());
+
+        assertTrue(context.isLineupDirty());
+        assertEquals(new LineupBaseline.Diff(1000, 1), context.fortificationDiffFromLoaded("alchemy-tower"));
     }
 }

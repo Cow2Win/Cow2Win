@@ -25,13 +25,15 @@ public class FortificationPanel extends JPanel {
     private Fortification fortification;
     private final int filledSlots;
     private final int totalPower;
-    /** Change of {@link #totalPower} against the baseline loaded from disk (see AppContext#loadedFortificationBaseline) - only shown when {@link #showChanges} is true (see {@link #getPowerLabel()}). */
+    /** Change of {@link #totalPower} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true (see {@link #getPowerLabel()}). */
     private final int totalPowerDiff;
     /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel / FortificationMapPanel#setShowChanges) is selected - then {@link #getPowerLabel()} shows {@link #totalPowerDiff} instead of {@link #totalPower}. */
     private final boolean showChanges;
     private final int buffPercent;
-    /** Change of {@link #buffPercent} against the baseline loaded from disk (see AppContext#loadedFortificationBaseline) - only shown when {@link #showChanges} is true (see {@link #getBuffPercentLabel()}). */
+    /** Change of {@link #buffPercent} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true (see {@link #getBuffPercentLabel()}). */
     private final int buffPercentDiff;
+    /** Change of the number of buff-matching heroes/titans since the lineup was loaded or last saved - shown in the power label's tooltip (see {@link #powerTooltip()}). */
+    private final int buffMemberCountDiff;
     private final AppContext appContext;
     private ImageIcon slot_set;
     private ImageIcon slot_open;
@@ -39,7 +41,7 @@ public class FortificationPanel extends JPanel {
 
     public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
                               boolean showChanges, int buffPercent, int buffPercentDiff,
-                              AppContext appContext){
+                              int buffMemberCountDiff, AppContext appContext){
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
@@ -47,6 +49,7 @@ public class FortificationPanel extends JPanel {
         this.showChanges = showChanges;
         this.buffPercent = buffPercent;
         this.buffPercentDiff = buffPercentDiff;
+        this.buffMemberCountDiff = buffMemberCountDiff;
         this.appContext = appContext;
         init();
     }
@@ -176,11 +179,42 @@ public class FortificationPanel extends JPanel {
             Color color = showChanges ? diffColor(totalPowerDiff) : FortificationTypeStyle.color(fortification.type());
             powerlbl = new JLabel(text, JLabel.RIGHT);
             powerlbl.setForeground(color);
+            powerlbl.setToolTipText(powerTooltip());
         }
         return powerlbl;
     }
 
-    /** "+1.234"/"-1.234"/"0" - {@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
+    /**
+     * Tooltip of the power label - always the value the label does NOT show:
+     * the change since the lineup was loaded or last saved while the label
+     * shows the total power, the total power while it shows the change.
+     */
+    private String powerTooltip() {
+        return powerTooltip(showChanges, totalPower, totalPowerDiff, fortification.buff() != null, buffMemberCountDiff);
+    }
+
+    /**
+     * GUI-free core of {@link #powerTooltip()}, e.g. "Since last save: +12.345
+     * power, +1 buff members", "Unchanged since last save" or "Total power:
+     * 1.234.567". The buff part only appears for a fortification with a buff.
+     */
+    static String powerTooltip(boolean showChanges, int totalPower, int totalPowerDiff,
+                               boolean hasBuff, int buffMemberCountDiff) {
+        if (showChanges) {
+            return LanguageService.displayName("fortification.totalPowerTooltip",
+                    GuiUtils.NUMBER_FORMAT.format(totalPower));
+        }
+        if (totalPowerDiff == 0 && (!hasBuff || buffMemberCountDiff == 0)) {
+            return LanguageService.displayName("fortification.unchangedTooltip");
+        }
+        if (hasBuff) {
+            return LanguageService.displayName("fortification.diffTooltip",
+                    formatPowerDiff(totalPowerDiff), formatPowerDiff(buffMemberCountDiff));
+        }
+        return LanguageService.displayName("fortification.diffTooltipNoBuff", formatPowerDiff(totalPowerDiff));
+    }
+
+    /** "+1.234"/"-1.234"/"0" -{@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
     private static String formatPowerDiff(int diff) {
         String formatted = GuiUtils.NUMBER_FORMAT.format(diff);
         return diff > 0 ? "+" + formatted : formatted;

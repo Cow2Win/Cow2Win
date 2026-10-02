@@ -31,6 +31,9 @@
     }
   },
   {
+    "id": "mara"
+  },
+  {
     "id": "merlin",
     "fortMarks": {
       "engineerium": "POSITIVE"
@@ -41,5 +44,8 @@
     "fortMarks": {
       "city-hall": "POSITIVE"
     }
+  },
+  {
+    "id": "vex"
   }
 ]

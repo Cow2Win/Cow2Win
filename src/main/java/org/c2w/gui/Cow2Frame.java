@@ -113,6 +113,11 @@ public class Cow2Frame extends JFrame {
             public void guildChanged() {
                 updateTitle();
             }
+
+            @Override
+            public void dirtyStateChanged() {
+                updateTitle();
+            }
         });
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
@@ -571,10 +576,28 @@ public class Cow2Frame extends JFrame {
         System.exit(0);
     }
 
+    /** Sets the window title for the open guild, see {@link #titleFor}. */
     private void updateTitle() {
         var guild = appContext.guild();
-        String displayName = guild.name().isBlank() ? guild.id() : guild.name();
-        setTitle(BASE_TITLE + " " + AppVersion.current() + " - " + displayName);
+        setTitle(titleFor(guildDisplayName(guild.name(), guild.id()), AppVersion.current(),
+                appContext.hasUnsavedChanges()));
+    }
+
+    /** The guild's name for the window title, or its id if the name is blank. */
+    static String guildDisplayName(String guildName, String guildId) {
+        return guildName.isBlank() ? guildId : guildName;
+    }
+
+    /**
+     * The window title, e.g. "Cow2Win 1.0.2 - Testgilde" - prefixed with "*"
+     * while the guild or the lineup has unsaved changes (see
+     * {@link AppContext#hasUnsavedChanges()}). GUI-free so it can be tested
+     * directly.
+     *
+     * @param guildDisplayName the guild's name, or its id if the name is blank
+     */
+    static String titleFor(String guildDisplayName, String version, boolean unsaved) {
+        return (unsaved ? "*" : "") + BASE_TITLE + " " + version + " - " + guildDisplayName;
     }
 
 

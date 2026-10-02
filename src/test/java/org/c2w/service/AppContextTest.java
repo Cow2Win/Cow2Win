@@ -1,8 +1,9 @@
 package org.c2w.service;
 
-import org.c2w.data.model.Guild;
-import org.c2w.data.model.Lineup;
+import org.c2w.data.model.*;
 import org.c2w.data.repository.Catalog;
+import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.LineupBaseline;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -127,5 +128,75 @@ class AppContextTest {
         context.setGuild(guild("a2"));
 
         assertTrue(listener.events.isEmpty());
+    }
+
+    // --- baselines ("Changes" view) ---
+
+    /** Guild "a" with one member "m1" whose single hero team (one MAGE) has 1000 power. */
+    private static Guild guildWithTeam() {
+        HeroTeam team = new HeroTeam("m1", 0, List.of(new Hero("h1", List.of(Role.MAGE))), 1000);
+        return new Guild("a", "a", List.of(new GuildMember("m1", "m1", List.of(team), List.of())));
+    }
+
+    /** "alchemy-tower" (HERO, MAGE buff) with m1's hero team assigned. */
+    private static Lineup lineupWithTeamOnAlchemyTower() {
+        return new Lineup("a", "a", "", LocalDateTime.now(),
+                List.of(new Lineup.Entry("alchemy-tower", "m1", Lineup.TeamType.HERO, 0)));
+    }
+
+    @Test
+    @DisplayName("fortificationDiffFromLoaded treats a fortification that was empty on load as baseline (0, 0)")
+    void diffForFortificationEmptyOnLoad() {
+        AppContext context = new AppContext(new Catalog(workspace));
+        context.set(guildWithTeam(), GUILD_A);
+        context.set(lineup("a"), LINEUP_A);
+
+        context.setLineup(lineupWithTeamOnAlchemyTower());
+
+        LineupBaseline.Diff diff = context.fortificationDiffFromLoaded("alchemy-tower");
+        assertEquals(1000, diff.totalPowerDiff());
+        assertEquals(1, diff.buffMemberCountDiff());
+        assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded("barracks"));
+    }
+
+    @Test
+    @DisplayName("fortificationDiffFromLoaded still rejects an unknown fortification id")
+    void diffForUnknownFortificationThrows() {
+        AppContext context = openContext();
+
+        assertThrows(IllegalArgumentException.class, () -> context.fortificationDiffFromLoaded("no-such-fort"));
+    }
+
+    @Test
+    @DisplayName("markLineupSaved retakes the baseline, clears the dirty flag and notifies lineup + dirty")
+    void markLineupSavedRetakesBaseline() {
+        AppContext context = new AppContext(new Catalog(workspace));
+        context.set(guildWithTeam(), GUILD_A);
+        context.set(lineup("a"), LINEUP_A);
+        context.setLineup(lineupWithTeamOnAlchemyTower());
+        context.setLineupDirty(true);
+        RecordingListener listener = new RecordingListener();
+        context.addListener(listener);
+
+        context.markLineupSaved();
+
+        assertFalse(context.isLineupDirty());
+        for (Fortification fortification : FortificationRepository.findAll()) {
+            assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded(fortification.id()),
+                    fortification.id());
+        }
+        assertEquals(List.of("lineup", "dirty"), listener.events);
+    }
+
+    @Test
+    @DisplayName("markLineupSaved on a clean lineup notifies lineupChanged only")
+    void markLineupSavedWhenCleanFiresNoDirtyEvent() {
+        AppContext context = openContext();
+        RecordingListener listener = new RecordingListener();
+        context.addListener(listener);
+
+        context.markLineupSaved();
+
+        assertEquals(List.of("lineup"), listener.events);
     }
 }
