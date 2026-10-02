@@ -104,7 +104,26 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
       `Fortification.java` javadoc; the research doc got this wrong once
       before a codebase re-check).
 
-## 6. After any data change
+## 6. Game names and aliases (battle logs)
+
+The display names in the language files are the **in-game names** exactly as
+they appear in an exported Clash of Worlds battle log (`.csv`) - the
+Weltenschlacht journal maps log names back to catalog ids through them.
+
+- [ ] New or renamed hero/titan/pet/fortification: take the name for each
+      language from a battle log in that language (game language DE/EN/FR),
+      not from the patch notes or a wiki - spelling, apostrophe (`'`) and
+      "und/and/et" exactly as in the log.
+- [ ] A variant that is NOT a display name in any language (short or long
+      name, an older spelling) goes into the optional `"aliases"` array of
+      the entry in `heroes.json`/`titans.json`/`pets.json` (read by
+      `CatalogAliases`), e.g. `"aliases": ["Lara"]`.
+- [ ] Got a new battle log? Copy it into `src/test/resources/battlelog/`
+      (file name unchanged, it is test data too) and run `mvn test`:
+      `BattleLogGameNamesTest` lists every name in the sample logs that has
+      no matching game name or alias in its language.
+
+## 7. After any data change
 
 - [ ] Re-run `BestPossibleLineupAlgorithmTest` (`mvn test`). If the total
       fortification count changed from 20, or the unlock chain changed,

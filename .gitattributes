@@ -1,0 +1,3 @@
+# Battle-log test data: keep byte-identical to the game's export (CRLF line
+# endings, no BOM) on every machine, including Linux CI - no newline conversion.
+src/test/resources/battlelog/*.csv -text

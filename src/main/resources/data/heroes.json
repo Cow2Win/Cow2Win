@@ -361,6 +361,9 @@
     "image": "Lara.png",
     "roles": [
       "MARKSMAN"
+    ],
+    "aliases": [
+      "Lara"
     ]
   },
   {

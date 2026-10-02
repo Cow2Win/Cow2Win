@@ -36,6 +36,14 @@ class TotemTextsGameNameTest {
             DARK, "Dark Spirit Totem",
             DISTORTION, "Elemental Spirit of Distortion");
 
+    private static final Map<TitanElement, String> FRENCH = Map.of(
+            FIRE, "Totem de l'esprit du feu",
+            WATER, "Totem de l'esprit de l'eau",
+            EARTH, "Totem de l'esprit de la terre",
+            LIGHT, "Totem d'esprit de lumière",
+            DARK, "Totem d'esprit des ténèbres",
+            DISTORTION, "Esprit élémentaire de distorsion");
+
     private String previousLanguage;
 
     @BeforeEach
@@ -67,7 +75,7 @@ class TotemTextsGameNameTest {
     }
 
     @Test
-    @DisplayName("gameName returns the in-game name of the configured language (DE and EN)")
+    @DisplayName("gameName returns the in-game name of the configured language (DE, EN and FR)")
     void gameName() {
         useLanguage("deutsch");
         GERMAN.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
@@ -75,10 +83,13 @@ class TotemTextsGameNameTest {
 
         useLanguage("english");
         ENGLISH.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
+
+        useLanguage("francais");
+        FRENCH.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
     }
 
     @Test
-    @DisplayName("fromGameName maps all 12 names regardless of language, case and surrounding whitespace")
+    @DisplayName("fromGameName maps all 18 names regardless of language, case and surrounding whitespace")
     void fromGameName() {
         useLanguage("english"); // the lookup must not depend on the configured language
         GERMAN.forEach((element, name) -> {
@@ -89,6 +100,18 @@ class TotemTextsGameNameTest {
             assertEquals(Optional.of(element), TotemTexts.fromGameName(name), name);
             assertEquals(Optional.of(element), TotemTexts.fromGameName(name.toLowerCase()), name);
         });
+        FRENCH.forEach((element, name) -> {
+            assertEquals(Optional.of(element), TotemTexts.fromGameName(name), name);
+            assertEquals(Optional.of(element), TotemTexts.fromGameName(name.toUpperCase()), name);
+        });
+    }
+
+    @Test
+    @DisplayName("fromGameName treats non-breaking spaces (U+00A0, used in French battle logs) like normal spaces")
+    void fromGameNameNonBreakingSpace() {
+        assertEquals(Optional.of(DARK), TotemTexts.fromGameName("Totem\u00A0d'esprit\u00A0des ténèbres"));
+        assertEquals(Optional.of(FIRE), TotemTexts.fromGameName("\u00A0Fire Spirit Totem\u00A0"));
+        assertEquals(Optional.of(DISTORTION), TotemTexts.fromGameName("Elementargeist  der Verzerrung"));
     }
 
     @Test

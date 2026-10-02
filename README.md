@@ -232,6 +232,16 @@ folder (`new Catalog(tempDir)`).
   app's catalog ("objective" master data only). When the game itself
   changes (new heroes/titans, balance changes, new fortifications), edit
   these files, not the research doc.
+- Display names live in the language files (keyed by id) and are the
+  **in-game names** as they appear in an exported battle log, per language.
+  Other variants (short name, older spelling) go into the optional
+  `"aliases"` array of an entry in `heroes.json`/`titans.json`/`pets.json`,
+  read by `CatalogAliases` - see `PATCH-CHECKLIST.md`, "Game names and
+  aliases".
+- `src/test/resources/battlelog/` holds 8 sample battle logs (DE/EN/FR,
+  attack and defense, unchanged file names) as test data for the
+  Weltenschlacht journal; `.gitattributes` keeps them byte-identical
+  (CRLF) on every machine.
 - The curated scores are kept OUT of those master data files, one score
   file per catalog: `cowScore.json` (heroes), `titanCowScore.json`,
   `petCowScore.json`, `warFlagCowScore.json`. The split means a wholesale
@@ -380,6 +390,11 @@ folder (`new Catalog(tempDir)`).
   against a temp workspace: files on disk, the open guild/lineup and the
   unsaved-changes state stay consistent. Also checks that a background
   algorithm run is discarded if the lineup changed in the meantime.
+- `CatalogAliasesTest` - the optional `aliases` of heroes/titans/pets
+  (shipped values, blank/duplicate entries, merging).
+- `BattleLogGameNamesTest` - every hero, titan, pet, totem and fortification
+  name in the sample battle logs is a game name in that log's language file
+  (or an alias).
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting
