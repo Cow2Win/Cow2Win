@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -36,6 +37,9 @@ public class LanguageService {
 
     private static volatile Properties displayNames;
     private static volatile String loadedLanguage;
+
+    /** Language files read by {@link #textIn}, by language name. */
+    private static final Map<String, Properties> languageFiles = new ConcurrentHashMap<>();
 
     private LanguageService() {
     }
@@ -138,6 +142,16 @@ public class LanguageService {
             displayNames = null;
             loadedLanguage = null;
         }
+    }
+
+    /**
+     * The text for {@code id} in the given language - independent of the
+     * configured one, e.g. to search all languages (see
+     * {@link TotemTexts#fromGameName}) - or {@code null} if that language
+     * has no entry for it. Each language file is read once and then kept.
+     */
+    public static String textIn(String language, String id) {
+        return languageFiles.computeIfAbsent(language, LanguageService::loadLanguageFile).getProperty(id);
     }
 
     // --- private ---

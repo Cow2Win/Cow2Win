@@ -92,26 +92,27 @@ public class GuildRepository {
 
     // ---- Guild <-> JSON tree ----
 
+    /**
+     * Reads the guild itself. Guild files saved by older versions may still
+     * contain the removed "season"/"seasonStart" fields - they are simply
+     * ignored and disappear from the file on its next save.
+     */
     private static Guild guildFromJson(JsonObject obj, Catalog catalog) {
         String id = JsonSupport.getString(obj, "id", "");
         String name = JsonSupport.getString(obj, "name", "");
-        int season = JsonSupport.getInt(obj, "season", 0);
-        LocalDate seasonStart = JsonSupport.getLocalDate(obj, "seasonStart");
 
         List<GuildMember> members = new ArrayList<>();
         for (JsonElement memberEl : JsonSupport.getArray(obj, "members")) {
             members.add(memberFromJson(memberEl.getAsJsonObject(), catalog));
         }
 
-        return new Guild(id, name, members, season, seasonStart);
+        return new Guild(id, name, members);
     }
 
     private static JsonObject guildToTree(Guild guild) {
         JsonObject obj = new JsonObject();
         obj.addProperty("id", guild.id());
         obj.addProperty("name", guild.name());
-        obj.addProperty("season", guild.season());
-        JsonSupport.putNullable(obj, "seasonStart", guild.seasonStart() == null ? null : guild.seasonStart().toString());
 
         JsonArray members = new JsonArray();
         for (GuildMember member : guild.members()) {

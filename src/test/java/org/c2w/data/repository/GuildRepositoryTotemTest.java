@@ -90,7 +90,7 @@ class GuildRepositoryTotemTest {
                 new TitanTeam("m1", 1, titans, 900, null, Set.of(WATER))));
         GuildMember noTotems = new GuildMember("m2", "Other", List.of(), List.of(
                 new TitanTeam("m2", 0, titans, 800, null)));
-        Guild guild = new Guild("g1", "Guild", List.of(member, noTotems), 1, LocalDate.of(2026, 1, 1));
+        Guild guild = new Guild("g1", "Guild", List.of(member, noTotems));
 
         Path file = workspace.resolve("guild.json");
         GuildRepository.save(guild, file);

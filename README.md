@@ -191,7 +191,7 @@ folder (`new Catalog(tempDir)`).
   *any one* of the listed fortifications unlocks this one, not all of them
   together. See the class javadoc on `Fortification` for the full rules,
   including how `strategicImportance` is assessed.
-- **Guild** (`id`, `name`, up to 30 `members`, `season`, `seasonStart`) - one
+- **Guild** (`id`, `name`, up to 30 `members`) - one
   guild is one subfolder under `workspace/`.
 - **Lineup** (`guildId`, `algorithmName`, `createdAt`, `entries[]`) - the
   saved result of one assignment run (manual and algorithm-produced entries

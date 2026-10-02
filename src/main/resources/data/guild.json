@@ -1,8 +1,6 @@
 {
   "id": "Demo",
   "name": "Demo",
-  "season": 1,
-  "seasonStart": "2026-01-01",
   "members": [
     {
       "id": "Team 123",

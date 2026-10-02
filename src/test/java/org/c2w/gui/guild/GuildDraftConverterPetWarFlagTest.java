@@ -18,7 +18,7 @@ class GuildDraftConverterPetWarFlagTest {
 
     private static Guild guildWith(HeroTeam... heroTeams) {
         GuildMember member = new GuildMember("m1", "Member", List.of(heroTeams), List.of());
-        return new Guild("g1", "Guild", List.of(member), 1, LocalDate.of(2026, 1, 1));
+        return new Guild("g1", "Guild", List.of(member));
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.c2w.infra;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -113,7 +114,7 @@ public final class Logger {
     private static void appendToLogFile(String entry) {
         Path logFilePath = logFilePath();
         try {
-            byte[] line = (entry + System.lineSeparator()).getBytes();
+            byte[] line = (entry + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
             if (logFilePath.getParent() != null) {
                 Files.createDirectories(logFilePath.getParent());
             }

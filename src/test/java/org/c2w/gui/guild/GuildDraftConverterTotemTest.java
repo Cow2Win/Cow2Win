@@ -4,7 +4,6 @@ import org.c2w.data.model.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +22,7 @@ class GuildDraftConverterTotemTest {
 
     private static Guild guildWith(TitanTeam... titanTeams) {
         GuildMember member = new GuildMember("m1", "Member", List.of(), List.of(titanTeams));
-        return new Guild("g1", "Guild", List.of(member), 1, LocalDate.of(2026, 1, 1));
+        return new Guild("g1", "Guild", List.of(member));
     }
 
     @Test

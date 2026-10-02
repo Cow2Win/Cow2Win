@@ -60,7 +60,7 @@ class GuildRepositoryPetWarFlagTest {
         GuildMember member = new GuildMember("m1", "Member", List.of(
                 new HeroTeam("m1", 0, List.of(galahad), albus, frost, 1000, LocalDate.of(2026, 9, 29)),
                 new HeroTeam("m1", 1, List.of(), null, null, 500, null)), List.of());
-        Guild guild = new Guild("g1", "Guild", List.of(member), 1, LocalDate.of(2026, 1, 1));
+        Guild guild = new Guild("g1", "Guild", List.of(member));
 
         Path file = workspace.resolve("guild.json");
         GuildRepository.save(guild, file);
