@@ -1,5 +1,7 @@
 package org.c2w.data.journal.db;
 
+import org.c2w.data.journal.NameMappingKind;
+
 /**
  * A manual mapping of a name the catalog does not know (e.g. a new hero) to a
  * catalog id - looked up via {@code GameNameNormalizer}, stored with the raw name.

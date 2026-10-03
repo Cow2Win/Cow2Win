@@ -56,6 +56,22 @@ public class GuildRepository {
      * Writes the given guild to the given path as pretty-printed JSON,
      * creating parent directories as needed.
      */
+    /** Name and game guild id of a guild file - see {@link #readSummary}. */
+    public record GuildFileSummary(String name, Long gameGuildId) {
+    }
+
+    /**
+     * Reads only the name and the optional {@code gameGuildId} of a guild file -
+     * cheap (no catalog, no members), e.g. to check which guild a battle log
+     * belongs to without loading every guild.
+     */
+    public static GuildFileSummary readSummary(Path path) throws IOException {
+        JsonObject obj = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8)).getAsJsonObject();
+        Long gameGuildId = obj.has("gameGuildId") && !obj.get("gameGuildId").isJsonNull()
+                ? obj.get("gameGuildId").getAsLong() : null;
+        return new GuildFileSummary(JsonSupport.getString(obj, "name", ""), gameGuildId);
+    }
+
     public static void save(Guild guild, Path path) throws IOException {
         if (guild == null) {
             throw new IllegalArgumentException("guild must not be null");
@@ -98,6 +114,7 @@ public class GuildRepository {
      * Reads the guild itself. Guild files saved by older versions may still
      * contain the removed "season"/"seasonStart" fields - they are simply
      * ignored and disappear from the file on its next save.
+     * The optional "gameGuildId" (Weltenschlacht journal) is null when missing.
      */
     private static Guild guildFromJson(JsonObject obj, Catalog catalog) {
         String id = JsonSupport.getString(obj, "id", "");
@@ -108,13 +125,19 @@ public class GuildRepository {
             members.add(memberFromJson(memberEl.getAsJsonObject(), catalog));
         }
 
-        return new Guild(id, name, members);
+        Long gameGuildId = obj.has("gameGuildId") && !obj.get("gameGuildId").isJsonNull()
+                ? obj.get("gameGuildId").getAsLong() : null;
+
+        return new Guild(id, name, members, gameGuildId);
     }
 
     private static JsonObject guildToTree(Guild guild) {
         JsonObject obj = new JsonObject();
         obj.addProperty("id", guild.id());
         obj.addProperty("name", guild.name());
+        if (guild.gameGuildId() != null) {
+            obj.addProperty("gameGuildId", guild.gameGuildId());
+        }
 
         JsonArray members = new JsonArray();
         for (GuildMember member : guild.members()) {

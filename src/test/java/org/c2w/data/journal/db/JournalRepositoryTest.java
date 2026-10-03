@@ -286,6 +286,30 @@ class JournalRepositoryTest {
         assertThrows(IllegalArgumentException.class, () -> repository.putNameMapping(NameMappingKind.HERO, " ", "x"));
     }
 
+    @Test
+    void inTransactionCommitsTogetherOrRollsEverythingBack() throws Exception {
+        Path file = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.ATTACK);
+        byte[] raw = Files.readAllBytes(file);
+
+        assertThrows(JournalException.class, () -> repository.inTransaction(r -> {
+            r.putNameMapping(NameMappingKind.HERO, "Neuheld", "dante");
+            r.createSeason(1, LocalDate.of(2026, 9, 14));
+            r.saveLog(BattleLogTestFiles.parse(file), raw, null);
+            throw new JournalException("simulated failure");
+        }));
+        assertEquals(0, count(db, "SELECT COUNT(*) FROM battle"));
+        assertEquals(List.of(), repository.listSeasons());
+        assertEquals(List.of(), repository.listNameMappings());
+
+        int battleId = repository.inTransaction(r -> {
+            Season season = r.createSeason(1, LocalDate.of(2026, 9, 14));
+            return r.saveLog(BattleLogTestFiles.parse(file), raw, season.id()).battleId();
+        });
+        assertEquals(1, summary(battleId).seasonNumber());
+        assertEquals(Optional.of(OWN_GAME_ID), repository.ownGameGuildId());
+        assertEquals(Optional.of(JournalRepository.sha256(raw)), repository.findLogSha256(battleId, LogDirection.ATTACK));
+    }
+
     // --- helpers ---
 
     private SaveResult save(String folder, String day, LogDirection direction) throws Exception {

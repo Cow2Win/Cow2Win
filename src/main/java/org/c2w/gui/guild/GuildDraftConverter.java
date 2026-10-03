@@ -22,6 +22,7 @@ public final class GuildDraftConverter {
         GuildDraft draft = new GuildDraft();
         draft.id = guild.id();
         draft.name = guild.name();
+        draft.gameGuildId = guild.gameGuildId();
 
         for (GuildMember member : guild.members()) {
             MemberDraft memberDraft = new MemberDraft(member.id(), member.name());
@@ -142,6 +143,6 @@ public final class GuildDraftConverter {
             }
             members.add(new GuildMember(memberDraft.id, memberDraft.name, heroTeams, titanTeams));
         }
-        return new Guild(draft.id, draft.name, members);
+        return new Guild(draft.id, draft.name, members, draft.gameGuildId);
     }
 }

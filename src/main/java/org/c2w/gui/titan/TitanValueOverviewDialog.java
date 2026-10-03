@@ -350,7 +350,7 @@ public class TitanValueOverviewDialog extends JDialog {
             }
             updatedMembers.add(new GuildMember(member.id(), member.name(), member.heroTeams(), updatedTitanTeams));
         }
-        return new Guild(currentGuild.id(), currentGuild.name(), updatedMembers);
+        return currentGuild.withMembers(updatedMembers);
     }
 
     private void refreshTable() {

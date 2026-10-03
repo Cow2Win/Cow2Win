@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,6 +99,19 @@ public final class BattleLogParser {
     /** A parser with the vocabularies of all available languages and the shipped catalogs. */
     public static BattleLogParser createDefault() {
         return new BattleLogParser(BattleLogVocabulary.loadAll(), NameResolver.load());
+    }
+
+    /**
+     * This parser with additional manual name mappings (raw name -> catalog id, see
+     * {@link NameResolver#withMappings}) - e.g. the ones stored in a guild's journal.
+     */
+    public BattleLogParser withNameMappings(Map<NameMappingKind, Map<String, String>> mappings) {
+        return new BattleLogParser(vocabularies, names.withMappings(mappings));
+    }
+
+    /** The name resolver this parser uses. */
+    public NameResolver names() {
+        return names;
     }
 
     /** Parses {@code file}; its file name supplies the head data. */

@@ -6,13 +6,21 @@ import java.util.List;
  * A guild with its members. Per the user's requirements, a guild has 0-30
  * members (upper bound from Hero Wars, no lower bound - a new/empty guild is
  * a valid state).
+ *
+ * <p>{@code gameGuildId} is the guild's id in the game (the number in
+ * parentheses in an exported battle log's file name), {@code null} while it is
+ * not known yet - set by the Weltenschlacht journal import, which uses it to
+ * make sure a battle log goes into the journal of the right guild. Code that
+ * rebuilds a guild must keep it (see {@link #withMembers}).
  */
 public record Guild(
         String id,
         String name,
-        List<GuildMember> members
+        List<GuildMember> members,
+        Long gameGuildId
 ) {
-    private static final int MAX_MEMBERS = 30;
+    /** Maximum number of members of a guild (Hero Wars rule). */
+    public static final int MAX_MEMBERS = 30;
 
     public Guild {
         if (id == null || id.isBlank()) {
@@ -27,5 +35,20 @@ public record Guild(
         if (distinctIds != members.size()) {
             throw new IllegalArgumentException("Guild '" + id + "' contains members with a duplicate id");
         }
+    }
+
+    /** A guild whose game guild id is not known (yet). */
+    public Guild(String id, String name, List<GuildMember> members) {
+        this(id, name, members, null);
+    }
+
+    /** This guild with other members - id, name and game guild id stay. */
+    public Guild withMembers(List<GuildMember> newMembers) {
+        return new Guild(id, name, newMembers, gameGuildId);
+    }
+
+    /** This guild with the given game guild id. */
+    public Guild withGameGuildId(Long newGameGuildId) {
+        return new Guild(id, name, members, newGameGuildId);
     }
 }

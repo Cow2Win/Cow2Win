@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Use cases around the guild(s) in the workspace: listing, creating,
@@ -189,6 +190,39 @@ public class GuildService {
         context.setGuild(updated);
         context.setGuildDirty(false);
         Logger.log("Saved: " + context.guildFilePath());
+    }
+
+    /**
+     * Makes {@code updated} the open guild WITHOUT saving it and marks the guild
+     * as having unsaved changes - like an edit in a dialog (e.g. the journal
+     * import renaming or adding members); the user saves it the usual way.
+     */
+    public void updateGuild(Guild updated) {
+        context.setGuild(updated);
+        context.setGuildDirty(true);
+    }
+
+    /**
+     * The name of another guild in the workspace (not {@code excludedFolder})
+     * whose {@code gameGuildId} is {@code gameGuildId}, read cheaply from its
+     * guild file - empty if there is none. Unreadable guild files are logged and skipped.
+     */
+    public Optional<String> findOtherGuildByGameGuildId(long gameGuildId, String excludedFolder) {
+        for (String folder : listGuildFolderNames()) {
+            if (folder.equals(excludedFolder)) {
+                continue;
+            }
+            Path guildFile = guildDir(folder).resolve(GUILD_FILE_NAME);
+            try {
+                GuildRepository.GuildFileSummary summary = GuildRepository.readSummary(guildFile);
+                if (summary.gameGuildId() != null && summary.gameGuildId() == gameGuildId) {
+                    return Optional.of(summary.name().isBlank() ? folder : summary.name());
+                }
+            } catch (IOException | RuntimeException e) {
+                Logger.logException("Could not read " + guildFile, e);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

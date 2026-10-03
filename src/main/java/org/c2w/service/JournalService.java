@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * </ul>
  * One instance per application, reachable via {@link AppContext#journal()}.
  */
-public final class JournalService implements AppContext.Listener {
+public final class JournalService implements AppContext.Listener, JournalStore {
 
     private final Supplier<Path> currentGuildDir;
     private JournalDatabase database;
@@ -46,6 +46,7 @@ public final class JournalService implements AppContext.Listener {
      * @return the repository, or empty if no guild is open, or the guild has no journal
      *         and {@code createIfMissing} is false
      */
+    @Override
     public synchronized Optional<JournalRepository> repository(boolean createIfMissing) throws JournalException {
         Path guildDir = currentGuildDir.get();
         if (guildDir == null) {

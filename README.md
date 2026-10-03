@@ -155,7 +155,7 @@ roughly from top to bottom:
 | Package | Contents |
 |---|---|
 | `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
-| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild; `JournalImportService` imports battle logs into it in two steps (`prepare` collects GUI-independent questions in `service.journal`, `execute` applies the answers). Cow2Win is about defense: only the defense log may change the guild (player assignment, rename, new members without teams), the attack log is only stored. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
 | `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
 | `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
 | `report` | `ReportGenerator` - the HTML lineup report. |
@@ -233,8 +233,10 @@ folder (`new Catalog(tempDir)`).
   *any one* of the listed fortifications unlocks this one, not all of them
   together. See the class javadoc on `Fortification` for the full rules,
   including how `strategicImportance` is assessed.
-- **Guild** (`id`, `name`, up to 30 `members`) - one
-  guild is one subfolder under `workspace/`.
+- **Guild** (`id`, `name`, up to 30 `members`, optional `gameGuildId`) - one
+  guild is one subfolder under `workspace/`. `gameGuildId` is the guild's id in
+  the game (from a battle log's file name), set by the journal import.
+  Code that rebuilds a guild keeps it via `Guild.withMembers`.
 - **Lineup** (`guildId`, `algorithmName`, `createdAt`, `entries[]`) - the
   saved result of one assignment run (manual and algorithm-produced entries
   can be mixed); persisted as `workspace/<guild>/<name>.lineup`. The
@@ -427,6 +429,14 @@ folder (`new Catalog(tempDir)`).
   replacing a partial export, status, seasons, assignments, name mappings,
   deleting with cleanup and the battle list. `JournalServiceTest` covers the
   connection lifecycle (lazy, guild switch, `deleteGuild`).
+- `JournalImportServiceTest` - import scenarios with a temp workspace and the
+  sample logs: first import (guild link, first season), `prepare` writes
+  nothing, attack log only (no player questions), second direction later,
+  replacing a partial export, several battles and the season raster,
+  duplicate direction, foreign guild, players from the defense log (exact,
+  normalized, similar, unknown; ASSIGN/CREATE/NOT_IN_COW2WIN/OPEN), renames
+  via team power and via units, the attack log changes nothing, member limit,
+  unknown names, rollback on a write error.
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting

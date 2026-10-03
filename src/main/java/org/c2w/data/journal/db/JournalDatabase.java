@@ -47,6 +47,7 @@ public final class JournalDatabase implements AutoCloseable {
     private final Connection connection;
     private final int schemaVersion;
     private boolean closed;
+    private boolean inTransaction;
 
     private JournalDatabase(Path guildDir, Connection connection, int schemaVersion) {
         this.guildDir = guildDir;
@@ -122,11 +123,24 @@ public final class JournalDatabase implements AutoCloseable {
         }
     }
 
-    /** Runs {@code work} in one transaction: committed on success, rolled back on any exception. */
+    /**
+     * Runs {@code work} in one transaction: committed on success, rolled back on any
+     * exception. Nested calls (from within {@code work}, same thread) join the outer
+     * transaction - only the outermost call commits or rolls back, so several
+     * repository methods can be combined atomically.
+     */
     public synchronized <T> T transaction(Work<T> work) throws JournalException {
         ensureOpen();
+        if (inTransaction) {
+            try {
+                return work.run(connection);
+            } catch (SQLException e) {
+                throw translate("write", guildDir, e);
+            }
+        }
         try {
             connection.setAutoCommit(false);
+            inTransaction = true;
             try {
                 T result = work.run(connection);
                 connection.commit();
@@ -135,6 +149,7 @@ public final class JournalDatabase implements AutoCloseable {
                 connection.rollback();
                 throw e;
             } finally {
+                inTransaction = false;
                 connection.setAutoCommit(true);
             }
         } catch (SQLException e) {

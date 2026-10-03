@@ -56,6 +56,45 @@ public final class JournalRepository {
         return db;
     }
 
+    /** Work combining several repository calls, see {@link #inTransaction}. */
+    @FunctionalInterface
+    public interface RepositoryWork<T> {
+        T run(JournalRepository repository) throws JournalException;
+    }
+
+    /**
+     * Runs several repository calls atomically: every writing method called from
+     * {@code work} joins this one transaction instead of committing on its own; on
+     * any exception everything is rolled back.
+     */
+    public <T> T inTransaction(RepositoryWork<T> work) throws JournalException {
+        return db.transaction(c -> work.run(this));
+    }
+
+    /** Game guild id of the journal's own guild, empty while nothing was saved. */
+    public Optional<Long> ownGameGuildId() throws JournalException {
+        return db.read(c -> {
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT game_guild_id FROM guild WHERE is_own")) {
+                return rs.next() ? Optional.of(rs.getLong(1)) : Optional.<Long>empty();
+            }
+        });
+    }
+
+    /** SHA-256 of the stored log of one direction, empty if there is none. */
+    public Optional<String> findLogSha256(int battleId, LogDirection direction) throws JournalException {
+        return db.read(c -> {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT sha256 FROM battle_log WHERE battle_id = ? AND direction = ?")) {
+                ps.setInt(1, battleId);
+                ps.setString(2, direction.name());
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(rs.getString(1)) : Optional.<String>empty();
+                }
+            }
+        });
+    }
+
     // =====================================================================
     // Saving
     // =====================================================================
@@ -823,6 +862,45 @@ public final class JournalRepository {
     // Players, assignments, name mappings
     // =====================================================================
 
+    /** The own-guild player with exactly this raw name. */
+    public Optional<JournalPlayer> findOwnPlayer(String name) throws JournalException {
+        return db.read(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT p.id, p.name, g.game_guild_id, g.is_own FROM player p"
+                    + " JOIN guild g ON g.id = p.guild_id WHERE g.is_own AND p.name = ?")) {
+                ps.setString(1, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(player(rs)) : Optional.<JournalPlayer>empty();
+                }
+            }
+        });
+    }
+
+    /** The assignments of all own-guild players that have one, by exact raw player name. */
+    public Map<String, PlayerAssignment> ownAssignmentsByName() throws JournalException {
+        return db.read(c -> {
+            Map<String, PlayerAssignment> result = new HashMap<>();
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT p.name, a.* FROM player_assignment a"
+                         + " JOIN player p ON p.id = a.player_id JOIN guild g ON g.id = p.guild_id WHERE g.is_own")) {
+                while (rs.next()) {
+                    result.put(rs.getString("name"), new PlayerAssignment(rs.getInt("player_id"),
+                            rs.getString("member_id"), AssignmentStatus.valueOf(rs.getString("status")),
+                            rs.getObject("confirmed_at", LocalDateTime.class)));
+                }
+            }
+            return result;
+        });
+    }
+
+    /** All manual name mappings as raw name -> catalog id per kind (input for {@code NameResolver#withMappings}). */
+    public Map<NameMappingKind, Map<String, String>> nameMappingsByKind() throws JournalException {
+        Map<NameMappingKind, Map<String, String>> result = new EnumMap<>(NameMappingKind.class);
+        for (NameMapping m : listNameMappings()) {
+            result.computeIfAbsent(m.kind(), k -> new HashMap<>()).put(m.rawName(), m.catalogId());
+        }
+        return result;
+    }
+
     /** All players (or only those of the own guild), own guild first, then by name. */
     public List<JournalPlayer> listPlayers(boolean ownGuildOnly) throws JournalException {
         return db.read(c -> {
@@ -1061,7 +1139,8 @@ public final class JournalRepository {
         return name == null ? null : Enum.valueOf(type, name);
     }
 
-    static String sha256(byte[] data) {
+    /** Hex SHA-256 of {@code data}, as stored with every log (identifies an identical re-export). */
+    public static String sha256(byte[] data) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));
         } catch (NoSuchAlgorithmException e) {
