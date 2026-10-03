@@ -31,10 +31,10 @@ class BattleLogParserSamplesTest {
         FightSide attacker = fight.attacker();
         assertEquals("Puschel", attacker.playerName());
         assertEquals(130, attacker.level());
-        assertEquals(1_037_005L, attacker.teamPower());
+        assertEquals(1_037_005, attacker.teamPower());
         assertNull(attacker.buff());
         assertEquals("Жека", fight.defender().playerName());
-        assertEquals(892_178L, fight.defender().teamPower());
+        assertEquals(892_178, fight.defender().teamPower());
         assertNull(fight.defender().buff());
 
         FightUnit titan = attacker.units().get(0);
@@ -43,10 +43,10 @@ class BattleLogParserSamplesTest {
         assertEquals("araji", titan.catalogId());
         assertEquals(6, titan.stars());
         assertEquals(130, titan.level());
-        assertEquals(209_561L, titan.power());
-        assertEquals(9_531_359L, titan.damageDealt());
-        assertEquals(825_825L, titan.damageTaken());
-        assertEquals(0L, titan.healing());
+        assertEquals(209_561, titan.power());
+        assertEquals(9_531_359, titan.damageDealt());
+        assertEquals(825_825, titan.damageTaken());
+        assertEquals(0, titan.healing());
 
         assertEquals(6, attacker.units().size(), "5 titans + 1 totem");
         FightUnit totem = attacker.units().get(5);
@@ -56,7 +56,7 @@ class BattleLogParserSamplesTest {
         assertNull(totem.catalogId());
         assertEquals(4, totem.stars());
         assertNull(totem.power());
-        assertEquals(32_060_697L, totem.damageDealt());
+        assertEquals(32_060_697, totem.damageDealt());
 
         FightUnit defenderTotem = fight.defender().units().get(5);
         assertEquals(TitanElement.EARTH, defenderTotem.totemElement());
@@ -99,7 +99,7 @@ class BattleLogParserSamplesTest {
         assertEquals(HeroColor.RED, dante.color());
         assertEquals("Rot +2", dante.colorText(), "raw text keeps the non-breaking space");
         assertEquals(2, dante.colorLevel());
-        assertEquals(197_577L, dante.power());
+        assertEquals(197_577, dante.power());
         assertEquals(new Patronage("fenris", "Fenris", 7958), dante.patronage());
 
         FightUnit pet = fight.attacker().units().get(5);
@@ -167,7 +167,7 @@ class BattleLogParserSamplesTest {
 
         // The cell is "Vale  (130-485697)": the name ends with a space, the second space separates the level.
         assertEquals("Vale ", fight.defender().playerName());
-        assertEquals(485_697L, fight.defender().teamPower());
+        assertEquals(485_697, fight.defender().teamPower());
         DefenseBuff buff = fight.defender().buff();
         assertEquals(BuffEffect.DAMAGE_RESIST, buff.effect());
         assertEquals(14, buff.percent());

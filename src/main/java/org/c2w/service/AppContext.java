@@ -43,6 +43,7 @@ public class AppContext {
 
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
     private final Catalog catalog;
+    private final JournalService journal;
 
     private Guild guild;
     private Path guildFilePath;
@@ -72,11 +73,20 @@ public class AppContext {
             throw new IllegalArgumentException("catalog must not be null");
         }
         this.catalog = catalog;
+        this.journal = new JournalService(this);
     }
 
     /** The hero/titan/pet/war flag catalogs of the workspace this app was started with. */
     public Catalog catalog() {
         return catalog;
+    }
+
+    /**
+     * The Weltenschlacht journal of the open guild (opened lazily, closed when
+     * another guild is opened - see {@link JournalService}).
+     */
+    public JournalService journal() {
+        return journal;
     }
 
     /** The guild currently open in the application. */

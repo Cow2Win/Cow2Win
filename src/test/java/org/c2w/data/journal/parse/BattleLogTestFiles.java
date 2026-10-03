@@ -17,15 +17,15 @@ import java.util.*;
  * language) plus {@code partial} (an earlier German export of the running
  * battle of 01.10.2026), and a shared parser for the tests.
  */
-final class BattleLogTestFiles {
+public final class BattleLogTestFiles {
 
-    static final Path ROOT = Paths.get("src", "test", "resources", "battlelog");
+    public static final Path ROOT = Paths.get("src", "test", "resources", "battlelog");
 
     /** Language folder -> language name as {@code LanguageService} uses it. */
-    static final Map<String, String> LANGUAGE_BY_FOLDER = Map.of("de", "deutsch", "en", "english", "fr", "francais");
+    public static final Map<String, String> LANGUAGE_BY_FOLDER = Map.of("de", "deutsch", "en", "english", "fr", "francais");
 
     /** Battle days of the 6 sample battles, as they start the file names. */
-    static final List<String> BATTLE_DAYS =
+    public static final List<String> BATTLE_DAYS =
             List.of("14-09-2026", "17-09-2026", "21-09-2026", "24-09-2026", "28-09-2026", "01-10-2026");
 
     private static BattleLogParser parser;
@@ -34,7 +34,7 @@ final class BattleLogTestFiles {
     private BattleLogTestFiles() {
     }
 
-    static synchronized BattleLogParser parser() {
+    public static synchronized BattleLogParser parser() {
         if (parser == null) {
             parser = BattleLogParser.createDefault();
         }
@@ -42,7 +42,7 @@ final class BattleLogTestFiles {
     }
 
     /** All CSV files of a folder ({@code de}, {@code en}, {@code fr}, {@code partial}), sorted. */
-    static List<Path> files(String folder) {
+    public static List<Path> files(String folder) {
         List<Path> files = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(ROOT.resolve(folder), "*.csv")) {
             stream.forEach(files::add);
@@ -54,7 +54,7 @@ final class BattleLogTestFiles {
     }
 
     /** All 38 sample files (36 in the language folders + 2 partial). */
-    static List<Path> allFiles() {
+    public static List<Path> allFiles() {
         List<Path> files = new ArrayList<>();
         for (String folder : List.of("de", "en", "fr", "partial")) {
             files.addAll(files(folder));
@@ -63,7 +63,7 @@ final class BattleLogTestFiles {
     }
 
     /** The file of {@code folder} for battle day {@code day} ({@code DD-MM-YYYY}) and direction. */
-    static Path file(String folder, String day, LogDirection direction) {
+    public static Path file(String folder, String day, LogDirection direction) {
         return files(folder).stream()
                 .filter(p -> p.getFileName().toString().startsWith(day))
                 .filter(p -> isAttack(p) == (direction == LogDirection.ATTACK))
@@ -72,7 +72,7 @@ final class BattleLogTestFiles {
     }
 
     /** Parses {@code file} with the shared parser (cached - records are immutable). */
-    static synchronized BattleLogParseResult parse(Path file) {
+    public static synchronized BattleLogParseResult parse(Path file) {
         return CACHE.computeIfAbsent(file, f -> {
             try {
                 return parser().parse(f);
@@ -82,7 +82,7 @@ final class BattleLogTestFiles {
         });
     }
 
-    static BattleLogParseResult parse(String folder, String day, LogDirection direction) {
+    public static BattleLogParseResult parse(String folder, String day, LogDirection direction) {
         return parse(file(folder, day, direction));
     }
 

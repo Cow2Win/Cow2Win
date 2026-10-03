@@ -168,6 +168,23 @@ class BattleLogParserRobustnessTest {
         assertNull(result.log().fights().get(0).teamKind(), "no units read");
     }
 
+    /** Values are stored as int (largest seen so far: about 50 million) - anything beyond is a problem, not a crash. */
+    @Test
+    void valuesBeyondTheIntRangeAreReported() throws IOException {
+        BattleLogParseResult result = parse(HEADER,
+                "Brücke (Position: 1),Sieg,+35,Alice (130-3000000000),,,,,,Bob (129-900),,,,",
+                "Brücke (Position: 2),Sieg,+35,Alice (130-1000),,,,,,Bob (129-900),,,,",
+                ",,,,Zugefügter Schaden,Erlittener Schaden,Heilung,,,,Zugefügter Schaden,Erlittener Schaden,Heilung,",
+                ",,,Araji | 6 stars | 130 | 209561,3000000000,0,0,,,Sigurd | 6 stars | 130 | 207442,1,2,3,");
+
+        assertEquals(2, result.problems().size(), result.problems().toString());
+        assertEquals("level or team power out of range", result.problems().get(0).reason());
+        assertEquals(List.of(2, 5), result.problems().stream().map(ParseProblem::lineNumber).toList());
+        Fight fight = result.log().fights().get(0);
+        assertEquals(List.of(), fight.attacker().units(), "unit with too large damage skipped");
+        assertEquals(1, fight.defender().units().size());
+    }
+
     @Test
     void unknownHeaderRowOrEmptyFileIsAnError() {
         assertThrows(BattleLogFormatException.class,

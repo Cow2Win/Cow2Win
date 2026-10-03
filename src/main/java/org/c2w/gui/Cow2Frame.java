@@ -573,6 +573,7 @@ public class Cow2Frame extends JFrame {
                 return;
             }
         }
+        appContext.journal().closeCurrent();
         System.exit(0);
     }
 

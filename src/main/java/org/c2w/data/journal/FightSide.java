@@ -14,7 +14,7 @@ import java.util.List;
  * @param units      the team's units in log order; empty if the log has none for this
  *                   fight (usual in defense logs, but possible in both directions)
  */
-public record FightSide(String playerName, int level, long teamPower, DefenseBuff buff, List<FightUnit> units) {
+public record FightSide(String playerName, int level, int teamPower, DefenseBuff buff, List<FightUnit> units) {
     public FightSide {
         playerName = playerName == null ? "" : playerName;
         units = units == null ? List.of() : List.copyOf(units);

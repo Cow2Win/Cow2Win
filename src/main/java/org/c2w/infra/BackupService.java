@@ -18,8 +18,11 @@ import java.util.zip.ZipOutputStream;
 /**
  * Creates a daily and a weekly backup (ZIP) of the workspace folder. Checked
  * once at program start (see {@code WorkspaceBootstrap#start}) - never during normal
- * operation, and never in a background thread, since the workspace folder
- * only holds small JSON/properties files.
+ * operation, and never in a background thread. The workspace folder holds
+ * small JSON/properties files plus one Weltenschlacht journal database
+ * ({@code journal.mv.db}) per guild that has one - those make the ZIPs
+ * bigger, but are copied safely: the backup runs at program start, before
+ * any journal database is opened (see {@code JournalService}).
  *
  * <p>Backup files always use the same fixed names ({@link #DAILY_BACKUP_FILE_NAME},
  * {@link #WEEKLY_BACKUP_FILE_NAME}), so a new backup simply overwrites the

@@ -150,11 +150,14 @@ public class GuildService {
     }
 
     /**
-     * Deletes the given guild folder from disk. Does NOT switch to another
-     * guild - see {@link #guildAfterRemoval} for which one should take its place.
+     * Deletes the given guild folder from disk, including its journal database
+     * (closed first if it is open - Windows would refuse to delete an open file).
+     * Does NOT switch to another guild - see {@link #guildAfterRemoval} for which
+     * one should take its place.
      */
     public void deleteGuild(String folderName) throws IOException {
         Path guildDir = guildDir(folderName);
+        context.journal().closeIfOpenFor(guildDir);
         GuildRepository.delete(guildDir);
         Logger.log("Removed guild: " + guildDir);
     }

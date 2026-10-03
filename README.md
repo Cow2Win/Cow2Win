@@ -116,7 +116,8 @@ fixes it.
   (`cowScore.json`, `titanCowScore.json`, `petCowScore.json`,
   `warFlagCowScore.json`), the hand-maintained hero combos
   (`heroCombos.json`), the team templates (`heroTemplates.json`,
-  `titanTemplates.json`) and the log file. Defaults to
+  `titanTemplates.json`), the log file and - per guild that has imported
+  battle logs - the Weltenschlacht journal database (see below). Defaults to
   `<user.home>/.cow2Win/workspace`, configurable in the Settings dialog; a
   change takes effect after a restart.
 - **`config.properties`** - language, workspace/backup folder, default
@@ -127,6 +128,21 @@ fixes it.
 - **Backups** - a daily and a weekly ZIP of the workspace, checked once at
   startup (`org.c2w.infra.BackupService`), by default in
   `<user.home>/.cow2Win/backup`.
+  The journal databases are part of the ZIPs; the backup runs before any of
+  them is opened.
+- **Weltenschlacht journal** - one embedded H2 database per guild,
+  `<guild folder>/journal.mv.db`, created only when the first battle log of
+  that guild is saved (`org.c2w.data.journal.db.JournalDatabase`). Each
+  stored log keeps its original CSV (gzip) with SHA-256 and the parser
+  version, so logs can be read again after a parser improvement. The schema
+  is versioned (table `schema_version`, scripts
+  `src/main/resources/journal/schema/V<n>__<name>.sql`, registered in
+  `SchemaMigrator.SCRIPTS`) and migrated when the database is opened; a
+  database from a newer Cow2Win is refused, not touched. The connection
+  belongs to the open guild (`org.c2w.service.JournalService`): opened on
+  first use, closed on a guild switch, before the guild folder is deleted
+  and at exit. H2 locks the file, so a second Cow2Win instance cannot open
+  the same journal.
 - **First start** (`org.c2w.service.WorkspaceBootstrap`) - creates a "Demo" guild pre-filled from
   `data/guild.json`/`data/default.lineup` (read from the packaged
   `resources/` folder, or from `src/main/resources` in the IDE).
@@ -139,13 +155,13 @@ roughly from top to bottom:
 | Package | Contents |
 |---|---|
 | `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
-| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
 | `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
 | `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
 | `report` | `ReportGenerator` - the HTML lineup report. |
 | `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
 | `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
-| `data.journal` (+ `parse`) | Weltenschlacht journal, phase 1: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...) and the CSV parser (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`). No database or GUI yet. |
+| `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). No GUI yet. |
 | `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts` and `GameNameNormalizer` (how in-game names are compared). |
 | `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
 
@@ -404,6 +420,13 @@ folder (`new Catalog(tempDir)`).
   append-only (an earlier export is a prefix of a later one), file names,
   ranking points control calculation, spot checks and robustness against
   broken rows; plus the vocabulary consistency of the three languages.
+- `org.c2w.data.journal.db` tests - the journal database in temp folders:
+  creating/opening/migrating (incl. an artificial V2, a database from a newer
+  version and a second process holding the lock), the round trip of all 38
+  sample logs (saved and loaded again = parser result, original bytes back),
+  replacing a partial export, status, seasons, assignments, name mappings,
+  deleting with cleanup and the battle list. `JournalServiceTest` covers the
+  connection lifecycle (lazy, guild switch, `deleteGuild`).
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting

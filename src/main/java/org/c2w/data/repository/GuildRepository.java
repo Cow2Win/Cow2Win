@@ -71,7 +71,9 @@ public class GuildRepository {
      * {@code org.c2w.service.GuildService#deleteGuild}) -
      * recursive, unlike {@link LineupRepository#delete}, since a guild
      * folder holds more than just the guild file itself (its
-     * {@code *.lineup} files, generated reports, etc.).
+     * {@code *.lineup} files, the journal database {@code journal.mv.db},
+     * generated reports, etc.). The journal must be closed first - see
+     * {@code GuildService#deleteGuild}.
      *
      * @throws IOException if the given path is not a directory, or any
      *                      file/subfolder in it cannot be deleted

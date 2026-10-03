@@ -42,6 +42,13 @@ import java.util.regex.Pattern;
  */
 public final class BattleLogParser {
 
+    /**
+     * Version of the parsing rules, stored with every saved log so a later
+     * parser improvement can tell which logs to read again from their original
+     * CSV. Increase it whenever the parse result of an existing file changes.
+     */
+    public static final int PARSER_VERSION = 1;
+
     /** Columns of a single fight row and of a unit row. */
     static final int ROW_COLUMNS = 14;
 
@@ -226,12 +233,20 @@ public final class BattleLogParser {
                 problem(lineNumber, line, "points '" + cells[COL_POINTS] + "' are not a number");
                 return;
             }
+            Integer attackerLevel = parseInt(attacker.group("level"));
+            Integer attackerPower = parseInt(attacker.group("power"));
+            Integer defenderLevel = parseInt(defender.group("level"));
+            Integer defenderPower = parseInt(defender.group("power"));
+            if (attackerLevel == null || attackerPower == null || defenderLevel == null || defenderPower == null) {
+                problem(lineNumber, line, "level or team power out of range");
+                return;
+            }
             DefenseBuff buff = cells.length > COL_BUFF && !cells[COL_BUFF].isBlank()
                     ? buff(lineNumber, line, cells[COL_BUFF]) : null;
             fight = new FightBuilder(fortificationId(lineNumber, line, fortName), fortName, position,
                     attackerWins, resultText, points, lineNumber,
-                    attacker.group("name"), Integer.parseInt(attacker.group("level")), Long.parseLong(attacker.group("power")),
-                    defender.group("name"), Integer.parseInt(defender.group("level")), Long.parseLong(defender.group("power")),
+                    attacker.group("name"), attackerLevel, attackerPower,
+                    defender.group("name"), defenderLevel, defenderPower,
                     buff);
         }
 
@@ -362,9 +377,9 @@ public final class BattleLogParser {
         private FightUnit unit(int lineNumber, String line, String[] cells, int start) {
             String unitCell = cell(cells, start);
             String[] parts = unitCell.split(Pattern.quote(UNIT_SEPARATOR), -1);
-            Long damageDealt = parseLong(cell(cells, start + OFFSET_DAMAGE_DEALT));
-            Long damageTaken = parseLong(cell(cells, start + OFFSET_DAMAGE_TAKEN));
-            Long healing = parseLong(cell(cells, start + OFFSET_HEALING));
+            Integer damageDealt = parseInt(cell(cells, start + OFFSET_DAMAGE_DEALT));
+            Integer damageTaken = parseInt(cell(cells, start + OFFSET_DAMAGE_TAKEN));
+            Integer healing = parseInt(cell(cells, start + OFFSET_HEALING));
             if (damageDealt == null || damageTaken == null || healing == null) {
                 problem(lineNumber, line, "damage/healing of '" + unitCell + "' are not numbers");
                 return null;
@@ -376,14 +391,14 @@ public final class BattleLogParser {
         }
 
         private FightUnit heroOrPet(int lineNumber, String line, String[] parts, String unitCell,
-                                    long damageDealt, long damageTaken, long healing, String patronageCell) {
+                                    int damageDealt, int damageTaken, int healing, String patronageCell) {
             if (parts.length != 5) {
                 problem(lineNumber, line, "hero/pet '" + unitCell + "' is not 'Name | Color | n stars | Level | Power'");
                 return null;
             }
             Integer stars = stars(parts[2]);
             Integer level = parseInt(parts[3]);
-            Long power = parseLong(parts[4]);
+            Integer power = parseInt(parts[4]);
             Matcher color = COLOR.matcher(parts[1].strip());
             if (stars == null || level == null || power == null || !color.matches()) {
                 problem(lineNumber, line, "hero/pet '" + unitCell + "' has an invalid color, stars, level or power");
@@ -417,7 +432,7 @@ public final class BattleLogParser {
 
         private Patronage patronage(int lineNumber, String line, String cell) {
             String[] parts = cell.split(Pattern.quote(UNIT_SEPARATOR), -1);
-            Long power = parts.length == 2 ? parseLong(parts[1]) : null;
+            Integer power = parts.length == 2 ? parseInt(parts[1]) : null;
             if (power == null) {
                 problem(lineNumber, line, "patronage '" + cell + "' is not 'Pet | Power'");
                 return null;
@@ -430,7 +445,7 @@ public final class BattleLogParser {
         }
 
         private FightUnit titanOrTotem(int lineNumber, String line, String[] parts, String unitCell,
-                                       long damageDealt, long damageTaken, long healing) {
+                                       int damageDealt, int damageTaken, int healing) {
             if (parts.length != 3 && parts.length != 4) {
                 problem(lineNumber, line, "titan/totem '" + unitCell
                         + "' is neither 'Name | n stars | Level | Power' nor 'Name | n stars | Level'");
@@ -438,7 +453,7 @@ public final class BattleLogParser {
             }
             Integer stars = stars(parts[1]);
             Integer level = parseInt(parts[2]);
-            Long power = parts.length == 4 ? parseLong(parts[3]) : null;
+            Integer power = parts.length == 4 ? parseInt(parts[3]) : null;
             if (stars == null || level == null || (parts.length == 4 && power == null)) {
                 problem(lineNumber, line, "titan/totem '" + unitCell + "' has invalid stars, level or power");
                 return null;
@@ -492,10 +507,10 @@ public final class BattleLogParser {
         private final int lineNumber;
         private final String attackerName;
         private final int attackerLevel;
-        private final long attackerPower;
+        private final int attackerPower;
         private final String defenderName;
         private final int defenderLevel;
-        private final long defenderPower;
+        private final int defenderPower;
         private final DefenseBuff buff;
         private final List<FightUnit> attackerUnits = new ArrayList<>();
         private final List<FightUnit> defenderUnits = new ArrayList<>();
@@ -503,8 +518,8 @@ public final class BattleLogParser {
 
         FightBuilder(String fortificationId, String fortificationName, int position, boolean attackerWins,
                      String resultText, int points, int lineNumber,
-                     String attackerName, int attackerLevel, long attackerPower,
-                     String defenderName, int defenderLevel, long defenderPower, DefenseBuff buff) {
+                     String attackerName, int attackerLevel, int attackerPower,
+                     String defenderName, int defenderLevel, int defenderPower, DefenseBuff buff) {
             this.fortificationId = fortificationId;
             this.fortificationName = fortificationName;
             this.position = position;
@@ -555,14 +570,6 @@ public final class BattleLogParser {
     private static Integer parseInt(String text) {
         try {
             return Integer.valueOf(text.strip());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Long parseLong(String text) {
-        try {
-            return Long.valueOf(text.strip());
         } catch (NumberFormatException e) {
             return null;
         }

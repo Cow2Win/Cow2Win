@@ -38,10 +38,10 @@ public record FightUnit(
         int colorLevel,
         int stars,
         int level,
-        Long power,
-        long damageDealt,
-        long damageTaken,
-        long healing,
+        Integer power,
+        int damageDealt,
+        int damageTaken,
+        int healing,
         Patronage patronage
 ) {
     public FightUnit {

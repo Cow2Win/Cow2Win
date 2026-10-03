@@ -7,7 +7,7 @@ package org.c2w.data.journal;
  * @param petName raw pet name from the log
  * @param power   patronage power
  */
-public record Patronage(String petId, String petName, long power) {
+public record Patronage(String petId, String petName, int power) {
     public Patronage {
         petName = petName == null ? "" : petName;
     }
