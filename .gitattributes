@@ -1,3 +1,12 @@
+# Line endings are fixed here for every machine and CI, independent of each
+# developer's core.autocrlf: text files are LF in the repository and in the
+# working copy.
+* text=auto eol=lf
+
 # Battle-log test data: keep byte-identical to the game's export (CRLF line
 # endings) on every machine, including Linux CI - no newline conversion.
 src/test/resources/battlelog/**/*.csv -text
+
+# Binary files
+*.png binary
+*.ico binary
