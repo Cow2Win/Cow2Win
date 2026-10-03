@@ -145,7 +145,8 @@ roughly from top to bottom:
 | `report` | `ReportGenerator` - the HTML lineup report. |
 | `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
 | `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
-| `i18n` | `LanguageService` (UI texts, see "Canonical data files") and `BuffTexts`. |
+| `data.journal` (+ `parse`) | Weltenschlacht journal, phase 1: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...) and the CSV parser (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`). No database or GUI yet. |
+| `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts` and `GameNameNormalizer` (how in-game names are compared). |
 | `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
 
 `Config`, `Logger` and `LanguageService` are still static singletons; the
@@ -233,15 +234,14 @@ folder (`new Catalog(tempDir)`).
   changes (new heroes/titans, balance changes, new fortifications), edit
   these files, not the research doc.
 - Display names live in the language files (keyed by id) and are the
-  **in-game names** as they appear in an exported battle log, per language.
-  Other variants (short name, older spelling) go into the optional
-  `"aliases"` array of an entry in `heroes.json`/`titans.json`/`pets.json`,
-  read by `CatalogAliases` - see `PATCH-CHECKLIST.md`, "Game names and
-  aliases".
-- `src/test/resources/battlelog/` holds 8 sample battle logs (DE/EN/FR,
-  attack and defense, unchanged file names) as test data for the
-  Weltenschlacht journal; `.gitattributes` keeps them byte-identical
-  (CRLF) on every machine.
+  **in-game names** as they appear in an exported battle log, per language -
+  the only basis for mapping log names back to catalog ids (see
+  `PATCH-CHECKLIST.md`, "Game names").
+- `src/test/resources/battlelog/de|en|fr/` hold the same 6 battles (attack
+  and defense log each, unchanged file names) in all three game languages,
+  `battlelog/partial/` an earlier export of the running battle of 01.10.2026 -
+  test data for the Weltenschlacht journal; `.gitattributes` keeps them
+  byte-identical (CRLF) on every machine.
 - The curated scores are kept OUT of those master data files, one score
   file per catalog: `cowScore.json` (heroes), `titanCowScore.json`,
   `petCowScore.json`, `warFlagCowScore.json`. The split means a wholesale
@@ -309,7 +309,13 @@ folder (`new Catalog(tempDir)`).
   packaged jar) rather than a hardcoded list, and the directory name is
   exactly what's shown in the language combo box - no separate display-name
   mapping in code anymore.
-- Each language's `.properties` file also carries an `algorithm.<key>.name`
+- Next to its `.properties` file, every language folder holds a
+  `battleLogVocabulary.json`: the texts of the Clash of Worlds battle logs in
+  that game language (file name words, column header, results, "captured"
+  and "undefended" sentences, stats header, buff and color texts), read by
+  `org.c2w.data.journal.parse.BattleLogVocabulary`. Not shown in the UI, so
+  not part of the `.properties` files; same keys in every language
+  (`BattleLogVocabularyConsistencyTest`).- Each language's `.properties` file also carries an `algorithm.<key>.name`
   and an `algorithm.<key>.description` entry per lineup strategy - the
   localized name shown in the UI and a short prose explanation of how the
   strategy works, read via `org.c2w.eval.AlgorithmDescriptions`
@@ -390,11 +396,14 @@ folder (`new Catalog(tempDir)`).
   against a temp workspace: files on disk, the open guild/lineup and the
   unsaved-changes state stay consistent. Also checks that a background
   algorithm run is discarded if the lineup changed in the meantime.
-- `CatalogAliasesTest` - the optional `aliases` of heroes/titans/pets
-  (shipped values, blank/duplicate entries, merging).
 - `BattleLogGameNamesTest` - every hero, titan, pet, totem and fortification
-  name in the sample battle logs is a game name in that log's language file
-  (or an alias).
+  name in the sample battle logs is a game name in that log's language file.
+- `org.c2w.data.journal.parse` tests - the battle log parser against all 38
+  sample logs: acceptance table (fights, undefended/captured rows, points,
+  units, buffs per file), DE/EN/FR yield the same language-neutral result,
+  append-only (an earlier export is a prefix of a later one), file names,
+  ranking points control calculation, spot checks and robustness against
+  broken rows; plus the vocabulary consistency of the three languages.
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting

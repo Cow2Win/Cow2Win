@@ -1,6 +1,5 @@
 package org.c2w.i18n;
 
-import org.c2w.data.repository.CatalogAliases;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,20 +17,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Every hero, titan, pet, totem and fortification name in the sample battle
- * logs under {@code src/test/resources/battlelog} (Schlachtplan 0.4) is a
- * display name in the language file of that log's language, or an alias
- * ({@link CatalogAliases}) - Schlachtplan 0.5, the basis for mapping log
- * names back to catalog ids.
+ * logs under {@code src/test/resources/battlelog/{de,en,fr,partial}} (Schlachtplan 0.4) is a
+ * display name in the language file of that log's language - Schlachtplan
+ * 0.5: the language files carry the in-game names and are the only basis for
+ * mapping log names back to catalog ids.
  *
  * <p>Deliberately simple CSV handling (no quoting in these exports), not the
- * real parser of the journal. The only normalization is the one the logs need
- * anyway: non-breaking and repeated spaces count as one space. A new sample log
+ * real parser of the journal. Names are compared via {@link GameNameNormalizer},
+ * like the parser does. A new sample log
  * after a patch that fails here means: add or correct the game name in the
  * language file (see PATCH-CHECKLIST.md).
  */
 class BattleLogGameNamesTest {
 
     private static final Path BATTLE_LOG_DIR = Paths.get("src", "test", "resources", "battlelog");
+    /** One folder per game language (the same battles in each) plus an earlier partial export. */
+    private static final List<String> BATTLE_LOG_FOLDERS = List.of("de", "en", "fr", "partial");
+    private static final int SAMPLE_LOG_COUNT = 38;
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
     private static final Path DATA_DIR = Paths.get("src", "main", "resources", "data");
     private static final List<String> CATALOGS =
@@ -59,16 +61,13 @@ class BattleLogGameNamesTest {
     @Test
     void everyNameInTheSampleLogsIsKnownInItsLanguage() throws IOException {
         Set<String> catalogIds = catalogIds();
-        Set<String> aliases = new HashSet<>();
-        CatalogAliases.load().all().values().forEach(list -> list.forEach(a -> aliases.add(normalize(a))));
 
         Map<String, Set<String>> unknownByLog = new TreeMap<>();
         for (Path log : battleLogs()) {
             Set<String> known = knownNames(languageOf(log), catalogIds);
-            known.addAll(aliases);
             Set<String> unknown = new TreeSet<>();
             for (String name : namesIn(log)) {
-                if (!known.contains(name)) {
+                if (!known.contains(GameNameNormalizer.key(name))) {
                     unknown.add(name);
                 }
             }
@@ -97,11 +96,14 @@ class BattleLogGameNamesTest {
 
     private static List<Path> battleLogs() throws IOException {
         List<Path> logs = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(BATTLE_LOG_DIR, "*.csv")) {
-            stream.forEach(logs::add);
+        for (String folder : BATTLE_LOG_FOLDERS) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(BATTLE_LOG_DIR.resolve(folder), "*.csv")) {
+                stream.forEach(logs::add);
+            }
         }
         logs.sort(Comparator.naturalOrder());
-        assertEquals(8, logs.size(), "expected the 8 sample battle logs in " + BATTLE_LOG_DIR);
+        assertEquals(SAMPLE_LOG_COUNT, logs.size(), "expected the " + SAMPLE_LOG_COUNT + " sample battle logs in "
+                + BATTLE_LOG_DIR + "/" + BATTLE_LOG_FOLDERS);
         return logs;
     }
 
@@ -129,12 +131,12 @@ class BattleLogGameNamesTest {
             }
             String[] cells = line.split(",", -1);
             if (!line.startsWith(",")) {
-                names.add(normalize(POSITION_SUFFIX.matcher(cells[0]).replaceFirst("")));
+                names.add(GameNameNormalizer.clean(POSITION_SUFFIX.matcher(cells[0]).replaceFirst("")));
             }
             for (String cell : cells) {
                 int bar = cell.indexOf(" | ");
                 if (bar > 0) {
-                    names.add(normalize(cell.substring(0, bar)));
+                    names.add(GameNameNormalizer.clean(cell.substring(0, bar)));
                 }
             }
         }
@@ -152,7 +154,7 @@ class BattleLogGameNamesTest {
         return ids;
     }
 
-    /** Display names of all catalog ids plus the totem game names in one language. */
+    /** Comparison keys of the display names of all catalog ids plus the totem game names in one language. */
     private static Set<String> knownNames(String language, Set<String> catalogIds) throws IOException {
         Properties props = new Properties();
         try (Reader reader = Files.newBufferedReader(
@@ -162,13 +164,9 @@ class BattleLogGameNamesTest {
         Set<String> names = new HashSet<>();
         for (String key : props.stringPropertyNames()) {
             if (catalogIds.contains(key) || key.startsWith("titanTotem.")) {
-                names.add(normalize(props.getProperty(key)));
+                names.add(GameNameNormalizer.key(props.getProperty(key)));
             }
         }
         return names;
-    }
-
-    private static String normalize(String name) {
-        return name.replace(' ', ' ').replaceAll(" {2,}", " ").trim();
     }
 }

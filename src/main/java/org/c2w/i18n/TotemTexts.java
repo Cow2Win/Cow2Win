@@ -62,31 +62,23 @@ public final class TotemTexts {
      * The totem whose in-game name (see {@link #gameName}) is {@code text}
      * in any available language - not just the configured one, since a
      * battle log is written in the game language of the exporting account.
-     * Case and surrounding whitespace are ignored, and non-breaking spaces
-     * (U+00A0, used in French battle logs) as well as runs of whitespace
-     * count as a single normal space; empty for an unknown or blank text.
+     * Compared via {@link GameNameNormalizer} (case, surrounding whitespace,
+     * non-breaking spaces and whitespace runs don't matter); empty for an
+     * unknown or blank text.
      */
     public static Optional<TitanElement> fromGameName(String text) {
-        String wanted = normalize(text);
+        String wanted = GameNameNormalizer.key(text);
         if (wanted.isEmpty()) {
             return Optional.empty();
         }
         for (String language : LanguageService.availableLanguages()) {
             for (TitanElement element : TitanElement.values()) {
                 String gameName = LanguageService.textIn(language, KEY_GAME_NAME_PREFIX + element.name());
-                if (gameName != null && normalize(gameName).equalsIgnoreCase(wanted)) {
+                if (gameName != null && GameNameNormalizer.key(gameName).equals(wanted)) {
                     return Optional.of(element);
                 }
             }
         }
         return Optional.empty();
-    }
-
-    /** {@code text} with non-breaking spaces turned into normal ones, whitespace runs collapsed and stripped - {@code ""} for {@code null}. */
-    private static String normalize(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace('\u00A0', ' ').replaceAll("\\s+", " ").strip();
     }
 }

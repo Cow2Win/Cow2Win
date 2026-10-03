@@ -104,24 +104,34 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
       `Fortification.java` javadoc; the research doc got this wrong once
       before a codebase re-check).
 
-## 6. Game names and aliases (battle logs)
+## 6. Game names (battle logs)
 
 The display names in the language files are the **in-game names** exactly as
 they appear in an exported Clash of Worlds battle log (`.csv`) - the
-Weltenschlacht journal maps log names back to catalog ids through them.
+Weltenschlacht journal maps log names back to catalog ids through them, and
+only through them (there are no aliases).
 
 - [ ] New or renamed hero/titan/pet/fortification: take the name for each
       language from a battle log in that language (game language DE/EN/FR),
       not from the patch notes or a wiki - spelling, apostrophe (`'`) and
       "und/and/et" exactly as in the log.
-- [ ] A variant that is NOT a display name in any language (short or long
-      name, an older spelling) goes into the optional `"aliases"` array of
-      the entry in `heroes.json`/`titans.json`/`pets.json` (read by
-      `CatalogAliases`), e.g. `"aliases": ["Lara"]`.
-- [ ] Got a new battle log? Copy it into `src/test/resources/battlelog/`
-      (file name unchanged, it is test data too) and run `mvn test`:
-      `BattleLogGameNamesTest` lists every name in the sample logs that has
-      no matching game name or alias in its language.
+- [ ] Got a new battle log? Copy it into the folder of its game language,
+      `src/test/resources/battlelog/de|en|fr/` (file name unchanged, it is
+      test data too; `partial/` holds an earlier export of a running battle),
+      and run `mvn test`: `BattleLogGameNamesTest` lists every name in the
+      sample logs that has no matching game name in its language.
+      The acceptance tests in `org.c2w.data.journal.parse` count the sample
+      files - adjust them when adding a file.
+- [ ] New log texts (e.g. a new fortification buff, a new hero color, a new
+      wording of the "undefended" sentence) go into
+      `language/<name>/battleLogVocabulary.json` of **all three** languages,
+      same keys everywhere (`BattleLogVocabularyConsistencyTest`). Never
+      invent a text that no log has shown - leave the list empty instead
+      (like `buff.SKILL_COOLDOWN_DECREASE`). The parser reports unknown texts
+      as parse problems.
+- [ ] New language: besides `<name>/<name>.properties` the language folder
+      also needs a `battleLogVocabulary.json` - without it, battle logs in
+      that language cannot be read.
 
 ## 7. After any data change
 

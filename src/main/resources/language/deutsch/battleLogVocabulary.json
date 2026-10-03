@@ -1,0 +1,47 @@
+{
+  "fileName": {
+    "server": ["Server"],
+    "win": ["Sieg"],
+    "loss": ["Niederlage"],
+    "draw": ["Unentschieden"],
+    "rankingPoints": ["Rangpunkte"],
+    "attackLog": ["Angriffs-Log"],
+    "defenseLog": ["Verteidigungs-Log"]
+  },
+  "headerRow": {
+    "fortification": ["Befestigung"],
+    "result": ["Ergebnis"],
+    "points": ["Punkte"],
+    "attacker": ["Angreifer"],
+    "defender": ["Verteidiger"]
+  },
+  "fightResult": {
+    "win": ["Sieg"],
+    "loss": ["Niederlage"]
+  },
+  "fortificationCaptured": ["Befestigung erobert"],
+  "undefended": {
+    "singular": ["{n} Position von {m} in dieser Befestigung wurde nicht verteidigt und konnte kampflos erobert werden."],
+    "plural": ["{n} Positionen von {m} in dieser Befestigung wurden nicht verteidigt und konnten kampflos erobert werden."]
+  },
+  "statsHeader": {
+    "damageDealt": ["Zugefügter Schaden"],
+    "damageTaken": ["Erlittener Schaden"],
+    "healing": ["Heilung"],
+    "patronage": ["Patronat"]
+  },
+  "heroColor": {
+    "ORANGE": ["Orange"],
+    "RED": ["Rot"],
+    "VIOLET": ["Violet"]
+  },
+  "buff": {
+    "DAMAGE_RESIST": ["Widerstand gegen Schaden"],
+    "HEALTH_INCREASE": ["Gesundheitsschub"],
+    "HEALING_INCREASE": ["Heilung erhöht"],
+    "ARMOR_INCREASE": ["Rüstung erhöht"],
+    "ENERGY_GAIN": ["Energiegewinn erhöht"],
+    "MAGIC_DEFENSE_INCREASE": ["Magische Verteidigung erhöht"],
+    "SKILL_COOLDOWN_DECREASE": []
+  }
+}

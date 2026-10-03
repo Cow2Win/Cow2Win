@@ -1,0 +1,47 @@
+{
+  "fileName": {
+    "server": ["Server"],
+    "win": ["Victory"],
+    "loss": ["Defeat"],
+    "draw": ["Draw"],
+    "rankingPoints": ["ranking pts."],
+    "attackLog": ["Attack Log"],
+    "defenseLog": ["Defense Log"]
+  },
+  "headerRow": {
+    "fortification": ["Fortification"],
+    "result": ["Result"],
+    "points": ["Points"],
+    "attacker": ["Attacker"],
+    "defender": ["Defender"]
+  },
+  "fightResult": {
+    "win": ["Victory"],
+    "loss": ["Defeat"]
+  },
+  "fortificationCaptured": ["Fortification captured"],
+  "undefended": {
+    "singular": ["{n} position out of {m} in this fortification was left undefended and got captured without a fight."],
+    "plural": ["{n} positions out of {m} in this fortification were left undefended and got captured without a fight."]
+  },
+  "statsHeader": {
+    "damageDealt": ["Damage Dealt"],
+    "damageTaken": ["Damage Taken"],
+    "healing": ["Healing"],
+    "patronage": ["Patronage"]
+  },
+  "heroColor": {
+    "ORANGE": ["Orange"],
+    "RED": ["Red"],
+    "VIOLET": ["Violet"]
+  },
+  "buff": {
+    "DAMAGE_RESIST": ["Damage Resist"],
+    "HEALTH_INCREASE": ["Health Increase"],
+    "HEALING_INCREASE": ["Healing Increase"],
+    "ARMOR_INCREASE": ["Armor Increase"],
+    "ENERGY_GAIN": ["Energy Gain Increase"],
+    "MAGIC_DEFENSE_INCREASE": ["Magic Defense Increase"],
+    "SKILL_COOLDOWN_DECREASE": []
+  }
+}

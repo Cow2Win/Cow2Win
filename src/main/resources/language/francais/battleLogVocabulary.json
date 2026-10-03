@@ -1,0 +1,47 @@
+{
+  "fileName": {
+    "server": ["Serveur"],
+    "win": ["Victoire"],
+    "loss": ["Défaite"],
+    "draw": ["Égalité"],
+    "rankingPoints": ["pts de classement"],
+    "attackLog": ["Journal d'attaque"],
+    "defenseLog": ["Journal de défense"]
+  },
+  "headerRow": {
+    "fortification": ["Fortification"],
+    "result": ["Résultat"],
+    "points": ["Points"],
+    "attacker": ["Attaquant"],
+    "defender": ["Défenseur"]
+  },
+  "fightResult": {
+    "win": ["Victoire"],
+    "loss": ["Défaite"]
+  },
+  "fortificationCaptured": ["Fortification capturée"],
+  "undefended": {
+    "singular": ["{n} position de cette fortification sur {m} est restée sans défense et a été capturée sans combat."],
+    "plural": ["{n} positions de cette fortification sur {m} sont restées sans défense et ont été capturées sans combat."]
+  },
+  "statsHeader": {
+    "damageDealt": ["Dégâts infligés"],
+    "damageTaken": ["Dégâts subis"],
+    "healing": ["Soins"],
+    "patronage": ["Patronage"]
+  },
+  "heroColor": {
+    "ORANGE": ["Orange"],
+    "RED": ["Rouge"],
+    "VIOLET": ["Violet"]
+  },
+  "buff": {
+    "DAMAGE_RESIST": ["Résistance aux dégâts"],
+    "HEALTH_INCREASE": ["PV augmentés"],
+    "HEALING_INCREASE": ["Soins améliorés"],
+    "ARMOR_INCREASE": ["Armure renforcée"],
+    "ENERGY_GAIN": ["Régénération d'énergie supérieure"],
+    "MAGIC_DEFENSE_INCREASE": ["Défense magique renforcée"],
+    "SKILL_COOLDOWN_DECREASE": []
+  }
+}

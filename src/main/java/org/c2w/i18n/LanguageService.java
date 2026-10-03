@@ -169,11 +169,29 @@ public class LanguageService {
         }
     }
 
+    /**
+     * Classpath path of a file in the folder of {@code language}, e.g.
+     * {@code /language/deutsch/battleLogVocabulary.json} - the one place that
+     * knows the per-language folder layout.
+     */
+    public static String languageResourcePath(String language, String fileName) {
+        return "/" + LANGUAGE_RESOURCE_ROOT + "/" + language + "/" + fileName;
+    }
+
+    /**
+     * Opens a file in the folder of {@code language} (see
+     * {@link #languageResourcePath}), or returns {@code null} if that language
+     * has no such file. The caller closes the stream.
+     */
+    public static InputStream openLanguageResource(String language, String fileName) {
+        return LanguageService.class.getResourceAsStream(languageResourcePath(language, fileName));
+    }
+
     /** Loads {@code language/<name>/<name>.properties} from the classpath. */
     private static Properties loadLanguageFile(String name) {
         Properties properties = new Properties();
-        String resourcePath = "/" + LANGUAGE_RESOURCE_ROOT + "/" + name + "/" + name + ".properties";
-        try (InputStream in = LanguageService.class.getResourceAsStream(resourcePath)) {
+        String resourcePath = languageResourcePath(name, name + ".properties");
+        try (InputStream in = openLanguageResource(name, name + ".properties")) {
             if (in == null) {
                 Logger.log("Language file not found on classpath: " + resourcePath);
                 return properties;

@@ -97,10 +97,7 @@
   {
     "id": "silva",
     "element": "EARTH",
-    "image": "Silva.png",
-    "aliases": [
-      "Silva"
-    ]
+    "image": "Silva.png"
   },
   {
     "id": "avalon",

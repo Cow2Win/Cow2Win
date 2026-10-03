@@ -1,0 +1,686 @@
+Fortification,Result,Points,Attacker,,,,,,Defender,,,
+Mage Academy,2 positions out of 3 in this fortification were left undefended and got captured without a fight.,+70
+Barracks,1 position out of 3 in this fortification was left undefended and got captured without a fight.,+35
+Bridge (Position: 6),Victory,+35,Puschel (130-1037005),,,,,,Жека (130-892178),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 130 | 209561,9531359,825825,0,,,Sigurd | 6 stars | 130 | 207442,3777708,13154377,0,
+,,,Moloch | 6 stars | 130 | 216475,7811806,10414087,0,,,Sylva | 6 stars | 130 | 201999,2407740,10012468,0,
+,,,Vulcan | 6 stars | 130 | 208820,6394391,471900,0,,,Verdoc and Phyto | 6 stars | 130 | 164546,1495164,11884251,0,
+,,,Asherona and Pyro | 6 stars | 130 | 192939,3863101,2198097,0,,,Avalon | 6 stars | 116 | 116112,1344976,10051363,0,
+,,,Ignis | 6 stars | 130 | 209210,3078360,471900,0,,,Angus | 6 stars | 130 | 202079,916599,15909451,0,
+,,,Fire Spirit Totem | 4 stars | 130,32060697,0,1248000,,,Earth Spirit Totem | 1 stars | 130,4439622,2042404,208000,
+
+Bridge (Position: 2),Victory,+35,Puschel (130-1400474),,,,,,Терапевт (130-1211449),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 312498,20490865,9515006,4255057,,,Solaris | 6 stars | 130 | 280610,22102355,25044780,1608975,
+,,,Tenebris | 6 stars | 130 | 312449,8760593,6463930,3864239,,,Tenebris | 6 stars | 130 | 271631,13791108,9084873,2794238,
+,,,Brustar | 6 stars | 130 | 267397,5774125,20329045,0,,,Nova | 6 stars | 130 | 219737,6278822,8766120,0,
+,,,Iyari | 6 stars | 130 | 249745,4967001,9848818,4806631,,,Sigurd | 6 stars | 130 | 219735,3522628,16973364,0,
+,,,Mort | 6 stars | 130 | 258385,3183780,20202234,0,,,Hyperion | 6 stars | 130 | 219736,1959368,14259557,1959369,
+,,,Dark Spirit Totem | 6 stars | 130,26914570,0,1560000,,,Water Spirit Totem | 6 stars | 130,18704752,0,12517380,
+,,,Light Spirit Totem | 6 stars | 130,4037760,0,0,,,,,,,
+
+Bridge (Position: 1),Victory,+35,Team Gandagom (130-1298935),,,,,,Team SC (130-1150611),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Eden | 6 stars | 130 | 223890,16432959,13029766,0,,,Solaris | 6 stars | 130 | 303736,19224297,14899035,3634758,
+,,,Tenebris | 6 stars | 130 | 313909,10668961,8706600,4679150,,,Hyperion | 6 stars | 130 | 220767,11221189,16186246,1959369,
+,,,Brustar | 6 stars | 130 | 268646,5826895,18185426,490560,,,Nova | 6 stars | 130 | 207581,11018880,8838273,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 223862,3889347,13630683,189458,,,Sigurd | 6 stars | 130 | 220767,3522628,21367155,0,
+,,,Mort | 6 stars | 130 | 268628,3158469,15002085,0,,,Iyari | 6 stars | 130 | 197760,2537568,14837515,4333050,
+,,,Earth Spirit Totem | 6 stars | 130,4155500,8049624,3900000,,,Water Spirit Totem | 6 stars | 130,11040454,0,12104360,
+,,,Dark Spirit Totem | 6 stars | 130,31996093,0,0,,,Light Spirit Totem | 6 stars | 130,15720432,0,0,
+
+Bridge (Position: 3),Defeat,+20,Haselnuss (130-1031156),,,,,,Dimka530 (130-1031388),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Eden | 6 stars | 130 | 204331,26637358,18442074,0,,,Tenebris | 6 stars | 130 | 212153,41130142,20453615,8463280,
+,,,Angus | 6 stars | 130 | 235331,22769397,25911530,0,,,Hyperion | 6 stars | 130 | 205583,16102866,26572782,6993995,
+,,,Sylva | 6 stars | 130 | 181537,13137959,17729469,0,,,Mairi | 6 stars | 130 | 198461,6265643,27781971,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 218704,5030965,18800632,0,,,Nova | 6 stars | 130 | 203069,5714826,10170819,0,
+,,,Avalon | 6 stars | 130 | 191253,4361159,16388971,0,,,Sigurd | 6 stars | 130 | 212122,3519700,20988100,0,
+,,,Earth Spirit Totem | 6 stars | 130,34030449,34143887,22345411,,,Water Spirit Totem | 6 stars | 130,54504110,0,58658913,
+
+Bridge (Position: 4),Victory,+35,Faern (130-1132972),,,,,,Marsik (130-705572),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Moloch | 6 stars | 130 | 208123,11606408,13123018,0,,,Hyperion | 6 stars | 130 | 148076,9106926,9949125,1321081,
+,,,Araji | 6 stars | 130 | 207853,10361408,3166804,0,,,Mairi | 6 stars | 125 | 126727,2476332,7201384,0,
+,,,Solaris | 6 stars | 130 | 252743,6634684,3159257,783954,,,Sylva | 6 stars | 130 | 138947,1847440,9042379,0,
+,,,Tenebris | 6 stars | 130 | 271631,5495179,990811,612590,,,Sigurd | 6 stars | 130 | 138108,1826614,9554316,0,
+,,,Ignis | 6 stars | 130 | 192622,2318234,0,0,,,Eden | 6 stars | 130 | 153714,871848,11028555,0,
+,,,Fire Spirit Totem | 4 stars | 110,10359846,0,0,,,Water Spirit Totem | 5 stars | 99,4310730,0,2168446,
+
+Bridge (Position: 5),Defeat,+33,Haselnuss (130-1332574),,,,,,Liftman (130-1082700),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 266008,7249306,14176083,2474147,,,Tenebris | 6 stars | 130 | 267825,28987248,13510907,9472913,
+,,,Umbra and Caligo | 6 stars | 130 | 233877,6335912,18727103,936751,,,Moloch | 6 stars | 130 | 210074,16743893,11953813,0,
+,,,Mort | 6 stars | 130 | 252843,3250526,15446822,130598,,,Eden | 6 stars | 130 | 184785,9263877,12386946,0,
+,,,Tenebris | 6 stars | 130 | 312449,2562930,16332925,3996640,,,Araji | 6 stars | 130 | 209984,8356628,7440332,0,
+,,,Brustar | 6 stars | 130 | 267397,1858842,19093644,0,,,Ignis | 6 stars | 130 | 210032,5549510,11180561,0,
+,,,Dark Spirit Totem | 6 stars | 130,35215043,0,0,,,Fire Spirit Totem | 4 stars | 126,14875421,0,0,
+
+Bridge (Position: 5),Victory,+2,remy (130-668368),,,,,,Liftman (130-1082700),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 160729,1508673,6146169,409278,,,Tenebris | 6 stars | 130 | 267825,23533072,5014699,3520550,
+,,,Nova | 6 stars | 130 | 116037,1289356,7806017,0,,,Moloch | 6 stars | 130 | 210074,0,0,0,
+,,,Iyari | 6 stars | 130 | 145550,1213662,0,0,,,Ignis | 6 stars | 130 | 210032,0,0,0,
+,,,Hyperion | 6 stars | 130 | 114963,1003008,0,1003009,,,Araji | 6 stars | 130 | 209984,0,0,0,
+,,,Sigurd | 6 stars | 130 | 131089,0,9580886,0,,,Eden | 6 stars | 130 | 184785,0,0,0,
+,,,Light Spirit Totem | 1 stars | 80,0,0,0,,,,,,,
+
+Bridge (Position: 3),Victory,+15,Serg (130-857334),,,,,,Dimka530 (130-1031388),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Tenebris | 6 stars | 130 | 194685,12206928,12099659,5975479,,,Tenebris | 6 stars | 130 | 212153,35517042,15583397,7181276,
+,,,Hyperion | 6 stars | 130 | 194531,8578499,10177063,3162241,,,Hyperion | 6 stars | 130 | 205583,12543232,9652004,1959369,
+,,,Umbra and Caligo | 6 stars | 123 | 141672,6016928,10421174,0,,,Mairi | 6 stars | 130 | 198461,3135300,7952142,0,
+,,,Nova | 6 stars | 130 | 153822,2084793,7293714,0,,,Nova | 6 stars | 130 | 203069,0,0,0,
+,,,Sigurd | 6 stars | 130 | 172624,1618300,11203964,0,,,Sigurd | 6 stars | 130 | 212122,0,0,0,
+,,,Water Spirit Totem | 2 stars | 94,1610939,0,2402540,,,,,,,
+,,,Dark Spirit Totem | 2 stars | 63,1071156,0,378000,,,,,,,
+
+Bridge,Fortification captured,+210
+Spring of Elements,3 positions out of 4 in this fortification were left undefended and got captured without a fight.,+105
+Foundry,2 positions out of 5 in this fortification were left undefended and got captured without a fight.,+70
+Gates of Nature,1 position out of 4 in this fortification was left undefended and got captured without a fight.,+35
+Gates of Nature (Position: 3),Defeat,+23,SpookeyWookie (130-956200),,,,,,Aspid (130-944883),Damage Resist (10%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Hyperion | 6 stars | 130 | 211513,13112060,17025727,1959369,,,Solaris | 6 stars | 130 | 188442,29816322,13263885,800905,
+,,,Nova | 6 stars | 130 | 200097,7279393,9966021,0,,,Araji | 6 stars | 130 | 205301,5034661,2531396,0,
+,,,Tidus and Gelo | 6 stars | 130 | 201160,2937329,12880943,0,,,Iyari | 6 stars | 130 | 164237,3936281,5685785,1094408,
+,,,Sigurd | 6 stars | 130 | 211510,2661128,26354228,0,,,Ignis | 6 stars | 130 | 175229,3064263,6431064,0,
+,,,Mairi | 6 stars | 130 | 131920,2114941,8653662,0,,,Moloch | 6 stars | 130 | 211674,2357977,14058328,0,
+,,,Water Spirit Totem | 6 stars | 130,13865607,5140686,20992599,,,Fire Spirit Totem | 5 stars | 125,33135958,0,0,
+,,,,,,,,,Light Spirit Totem | 6 stars | 123,2675805,0,3690000,
+
+Gates of Nature (Position: 2),Victory,+35,SpookeyWookie (130-1233476),,,,,,Knifer (130-844239),Damage Resist (10%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Eden | 6 stars | 130 | 219763,12902911,1637345,0,,,Eden | 6 stars | 130 | 177128,4592415,12565122,0,
+,,,Tenebris | 6 stars | 130 | 315369,12837533,5915743,1149387,,,Sylva | 6 stars | 130 | 170376,3824905,11572386,0,
+,,,Brustar | 6 stars | 130 | 259214,5223662,13291514,0,,,Angus | 6 stars | 130 | 170479,3040329,16374500,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 203067,3321942,2519536,0,,,Avalon | 6 stars | 130 | 169157,2781925,12254608,0,
+,,,Umbra and Caligo | 6 stars | 130 | 236063,2864176,558111,0,,,Hyperion | 6 stars | 130 | 157099,1876266,10710714,1250845,
+,,,Earth Spirit Totem | 6 stars | 130,6349271,8954612,0,,,Earth Spirit Totem | 6 stars | 82,13842579,6426867,4464888,
+,,,Dark Spirit Totem | 6 stars | 130,26347881,0,7650011,,,,,,,
+
+Gates of Nature (Position: 4),Victory,+35,Team Gandagom (130-1332679),,,,,,Дядюшка Ау (130-952239),Damage Resist (10%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 315419,17000669,11854669,944260,,,Eden | 6 stars | 130 | 185795,20303935,13800157,0,
+,,,Alecto | 6 stars | 130 | 246992,8713627,9772098,0,,,Tenebris | 6 stars | 130 | 166999,7294684,9889085,4285162,
+,,,Rigel | 6 stars | 130 | 269918,4444712,15640096,0,,,Araji | 6 stars | 130 | 202786,4175776,8370642,0,
+,,,Iyari | 6 stars | 130 | 269875,3842600,7039184,533696,,,Moloch | 6 stars | 130 | 202874,4090035,11953813,0,
+,,,Valdur and Echo | 6 stars | 130 | 230475,1264272,9242813,0,,,Ignis | 6 stars | 130 | 193785,3953198,11007819,0,
+,,,Light Spirit Totem | 6 stars | 130,19755636,0,0,,,Fire Spirit Totem | 3 stars | 130,13731232,0,0,
+,,,Elemental Spirit of Distortion | 2 stars | 116,0,0,0,,,,,,,
+
+Gates of Nature (Position: 3),Victory,+12,COCO (130-1083030),,,,,,Aspid (130-944883),Damage Resist (10%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Tenebris | 6 stars | 130 | 276503,9394394,0,0,,,Araji | 6 stars | 130 | 205301,8178032,6497549,0,
+,,,Solaris | 6 stars | 130 | 250365,3382874,0,856292,,,Iyari | 6 stars | 130 | 164237,3126882,7935021,3126884,
+,,,Sylva | 6 stars | 130 | 189465,1838094,0,0,,,Ignis | 6 stars | 130 | 175229,2740040,5945480,0,
+,,,Eden | 6 stars | 130 | 195415,1505189,0,0,,,Solaris | 6 stars | 130 | 188442,1072971,146528,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 171282,1286438,14075631,0,,,Moloch | 6 stars | 130 | 211674,0,0,0,
+,,,Earth Spirit Totem | 4 stars | 114,3117589,1042294,0,,,Light Spirit Totem | 6 stars | 123,0,0,1476000,
+
+Gates of Nature,Fortification captured,+200
+Heroes' Bridge (Position: 2),Victory,+35,COCO (130-1080683),,,,,,Дядюшка Ау (130-930811),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Dante | Red +2 | 6 stars | 130 | 197577,1351226,224788,0,Fenris | 7958,,Isaac | Red +2 | 6 stars | 130 | 177348,106085,462195,0,
+,,,Orion | Red +2 | 6 stars | 130 | 184039,912649,2768,2073,Axel | 11064,,Aurora | Red +2 | 6 stars | 130 | 150632,101798,594822,0,Cain | 11064
+,,,Iris | Red +2 | 6 stars | 130 | 158241,611223,5464,5464,Albus | 11064,,Martha | Red +2 | 6 stars | 130 | 165897,18588,999498,53923,
+,,,Dorian | Red +2 | 6 stars | 130 | 160965,47194,2715,2715,Merlin | 7804,,Yasmine | Red +2 | 6 stars | 130 | 151744,13062,398645,0,
+,,,Nebula | Red +2 | 6 stars | 130 | 197918,0,7530,51652,Cain | 11064,,Lyria | Red | 6 stars | 130 | 103247,3732,467132,0,Biscuit | 6899
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 181943,0,0,22348,
+
+Heroes' Bridge (Position: 4),Victory,+35,COCO (130-1056896),,,,,,Aspid (130-1052404),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Galahad | Red +2 | 6 stars | 130 | 197940,1898929,1541133,736663,Albus | 11064,,Heidi | Red +2 | 6 stars | 130 | 157266,1445485,585436,0,
+,,,Jhu | Red +2 | 6 stars | 130 | 173729,681078,579685,193633,Fenris | 7958,,Jhu | Red +2 | 6 stars | 130 | 184487,951671,1079216,115903,Vex | 6676
+,,,Mojo | Red +2 | 6 stars | 130 | 174627,554369,387503,48988,Axel | 11064,,Celeste | Red +2 | 6 stars | 130 | 173719,619485,433915,356663,Merlin | 11036
+,,,Lyria | Red +2 | 6 stars | 130 | 164145,404278,481040,22439,Oliver | 9428,,Arachne | Red +2 | 6 stars | 130 | 171820,369238,753083,187286,
+,,,Thea | Red +2 | 6 stars | 130 | 164512,160405,502281,683789,Merlin | 7804,,Astaroth | Red +2 | 6 stars | 130 | 183169,17888,1436043,113316,Biscuit | 8068
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,676509,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 181943,0,0,459821,
+
+Heroes' Bridge (Position: 6),Defeat,+21,COCO (130-974047),,,,,,Liftman (130-1072682),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Judge | Red +2 | 6 stars | 130 | 147869,585948,555960,0,Khorus | 9692,,Isaac | Red +2 | 6 stars | 130 | 182255,842537,185896,0,Axel | 11064
+,,,Yasmine | Red +2 | 6 stars | 130 | 167844,465389,457576,0,Cain | 11064,,Phobos | Red +2 | 6 stars | 130 | 179921,796187,493082,31340,Merlin | 11064
+,,,Augustus | Red +2 | 6 stars | 130 | 162629,456201,556650,0,Albus | 11064,,Arachne | Red +2 | 6 stars | 130 | 200835,462104,295465,278887,Mara | 11064
+,,,K'arkh | Red +2 | 6 stars | 130 | 151685,46521,370652,0,Fenris | 7958,,Polaris | Red +2 | 6 stars | 130 | 157057,230380,411055,0,Khorus | 11064
+,,,Martha | Red +2 | 6 stars | 130 | 162077,6265,722780,454687,Axel | 11064,,Jorgen | Red +2 | 6 stars | 130 | 170671,121576,1180755,431496,Oliver | 11064
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,1005929,0,0,,,Mara | Violet +3 | 6 stars | 130 | 181943,210834,0,0,
+
+Ether Prism,2 positions out of 5 in this fortification were left undefended and got captured without a fight.,+70
+Heroes' Bridge (Position: 5),Victory,+35,Puschel (130-1112664),,,,,,Фаркуа (130-1071698),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Augustus | Red +2 | 6 stars | 130 | 193665,2087173,10194,10194,Albus | 11064,,Jhu | Red +2 | 6 stars | 130 | 198970,1726855,1547207,0,Vex | 11064
+,,,Orion | Red +2 | 6 stars | 130 | 205923,1679988,133676,133676,Merlin | 11064,,Orion | Red +2 | 6 stars | 130 | 204185,417713,692583,194140,Merlin | 11064
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 182553,218426,1704249,431993,Oliver | 11064,,Dorian | Red +2 | 6 stars | 130 | 176414,179324,963192,988443,
+,,,Fluffy | Red +2 | 6 stars | 130 | 157659,180021,203352,63807,Khorus | 11064,,Nebula | Red +2 | 6 stars | 130 | 181436,150031,545471,0,
+,,,Dorian | Red +2 | 6 stars | 130 | 190921,31641,551382,120292,Axel | 11064,,Morrigan | Red +1 | 6 stars | 130 | 128750,52366,450405,0,
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,78173,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Heroes' Bridge (Position: 6),Victory,+14,Puschel (130-961921),,,,,,Liftman (130-1072682),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Kayla | Red +2 | 6 stars | 130 | 113395,830344,399453,0,Biscuit | 9018,,Arachne | Red +2 | 6 stars | 130 | 200835,156574,626975,94636,Mara | 11064
+,,,Sebastian | Red +2 | 6 stars | 130 | 175192,631086,38935,0,Albus | 11064,,Isaac | Red +2 | 6 stars | 130 | 182255,115341,231511,0,Axel | 11064
+,,,Galahad | Red +2 | 6 stars | 130 | 203914,329938,100641,91643,Oliver | 11064,,Jorgen | Red +2 | 6 stars | 130 | 170671,24346,1112137,779467,Oliver | 11064
+,,,Lara Croft | Red +2 | 6 stars | 130 | 160054,244586,38650,43119,Mara | 11064,,Phobos | Red +2 | 6 stars | 130 | 179921,2524,46951,0,Merlin | 11064
+,,,Thea | Red +2 | 6 stars | 130 | 127423,21916,35536,386454,Merlin | 11064,,Polaris | Red +2 | 6 stars | 130 | 157057,0,0,0,Khorus | 11064
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,114175,0,0,,,Mara | Violet +3 | 6 stars | 130 | 181943,159959,0,0,
+
+Heroes' Bridge (Position: 1),Victory,+35,Puschel (130-1062125),,,,,,Дядюшка Ау (130-1146997),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Keira | Red +2 | 6 stars | 130 | 180547,3287877,867117,573523,Vex | 11064,,Jhu | Red +2 | 6 stars | 130 | 190456,1645335,1596058,646187,Vex | 11064
+,,,Corvus | Red +2 | 6 stars | 130 | 202127,819067,636805,29674,Oliver | 11064,,Sebastian | Red +2 | 6 stars | 130 | 193998,1561900,656369,0,Albus | 11064
+,,,Lyria | Red +2 | 6 stars | 130 | 166702,280003,1358574,103029,Biscuit | 9018,,K'arkh | Red +2 | 6 stars | 130 | 197626,1164977,591838,174106,Fenris | 11064
+,,,Morrigan | Red +2 | 6 stars | 130 | 160039,6595,648475,282847,Axel | 11064,,Astaroth | Red +2 | 6 stars | 130 | 199134,106442,1134475,169746,Axel | 11064
+,,,Martha | Red +2 | 6 stars | 130 | 170767,2765,894174,245995,,,Nebula | Red +2 | 6 stars | 130 | 183840,35894,526970,157778,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Heroes' Bridge (Position: 3),Victory,+35,Hero (130-928476),,,,,,Aspid (130-1088126),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Galahad | Red +2 | 6 stars | 130 | 185054,1512621,484079,484079,Fenris | 9504,,Orion | Red +2 | 6 stars | 130 | 177783,353413,372388,0,Khorus | 9428
+,,,Adam | Red +2 | 6 stars | 130 | 130252,946549,30276,0,Cain | 9504,,K'arkh | Red +2 | 6 stars | 130 | 203540,282011,466822,54172,Mara | 6696
+,,,Orion | Red +2 | 6 stars | 130 | 158286,709819,137765,0,Axel | 9504,,Sebastian | Red +2 | 6 stars | 130 | 187216,133735,718065,132768,Albus | 11064
+,,,Isaac | Red | 6 stars | 130 | 147208,181103,88809,0,Oliver | 9504,,Dorian | Red +2 | 6 stars | 130 | 145827,68087,575690,74864,
+,,,Arachne | Red | 6 stars | 130 | 142893,78830,112356,44660,Albus | 9504,,Lyria | Red +2 | 6 stars | 130 | 191817,16039,1295957,70995,Oliver | 11064
+,,,Axel | Violet +3 | 4 stars | 130 | 164783,0,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Heroes' Bridge,Fortification captured,+210
+Sun Temple,1 position out of 4 in this fortification was left undefended and got captured without a fight.,+35
+Moon Temple,1 position out of 4 in this fortification was left undefended and got captured without a fight.,+35
+Sun Temple (Position: 3),Defeat,+25,Hero (130-946525),,,,,,Dimka530 (130-892111),Damage Resist (4%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Tenebris | 6 stars | 130 | 232554,20743985,14597719,6453498,,,Solaris | 6 stars | 130 | 195901,10484718,16488570,2798648,
+,,,Hyperion | 6 stars | 130 | 176273,10225043,12142042,1255729,,,Moloch | 6 stars | 130 | 176110,8481920,12779712,0,
+,,,Nova | 6 stars | 130 | 183060,5845420,8880616,0,,,Araji | 6 stars | 130 | 189161,7532049,8921486,0,
+,,,Sigurd | 6 stars | 130 | 184582,2652422,12703383,0,,,Ignis | 6 stars | 130 | 159697,2188168,7273837,0,
+,,,Brustar | 6 stars | 130 | 170056,1611873,11491687,0,,,Iyari | 6 stars | 130 | 171242,2134778,4919191,2451904,
+,,,Water Spirit Totem | 2 stars | 87,4709865,0,2245860,,,Light Spirit Totem | 6 stars | 130,2144414,0,0,
+,,,Dark Spirit Totem | 3 stars | 81,4594188,640608,0,,,Fire Spirit Totem | 6 stars | 126,27490008,0,7146560,
+
+Sun Temple (Position: 3),Victory,+10,Hero (130-852098),,,,,,Dimka530 (130-892111),Damage Resist (4%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Alecto | 6 stars | 130 | 157791,5806344,0,0,,,Ignis | 6 stars | 130 | 159697,5170720,5495568,0,
+,,,Umbra and Caligo | 6 stars | 130 | 162820,5027942,0,0,,,Iyari | 6 stars | 130 | 171242,4012237,11540711,3889425,
+,,,Valdur and Echo | 6 stars | 125 | 169512,3172046,0,0,,,Solaris | 6 stars | 130 | 195901,1145181,360363,0,
+,,,Lumira and Apollo | 6 stars | 130 | 165408,2120080,0,0,,,Moloch | 6 stars | 130 | 176110,0,0,0,
+,,,Rigel | 6 stars | 130 | 196567,1270230,10328138,0,,,Araji | 6 stars | 130 | 189161,0,0,0,
+,,,Light Spirit Totem | 1 stars | 43,0,0,68800,,,Light Spirit Totem | 6 stars | 130,0,0,0,
+,,,Elemental Spirit of Distortion | 1 stars | 90,0,0,0,,,,,,,
+
+Mage Academy (Position: 2),Defeat,+17,Hero (130-887198),,,,,,Knifer (130-1121371),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Folio | Red +2 | 5 stars | 130 | 128107,1683012,1105828,0,Merlin | 7868,,Jhu | Red +2 | 6 stars | 130 | 186352,4567957,1580415,923745,Vex | 5683
+,,,Judge | Red | 6 stars | 130 | 160696,1434065,1030683,302614,Oliver | 9504,,Sebastian | Red +2 | 6 stars | 130 | 203138,146743,815952,0,Albus | 11064
+,,,Jhu | Red +2 | 6 stars | 130 | 169446,1094039,1403086,215184,Fenris | 9504,,Nebula | Red +2 | 6 stars | 130 | 189761,136992,886116,484726,Cain | 9692
+,,,Heidi | Red +2 | 6 stars | 130 | 146213,1078143,277686,0,Cain | 9504,,Astaroth | Red +2 | 6 stars | 130 | 168065,22254,1498292,139154,
+,,,Byrna | Red +1 | 6 stars | 130 | 117953,1013650,940391,1083568,Axel | 9504,,Martha | Red +2 | 6 stars | 130 | 192112,5231,1643637,2864061,Oliver | 11064
+,,,Axel | Violet +3 | 4 stars | 130 | 164783,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Mage Academy (Position: 2),Defeat,+3,Hero (130-768840),,,,,,Knifer (130-1121371),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Ninja Turtles | Orange +4 | 5 stars | 130 | 96670,595819,281468,32744,,,Jhu | Red +2 | 6 stars | 130 | 186352,2242461,1050819,394375,Vex | 5683
+,,,Daredevil | Red | 6 stars | 130 | 117339,453337,274155,0,Fenris | 9504,,Nebula | Red +2 | 6 stars | 130 | 189761,130260,156813,150573,Cain | 9692
+,,,Lara Croft | Red | 5 stars | 130 | 118188,275519,329166,0,,,Martha | Red +2 | 6 stars | 130 | 192112,46845,494526,753199,Oliver | 11064
+,,,Corvus | Red | 6 stars | 130 | 134299,226748,721075,0,Albus | 9504,,Sebastian | Red +2 | 6 stars | 130 | 203138,0,0,0,Albus | 11064
+,,,Martha | Red | 6 stars | 130 | 137561,4182,667149,35428,Oliver | 9504,,Astaroth | Red +2 | 6 stars | 130 | 168065,0,0,0,
+,,,Axel | Violet +3 | 4 stars | 130 | 164783,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Sun Temple (Position: 1),Victory,+35,Andy (130-1084486),,,,,,NIRO (130-897972),Damage Resist (4%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 130 | 208461,14144407,2431534,0,,,Tenebris | 6 stars | 130 | 285266,5665805,12553320,2420520,
+,,,Asherona and Pyro | 6 stars | 130 | 176884,12180159,0,0,,,Ignis | 6 stars | 130 | 222978,3122822,10259833,0,
+,,,Ignis | 6 stars | 130 | 217689,5323983,2044610,0,,,Avalon | 6 stars | 130 | 134336,1669155,13812563,0,
+,,,Rigel | 6 stars | 130 | 205858,4652979,12653102,0,,,Sylva | 6 stars | 130 | 120715,1361776,12787947,0,
+,,,Solaris | 6 stars | 130 | 275594,4437113,0,803904,,,Angus | 6 stars | 130 | 134677,833544,14843807,0,
+,,,Fire Spirit Totem | 6 stars | 130,29006789,0,1179744,,,Earth Spirit Totem | 6 stars | 105,4476144,5487960,0,
+,,,Light Spirit Totem | 6 stars | 130,0,0,0,,,,,,,
+
+Sun Temple (Position: 2),Victory,+35,Andy (130-897143),,,,,,Дядюшка Ау (130-718259),Damage Resist (4%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Tenebris | 6 stars | 130 | 226410,16230696,6351111,1790552,,,Angus | 6 stars | 130 | 167196,11180921,16081772,0,
+,,,Hyperion | 6 stars | 130 | 169014,12506944,6770490,3606992,,,Hyperion | 6 stars | 130 | 185186,10494220,13547026,2708186,
+,,,Umbra and Caligo | 6 stars | 130 | 157762,7112481,3667065,0,,,Sylva | 6 stars | 121 | 133028,6331562,8312372,0,
+,,,Tidus and Gelo | 6 stars | 130 | 164408,3834932,4611950,15121871,,,Verdoc and Phyto | 5 stars | 123 | 113924,3345878,8455867,0,
+,,,Sigurd | 6 stars | 130 | 179549,2415436,18205933,0,,,Avalon | 6 stars | 116 | 118925,2862150,8922991,0,
+,,,Water Spirit Totem | 6 stars | 130,7965955,0,19087134,,,Earth Spirit Totem | 1 stars | 80,5391818,1969909,1414400,
+,,,Dark Spirit Totem | 1 stars | 114,7075658,0,0,,,,,,,
+
+Sun Temple,Fortification captured,+200
+Citadel (Position: 6),Victory,+35,Andy (130-1146355),,,,,,Aspid (130-1121316),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Dante | Red +2 | 6 stars | 130 | 198933,2344243,286001,0,Fenris | 9428,,Aurora | Red +2 | 6 stars | 130 | 207410,1057966,1212376,0,Cain | 11064
+,,,Yasmine | Red +2 | 6 stars | 130 | 196754,1034223,373993,0,Albus | 11064,,Iris | Red +2 | 6 stars | 130 | 180462,258431,463810,0,
+,,,Galahad | Red +2 | 6 stars | 130 | 202052,510561,266220,196348,Oliver | 11064,,Yasmine | Red +2 | 6 stars | 130 | 201619,80065,410325,0,Fenris | 9483
+,,,Nebula | Red +2 | 6 stars | 130 | 184485,62224,353818,273178,Cain | 6676,,Nebula | Red +2 | 6 stars | 130 | 157269,34671,618713,261174,
+,,,Martha | Red +2 | 6 stars | 130 | 182188,53726,168087,978592,Axel | 11064,,Martha | Red +2 | 6 stars | 130 | 192613,16986,1299753,381754,Axel | 11064
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Citadel (Position: 4),Victory,+35,Andy (130-1145169),,,,,,Dimka530 (130-914063),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Iris | Red +2 | 6 stars | 130 | 190307,1739783,4526,0,Biscuit | 5683,,K'arkh | Red +2 | 6 stars | 130 | 154150,136156,464039,0,
+,,,Jhu | Red +2 | 6 stars | 130 | 187936,1010293,198684,19241,Vex | 11064,,Sebastian | Red +2 | 6 stars | 130 | 136394,62419,485743,0,
+,,,Sebastian | Red +2 | 6 stars | 130 | 196734,593923,4156,0,Oliver | 11064,,Martha | Red +2 | 6 stars | 130 | 170960,16236,1071173,240850,
+,,,Celeste | Red +2 | 6 stars | 130 | 192620,468500,5069,345941,Axel | 11064,,Rufus | Red +2 | 6 stars | 130 | 159118,6729,1149108,0,
+,,,Rufus | Red +2 | 6 stars | 130 | 195629,95339,186694,0,Albus | 11064,,Nebula | Red +2 | 6 stars | 130 | 132750,0,560186,84894,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 160691,0,0,196117,
+
+Citadel (Position: 2),Victory,+35,Andy (130-1016772),,,,,,Фаркуа (130-816500),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Corvus | Red +2 | 6 stars | 130 | 149597,1401337,325637,97287,Biscuit | 5683,,Corvus | Orange +2 | 6 stars | 130 | 93521,233164,445145,0,Albus | 11064
+,,,Isaac | Red +2 | 6 stars | 130 | 166176,968588,42157,1597,Mara | 11064,,Cleaver | Red | 6 stars | 130 | 144645,198872,926807,55321,Fenris | 10238
+,,,Arachne | Red +2 | 6 stars | 130 | 157005,775982,180195,132086,Albus | 11064,,Aurora | Red +2 | 6 stars | 130 | 173570,133159,1121729,0,
+,,,Dorian | Red +2 | 6 stars | 130 | 181996,770176,598829,853507,Axel | 11064,,Rufus | Red | 6 stars | 130 | 124200,95029,1195429,307680,
+,,,Jorgen | Red +2 | 6 stars | 130 | 180055,614936,160171,95515,Oliver | 11064,,Astaroth | Orange +2 | 6 stars | 130 | 98621,4405,505197,70317,Biscuit | 11064
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Merlin | Violet +3 | 6 stars | 130 | 181943,305648,0,0,
+
+Citadel (Position: 1),Defeat,+19,Xavior (130-922048),,,,,,Дядюшка Ау (130-956542),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Kayla | Red +2 | 6 stars | 130 | 181578,1651705,1238334,0,Albus | 11064,,Orion | Red +2 | 6 stars | 130 | 183327,2107840,445947,445947,Khorus | 11064
+,,,Jhu | Red +2 | 6 stars | 130 | 153543,733451,844209,87957,Vex | 11064,,Helios | Red +2 | 6 stars | 130 | 167044,1272678,1219799,719582,Merlin | 8640
+,,,Sebastian | Red +2 | 6 stars | 130 | 118540,480494,404229,0,Fenris | 9018,,Celeste | Red +1 | 6 stars | 130 | 115914,230373,194824,60725,
+,,,Aidan | Red +2 | 6 stars | 130 | 191499,287956,1238334,216622,Khorus | 10336,,Rufus | Red +2 | 6 stars | 130 | 166993,50104,1148817,655189,Oliver | 11064
+,,,Astrid and Lucas | Red | 6 stars | 130 | 94945,36384,239176,0,Mara | 11064,,Dorian | Red +2 | 6 stars | 130 | 141321,6478,465498,2677,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,579384,0,0,,,Khorus | Violet +3 | 6 stars | 130 | 181943,2320,0,0,
+
+Citadel (Position: 5),Victory,+35,Xavior (130-1151326),,,,,,GodDevil (130-1050254),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Keira | Red +2 | 6 stars | 130 | 200309,2144984,198421,0,Vex | 11064,,Keira | Red +2 | 6 stars | 130 | 166888,726057,396141,0,Vex | 8782
+,,,Corvus | Red +2 | 6 stars | 130 | 199175,287948,186753,0,Albus | 11064,,Yasmine | Red +2 | 6 stars | 130 | 182280,88980,410325,0,Cain | 9692
+,,,Lyria | Red +2 | 6 stars | 130 | 189622,46291,172581,6554,Fenris | 9018,,K'arkh | Red +2 | 6 stars | 130 | 206008,40670,429412,0,Mara | 11064
+,,,Morrigan | Red +2 | 6 stars | 130 | 198609,31934,276748,8704,Axel | 6676,,Galahad | Red | 6 stars | 130 | 124949,9249,729808,2186,
+,,,Nebula | Red +2 | 6 stars | 130 | 181668,0,30453,0,Cain | 5683,,Nebula | Red +2 | 6 stars | 130 | 188186,0,545471,0,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Citadel (Position: 1),Victory,+16,Xavior (130-933447),,,,,,Дядюшка Ау (130-956542),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Isaac | Red +2 | 6 stars | 130 | 197628,1151607,267712,0,Mara | 11064,,Orion | Red +2 | 6 stars | 130 | 183327,831373,391798,0,Khorus | 11064
+,,,Phobos | Red +2 | 6 stars | 130 | 196508,191890,108002,40495,Merlin | 6719,,Celeste | Red +1 | 6 stars | 130 | 115914,185463,107503,0,
+,,,Jorgen | Red +2 | 6 stars | 130 | 146318,50592,298869,0,Axel | 6676,,Rufus | Red +2 | 6 stars | 130 | 166993,10770,894383,257965,Oliver | 11064
+,,,Martha | Red +2 | 6 stars | 130 | 126346,37345,216004,216004,Oliver | 6676,,Dorian | Red +2 | 6 stars | 130 | 141321,5758,137898,6620,
+,,,Astaroth | Red | 6 stars | 130 | 84704,2840,392362,0,Biscuit | 4773,,Helios | Red +2 | 6 stars | 130 | 167044,0,0,0,Merlin | 8640
+,,,Mara | Violet +3 | 6 stars | 130 | 181943,97308,0,0,,,Khorus | Violet +3 | 6 stars | 130 | 181943,249585,0,0,
+
+Moon Temple (Position: 4),Victory,+35,Xavior (130-741265),,,,,,Фигаро 2 (130-635612),Health Increase (49%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 284733,26637315,2583855,3664492,,,Hyperion | 6 stars | 130 | 166621,8563338,19931861,3897300,
+,,,Rigel | 6 stars | 130 | 218764,16598869,7723701,0,,,Tenebris | 6 stars | 129 | 194537,4488145,14822505,1579880,
+,,,Avalon | 6 stars | 130 | 105714,6012121,2148717,0,,,Brustar | 6 stars | 108 | 112506,2790276,13856027,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 100559,4946790,3256671,0,,,Tidus and Gelo | 6 stars | 101 | 88998,2594984,13537782,5732376,
+,,,Iyari | 6 stars | 70 | 31495,2698216,4954427,2703772,,,Umbra and Caligo | 4 stars | 88 | 72950,1659957,6649648,0,
+,,,Earth Spirit Totem | 2 stars | 87,6245992,3326120,2088000,,,Dark Spirit Totem | 1 stars | 90,3983199,0,0,
+,,,Light Spirit Totem | 1 stars | 97,5658520,0,0,,,,,,,
+
+Bastion of Ice (Position: 2),Defeat,+6,Xavior (130-756545),,,,,,Фаркуа (130-691656),Energy Gain Increase (21%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Sylva | 6 stars | 130 | 181882,4703183,9829091,0,,,Araji | 6 stars | 130 | 160624,14382620,0,0,
+,,,Eden | 6 stars | 130 | 200959,3179405,12118062,0,,,Angus | 6 stars | 130 | 128233,10828176,9859081,0,
+,,,Araji | 6 stars | 130 | 115313,3106310,5758887,0,,,Eden | 6 stars | 130 | 163912,6415692,0,0,
+,,,Asherona and Pyro | 5 stars | 130 | 71628,2390165,4404844,0,,,Sylva | 6 stars | 130 | 127047,5276144,0,0,
+,,,Angus | 6 stars | 130 | 186763,2005599,15084779,0,,,Avalon | 6 stars | 117 | 111840,2322125,0,0,
+,,,Fire Spirit Totem | 1 stars | 80,477958,0,0,,,Earth Spirit Totem | 3 stars | 125,7970906,6003539,0,
+,,,Earth Spirit Totem | 2 stars | 87,0,1960035,174000,,,,,,,
+
+Citadel,2 positions out of 8 in this fortification were left undefended and got captured without a fight.,+70
+Spring of Elements (Position: 2),Defeat,+31,COCO (130-824196),,,,,,Glip (130-913405),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Hyperion | 6 stars | 130 | 145487,12177275,11902824,3152453,,,Moloch | 6 stars | 130 | 192236,11223405,12990735,0,
+,,,Brustar | 6 stars | 130 | 161399,10968441,11132485,0,,,Araji | 6 stars | 130 | 195084,6132286,7440332,0,
+,,,Araji | 6 stars | 130 | 157892,7152404,8382198,1522903,,,Vulcan | 6 stars | 130 | 182794,3529854,6593399,0,
+,,,Angus | 6 stars | 130 | 172170,2973243,14438235,0,,,Ignis | 6 stars | 130 | 183009,3376088,9145590,0,
+,,,Mort | 6 stars | 130 | 187248,2616936,9237590,0,,,Hyperion | 6 stars | 130 | 160282,3085714,7576047,1289921,
+,,,Dark Spirit Totem | 4 stars | 81,7857804,0,0,,,Fire Spirit Totem | 5 stars | 112,27745985,0,0,
+
+Moon Temple (Position: 1),Victory,+35,Team JE (130-1403267),,,,,,GodDevil (130-1002554),Health Increase (49%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Solaris | 6 stars | 130 | 319799,31614738,6666218,1643400,,,Brustar | 6 stars | 130 | 192305,19913243,30256583,4423494,
+,,,Eden | 6 stars | 130 | 221826,17769206,16437703,0,,,Tenebris | 6 stars | 130 | 308069,10473720,21228588,4270419,
+,,,Rigel | 6 stars | 130 | 273667,12641218,7780868,0,,,Keros | 6 stars | 130 | 172031,3378536,17236682,0,
+,,,Brustar | 6 stars | 130 | 271145,11747487,19367826,0,,,Mort | 6 stars | 130 | 181360,2066427,22127216,0,
+,,,Tenebris | 6 stars | 130 | 316830,8421561,12550912,800910,,,Solaris | 6 stars | 130 | 148789,1025438,16011012,1029697,
+,,,Dark Spirit Totem | 6 stars | 130,24665871,0,0,,,Dark Spirit Totem | 6 stars | 130,25946163,0,0,
+,,,Light Spirit Totem | 6 stars | 130,0,0,0,,,,,,,
+
+Citadel (Position: 7),Victory,+35,Serg (130-1100117),,,,,,Терапевт (130-1042338),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Dante | Red +2 | 6 stars | 130 | 203762,2577211,295861,0,Cain | 10154,,Helios | Red +2 | 6 stars | 130 | 179952,124695,669596,0,
+,,,Jet | Red +2 | 6 stars | 130 | 164594,2002,0,0,Axel | 6866,,Celeste | Red +2 | 6 stars | 130 | 155314,92340,411777,0,Merlin | 4169
+,,,Nebula | Red +2 | 6 stars | 130 | 181707,0,2920,0,,,Jhu | Red +2 | 6 stars | 130 | 183742,91333,619296,0,Vex | 5634
+,,,Sebastian | Red +2 | 6 stars | 130 | 195418,0,0,0,Albus | 11064,,Yasmine | Red +2 | 6 stars | 130 | 184379,7063,398645,0,
+,,,Fafnir | Red +2 | 6 stars | 130 | 172693,0,0,0,Mara | 5766,,Orion | Red +2 | 6 stars | 130 | 202087,1894,498443,0,Khorus | 11064
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Oliver | Violet +2 | 6 stars | 130 | 136864,0,0,0,
+
+Citadel,Fortification captured,+410
+Spring of Elements (Position: 2),Victory,+4,Serg (130-375065),,,,,,Glip (130-913405),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 105 | 93517,2003482,3369409,0,,,Hyperion | 6 stars | 130 | 160282,12990824,5548098,1289921,
+,,,Moloch | 6 stars | 81 | 63498,1348452,3088621,0,,,Araji | 6 stars | 130 | 195084,0,0,0,
+,,,Alecto | 5 stars | 102 | 74547,996600,1684705,0,,,Ignis | 6 stars | 130 | 183009,0,0,0,
+,,,Eden | 6 stars | 106 | 89232,683654,1855345,0,,,Moloch | 6 stars | 130 | 192236,0,0,0,
+,,,Ignis | 6 stars | 79 | 54271,0,2992744,0,,,Vulcan | 6 stars | 130 | 182794,0,0,0,
+,,,Fire Spirit Totem | 1 stars | 80,515910,0,256000,,,,,,,
+
+Spring of Elements,Fortification captured,+140
+Mage Academy (Position: 2),Victory,+15,Serg (130-887559),,,,,,Knifer (130-1121371),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +2 | 6 stars | 130 | 125520,1364681,25194,5388,Khorus | 11064,,Jhu | Red +2 | 6 stars | 130 | 186352,1368696,850345,0,Vex | 5683
+,,,Jhu | Red +2 | 6 stars | 130 | 142728,832666,200209,48143,Vex | 6894,,Nebula | Red +2 | 6 stars | 130 | 189761,104393,756350,342898,Cain | 9692
+,,,Cleaver | Red +2 | 6 stars | 130 | 165787,639741,890332,313471,Albus | 11064,,Martha | Red +2 | 6 stars | 130 | 192112,48073,2293139,1840722,Oliver | 11064
+,,,Isaac | Red +2 | 6 stars | 130 | 142617,354093,0,0,Axel | 6866,,Sebastian | Red +2 | 6 stars | 130 | 203138,0,0,0,Albus | 11064
+,,,Martha | Red +1 | 6 stars | 130 | 128964,22286,633156,1378484,Oliver | 4773,,Astaroth | Red +2 | 6 stars | 130 | 168065,0,0,0,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,914096,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Mage Academy,Fortification captured,+105
+Lighthouse (Position: 2),Victory,+35,Serg (130-690481),,,,,,Фигаро 2 (130-657072),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Augustus | Red +2 | 6 stars | 130 | 112571,1380935,105038,0,Albus | 11064,,Isaac | Red +1 | 6 stars | 130 | 120669,353485,353933,0,Mara | 3398
+,,,Adam | Red +2 | 6 stars | 130 | 107462,1072995,49275,0,Cain | 10154,,Iris | Orange +3 | 6 stars | 130 | 71793,335978,203836,0,
+,,,Byrna | Red +2 | 6 stars | 130 | 108582,288668,610109,463629,Khorus | 11064,,Rufus | Red | 6 stars | 130 | 126624,237321,2085072,1017585,Oliver | 5023
+,,,Lara Croft | Red +1 | 4 stars | 130 | 84471,165358,44934,57077,Vex | 6894,,Yasmine | Orange +4 | 6 stars | 130 | 111872,73700,210615,0,
+,,,Yasmine | Red | 6 stars | 130 | 95452,153831,227965,0,Fenris | 4773,,Martha | Red | 6 stars | 130 | 119489,36837,930330,737398,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,721999,0,0,,,Axel | Violet +1 | 5 stars | 130 | 106625,0,0,0,
+
+Moon Temple (Position: 3),Victory,+35,Team JE (130-1315348),,,,,,Liftman (130-1011597),Health Increase (49%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Amon | 6 stars | 130 | 273606,24436771,12502528,1299862,,,Sigurd | 6 stars | 130 | 213807,10064656,24175048,0,
+,,,Keros | 6 stars | 130 | 271115,7505557,2806763,0,,,Nova | 6 stars | 130 | 202331,4876556,14113307,0,
+,,,Araji | 6 stars | 130 | 225877,6285383,2735028,0,,,Hyperion | 6 stars | 130 | 214349,2842764,20118936,1895176,
+,,,Iyari | 6 stars | 130 | 273623,4856619,601923,3202168,,,Solaris | 6 stars | 130 | 229826,2230719,19604903,874562,
+,,,Mort | 6 stars | 130 | 271127,3532673,15204685,325901,,,Iyari | 6 stars | 130 | 151284,1394565,15572329,0,
+,,,Dark Spirit Totem | 6 stars | 130,46967520,0,0,,,Water Spirit Totem | 6 stars | 121,12441667,0,8819360,
+,,,Light Spirit Totem | 6 stars | 130,0,0,0,,,Light Spirit Totem | 2 stars | 74,0,0,0,
+
+Moon Temple,Fortification captured,+200
+Bastion of Fire (Position: 4),Victory,+35,lucky (130-990771),,,,,,Glip (130-680156),Health Increase (80%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Moloch | 6 stars | 130 | 201481,24917648,10236179,0,,,Eden | 6 stars | 130 | 175492,11660332,21651100,0,
+,,,Solaris | 6 stars | 130 | 262360,22556250,4724566,4457523,,,Sylva | 6 stars | 130 | 122428,5567444,14747832,0,
+,,,Araji | 6 stars | 130 | 188908,15733766,3595783,0,,,Nova | 6 stars | 130 | 116333,5294198,11199193,0,
+,,,Rigel | 6 stars | 130 | 160783,10254654,11800063,0,,,Angus | 6 stars | 130 | 147987,5258948,24622036,0,
+,,,Ignis | 6 stars | 130 | 177239,8460527,3160182,0,,,Sigurd | 6 stars | 130 | 117916,4503879,16769656,0,
+,,,Fire Spirit Totem | 1 stars | 90,8738702,0,0,,,Earth Spirit Totem | 1 stars | 92,1231972,1671730,0,
+
+Bastion of Fire (Position: 3),Defeat,+23,lucky (130-699127),,,,,,Терапевт (130-581186),Health Increase (80%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Hyperion | 6 stars | 130 | 151661,17800077,10346859,765442,,,Araji | 6 stars | 130 | 142147,16711307,7604492,0,
+,,,Tenebris | 6 stars | 130 | 260047,11864410,9285474,1079081,,,Mairi | 6 stars | 130 | 200363,10009259,14544969,0,
+,,,Eden | 6 stars | 130 | 148463,7455160,9745129,0,,,Eden | 6 stars | 115 | 96529,5206593,1799119,0,
+,,,Keros | 6 stars | 80 | 80981,1722877,3650231,0,,,Vulcan | 6 stars | 99 | 69019,3589131,6140595,0,
+,,,Sigurd | 6 stars | 77 | 57975,256482,3965798,0,,,Moloch | 6 stars | 98 | 73128,1477201,9009831,0,
+
+Lighthouse (Position: 4),Victory,+35,lucky (130-955358),,,,,,Marsik (130-766683),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Galahad | Red +2 | 6 stars | 130 | 174808,1082088,773138,482386,Albus | 9428,,Helios | Red +2 | 6 stars | 130 | 151751,614770,728657,0,
+,,,Jhu | Red +2 | 6 stars | 130 | 169996,1040842,447637,76569,Fenris | 9428,,Corvus | Red +2 | 6 stars | 130 | 127983,259913,894405,0,
+,,,Yasmine | Red +2 | 6 stars | 130 | 178942,690507,363695,0,Cain | 9428,,Kai | Red +1 | 6 stars | 130 | 121635,166585,380612,33622,Khorus | 9428
+,,,Isaac | Red +2 | 6 stars | 130 | 137996,237466,72072,0,Axel | 8542,,Thea | Orange +4 | 6 stars | 130 | 84035,11988,441730,632034,
+,,,Martha | Red +2 | 6 stars | 130 | 138679,27692,32173,461025,Oliver | 9428,,Astaroth | Red +1 | 6 stars | 130 | 99336,9212,688469,88282,
+,,,Khorus | Violet +3 | 6 stars | 130 | 154937,171175,0,0,,,Cain | Violet +3 | 6 stars | 130 | 181943,510350,0,0,
+
+Lighthouse (Position: 5),Victory,+35,lucky (130-831322),,,,,,ZAC (130-355335),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Dante | Red +2 | 6 stars | 130 | 146679,911825,41860,0,Cain | 9428,,Corvus | Orange +3 | 6 stars | 130 | 86880,204109,510725,0,Albus | 2781
+,,,K'arkh | Red +1 | 6 stars | 130 | 104089,192539,28311,0,Fenris | 9428,,Jhu | Orange | 6 stars | 130 | 63754,168758,292790,0,Fenris | 2790
+,,,Sebastian | Red +2 | 6 stars | 130 | 162301,102026,27384,0,,,Qing Mao | Orange | 6 stars | 130 | 46995,153400,119465,0,
+,,,Maya | Red | 6 stars | 130 | 116940,63902,122166,0,Albus | 9428,,Heidi | Violet +2 | 3 stars | 96 | 20911,61371,43393,0,
+,,,Astaroth | Red +1 | 6 stars | 130 | 146376,12770,533421,9428,Oliver | 9428,,Martha | Orange +3 | 6 stars | 130 | 77571,1606,363575,13485,
+,,,Khorus | Violet +3 | 6 stars | 130 | 154937,24159,0,0,,,Albus | Violet | 3 stars | 93 | 59224,186625,0,0,
+
+Foundry (Position: 1),Victory,+35,lucky (130-705107),,,,,,ZAC (130-394184),Health Increase (40%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +1 | 6 stars | 130 | 103357,1055121,13168,0,Merlin | 9428,,Orion | Orange | 6 stars | 130 | 59236,188784,280157,73676,
+,,,Helios | Red +2 | 6 stars | 130 | 130865,165315,45088,0,Khorus | 9428,,Ishmael | Orange +4 | 6 stars | 130 | 92666,42583,383714,49653,Oliver | 3865
+,,,Corvus | Red +1 | 6 stars | 130 | 104687,161417,146607,0,Oliver | 9428,,Nebula | Orange | 6 stars | 130 | 50131,23386,194793,35774,
+,,,Phobos | Red +1 | 6 stars | 130 | 106811,21387,22046,0,Albus | 9428,,Sebastian | Orange +1 | 6 stars | 130 | 66369,11686,389358,0,
+,,,Nebula | Red +1 | 6 stars | 130 | 104450,17548,40900,32382,Cain | 9428,,Dorian | Orange | 6 stars | 130 | 51057,1370,230726,0,
+,,,Khorus | Violet +3 | 6 stars | 130 | 154937,57960,0,0,,,Oliver | Violet +1 | 3 stars | 100 | 74725,0,0,90640,
+
+Altar of Life (Position: 3),Victory,+35,remy (130-724206),,,,,,ZAC (130-217692),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Angus | 6 stars | 130 | 150596,6627680,1355272,1257297,,,Eden | 5 stars | 80 | 53111,427402,3920930,0,
+,,,Tenebris | 6 stars | 130 | 169816,3151981,0,0,,,Nova | 5 stars | 70 | 37921,350744,2148909,0,
+,,,Avalon | 6 stars | 130 | 150053,3148354,0,0,,,Hyperion | 5 stars | 75 | 46426,255329,3123759,386700,
+,,,Mort | 6 stars | 130 | 123275,1798527,0,0,,,Angus | 5 stars | 60 | 31409,187984,3265535,0,
+,,,Sylva | 6 stars | 130 | 130466,1411101,0,0,,,Sigurd | 5 stars | 70 | 48825,133813,3678510,0,
+,,,Earth Spirit Totem | 5 stars | 84,0,0,0,,,,,,,
+,,,Dark Spirit Totem | 1 stars | 67,0,0,0,,,,,,,
+
+Altar of Life (Position: 1),Victory,+35,Faern (130-802608),,,,,,ZAC (130-195956),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Vulcan | 6 stars | 130 | 139224,4564339,2901268,0,,,Araji | 5 stars | 80 | 54666,931011,2500440,0,
+,,,Asherona and Pyro | 6 stars | 130 | 170804,2302873,884449,0,,,Ignis | 6 stars | 70 | 46875,795672,2431945,0,
+,,,Hyperion | 6 stars | 130 | 180786,1507047,613340,1322071,,,Moloch | 5 stars | 80 | 61250,519776,3936379,0,
+,,,Verdoc and Phyto | 6 stars | 130 | 122233,1369204,590595,0,,,Vulcan | 5 stars | 41 | 18769,373152,764089,0,
+,,,Eden | 6 stars | 130 | 189561,677257,670914,0,,,Mort | 5 stars | 34 | 14396,64837,787867,0,
+,,,Fire Spirit Totem | 4 stars | 110,0,0,0,,,Fire Spirit Totem | 1 stars | 42,2976118,0,0,
+,,,Earth Spirit Totem | 2 stars | 81,0,0,486000,,,,,,,
+
+City Hall (Position: 5),Victory,+35,Faern (130-1165793),,,,,,Жека (130-1142202),Healing Increase (77%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Keira | Red +2 | 6 stars | 130 | 204474,1861238,499601,187820,Vex | 11064,,Dante | Red +2 | 6 stars | 130 | 198432,984227,390662,0,Fenris | 9428
+,,,Sebastian | Red +2 | 6 stars | 130 | 198368,956429,530904,0,Albus | 11064,,Heidi | Red +2 | 6 stars | 130 | 202865,458813,388854,0,Biscuit | 11064
+,,,Corvus | Red +2 | 6 stars | 130 | 198926,500963,354552,0,Oliver | 11064,,Yasmine | Red +2 | 6 stars | 130 | 195914,376021,539584,0,Cain | 11064
+,,,Lyria | Red +2 | 6 stars | 130 | 189526,500497,274279,263234,Fenris | 11064,,Astaroth | Red +2 | 6 stars | 130 | 182456,18216,1707769,645777,Oliver | 11064
+,,,Fafnir | Red +2 | 6 stars | 130 | 192556,0,180677,0,Mara | 11064,,Martha | Red +2 | 6 stars | 130 | 180592,2736,792258,125185,Axel | 11064
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+City Hall (Position: 4),Victory,+35,Faern (130-974349),,,,,,Терапевт (130-1039341),Healing Increase (77%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +2 | 6 stars | 130 | 152256,1899133,94964,0,Mara | 11064,,Sebastian | Red +2 | 6 stars | 130 | 143420,1147435,551424,0,Albus | 11064
+,,,Augustus | Red +2 | 6 stars | 130 | 150176,1240154,63939,0,Biscuit | 11064,,K'arkh | Red +2 | 6 stars | 130 | 199257,797998,572694,70447,Fenris | 7059
+,,,Fluffy | Red +2 | 6 stars | 130 | 162108,1082578,442790,292933,Khorus | 11064,,Nebula | Red +2 | 6 stars | 130 | 182398,89536,1066869,817015,Cain | 11064
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 162470,720538,1922564,741019,Oliver | 11064,,Astaroth | Red +2 | 6 stars | 130 | 197566,68276,1117735,291322,Axel | 11064
+,,,Jorgen | Red +2 | 6 stars | 130 | 165396,400890,117900,0,Axel | 11064,,Martha | Red +2 | 6 stars | 130 | 134757,34058,1722580,733020,Oliver | 8332
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,192863,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+City Hall (Position: 3),Victory,+35,Faern (130-968380),,,,,,Жека (130-903844),Healing Increase (77%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Lara Croft | Red +2 | 5 stars | 130 | 173964,2284635,323115,386055,Vex | 11064,,Iris | Red +2 | 6 stars | 130 | 111832,3829014,955308,616059,
+,,,Phobos | Red +2 | 6 stars | 130 | 127286,764338,408715,26438,Khorus | 11064,,Aurora | Red +2 | 6 stars | 130 | 162311,631477,1437317,0,
+,,,Byrna | Red +2 | 6 stars | 130 | 130921,570786,495325,1262345,Biscuit | 11064,,Jhu | Red +2 | 6 stars | 130 | 173297,533773,1266636,0,Vex | 7804
+,,,Morrigan | Red +2 | 6 stars | 130 | 155132,313405,1388457,340128,Axel | 11064,,Dorian | Red +2 | 6 stars | 130 | 142212,266888,894015,1202814,
+,,,Astaroth | Red +2 | 6 stars | 130 | 199134,80965,3147907,480344,Oliver | 11064,,Nebula | Red +2 | 6 stars | 130 | 132249,28858,579029,238002,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,864942,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,726743,0,0,
+
+Alchemy Tower (Position: 1),Victory,+35,Team Gandagom (130-1169654),,,,,,Терапевт (130-915477),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +2 | 6 stars | 130 | 196004,1044196,75550,0,Khorus | 10154,,Iris | Red +2 | 6 stars | 130 | 141469,316363,495567,131980,
+,,,Dante | Red +2 | 6 stars | 130 | 194770,600696,55082,0,Fenris | 8782,,Isaac | Red +2 | 6 stars | 130 | 180302,239438,412687,0,
+,,,Aurora | Red +2 | 6 stars | 130 | 203177,462947,307804,0,Axel | 11064,,Polaris | Red +2 | 6 stars | 130 | 139625,2129,385525,0,
+,,,Martha | Red +2 | 6 stars | 130 | 194919,3425,67118,35412,Oliver | 10154,,Dorian | Red +2 | 6 stars | 130 | 139159,1796,499409,25200,
+,,,Nebula | Red +2 | 6 stars | 130 | 198841,0,54172,82602,Cain | 10154,,Ishmael | Red +2 | 6 stars | 130 | 132979,0,318076,0,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Alchemy Tower (Position: 2),Defeat,+33,Team Gandagom (130-977388),,,,,,Dimka530 (130-1071335),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Adam | Red +2 | 6 stars | 130 | 175771,1623819,450732,0,Cain | 10154,,Iris | Red +2 | 6 stars | 130 | 191712,2463708,1188949,697220,Albus | 11064
+,,,Eva | Red +2 | 6 stars | 130 | 134313,1486396,395962,0,Fenris | 8782,,Yasmine | Red +2 | 6 stars | 130 | 197673,1177851,389679,8775,Cain | 6894
+,,,Fluffy | Red +2 | 6 stars | 130 | 138816,720225,404059,269540,Khorus | 10154,,Dorian | Red +2 | 6 stars | 130 | 129422,86725,558508,241719,
+,,,Julius | Red +2 | 6 stars | 130 | 182937,136158,1998394,0,Axel | 11064,,Amira | Red +2 | 6 stars | 130 | 188212,83125,632644,0,Biscuit | 8782
+,,,Fafnir | Red +2 | 6 stars | 130 | 173618,0,897784,192926,Oliver | 10154,,Astaroth | Red +2 | 6 stars | 130 | 182373,11276,1089955,208053,
+,,,Khorus | Violet +3 | 5 stars | 130 | 171933,217383,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Barracks (Position: 2),Victory,+35,Arya (130-1086295),,,,,,Фигаро 2 (130-887824),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Augustus | Red +2 | 6 stars | 130 | 192348,944326,0,0,Albus | 11064,,Fluffy | Red +1 | 6 stars | 130 | 106751,63536,287166,0,Khorus | 10154
+,,,Dante | Red +2 | 6 stars | 130 | 203818,791803,63952,45723,Cain | 11064,,Lara Croft | Red +2 | 4 stars | 130 | 144889,30838,329412,0,Vex | 5054
+,,,Orion | Red +2 | 6 stars | 130 | 207386,564115,3850,3850,Khorus | 11064,,Lyria | Red +2 | 6 stars | 130 | 159910,23834,868672,0,Fenris | 7290
+,,,Dorian | Red +2 | 6 stars | 130 | 119863,4492,0,0,Merlin | 9428,,Sebastian | Red +2 | 6 stars | 130 | 138850,7027,391087,0,
+,,,Nebula | Red +2 | 6 stars | 130 | 180937,0,0,0,,,Nebula | Red +2 | 6 stars | 130 | 165491,0,485832,0,
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Khorus | Violet +3 | 5 stars | 130 | 171933,0,0,0,
+
+Barracks (Position: 3),Victory,+35,Arya (130-926631),,,,,,NIRO (130-1177321),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Iris | Red +2 | 6 stars | 130 | 152438,4075012,270560,0,Albus | 11064,,Peppy | Red +2 | 6 stars | 130 | 192053,1421468,806799,0,Biscuit | 11064
+,,,Keira | Red +2 | 6 stars | 130 | 168698,1677895,637041,228264,Vex | 7130,,Yasmine | Red +2 | 6 stars | 130 | 203077,1159100,729986,0,Albus | 11064
+,,,Lyria | Red +2 | 6 stars | 130 | 153458,383790,1004280,65398,Fenris | 7804,,Astaroth | Red +2 | 6 stars | 130 | 199134,343597,2568022,386045,Oliver | 11064
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 115991,253830,1497957,218515,Merlin | 9428,,Thea | Red +2 | 6 stars | 130 | 199220,133609,882647,1019157,Axel | 11064
+,,,Martha | Red +2 | 6 stars | 130 | 154103,19157,319318,272619,Axel | 11064,,Nebula | Red +2 | 6 stars | 130 | 201894,101386,1770083,280338,Cain | 11064
+,,,Khorus | Violet +3 | 6 stars | 130 | 181943,347853,0,0,,,Albus | Violet +3 | 6 stars | 130 | 181943,569996,0,0,
+
+Barracks,Fortification captured,+105
+Lighthouse (Position: 3),Victory,+35,sIGMo (130-963517),,,,,,Marsik (130-868106),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +2 | 6 stars | 130 | 189780,1704121,190196,0,Axel | 9494,,Jhu | Red +2 | 6 stars | 130 | 182524,742225,1199616,167980,Vex | 6676
+,,,Jhu | Red +2 | 6 stars | 130 | 135823,1296866,690597,238162,Albus | 9428,,Ishmael | Red +2 | 6 stars | 130 | 158156,566460,939847,373076,Mara | 6676
+,,,Dante | Red +2 | 6 stars | 130 | 176871,1140890,210889,0,Cain | 2648,,Keira | Orange +3 | 6 stars | 130 | 74126,319411,223450,29145,
+,,,Thea | Red +2 | 6 stars | 130 | 127714,89732,423692,1621165,Mara | 974,,Aurora | Red +2 | 6 stars | 130 | 177690,277111,1197191,0,Merlin | 6676
+,,,Astaroth | Red +2 | 6 stars | 130 | 160021,15762,665628,7378,Oliver | 5467,,Lyria | Orange +4 | 6 stars | 130 | 93667,129633,541105,10575,Biscuit | 5683
+,,,Axel | Violet +3 | 6 stars | 130 | 173308,0,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 181943,0,0,581929,
+
+City Hall (Position: 2),Victory,+35,Trofik (130-1123099),,,,,,Team SC (130-944937),Healing Increase (77%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Augustus | Red +2 | 6 stars | 130 | 195908,1545777,1971,1971,Albus | 10154,,Celeste | Red +2 | 6 stars | 130 | 153471,200620,361277,0,Merlin | 11064
+,,,Orion | Red +2 | 6 stars | 130 | 197560,1093708,1112,1112,Biscuit | 11064,,Thea | Red +2 | 6 stars | 130 | 186950,77895,985355,645732,Axel | 11064
+,,,Iris | Red +2 | 6 stars | 130 | 183273,583225,1501,1501,,,Maya | Red +2 | 6 stars | 130 | 159014,41394,477856,0,Biscuit | 11064
+,,,Dorian | Red +2 | 6 stars | 130 | 189269,84796,76714,187986,Merlin | 7804,,Martha | Red +2 | 6 stars | 130 | 165506,39936,1158958,195536,
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 179558,25712,354271,14599,Oliver | 6894,,Jet | Red +2 | 6 stars | 130 | 98053,0,283499,0,
+,,,Biscuit | Violet +3 | 6 stars | 130 | 177531,9451,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+City Hall (Position: 1),Victory,+35,Trofik (130-1145981),,,,,,Жека (130-995421),Healing Increase (77%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Kayla | Red +2 | 6 stars | 130 | 170724,1456653,359424,0,,,Orion | Red +2 | 6 stars | 130 | 195463,1005224,417168,0,Merlin | 7804
+,,,Galahad | Red +2 | 6 stars | 130 | 199291,688706,459521,299376,Fenris | 8518,,Helios | Red +2 | 6 stars | 130 | 174002,329923,461996,0,Khorus | 11064
+,,,Yasmine | Red +2 | 6 stars | 130 | 202238,619278,165607,171698,Albus | 10154,,Celeste | Red +2 | 6 stars | 130 | 150240,122888,344897,0,
+,,,Lyria | Red +2 | 6 stars | 130 | 194051,330018,343623,61250,Oliver | 6894,,Rufus | Red +2 | 6 stars | 130 | 109817,66420,1525656,787996,
+,,,Celeste | Red +2 | 6 stars | 130 | 202146,238182,331866,132952,Biscuit | 11064,,Sebastian | Red +2 | 6 stars | 130 | 183956,34614,489292,0,Albus | 11064
+,,,Biscuit | Violet +3 | 6 stars | 130 | 177531,0,0,0,,,Khorus | Violet +3 | 6 stars | 130 | 181943,7144,0,0,
+
+City Hall,Fortification captured,+235
+Altar of Life (Position: 4),Victory,+35,Trofik (130-950293),,,,,,GodDevil (130-924267),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Hyperion | 6 stars | 130 | 195140,16192840,4447568,3119606,,,Hyperion | 6 stars | 130 | 200449,12244461,13934302,2495686,
+,,,Nova | 6 stars | 130 | 190028,8828559,13186035,0,,,Nova | 6 stars | 130 | 186342,10763304,9092653,0,
+,,,Mairi | 6 stars | 130 | 183259,4805169,7316047,0,,,Eden | 6 stars | 130 | 160666,5361438,14497503,0,
+,,,Tidus and Gelo | 6 stars | 130 | 155590,2218439,5111428,3434117,,,Araji | 6 stars | 130 | 176361,4875886,8786575,0,
+,,,Sigurd | 6 stars | 130 | 226276,1529755,19616998,0,,,Sigurd | 6 stars | 130 | 200449,3971493,15527724,0,
+,,,Water Spirit Totem | 4 stars | 130,28263995,0,19104445,,,Water Spirit Totem | 2 stars | 130,12461494,0,8037800,
+
+Bastion of Fire (Position: 3),Victory,+12,Trofik (130-779471),,,,,,Терапевт (130-581186),Health Increase (80%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 130 | 147626,6279036,1154232,0,,,Araji | 6 stars | 130 | 142147,7325714,4349680,0,
+,,,Brustar | 6 stars | 130 | 169942,4159730,11129194,0,,,Eden | 6 stars | 115 | 96529,5741032,12583062,0,
+,,,Asherona and Pyro | 6 stars | 130 | 92331,3319344,1345347,0,,,Mairi | 6 stars | 130 | 200363,1890418,2256639,0,
+,,,Moloch | 6 stars | 115 | 90379,2152404,1328391,0,,,Moloch | 6 stars | 98 | 73128,0,0,0,
+,,,Tenebris | 6 stars | 130 | 279193,1235640,0,1669377,,,Vulcan | 6 stars | 99 | 69019,0,0,0,
+,,,Fire Spirit Totem | 2 stars | 88,2043227,0,0,,,,,,,
+,,,Dark Spirit Totem | 1 stars | 100,0,0,0,,,,,,,
+
+Alchemy Tower (Position: 2),Victory,+2,Trofik (130-835631),,,,,,Dimka530 (130-1071335),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Ishmael | Red +2 | 6 stars | 130 | 177050,122082,0,0,Fenris | 8518,,Yasmine | Red +2 | 6 stars | 130 | 197673,0,122082,0,Cain | 6894
+,,,Sebastian | Red +2 | 6 stars | 130 | 140192,0,0,0,Albus | 10154,,Iris | Red +2 | 6 stars | 130 | 191712,0,0,0,Albus | 11064
+,,,Lara Croft | Red | 4 stars | 130 | 92426,0,0,0,,,Astaroth | Red +2 | 6 stars | 130 | 182373,0,0,0,
+,,,Adam | Red +2 | 6 stars | 130 | 155381,0,0,0,Biscuit | 11064,,Amira | Red +2 | 6 stars | 130 | 188212,0,0,0,Biscuit | 8782
+,,,Somna | Red +1 | 6 stars | 130 | 93051,0,0,0,Oliver | 6894,,Dorian | Red +2 | 6 stars | 130 | 129422,0,0,0,
+,,,Biscuit | Violet +3 | 6 stars | 130 | 177531,0,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Alchemy Tower (Position: 4),Defeat,+2,Arya (130-555034),,,,,,NIRO (130-925944),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Corvus | Orange +2 | 6 stars | 130 | 74546,269205,904566,0,Albus | 11064,,Helios | Red +2 | 6 stars | 130 | 139169,656640,157572,0,
+,,,Cascade | Red | 6 stars | 130 | 97863,162065,413065,0,Axel | 11064,,Celeste | Red +2 | 6 stars | 130 | 197377,446187,82225,294478,Khorus | 11064
+,,,Yasmine | Orange +3 | 6 stars | 130 | 77005,49924,152225,0,Cain | 11064,,Lars | Orange +3 | 6 stars | 130 | 100004,406562,59298,0,Mara | 11064
+,,,Krista | Orange +3 | 6 stars | 130 | 63645,39292,251027,0,Khorus | 11064,,Phobos | Red +2 | 6 stars | 130 | 188844,237025,101930,29307,
+,,,Guus | Orange +2 | 6 stars | 130 | 60032,5509,480804,1014454,Fenris | 7804,,Folio | Red +2 | 6 stars | 130 | 118607,216234,124970,41732,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Fenris | Violet +3 | 6 stars | 130 | 181943,239039,0,0,
+
+Bastion of Ice (Position: 2),Victory,+29,Arya (130-761310),,,,,,Фаркуа (130-691656),Energy Gain Increase (21%),,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 130 | 157697,8857790,5911100,0,,,Eden | 6 stars | 130 | 163912,9455829,11580222,0,
+,,,Vulcan | 6 stars | 130 | 121762,7668562,4805904,0,,,Angus | 6 stars | 130 | 128233,7105120,3735247,0,
+,,,Asherona and Pyro | 6 stars | 130 | 158685,4450389,4883892,0,,,Araji | 6 stars | 130 | 160624,6179130,6641207,0,
+,,,Moloch | 6 stars | 130 | 187716,4424196,11097584,0,,,Sylva | 6 stars | 130 | 127047,4512614,9649988,0,
+,,,Ignis | 6 stars | 130 | 135450,1964445,3235293,0,,,Avalon | 6 stars | 117 | 111840,671920,9787825,0,
+,,,Fire Spirit Totem | 4 stars | 130,16912341,0,0,,,Earth Spirit Totem | 3 stars | 125,2009160,2883234,0,
+
+Altar of Life (Position: 2),Victory,+35,Ordensritter (130-1073827),,,,,,Knifer (130-1128811),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Araji | 6 stars | 130 | 217626,3664103,7440332,0,,,Araji | 6 stars | 130 | 223814,3971287,8427516,0,
+,,,Moloch | 6 stars | 130 | 218038,3401315,11953813,0,,,Ignis | 6 stars | 130 | 202789,3210279,10090818,0,
+,,,Vulcan | 6 stars | 130 | 217975,3162175,6593399,0,,,Moloch | 6 stars | 130 | 218390,2734071,10089255,0,
+,,,Ignis | 6 stars | 130 | 219028,2380105,9513540,0,,,Tenebris | 6 stars | 130 | 273590,2727547,10624106,1613171,
+,,,Asherona and Pyro | 6 stars | 130 | 201160,2372242,9779058,0,,,Vulcan | 6 stars | 130 | 210228,2474476,6298736,0,
+,,,Fire Spirit Totem | 6 stars | 130,30550491,0,0,,,Fire Spirit Totem | 6 stars | 130,30162482,0,0,
+
+Alchemy Tower (Position: 5),Victory,+35,Ordensritter (130-1191117),,,,,,Knifer (130-1045533),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Lyria | Red +2 | 6 stars | 130 | 190104,1259776,1040897,348585,Oliver | 11064,,Heidi | Red +2 | 6 stars | 130 | 170824,812789,338126,55917,
+,,,Sebastian | Red +2 | 6 stars | 130 | 201674,1114395,196460,31798,Albus | 11064,,Galahad | Red +2 | 6 stars | 130 | 163827,789808,1490147,218044,
+,,,Lara Croft | Red +2 | 5 stars | 130 | 223803,704802,203636,507848,Vex | 11064,,Yasmine | Red +2 | 6 stars | 130 | 188807,586997,542281,0,
+,,,Aidan | Red +2 | 6 stars | 130 | 189961,147472,1026872,266973,Merlin | 11064,,Celeste | Red +2 | 6 stars | 130 | 168512,416629,438010,152368,
+,,,Nebula | Red +2 | 6 stars | 130 | 203632,55917,147866,70649,Cain | 11064,,Dorian | Red +2 | 6 stars | 130 | 171620,121411,585701,113373,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 181943,0,0,217872,
+
+Alchemy Tower (Position: 3),Victory,+35,Ordensritter (130-1082330),,,,,,GodDevil (130-1027843),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Qing Mao | Red +2 | 6 stars | 130 | 197993,1104349,400059,0,Cain | 11064,,Helios | Red +2 | 6 stars | 130 | 156269,353554,385288,26839,Khorus | 9428
+,,,Isaac | Red +2 | 6 stars | 130 | 196165,686462,70410,0,Mara | 11064,,Orion | Red +2 | 6 stars | 130 | 202395,171794,544918,51335,Merlin | 11064
+,,,Dante | Red +2 | 6 stars | 130 | 203643,513015,203375,0,Fenris | 11064,,Isaac | Red +2 | 6 stars | 130 | 162407,91884,489571,95099,
+,,,Fluffy | Red +2 | 6 stars | 130 | 165831,322225,182134,638,Merlin | 11064,,Cornelius | Red +2 | 6 stars | 130 | 178767,36930,632215,0,
+,,,Martha | Red +2 | 6 stars | 130 | 136755,48254,111378,354939,Oliver | 11064,,Dorian | Red +1 | 6 stars | 130 | 146062,3829,423907,1377,
+,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,,,Merlin | Violet +3 | 6 stars | 130 | 181943,110959,0,0,
+
+Alchemy Tower (Position: 4),Victory,+33,Ordensritter (130-1116306),,,,,,NIRO (130-925944),Armor Increase (56%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Cascade | Red +2 | 6 stars | 130 | 185148,946208,177585,0,Axel | 11064,,Folio | Red +2 | 6 stars | 130 | 118607,927729,795535,144634,
+,,,Byrna | Red +2 | 6 stars | 130 | 178787,552831,405546,435316,Khorus | 10764,,Celeste | Red +2 | 6 stars | 130 | 197377,293339,401898,251185,Khorus | 11064
+,,,Lars | Red +2 | 6 stars | 130 | 179736,499643,353858,0,Mara | 11064,,Phobos | Red +2 | 6 stars | 130 | 188844,277300,446817,0,
+,,,Krista | Red +2 | 6 stars | 130 | 204199,249908,129261,367592,Merlin | 11064,,Lars | Orange +3 | 6 stars | 130 | 100004,218235,310451,0,Mara | 11064
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 186493,68807,987234,599829,Oliver | 11064,,Helios | Red +2 | 6 stars | 130 | 139169,177801,424846,0,
+,,,Merlin | Violet +3 | 6 stars | 130 | 181943,62150,0,0,,,Fenris | Violet +3 | 6 stars | 130 | 181943,159080,0,0,
+
+Alchemy Tower,Fortification captured,+235
+Bastion (Position: 1),Victory,+35,Team Gandagom (130-1065144),,,,,,Liftman (130-999550),Magic Defense Increase (39%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Tristan | Red +2 | 6 stars | 130 | 176029,982895,390677,122346,Fenris | 8782,,Galahad | Red +2 | 6 stars | 130 | 182554,1087241,1700536,645281,Biscuit | 9568
+,,,Astrid and Lucas | Red +2 | 6 stars | 130 | 172185,882253,170546,539976,Vex | 7804,,Qing Mao | Red +2 | 6 stars | 130 | 199853,971541,563707,0,Albus | 11064
+,,,Lyria | Red +2 | 6 stars | 130 | 153328,618150,820403,393189,Oliver | 10154,,Yasmine | Red +2 | 6 stars | 130 | 202515,271263,414215,0,Cain | 11064
+,,,Galahad | Red +2 | 6 stars | 130 | 196207,503704,1028508,8282,Albus | 11064,,Ninja Turtles | Red | 4 stars | 130 | 95088,199152,275382,63172,
+,,,Dorian | Red +2 | 6 stars | 130 | 195462,245273,261731,380403,Axel | 11064,,Ishmael | Red +2 | 6 stars | 130 | 137597,12980,307082,8761,Fenris | 11064
+,,,Khorus | Violet +3 | 5 stars | 130 | 171933,158335,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Ether Prism (Position: 4),Victory,+35,Paradel (130-988049),,,,,,Фаркуа (130-1019484),,,,
+,,,,Damage Dealt,Damage Taken,Healing,,,,Damage Dealt,Damage Taken,Healing,
+,,,Angus | 6 stars | 130 | 220931,24394742,14916960,0,,,Tenebris | 6 stars | 130 | 274732,6752208,14811725,4136382,
+,,,Eden | 6 stars | 130 | 198571,13759522,795681,0,,,Hyperion | 6 stars | 130 | 193308,5563850,11303742,1559803,
+,,,Verdoc and Phyto | 6 stars | 130 | 199895,5449525,3402397,0,,,Nova | 6 stars | 130 | 181966,3983293,8159920,0,
+,,,Sylva | 6 stars | 130 | 175440,5161350,0,0,,,Mairi | 6 stars | 130 | 176170,3676420,18613778,0,
+,,,Avalon | 6 stars | 130 | 193212,4726102,1100858,0,,,Sigurd | 6 stars | 130 | 193308,2053149,16209557,0,
+,,,Earth Spirit Totem | 6 stars | 130,15607481,23134402,0,,,Water Spirit Totem | 4 stars | 130,16202187,0,14466456,
+
+Lighthouse (Position: 1),Victory,+35,Paradel (130-996043),,,,,,Glip (130-1090063),,,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Orion | Red +2 | 6 stars | 130 | 198601,2054933,56130,46962,Merlin | 11064,,Orion | Red +2 | 6 stars | 130 | 204452,227060,726021,0,Khorus | 7804
+,,,Augustus | Red +2 | 6 stars | 130 | 174605,1154683,56130,18496,Albus | 11064,,Lyria | Red +2 | 6 stars | 130 | 164229,143034,930311,22902,
+,,,Dante | Red +2 | 6 stars | 130 | 194102,725769,258039,0,Cain | 11064,,Celeste | Red +2 | 6 stars | 130 | 177642,106481,417897,100394,Axel | 11064
+,,,Dorian | Red +1 | 6 stars | 130 | 93233,2466,0,0,Axel | 9018,,Nebula | Red +2 | 6 stars | 130 | 170185,41557,538424,0,Cain | 5766
+,,,Nebula | Red +2 | 6 stars | 130 | 153559,0,153817,50593,,,Astaroth | Red +2 | 6 stars | 130 | 191612,5984,1334741,340118,Oliver | 11064
+,,,Cain | Violet +3 | 6 stars | 130 | 181943,9543,0,0,,,Oliver | Violet +3 | 6 stars | 130 | 181943,0,0,73845,
+
+Lighthouse,Fortification captured,+235
+Foundry (Position: 2),Defeat,+20,Paradel (130-733127),,,,,,Glip (130-1034333),Health Increase (40%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Adam | Red +1 | 6 stars | 130 | 103599,1771229,255408,0,Cain | 11064,,Keira | Red +2 | 6 stars | 130 | 181895,2953195,590682,0,Fenris | 7804
+,,,Jhu | Red +1 | 6 stars | 130 | 130630,960780,530750,0,Albus | 11064,,Aurora | Red +2 | 6 stars | 130 | 184929,735377,867898,0,Merlin | 6676
+,,,Electra von Grave | Red +2 | 6 stars | 130 | 139636,779858,2426922,310588,Oliver | 9428,,Galahad | Red +2 | 6 stars | 130 | 176227,381037,908436,75108,Albus | 11064
+,,,Isaac | Red +2 | 6 stars | 130 | 145258,435229,371377,0,Mara | 6676,,Phobos | Red +2 | 6 stars | 130 | 155698,143124,735235,0,
+,,,Martha | Red +1 | 6 stars | 130 | 114511,29483,746879,280973,Axel | 9018,,Martha | Red +2 | 6 stars | 130 | 153641,37740,839387,866613,
+,,,Biscuit | Violet +1 | 5 stars | 130 | 99493,45922,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Foundry (Position: 2),Defeat,0,Paradel (130-722727),,,,,,Glip (130-1034333),Health Increase (40%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Fluffy | Red +1 | 6 stars | 130 | 92986,2878320,1495513,1146471,Axel | 9018,,Aurora | Red +2 | 6 stars | 130 | 184929,4255437,2117954,0,Merlin | 6676
+,,,Lyria | Red +1 | 6 stars | 130 | 91511,1229539,3537388,1177104,Oliver | 9428,,Galahad | Red +2 | 6 stars | 130 | 176227,2168659,1618223,1175723,Albus | 11064
+,,,Guus | Red +1 | 6 stars | 130 | 95866,949848,2569263,4453580,Khorus | 11064,,Keira | Red +2 | 6 stars | 130 | 181895,1167049,285787,67493,Fenris | 7804
+,,,Cascade | Red +1 | 6 stars | 130 | 125932,527491,408232,0,Merlin | 11064,,Martha | Red +2 | 6 stars | 130 | 153641,14552,2409108,5601706,
+,,,Sebastian | Red +2 | 6 stars | 130 | 134489,206787,933250,49894,Albus | 11064,,Phobos | Red +2 | 6 stars | 130 | 155698,0,0,0,
+,,,Albus | Violet +3 | 6 stars | 130 | 181943,1977036,0,0,,,Axel | Violet +3 | 6 stars | 130 | 181943,0,0,0,
+
+Engineerium (Position: 3),Victory,+35,Karicage (130-659404),,,,,,ZAC (130-372651),Energy Gain Increase (55%),,,
+,,,,Damage Dealt,Damage Taken,Healing,Patronage,,,Damage Dealt,Damage Taken,Healing,Patronage
+,,,Kayla | Red +1 | 6 stars | 130 | 103602,564252,158845,0,,,Keira | Red | 6 stars | 130 | 93349,270600,225917,0,
+,,,Daredevil | Orange +4 | 6 stars | 130 | 97824,160757,54544,0,,,Yasmine | Orange | 6 stars | 130 | 58481,54612,133965,0,Cain | 2914
+,,,Astrid and Lucas | Red +2 | 6 stars | 130 | 142999,144723,11466,0,,,Isaac | Orange +3 | 6 stars | 130 | 85908,24716,241505,0,
+,,,Cleaver | Orange +4 | 6 stars | 130 | 71575,35178,111235,6047,,,Galahad | Orange +1 | 5 stars | 130 | 43203,3919,194113,1371,
+,,,Nebula | Red | 6 stars | 130 | 78621,0,54544,0,,,Celeste | Violet +3 | 4 stars | 130 | 30772,3847,76470,0,
+,,,Khorus | Violet +3 | 4 stars | 130 | 164783,0,0,0,,,Cain | Violet | 3 stars | 87 | 60938,0,0,0,
+
