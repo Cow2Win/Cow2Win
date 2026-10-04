@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  *     by this class.</li>
  *     <li>{@code titanCowScore.json} - Thorsten's manually curated {@link
  *     FortMarks} per titan (positive and negative marks, see that type's
- *     Javadoc), edited via {@code TitanCoreScoreDialog} and persisted
+ *     Javadoc), edited via {@code TitanCowScorePanel} and persisted
  *     through {@link #saveCowScores}. Same file format as the heroes'
  *     {@code cowScore.json}, see {@link FortMarkFiles} (which also migrates
  *     the former tier-based format).</li>
@@ -134,9 +134,9 @@ public class TitanRepository {
     /**
      * The shipped default fortification marks of every known titan (from the
      * {@code titanCowScore.json} inside the jar, {@link FortMarks#NONE} for a
-     * titan without an entry there) - what {@code TitanCoreScoreDialog}'s
+     * titan without an entry there) - what {@code TitanCowScorePanel}'s
      * "restore defaults" button resets its values to. Only reads, never
-     * writes: the workspace copy is not touched until the dialog is saved.
+     * writes: the workspace copy is not touched until the CowScore dialog is saved.
      */
     public Map<String, FortMarks> loadDefaultCowScores() {
         return FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH, titansById.keySet(),

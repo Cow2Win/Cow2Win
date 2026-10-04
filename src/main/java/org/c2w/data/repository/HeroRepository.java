@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  *     it yet (see the planned GitHub-based master-data download workflow).</li>
  *     <li>{@code cowScore.json} - Thorsten's manually curated {@link
  *     org.c2w.data.model.FortMarks} per hero (see that type's Javadoc), edited exclusively via
- *     {@code HeroCoreScoreDialog} and persisted through {@link
+ *     {@code HeroCowScorePanel} and persisted through {@link
  *     #saveCowScores}. The copy the app reads and writes
  *     lives in the workspace folder (see {@link #cowScoreFile()}); the copy
  *     inside the jar only holds the shipped defaults it is created from -
@@ -122,9 +122,9 @@ public class HeroRepository {
     /**
      * The shipped default fortification marks of every known hero (from the {@code
      * cowScore.json} inside the jar, {@link FortMarks#NONE} for a hero
-     * without an entry there) - what {@code HeroCoreScoreDialog}'s "restore
+     * without an entry there) - what {@code HeroCowScorePanel}'s "restore
      * defaults" button resets its values to. Only reads, never writes: the
-     * workspace copy is not touched until the dialog is saved.
+     * workspace copy is not touched until the CowScore dialog is saved.
      */
     public Map<String, FortMarks> loadDefaultCowScores() {
         return FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH, heroesById.keySet(), true, "hero");

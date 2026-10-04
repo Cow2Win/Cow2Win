@@ -22,9 +22,9 @@ class MainMenuBarTest {
 
     private static final String SEPARATOR = "---";
 
-    /** "menu title key: entries" - the menu bar as it was built by Cow2Frame/JournalActions before M0. */
+    /** "menu title key: entries" - the menu bar as before M0, with the four CowScore entries merged into one (step 1.7). */
     private static final List<String> EXPECTED = List.of(
-            "menu.file: SETTINGS, COWSCORE_HEROES, COWSCORE_TITANS, COWSCORE_PETS, COWSCORE_WAR_FLAGS, SHOW_LOG, OPEN_HERO_WARS",
+            "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD",
             "menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP",
             "menu.journal: JOURNAL_IMPORT, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS, JOURNAL_SYNC, ---, "

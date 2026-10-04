@@ -391,9 +391,10 @@ folder (`new Catalog(tempDir)`).
   the **workspace copy** (see "Workspace, configuration & backups"), created
   from the defaults on the first start and completed with defaults for
   entities added by an update. They are edited in-app via "File" >
-  "CowScore - Heroes/Titans/Pets/War Flags" (`HeroCoreScoreDialog`,
-  `TitanCoreScoreDialog`, `PetCoreScoreDialog`, `WarFlagCoreScoreDialog`),
-  whose "restore defaults" button resets to the shipped values.
+  "CowScore ..." - one `CowScoreDialog` with a tab (panel) each for heroes,
+  titans, pets and war flags (`HeroCowScorePanel`, `TitanCowScorePanel`,
+  `PetCowScorePanel`, `WarFlagCowScorePanel`) -
+  whose "restore defaults" button resets the active tab to the shipped values.
 - Format: all four files use `FortMarkFiles`
   (`[{"id": "corvus", "fortMarks": {"foundry": "POSITIVE"}}, ...]`; a
   workspace copy still in the former tier-based format

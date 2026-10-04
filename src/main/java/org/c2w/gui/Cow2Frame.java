@@ -6,13 +6,11 @@ import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.flag.WarFlagCoreScoreDialog;
+import org.c2w.gui.cowscore.CowScoreDialog;
+import org.c2w.gui.cowscore.CowScoreTab;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
-import org.c2w.gui.hero.HeroCoreScoreDialog;
 import org.c2w.gui.journal.JournalActions;
-import org.c2w.gui.pet.PetCoreScoreDialog;
-import org.c2w.gui.titan.TitanCoreScoreDialog;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
 import org.c2w.infra.Logger;
@@ -166,10 +164,9 @@ public class Cow2Frame extends JFrame {
      */
     private void registerActions(MainActions actions) {
         actions.register(new AppAction(ActionId.SETTINGS, this::onOpenSettings));
-        actions.register(new AppAction(ActionId.COWSCORE_HEROES, this::onOpenHeroBuffFitScores));
-        actions.register(new AppAction(ActionId.COWSCORE_TITANS, this::onOpenTitanBuffFitScores));
-        actions.register(new AppAction(ActionId.COWSCORE_PETS, this::onOpenPetBuffFitScores));
-        actions.register(new AppAction(ActionId.COWSCORE_WAR_FLAGS, this::onOpenWarFlagBuffFitScores));
+        // Independent of the open guild/lineup - the catalogs are shared by every guild.
+        actions.register(new AppAction(ActionId.COWSCORE,
+                () -> CowScoreDialog.open(this, appContext.catalog(), CowScoreTab.HEROES)));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         actions.register(new AppAction(ActionId.OPEN_HERO_WARS, () -> onOpenWeb(HERO_WARS_URL))
                 .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE)));
@@ -415,30 +412,6 @@ public class Cow2Frame extends JFrame {
     /** Opens {@link SettingsDialog} (currently: choosing the display language). */
     private void onOpenSettings() {
         SettingsDialog.show(this);
-    }
-
-    /**
-     * Opens {@link HeroCoreScoreDialog} - independent of the currently
-     * open guild/lineup (see that dialog's class Javadoc) - it only needs
-     * the hero catalog.
-     */
-    private void onOpenHeroBuffFitScores() {
-        new HeroCoreScoreDialog(this, appContext.catalog().heroes()).setVisible(true);
-    }
-
-    /** Opens {@link TitanCoreScoreDialog} - the titan counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
-    private void onOpenTitanBuffFitScores() {
-        new TitanCoreScoreDialog(this, appContext.catalog().titans()).setVisible(true);
-    }
-
-    /** Opens {@link PetCoreScoreDialog} - the pet counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
-    private void onOpenPetBuffFitScores() {
-        new PetCoreScoreDialog(this, appContext.catalog().pets()).setVisible(true);
-    }
-
-    /** Opens {@link WarFlagCoreScoreDialog} - the war flag counterpart of {@link #onOpenHeroBuffFitScores()}, likewise independent of the open guild/lineup. */
-    private void onOpenWarFlagBuffFitScores() {
-        new WarFlagCoreScoreDialog(this, appContext.catalog().warFlags()).setVisible(true);
     }
 
     /**

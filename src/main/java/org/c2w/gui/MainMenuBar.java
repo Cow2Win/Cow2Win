@@ -24,8 +24,7 @@ public final class MainMenuBar extends JMenuBar {
     static final ActionId SEPARATOR = null;
 
     static final List<MenuSpec> MENUS = List.of(
-            new MenuSpec("menu.file", Arrays.asList(SETTINGS, COWSCORE_HEROES, COWSCORE_TITANS, COWSCORE_PETS,
-                    COWSCORE_WAR_FLAGS, SHOW_LOG, OPEN_HERO_WARS)),
+            new MenuSpec("menu.file", Arrays.asList(SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS)),
             new MenuSpec("menu.guild", Arrays.asList(NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD)),
             new MenuSpec("menu.lineup", Arrays.asList(NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP)),
             new MenuSpec("menu.journal", Arrays.asList(JOURNAL_IMPORT, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS,

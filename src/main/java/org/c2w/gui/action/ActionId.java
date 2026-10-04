@@ -13,10 +13,7 @@ public enum ActionId {
     NEW_GUILD("toolbar.newGuild", Stage.GENERAL),
     REMOVE_GUILD("toolbar.removeGuild", Stage.GENERAL),
 
-    COWSCORE_HEROES("menu.cowScore", Stage.MASTER_DATA),
-    COWSCORE_TITANS("menu.titanCowScore", Stage.MASTER_DATA),
-    COWSCORE_PETS("menu.petCowScore", Stage.MASTER_DATA),
-    COWSCORE_WAR_FLAGS("menu.warFlagCowScore", Stage.MASTER_DATA),
+    COWSCORE("menu.cowScoreDialog", Stage.MASTER_DATA),
     OPEN_GUILD_EDITOR("teamsOverview.openGuildEditor", Stage.MASTER_DATA),
 
     SAVE_GUILD("teamsOverview.saveGuild", Stage.INPUT),
