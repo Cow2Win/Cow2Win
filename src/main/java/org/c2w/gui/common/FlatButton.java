@@ -16,6 +16,14 @@ public class FlatButton extends JButton {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
+    /** An icon-only button bound to {@code action}: icon, tooltip and enabled state come from the action. */
+    public static FlatButton forAction(Action action) {
+        FlatButton button = new FlatButton((Icon) null);
+        button.setHideActionText(true);
+        button.setAction(action);
+        return button;
+    }
+
     public FlatButton(Icon icon, boolean withCursor) {
         super(icon);
         setBorderPainted(false);

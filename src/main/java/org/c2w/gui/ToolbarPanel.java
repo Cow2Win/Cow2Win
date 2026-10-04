@@ -6,6 +6,9 @@ import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.ManualLineupAlgorithm;
+import org.c2w.gui.action.ActionId;
+import org.c2w.gui.action.AppAction;
+import org.c2w.gui.action.MainActions;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
@@ -52,16 +55,9 @@ public class ToolbarPanel extends JPanel {
 
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
 
-    private static final String KEY_GENERATE_REPORT = "toolbar.generateReport";
-
     private static final String ICON_GENERATE_REPORT = "/images/app/lineup-report.png";
 
-    private static final String KEY_HERO_TEAMS = "toolbar.heroTeams";
-
     private static final String ICON_HERO_TEAMS = "/images/app/square.png";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "titan teams" button (see {@link #onOpenTitanTeams()}). */
-    private static final String KEY_TITAN_TEAMS = "toolbar.titanTeams";
 
     private static final String ICON_TITAN_TEAMS = "/images/app/hexagon.png";
 
@@ -81,32 +77,17 @@ public class ToolbarPanel extends JPanel {
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the label in front of the algorithm combo box. */
     private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "run algorithm" button (see {@link #onRunAlgorithm()}). */
-    private static final String KEY_RUN_ALGORITHM = "teamsOverview.runAlgorithm";
-
     /** Classpath path of the "run algorithm" button's icon (see {@link IconLoader}). */
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "compare lineups" button (see {@link #onOpenLineupComparison()}). */
-    private static final String KEY_COMPARE_LINEUPS = "toolbar.compareLineups";
 
     /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - same "hexagon" family already used for {@link #ICON_HERO_TEAMS}/{@link #ICON_TITAN_TEAMS}, told apart by shape (paired hexagons) instead of color. */
     private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open in-game change plan" button (see {@link #onOpenChangePlan()}). */
-    private static final String KEY_OPEN_CHANGE_PLAN = "toolbar.openChangePlan";
-
     /** Icon of the "open in-game change plan" button - the "box-arrow-down" icon reads as "produce a checklist/plan to apply", telling it apart from the paired-hexagon "compare" button next to it. */
     private static final String ICON_OPEN_CHANGE_PLAN = "/images/app/box-arrow-down.png";
 
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide hero team assignment" button (see {@link #onOpenGuildHeroEntry()}). */
-    private static final String KEY_OPEN_GUILD_HERO_ENTRY = "toolbar.openGuildHeroEntry";
-
     /** Reused rather than a dedicated icon - same "square" (HERO fortification) icon as {@link #ICON_HERO_TEAMS}, since this button opens the guild-wide hero counterpart of a single fortification's own team-entry dialog. */
     private static final String ICON_OPEN_GUILD_HERO_ENTRY = "/images/app/square-plus.png";;
-
-    /** Language file key (see {@code resources/language/<name>/<name>.properties}) for the tooltip of the "open guild-wide titan team assignment" button (see {@link #onOpenGuildTitanEntry()}). */
-    private static final String KEY_OPEN_GUILD_TITAN_ENTRY = "toolbar.openGuildTitanEntry";
 
     /** Reused rather than a dedicated icon - same "hexagon" (TITAN fortification) icon as {@link #ICON_TITAN_TEAMS}, since this button opens the guild-wide titan counterpart of a single fortification's own team-entry dialog. */
     private static final String ICON_OPEN_GUILD_TITAN_ENTRY = "/images/app/hexagon-plus.png";
@@ -136,14 +117,17 @@ public class ToolbarPanel extends JPanel {
     /** Combo box listing every guild folder under workspace/ (see {@link #populateGuildCombo()}) - sits before {@link #lineupCombo}, separated from it by a {@link JSeparator} (see constructor). */
     private final JComboBox<String> guildCombo = new JComboBox<>();
 
-    /** "Save guild" button - red icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
-    private final FlatButton saveGuildButton;
+    /** "Save guild" action - red icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
+    private final AppAction saveGuildAction;
 
-    /** "Save lineup" button - red icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
-    private final FlatButton saveLineupButton;
+    /** "Save lineup" action - red icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
+    private final AppAction saveLineupAction;
 
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
-    private final FlatButton runAlgorithmButton;
+    private final AppAction runAlgorithmAction;
+
+    /** The registry this panel's actions are registered in and its buttons are built from (see {@link #buildToolbar()}). */
+    private final MainActions actions;
 
     /** Reports the outcome of the last algorithm run (see {@link #onRunAlgorithm()}). */
     private final JLabel statusLabel = new JLabel(" ");
@@ -161,7 +145,11 @@ public class ToolbarPanel extends JPanel {
     /** {@link #guildCombo} counterpart of {@link #populatingCombo} - guards {@link #onGuildSelected()} the same way, see its Javadoc. */
     private boolean populatingGuildCombo = false;
 
-    public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel) {
+    /**
+     * Registers this panel's actions in {@code actions} - the components themselves are only
+     * added by {@link #buildToolbar()}, once every action of the main window exists.
+     */
+    public ToolbarPanel(AppContext appContext, FortificationMapPanel fortificationMapPanel, MainActions actions) {
         super(new FlowLayout(FlowLayout.LEFT, 8, 4));
         if (appContext == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a guildContext");
@@ -169,11 +157,51 @@ public class ToolbarPanel extends JPanel {
         if (fortificationMapPanel == null) {
             throw new IllegalArgumentException("ToolbarPanel needs a fortificationMapPanel");
         }
+        if (actions == null) {
+            throw new IllegalArgumentException("ToolbarPanel needs the main actions");
+        }
         this.appContext = appContext;
         this.guildService = new GuildService(appContext);
         this.lineupService = new LineupService(appContext);
         this.fortificationMapPanel = fortificationMapPanel;
+        this.actions = actions;
 
+        saveGuildAction = actions.register(new AppAction(ActionId.SAVE_GUILD, this::onSaveGuild));
+        actions.register(new AppAction(ActionId.OPEN_GUILD_HERO_ENTRY, this::onOpenGuildHeroEntry)
+                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY)));
+        actions.register(new AppAction(ActionId.OPEN_GUILD_TITAN_ENTRY, this::onOpenGuildTitanEntry)
+                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY)));
+        saveLineupAction = actions.register(new AppAction(ActionId.SAVE_LINEUP, this::onSaveLineup));
+        actions.register(new AppAction(ActionId.GENERATE_REPORT, this::onGenerateReport)
+                .withLargeIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
+        runAlgorithmAction = actions.register(new AppAction(ActionId.RUN_ALGORITHM, this::onRunAlgorithm)
+                .withLargeIcon(IconLoader.iconForButton(ICON_RUN_ALGORITHM)));
+        actions.register(new AppAction(ActionId.COMPARE_LINEUPS, this::onOpenLineupComparison)
+                .withLargeIcon(IconLoader.iconForButton(ICON_COMPARE_LINEUPS)));
+        actions.register(new AppAction(ActionId.OPEN_CHANGE_PLAN, this::onOpenChangePlan)
+                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN)));
+        actions.register(new AppAction(ActionId.SHOW_HERO_TEAMS, this::onOpenHeroTeams)
+                .withLargeIcon(IconLoader.iconForButton(ICON_HERO_TEAMS)));
+        actions.register(new AppAction(ActionId.SHOW_TITAN_TEAMS, this::onOpenTitanTeams)
+                .withLargeIcon(IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE,
+                        FortificationTypeStyle.color(FortificationType.TITAN))));
+
+        // Shows on the two save buttons WHICH part (guild and/or lineup) has unsaved changes.
+        updateSaveButtons();
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void dirtyStateChanged() {
+                updateSaveButtons();
+            }
+        });
+    }
+
+    /**
+     * Adds the combo boxes, the buttons (bound to the actions registered in the
+     * constructor, see {@link FlatButton#forAction}) and the map filter checkboxes.
+     * Called once by {@code Cow2Frame} after all actions of the main window are registered.
+     */
+    void buildToolbar() {
         add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
         add(guildCombo);
         populateGuildCombo();
@@ -183,20 +211,9 @@ public class ToolbarPanel extends JPanel {
             }
         });
 
-
-        saveGuildButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
-        saveGuildButton.addActionListener(e -> onSaveGuild());
-        add(saveGuildButton);
-
-        FlatButton openGuildHeroEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY));
-        openGuildHeroEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_HERO_ENTRY));
-        openGuildHeroEntryButton.addActionListener(e -> onOpenGuildHeroEntry());
-        add(openGuildHeroEntryButton);
-
-        FlatButton openGuildTitanEntryButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY));
-        openGuildTitanEntryButton.setToolTipText(LanguageService.displayName(KEY_OPEN_GUILD_TITAN_ENTRY));
-        openGuildTitanEntryButton.addActionListener(e -> onOpenGuildTitanEntry());
-        add(openGuildTitanEntryButton);
+        add(FlatButton.forAction(actions.get(ActionId.SAVE_GUILD)));
+        add(FlatButton.forAction(actions.get(ActionId.OPEN_GUILD_HERO_ENTRY)));
+        add(FlatButton.forAction(actions.get(ActionId.OPEN_GUILD_TITAN_ENTRY)));
 
         JSeparator guildLineupSeparator = new JSeparator(SwingConstants.VERTICAL);
         guildLineupSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -222,32 +239,11 @@ public class ToolbarPanel extends JPanel {
             }
         });
 
-        saveLineupButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_LINEUP, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
-        saveLineupButton.addActionListener(e -> onSaveLineup());
-        add(saveLineupButton);
-
-        FlatButton generateReportButton = new FlatButton(IconLoader.iconForButton(ICON_GENERATE_REPORT));
-        generateReportButton.setToolTipText(LanguageService.displayName(KEY_GENERATE_REPORT));
-        generateReportButton.addActionListener(e -> onGenerateReport());
-        add(generateReportButton);
-
-
-
-
-        runAlgorithmButton = new FlatButton(IconLoader.iconForButton(ICON_RUN_ALGORITHM));
-        runAlgorithmButton.setToolTipText(LanguageService.displayName(KEY_RUN_ALGORITHM));
-        runAlgorithmButton.addActionListener(e -> onRunAlgorithm());
-        add(runAlgorithmButton);
-
-        FlatButton compareLineupsButton = new FlatButton(IconLoader.iconForButton(ICON_COMPARE_LINEUPS));
-        compareLineupsButton.setToolTipText(LanguageService.displayName(KEY_COMPARE_LINEUPS));
-        compareLineupsButton.addActionListener(e -> onOpenLineupComparison());
-        add(compareLineupsButton);
-
-        FlatButton changePlanButton = new FlatButton(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN));
-        changePlanButton.setToolTipText(LanguageService.displayName(KEY_OPEN_CHANGE_PLAN));
-        changePlanButton.addActionListener(e -> onOpenChangePlan());
-        add(changePlanButton);
+        add(FlatButton.forAction(actions.get(ActionId.SAVE_LINEUP)));
+        add(FlatButton.forAction(actions.get(ActionId.GENERATE_REPORT)));
+        add(FlatButton.forAction(actions.get(ActionId.RUN_ALGORITHM)));
+        add(FlatButton.forAction(actions.get(ActionId.COMPARE_LINEUPS)));
+        add(FlatButton.forAction(actions.get(ActionId.OPEN_CHANGE_PLAN)));
 
         JSeparator filterSeparator = new JSeparator(SwingConstants.VERTICAL);
         filterSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -275,15 +271,6 @@ public class ToolbarPanel extends JPanel {
                 }
             }
         });
-
-        // Shows on the two save buttons WHICH part (guild and/or lineup) has unsaved changes.
-        updateSaveButtons();
-        appContext.addListener(new AppContext.Listener() {
-            @Override
-            public void dirtyStateChanged() {
-                updateSaveButtons();
-            }
-        });
     }
 
 
@@ -291,18 +278,20 @@ public class ToolbarPanel extends JPanel {
      * Colors the "save guild"/"save lineup" icons {@link IconLoader#RED}
      * while {@link AppContext#isGuildDirty()}/{@link AppContext#isLineupDirty()}
      * respectively (otherwise {@link IconLoader#BLUE}) and appends
-     * "unsaved changes" to their tooltips - only icon and tooltip are reset,
-     * the buttons themselves stay.
+     * "unsaved changes" to their tooltips - set on the actions, which pass
+     * them on to the bound buttons.
      */
     private void updateSaveButtons() {
-        updateSaveButton(saveGuildButton, ICON_SAVE_GUILD, KEY_SAVE_GUILD, appContext.isGuildDirty());
-        updateSaveButton(saveLineupButton, ICON_SAVE_LINEUP, KEY_SAVE_LINEUP, appContext.isLineupDirty());
+        updateSaveButton(saveGuildAction, ICON_SAVE_GUILD, KEY_SAVE_GUILD, appContext.isGuildDirty());
+        updateSaveButton(saveLineupAction, ICON_SAVE_LINEUP, KEY_SAVE_LINEUP, appContext.isLineupDirty());
     }
 
-    private static void updateSaveButton(FlatButton button, String iconPath, String tooltipKey, boolean dirty) {
-        button.setIcon(IconLoader.iconFor(iconPath, TOOLBAR_ICON_SIZE, dirty ? IconLoader.RED : IconLoader.BLUE));
+    private static void updateSaveButton(AppAction action, String iconPath, String tooltipKey, boolean dirty) {
+        action.putValue(Action.LARGE_ICON_KEY,
+                IconLoader.iconFor(iconPath, TOOLBAR_ICON_SIZE, dirty ? IconLoader.RED : IconLoader.BLUE));
         String tooltip = LanguageService.displayName(tooltipKey);
-        button.setToolTipText(dirty ? tooltip + " – " + LanguageService.displayName(KEY_UNSAVED_SUFFIX) : tooltip);
+        action.putValue(Action.SHORT_DESCRIPTION,
+                dirty ? tooltip + " – " + LanguageService.displayName(KEY_UNSAVED_SUFFIX) : tooltip);
     }
 
     /**
@@ -319,10 +308,7 @@ public class ToolbarPanel extends JPanel {
                 fortificationMapPanel.setShowHeroFortifications(showHeroesCheckbox.isSelected()));
         add(showHeroesCheckbox);
 
-        FlatButton heroTeamsButton = new FlatButton(IconLoader.iconForButton(ICON_HERO_TEAMS));
-        heroTeamsButton.setToolTipText(LanguageService.displayName(KEY_HERO_TEAMS));
-        heroTeamsButton.addActionListener(e -> onOpenHeroTeams());
-        add(heroTeamsButton);
+        add(FlatButton.forAction(actions.get(ActionId.SHOW_HERO_TEAMS)));
 
         JSeparator filterSeparator = new JSeparator(SwingConstants.VERTICAL);
         filterSeparator.setPreferredSize(new Dimension(2, TOOLBAR_ICON_SIZE + 8));
@@ -337,10 +323,7 @@ public class ToolbarPanel extends JPanel {
         add(showTitansCheckbox);
 
 
-        FlatButton titanTeamsButton = new FlatButton(IconLoader.iconFor(ICON_TITAN_TEAMS,TOOLBAR_ICON_SIZE,FortificationTypeStyle.color(FortificationType.TITAN)));
-        titanTeamsButton.setToolTipText(LanguageService.displayName(KEY_TITAN_TEAMS));
-        titanTeamsButton.addActionListener(e -> onOpenTitanTeams());
-        add(titanTeamsButton);
+        add(FlatButton.forAction(actions.get(ActionId.SHOW_TITAN_TEAMS)));
 
         JCheckBox changesCheckbox = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES),
                 fortificationMapPanel.isShowChanges());
@@ -372,7 +355,7 @@ public class ToolbarPanel extends JPanel {
         LineupAlgorithm titanAlgorithm = LineupService.defaultTitanAlgorithm();
 
         Window window = SwingUtilities.getWindowAncestor(this);
-        runAlgorithmButton.setEnabled(false);
+        runAlgorithmAction.setEnabled(false);
         window.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<LineupService.AlgorithmRun, Void>() {
             @Override
@@ -382,7 +365,7 @@ public class ToolbarPanel extends JPanel {
 
             @Override
             protected void done() {
-                runAlgorithmButton.setEnabled(true);
+                runAlgorithmAction.setEnabled(true);
                 window.setCursor(Cursor.getDefaultCursor());
                 try {
                     lineupService.applyAlgorithmRun(get());

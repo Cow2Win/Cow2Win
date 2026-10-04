@@ -3,6 +3,9 @@ package org.c2w.gui.journal;
 import org.c2w.data.journal.db.JournalDatabase;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalRepository;
+import org.c2w.gui.action.ActionId;
+import org.c2w.gui.action.AppAction;
+import org.c2w.gui.action.MainActions;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -24,8 +27,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * The "Weltenschlacht Journal" menu and its windows - kept out of
- * {@code Cow2Frame}, which only adds the menu: choose battle logs and run the
+ * The "Weltenschlacht Journal" actions and their windows - kept out of
+ * {@code Cow2Frame} and {@code MainMenuBar}: choose battle logs and run the
  * import assistant, the (single) battle list, battle details (several), "build
  * teams from logs", "update teams (sync)", and the
  * maintenance windows for players, seasons and name mappings. After every change
@@ -57,23 +60,23 @@ public final class JournalActions {
         this.operations = new JournalOperations(new JournalMaintenanceService(context), this::journalChanged);
     }
 
-    /** The menu with "Import …", "Battle list …" and the maintenance windows. */
-    public JMenu buildMenu() {
-        JMenu menu = new JMenu(JournalTexts.text("menu.journal"));
-        JMenuItem importItem = item(menu, "menu.journal.import", this::importWithChooser);
-        JMenuItem battlesItem = item(menu, "menu.journal.battles", this::openBattleList);
-        JMenuItem teamsItem = item(menu, "menu.journal.buildTeams", this::openTeamBuilder);
-        JMenuItem syncItem = item(menu, "menu.journal.sync", this::openSync);
-        menu.addSeparator();
-        JMenuItem playersItem = item(menu, "journal.action.players", this::openPlayers);
-        JMenuItem seasonsItem = item(menu, "journal.action.seasons", this::openSeasons);
-        JMenuItem mappingsItem = item(menu, "journal.action.nameMappings", this::openNameMappings);
+    /**
+     * Registers the journal actions ("Import …", "Battle list …", the maintenance windows, ...)
+     * in {@code actions} - the menu itself is built by {@code MainMenuBar}. They are only
+     * enabled while a guild is open.
+     */
+    public void registerActions(MainActions actions) {
+        List<AppAction> journalActions = List.of(
+                actions.register(new AppAction(ActionId.JOURNAL_IMPORT, this::importWithChooser)),
+                actions.register(new AppAction(ActionId.JOURNAL_BATTLES, this::openBattleList)),
+                actions.register(new AppAction(ActionId.JOURNAL_BUILD_TEAMS, this::openTeamBuilder)),
+                actions.register(new AppAction(ActionId.JOURNAL_SYNC, this::openSync)),
+                actions.register(new AppAction(ActionId.JOURNAL_PLAYERS, this::openPlayers)),
+                actions.register(new AppAction(ActionId.JOURNAL_SEASONS, this::openSeasons)),
+                actions.register(new AppAction(ActionId.JOURNAL_NAME_MAPPINGS, this::openNameMappings)));
         Runnable update = () -> {
             boolean guildOpen = context.guild() != null && context.guildFilePath() != null;
-            for (JMenuItem item : List.of(importItem, battlesItem, teamsItem, syncItem, playersItem, seasonsItem,
-                    mappingsItem)) {
-                item.setEnabled(guildOpen);
-            }
+            journalActions.forEach(action -> action.setEnabled(guildOpen));
         };
         update.run();
         context.addListener(new AppContext.Listener() {
@@ -82,14 +85,6 @@ public final class JournalActions {
                 update.run();
             }
         });
-        return menu;
-    }
-
-    private static JMenuItem item(JMenu menu, String key, Runnable action) {
-        JMenuItem item = new JMenuItem(JournalTexts.text(key));
-        item.addActionListener(e -> action.run());
-        menu.add(item);
-        return item;
     }
 
     /** Lets the user choose battle logs and imports them. */

@@ -1,6 +1,9 @@
 package org.c2w.gui;
 
 import org.c2w.data.repository.LineupFiles;
+import org.c2w.gui.action.ActionId;
+import org.c2w.gui.action.AppAction;
+import org.c2w.gui.action.MainActions;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCoreScoreDialog;
@@ -40,14 +43,6 @@ public class Cow2Frame extends JFrame {
 
     private static final String HERO_WARS_URL = "https://www.hero-wars.com/";
 
-    /**
-     * Language file keys and icon paths for the "Guild" menu (see
-     * {@link #buildGuildMenu()}).
-     */
-    private static final String KEY_NEW_GUILD = "toolbar.newGuild";
-    private static final String KEY_REMOVE_GUILD = "toolbar.removeGuild";
-    private static final String KEY_OPEN_GUILD_EDITOR = "teamsOverview.openGuildEditor";
-
     /** Language file key for the (shared) title of every {@link #onRemoveGuild()} dialog - the confirmation and the "only guild left" warning alike. */
     private static final String KEY_REMOVE_GUILD_DIALOG_TITLE = "toolbar.removeGuild.dialogTitle";
 
@@ -63,12 +58,12 @@ public class Cow2Frame extends JFrame {
     /** Language file key for the message prefix (followed by the exception's own message) of that same error dialog. */
     private static final String KEY_REMOVE_GUILD_ERROR = "toolbar.removeGuild.error";
 
+    /** Icon paths of the menu entries (see {@link #registerActions}). */
     private static final String ICON_HERO_WARS = "/images/app/herowars32.png";
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
     private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
 
-    private static final String KEY_NEW_LINEUP = "toolbar.newLineup";
     private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
     private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
 
@@ -85,8 +80,10 @@ public class Cow2Frame extends JFrame {
     private final ToolbarPanel toolbarPanel;
     private final LogPanel logPanel;
     private JDialog logDialog;
-    /** The "Weltenschlacht Journal" menu and windows - created with the menu bar. */
-    private JournalActions journalActions;
+    /** The "Weltenschlacht Journal" actions and windows. */
+    private final JournalActions journalActions;
+    /** Every action of menu bar and toolbar - see the constructor. */
+    private final MainActions actions;
 
     public Cow2Frame(AppContext appContext) {
         super(BASE_TITLE);
@@ -114,7 +111,6 @@ public class Cow2Frame extends JFrame {
         this.background = IconLoader.getBackgroundImage();
         updateTitle();
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
-        setJMenuBar(buildMenuBar());
         appContext.addListener(new AppContext.Listener() {
             @Override
             public void guildChanged() {
@@ -128,8 +124,16 @@ public class Cow2Frame extends JFrame {
         });
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
-        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel);
         this.logPanel = new LogPanel();
+
+        // First every action (with its handler in its owner), then menu bar and toolbar built from them.
+        this.actions = new MainActions();
+        registerActions(actions);
+        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, actions);
+        this.journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
+        journalActions.registerActions(actions);
+        setJMenuBar(new MainMenuBar(actions));
+        toolbarPanel.buildToolbar();
 
         JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
         fortificationScrollPane.setOpaque(false);
@@ -156,53 +160,38 @@ public class Cow2Frame extends JFrame {
         checkForUpdatesAtStartup(startupCheck);
     }
 
-    private JMenuBar buildMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
+    /**
+     * Registers the actions whose handlers live in this frame (file, guild and lineup
+     * menus) - see {@link MainMenuBar} for where they show up.
+     */
+    private void registerActions(MainActions actions) {
+        actions.register(new AppAction(ActionId.SETTINGS, this::onOpenSettings));
+        actions.register(new AppAction(ActionId.COWSCORE_HEROES, this::onOpenHeroBuffFitScores));
+        actions.register(new AppAction(ActionId.COWSCORE_TITANS, this::onOpenTitanBuffFitScores));
+        actions.register(new AppAction(ActionId.COWSCORE_PETS, this::onOpenPetBuffFitScores));
+        actions.register(new AppAction(ActionId.COWSCORE_WAR_FLAGS, this::onOpenWarFlagBuffFitScores));
+        actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
+        actions.register(new AppAction(ActionId.OPEN_HERO_WARS, () -> onOpenWeb(HERO_WARS_URL))
+                .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE)));
 
-        JMenu fileMenu = new JMenu(LanguageService.displayName("menu.file"));
+        actions.register(new AppAction(ActionId.NEW_GUILD, this::onNewGuild)
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+        actions.register(new AppAction(ActionId.OPEN_GUILD_EDITOR, this::onOpenGuildEditor)
+                .withSmallIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_EDITOR)));
+        actions.register(new AppAction(ActionId.REMOVE_GUILD, this::onRemoveGuild)
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED)));
 
-        JMenuItem checkForUpdatesItem = new JMenuItem(LanguageService.displayName("menu.checkForUpdates"));
-        checkForUpdatesItem.addActionListener(e -> onCheckForUpdates());
-        fileMenu.add(checkForUpdatesItem);
-        menuBar.add(fileMenu);
+        actions.register(new AppAction(ActionId.NEW_LINEUP, this::onNewLineup)
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+        actions.register(new AppAction(ActionId.REMOVE_LINEUP, this::onRemoveLineup)
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED)));
+        actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup)
+                .withSmallIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP)));
+    }
 
-        JMenuItem settingsItem = new JMenuItem(LanguageService.displayName("menu.settings"));
-        settingsItem.addActionListener(e -> onOpenSettings());
-        fileMenu.add(settingsItem);
-
-        JMenuItem heroBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.cowScore"));
-        heroBuffFitScoresItem.addActionListener(e -> onOpenHeroBuffFitScores());
-        fileMenu.add(heroBuffFitScoresItem);
-
-        JMenuItem titanBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.titanCowScore"));
-        titanBuffFitScoresItem.addActionListener(e -> onOpenTitanBuffFitScores());
-        fileMenu.add(titanBuffFitScoresItem);
-
-        JMenuItem petBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.petCowScore"));
-        petBuffFitScoresItem.addActionListener(e -> onOpenPetBuffFitScores());
-        fileMenu.add(petBuffFitScoresItem);
-
-        JMenuItem warFlagBuffFitScoresItem = new JMenuItem(LanguageService.displayName("menu.warFlagCowScore"));
-        warFlagBuffFitScoresItem.addActionListener(e -> onOpenWarFlagBuffFitScores());
-        fileMenu.add(warFlagBuffFitScoresItem);
-
-        JMenuItem showLogItem = new JMenuItem(LanguageService.displayName("menu.showLog"));
-        showLogItem.addActionListener(e -> onShowLog());
-        fileMenu.add(showLogItem);
-
-        JMenuItem hwWebItem = new JMenuItem(LanguageService.displayName("toolbar.heroWars"));
-        hwWebItem.setIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE));
-        hwWebItem.addActionListener(e -> onOpenWeb(HERO_WARS_URL));
-        fileMenu.add(hwWebItem);
-
-        menuBar.add(buildGuildMenu());
-        menuBar.add(buildLineupMenu());
-        journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
-        menuBar.add(journalActions.buildMenu());
-
-
-
-        return menuBar;
+    /** The actions of menu bar and toolbar - package-visible for tests. */
+    MainActions actions() {
+        return actions;
     }
 
     /**
@@ -211,31 +200,6 @@ public class Cow2Frame extends JFrame {
      */
     private boolean switchGuildFromJournal(String folderName) {
         return toolbarPanel.confirmDiscardUnsavedChanges() && toolbarPanel.switchToGuild(folderName);
-    }
-
-    /**
-     * Builds the "Guild" menu: new guild, guild editor and remove guild,
-     * each with its icon in front of the text.
-     */
-    private JMenu buildGuildMenu() {
-        JMenu guildMenu = new JMenu(LanguageService.displayName("menu.guild"));
-
-        JMenuItem newGuildItem = new JMenuItem(LanguageService.displayName(KEY_NEW_GUILD));
-        newGuildItem.setIcon(IconLoader.iconFor(ICON_NEW_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN));
-        newGuildItem.addActionListener(e -> onNewGuild());
-        guildMenu.add(newGuildItem);
-
-        JMenuItem openGuildEditorItem = new JMenuItem(LanguageService.displayName(KEY_OPEN_GUILD_EDITOR));
-        openGuildEditorItem.setIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_EDITOR));
-        openGuildEditorItem.addActionListener(e -> onOpenGuildEditor());
-        guildMenu.add(openGuildEditorItem);
-
-        JMenuItem removeGuildItem = new JMenuItem(LanguageService.displayName(KEY_REMOVE_GUILD));
-        removeGuildItem.setIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED));
-        removeGuildItem.addActionListener(e -> onRemoveGuild());
-        guildMenu.add(removeGuildItem);
-
-        return guildMenu;
     }
 
     /**
@@ -299,7 +263,7 @@ public class Cow2Frame extends JFrame {
 
         String confirmMessage = LanguageService.displayName(KEY_REMOVE_GUILD_CONFIRM_MESSAGE)
                 .replace("{0}", folderName);
-        String journalNote = journalActions == null ? "" : journalActions.removeGuildJournalNote(folderName);
+        String journalNote = journalActions.removeGuildJournalNote(folderName);
         if (!journalNote.isEmpty()) {
             confirmMessage += "\n" + journalNote;
         }
@@ -322,31 +286,6 @@ public class Cow2Frame extends JFrame {
         if (nextFolderName != null) {
             toolbarPanel.switchToGuild(nextFolderName);
         }
-    }
-
-    /**
-     * Builds the "Lineup" menu: new lineup, remove lineup and clear lineup,
-     * each with its icon in front of the text - see {@link #buildGuildMenu()}.
-     */
-    private JMenu buildLineupMenu() {
-        JMenu lineupMenu = new JMenu(LanguageService.displayName("menu.lineup"));
-
-        JMenuItem newLineupItem = new JMenuItem(LanguageService.displayName(KEY_NEW_LINEUP));
-        newLineupItem.setIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN));
-        newLineupItem.addActionListener(e -> onNewLineup());
-        lineupMenu.add(newLineupItem);
-
-        JMenuItem removeLineupItem = new JMenuItem(LanguageService.displayName(KEY_REMOVE_LINEUP));
-        removeLineupItem.setIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED));
-        removeLineupItem.addActionListener(e -> onRemoveLineup());
-        lineupMenu.add(removeLineupItem);
-
-        JMenuItem clearLineupItem = new JMenuItem(LanguageService.displayName(KEY_CLEAR_LINEUP));
-        clearLineupItem.setIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP));
-        clearLineupItem.addActionListener(e -> onClearLineup());
-        lineupMenu.add(clearLineupItem);
-
-        return lineupMenu;
     }
 
     /** Creates a new ".lineup" file in the current guild folder and opens it - see {@link LineupService#createLineup}. */
@@ -514,29 +453,15 @@ public class Cow2Frame extends JFrame {
      */
     private void checkForUpdatesAtStartup(CompletableFuture<UpdateChecker.UpdateCheckResult> startupCheck) {
         startupCheck.thenAccept(result ->
-                SwingUtilities.invokeLater(() -> handleUpdateCheckResult(result, false)));
-    }
-
-    /** "File" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup}, always reports back, including "already up to date" and a failed check. */
-    private void onCheckForUpdates() {
-        checkForUpdates(true);
-    }
-
-    /** Runs {@link UpdateChecker#checkAsync()} and handles its result back on the Swing event thread. */
-    private void checkForUpdates(boolean alwaysShowDialog) {
-        UpdateChecker.checkAsync().thenAccept(result ->
-                SwingUtilities.invokeLater(() -> handleUpdateCheckResult(result, alwaysShowDialog)));
+                SwingUtilities.invokeLater(() -> handleUpdateCheckResult(result)));
     }
 
     /**
      * Reports one {@link UpdateChecker.UpdateCheckResult} - always logs it,
-     * and shows a dialog for {@link UpdateChecker.UpdateCheckResult.Status#UPDATE_AVAILABLE}
-     * (offering to open the release page via {@link #onOpenWeb}) always, or
-     * for the other two outcomes only when {@code alwaysShowDialog} is true
-     * (i.e. only for the explicit, user-triggered check - see
-     * {@link #onCheckForUpdates()} vs. {@link #checkForUpdatesAtStartup}).
+     * and shows a dialog only for {@link UpdateChecker.UpdateCheckResult.Status#UPDATE_AVAILABLE}
+     * (offering to open the release page via {@link #onOpenWeb}).
      */
-    private void handleUpdateCheckResult(UpdateChecker.UpdateCheckResult result, boolean alwaysShowDialog) {
+    private void handleUpdateCheckResult(UpdateChecker.UpdateCheckResult result) {
         switch (result.status()) {
             case UPDATE_AVAILABLE -> {
                 Logger.log("Update available: " + result.latestVersion() + " (installed: " + result.currentVersion() + ")");
@@ -548,22 +473,10 @@ public class Cow2Frame extends JFrame {
                     onOpenWeb(result.releaseUrl());
                 }
             }
-            case UP_TO_DATE -> {
-                Logger.log("Update check: already up to date (" + result.currentVersion() + ")");
-                if (alwaysShowDialog) {
-                    JOptionPane.showMessageDialog(this,
-                            LanguageService.displayName("mainFrame.update.upToDateMessage", result.currentVersion()),
-                            LanguageService.displayName("menu.checkForUpdates"), JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-            case CHECK_FAILED -> {
-                Logger.log("Update check failed or could not be evaluated (installed: " + result.currentVersion() + ")");
-                if (alwaysShowDialog) {
-                    JOptionPane.showMessageDialog(this,
-                            LanguageService.displayName("mainFrame.update.failedMessage"),
-                            LanguageService.displayName("menu.checkForUpdates"), JOptionPane.WARNING_MESSAGE);
-                }
-            }
+            case UP_TO_DATE ->
+                    Logger.log("Update check: already up to date (" + result.currentVersion() + ")");
+            case CHECK_FAILED ->
+                    Logger.log("Update check failed or could not be evaluated (installed: " + result.currentVersion() + ")");
         }
     }
 

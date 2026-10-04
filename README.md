@@ -298,10 +298,9 @@ folder (`new Catalog(tempDir)`).
   none of them can ever have a `${...}`-looking substring "resolved" away).
 - `org.c2w.infra.UpdateChecker` compares that version against
   `GET /repos/Cow2Win/Cow2Win/releases/latest` on GitHub's public REST API
-  and reports whether a newer release exists. `Cow2Frame` uses it twice: a
-  silent check once at startup (only ever shows a dialog when an update was
-  actually found - no popup for "up to date" or a failed/offline check), and
-  the "File" > "Check for Updates" menu item, which always reports back.
+  and reports whether a newer release exists. `Cow2Frame` runs a silent
+  check once at startup (only ever shows a dialog when an update was
+  actually found - no popup for "up to date" or a failed/offline check).
   A found update offers to open the release's GitHub page in the system
   browser.
 - **Requires the `Cow2Win/Cow2Win` repository - or at least its Releases -

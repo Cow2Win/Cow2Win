@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
- * Cow2Frame#buildMenuBar). Lets the user change the display language, the
+ * MainMenuBar). Lets the user change the display language, the
  * default hero and titan lineup algorithms (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
  * the backup directory (see org.c2w.infra.BackupService) and the workspace
  * directory (see {@link Config#getWorkspaceDir()}); named generically since
