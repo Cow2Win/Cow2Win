@@ -577,8 +577,9 @@ public final class JournalImportService {
 
     private static ImportResult writeFailed(Exception e) {
         Logger.logException("Journal import failed - nothing was imported", e);
-        return ImportResult.failed(List.of(new ImportResult.ImportError(
-                ImportResult.ImportError.Kind.WRITE_FAILED, null, e.getMessage())));
+        ImportResult.ImportError.Kind kind = e instanceof JournalLockedException
+                ? ImportResult.ImportError.Kind.JOURNAL_LOCKED : ImportResult.ImportError.Kind.WRITE_FAILED;
+        return ImportResult.failed(List.of(new ImportResult.ImportError(kind, null, e.getMessage())));
     }
 
     private List<ImportResult.ImportError> validate(ImportPlan plan, ImportAnswers a, Guild guild)

@@ -65,4 +65,30 @@ public class GuiUtils {
             window.setSize(Math.min(needed, screen.width), window.getHeight());
         }
     }
+
+    /**
+     * Runs {@code task} on the Swing event thread and waits for it - directly if this
+     * already is the event thread. Used as {@code AppContext}'s event dispatcher, so
+     * listener notifications from background tasks reach Swing components safely.
+     */
+    public static void runOnEdtAndWait(Runnable task) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            task.run();
+            return;
+        }
+        try {
+            SwingUtilities.invokeAndWait(task);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException re) {
+                throw re;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException(cause);
+        }
+    }
 }

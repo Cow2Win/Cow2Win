@@ -115,6 +115,8 @@ public record ImportResult(
             SEASON_OVERLAP,
             /** The catalog id of a name answer does not exist. */
             INVALID_CATALOG_ID,
+            /** The journal is open in another Cow2Win instance (H2 file lock) - nothing was changed. */
+            JOURNAL_LOCKED,
             /** Writing the journal failed - everything was rolled back. */
             WRITE_FAILED
         }

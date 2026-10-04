@@ -58,6 +58,8 @@ public final class Config {
     private static final String KEY_DEFAULT_TITAN_ALGORITHM = "defaultTitanAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
     private static final String KEY_WORKSPACE_PATH = "workspacePath";
+    /** Folder the last battle logs were imported from (Weltenschlacht journal). */
+    private static final String KEY_LAST_JOURNAL_IMPORT_DIR = "lastJournalImportDir";
     /** Default backup directory: a "backup" folder next to {@link #DEFAULT_WORKSPACE_DIR}, under the same {@link #ROOT} umbrella. */
     private static final String DEFAULT_BACKUP_DIR = ROOT.resolve("backup").toString();
 
@@ -124,6 +126,17 @@ public final class Config {
             Logger.log("Config changed: " + key + " = \"" + value + "\"" + previousNote);
         }
         properties.setProperty(key, value);
+    }
+
+    // --- lastJournalImportDir ---
+
+    /** Folder the last battle logs were imported from, {@code ""} if none yet. */
+    public static String getLastJournalImportDir() {
+        return properties.getProperty(KEY_LAST_JOURNAL_IMPORT_DIR, "");
+    }
+
+    public static void setLastJournalImportDir(String lastJournalImportDir) {
+        setProperty(KEY_LAST_JOURNAL_IMPORT_DIR, lastJournalImportDir == null ? "" : lastJournalImportDir);
     }
 
     // --- lastGuildPath ---

@@ -147,6 +147,86 @@ fixes it.
   `data/guild.json`/`data/default.lineup` (read from the packaged
   `resources/` folder, or from `src/main/resources` in the IDE).
 
+## Weltenschlacht Journal (user guide)
+
+The journal collects the battle logs of Clash of Worlds, one database per
+guild (see "Workspace, configuration & backups").
+
+- **Export in the game:** only the **guild master** can export the logs of
+  the own guild - per battle an attack log and a defense log (CSV). Older
+  battles and running battles (partial state) can be exported too; the file
+  name must stay as the game wrote it (date, guilds, result).
+- **Import:** menu **Weltenschlacht Journal → Import …** (or drop the CSV
+  files onto the battle list). One or both files of a battle, also several
+  battles at once. The assistant shows an overview (new / replaces the
+  stored log / unchanged, ranking points check) and asks only what it needs:
+  link the Cow2Win guild with the game guild (first import), the season
+  (12 weeks), unknown players, unknown names. "Cancel" changes nothing.
+- **Defense only:** Cow2Win plans the defense. Players are only assigned
+  from the **defense log** (our defenders); new members are created
+  **without teams**. The attack log is stored completely but never changes
+  the guild. If the import changes the guild (link, new/renamed members),
+  the guild is unsaved afterwards - save it ("Save guild now" on the result
+  page).
+- **What is stored:** every single fight with both sides, teams (if the log
+  has them), fortification buffs, points, the original CSV file and the
+  season. A later export of the same battle replaces the earlier one.
+- **Battle list:** menu **Weltenschlacht Journal → Battle list …** - date,
+  opponent, result, ranking points, points, stored logs, season. Filters:
+  season, opponent (contains), period from/to, status (running/finished),
+  result; "n of m battles". Double click, Enter or **Details …** opens the
+  battle; right click (or the Delete key) offers **Parse again**, **Save
+  original CSV as**, **Assign season …** and **Delete battle …** - several
+  selected battles at once for parsing again and deleting.
+- **Battle detail** (several windows at once): head data (guilds with server
+  and game id, result or "running", ranking points and their check, points,
+  season, per log language, file, import time, parser version, parse
+  problems) and the tabs
+  - **Defense** first - per fortification our defenders in file order with
+    the assigned member ("Puschel → Puschel", "Vale·· (open)"), team power,
+    the attacker, **held/fallen** from our side and the opponent's points,
+    plus a short evaluation (held/lost, points per fortification, fallen
+    fortifications). Without a defense log: a hint and **Import …**.
+  - **Attack** - display only, our attackers against the opponent's defense
+    teams.
+  - **Fortifications** - per fortification and direction: positions,
+    undefended, fights, wins/losses from our side, points, captured.
+  - **Problems** - only if the parser reported any.
+
+  Selecting a fight shows both teams with images, stars, color, level,
+  power, damage dealt/taken, healing and pet/patronage - if the log has them
+  (attack logs always, defense logs rarely, e.g. 17.09.2026).
+- **Deleting:** a battle (or several) from the list or the detail, a season
+  in **Seasons …** - only the season (battles stay, without season) or with
+  all its battles. Every confirmation says exactly what goes (e.g. "battle of
+  24.09.2026 against Das Schwarze Auge – 2 logs, 124 single fights").
+  Deleting the guild deletes its folder including the journal; the
+  confirmation mentions the journal (with its number of battles) if there is
+  one.
+- **Players …:** the own guild's players exactly as in the log (spaces made
+  visible) with status, assigned member (hint if that member no longer
+  exists; several log names of one member after renames are visible),
+  defenses, last seen and last team power(s) from the defense logs. Change
+  the status or the member - this never changes the guild (no renaming, no
+  new members). Filters "only open"/"only problems"; below, members without
+  a journal player or missing from the last 3 defense logs (possible typo,
+  name change or left the guild).
+- **Seasons …:** create (suggested after the last season in the 12-week
+  raster), edit (end suggestion start + 12 weeks), delete. Overlapping
+  seasons are refused. After every change all battles are assigned to the
+  season containing their date (battles outside all seasons get none) -
+  the dialog says beforehand how many battles change their season.
+  **Assign season …** in the battle list offers only seasons containing the
+  battle's date, or none.
+- **Name mappings …:** the manual mappings of unknown names (kind, raw name,
+  catalog entry with image) - change or delete. They apply to future imports;
+  stored battles follow with **Parse all battles again**.
+- **Parse again:** reads the stored original CSVs with the current parser and
+  name mappings and replaces the logs - for one, several or all battles.
+  Seasons and player assignments stay, no questions are asked and the guild
+  is not changed (new unknown players stay open). The result shows the number
+  of logs and the parse problems before → after.
+
 ## Architecture
 
 Swing desktop app, entry point `org.c2w.C2WApp`. Packages under `org.c2w`,
@@ -154,14 +234,14 @@ roughly from top to bottom:
 
 | Package | Contents |
 |---|---|
-| `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
-| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild; `JournalImportService` imports battle logs into it in two steps (`prepare` collects GUI-independent questions in `service.journal`, `execute` applies the answers). Cow2Win is about defense: only the defense log may change the guild (player assignment, rename, new members without teams), the attack log is only stored. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
+| `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `journal`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild; `JournalImportService` imports battle logs into it in two steps (`prepare` collects GUI-independent questions in `service.journal`, `execute` applies the answers); `JournalMaintenanceService` deletes battles/seasons, edits seasons (reassigning battles by date in the same transaction), corrects player assignments and name mappings and parses stored logs again - never changing the guild. Cow2Win is about defense: only the defense log may change the guild (player assignment, rename, new members without teams), the attack log is only stored. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
 | `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
 | `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
 | `report` | `ReportGenerator` - the HTML lineup report. |
 | `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
 | `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
-| `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). No GUI yet. |
+| `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). The GUI is in `gui.journal` (menu `JournalActions`, import assistant, battle list and detail, players/seasons/name mapping windows; the logic in Swing-free models such as `ImportWizardModel`, `BattleDetailModel`, `BattleListFilter`, `JournalPlayersModel`). |
 | `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts` and `GameNameNormalizer` (how in-game names are compared). |
 | `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
 
@@ -429,6 +509,15 @@ folder (`new Catalog(tempDir)`).
   replacing a partial export, status, seasons, assignments, name mappings,
   deleting with cleanup and the battle list. `JournalServiceTest` covers the
   connection lifecycle (lazy, guild switch, `deleteGuild`).
+  `JournalRepositoryMaintenanceTest` covers the phase-5 additions: deleting
+  name mappings, `reassignSeasonsByDate` with both previews, counts for the
+  confirmations, log infos, player statistics (one query, defense logs only),
+  the defenders of the latest defense logs, replacing an unchanged file and
+  `reparseLog` with new name mappings.
+- `JournalMaintenanceServiceTest` - deleting battles and seasons, editing
+  seasons (preview, reassignment, overlap), manual season, player
+  assignments, name mappings and parsing again - each test checks that the
+  guild (in memory and `guild.json`) is unchanged.
 - `JournalImportServiceTest` - import scenarios with a temp workspace and the
   sample logs: first import (guild link, first season), `prepare` writes
   nothing, attack log only (no player questions), second direction later,
@@ -437,6 +526,20 @@ folder (`new Catalog(tempDir)`).
   normalized, similar, unknown; ASSIGN/CREATE/NOT_IN_COW2WIN/OPEN), renames
   via team power and via units, the attack log changes nothing, member limit,
   unknown names, rollback on a write error.
+- `org.c2w.gui.journal` tests - the Swing-free import assistant model
+  (`ImportWizardModelTest`: steps, defaults, answers, blocks, summary - with
+  real plans from the sample logs), texts for every journal enum in all
+  languages (`JournalTextsTest`), the battle list table model incl. season
+  filter and the empty state without journal file, `Config.lastJournalImportDir`,
+  and a smoke test of the assistant pages (`JournalPanelsSmokeTest`).
+  Phase 5: `BattleDetailModelTest` (grouping per fortification, held/fallen,
+  points per fortification, units, attack log only, player labels),
+  `JournalPlayersModelTest`, the battle list filters in
+  `JournalBattleTableModelTest`, `JournalMaintenanceTextsTest` (confirmation
+  texts, guild delete note, every used key in every language) and
+  `JournalDialogsSmokeTest`, which builds and paints all journal windows
+  off-screen (skipped without a display; `-Djournal.smoke.out=<folder>` saves
+  the renderings as PNG).
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting

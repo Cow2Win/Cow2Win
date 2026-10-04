@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 /**
  * The guild and lineup currently open in the application, the files they
@@ -42,6 +43,8 @@ public class AppContext {
     }
 
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    /** Runs the listener notifications - directly by default, see {@link #setEventDispatcher}. */
+    private volatile Consumer<Runnable> eventDispatcher = Runnable::run;
     private final Catalog catalog;
     private final JournalService journal;
 
@@ -254,16 +257,26 @@ public class AppContext {
         listeners.remove(listener);
     }
 
+    /**
+     * How listener notifications are run. The GUI sets one that runs them on the
+     * Swing event thread (and waits), so a change made in a background task (e.g.
+     * the journal import in a {@code SwingWorker}) never updates Swing components
+     * from another thread. Default: directly, in the calling thread (tests, services).
+     */
+    public void setEventDispatcher(Consumer<Runnable> dispatcher) {
+        this.eventDispatcher = dispatcher == null ? Runnable::run : dispatcher;
+    }
+
     private void fireGuildChanged() {
-        listeners.forEach(Listener::guildChanged);
+        eventDispatcher.accept(() -> listeners.forEach(Listener::guildChanged));
     }
 
     private void fireLineupChanged() {
-        listeners.forEach(Listener::lineupChanged);
+        eventDispatcher.accept(() -> listeners.forEach(Listener::lineupChanged));
     }
 
     private void fireDirtyStateChanged() {
-        listeners.forEach(Listener::dirtyStateChanged);
+        eventDispatcher.accept(() -> listeners.forEach(Listener::dirtyStateChanged));
     }
 
     // --- baselines ---

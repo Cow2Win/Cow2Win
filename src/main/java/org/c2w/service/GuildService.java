@@ -208,6 +208,21 @@ public class GuildService {
      * guild file - empty if there is none. Unreadable guild files are logged and skipped.
      */
     public Optional<String> findOtherGuildByGameGuildId(long gameGuildId, String excludedFolder) {
+        return findOtherGuildFolderByGameGuildId(gameGuildId, excludedFolder).map(folder -> {
+            try {
+                String name = GuildRepository.readSummary(guildDir(folder).resolve(GUILD_FILE_NAME)).name();
+                return name.isBlank() ? folder : name;
+            } catch (IOException | RuntimeException e) {
+                return folder;
+            }
+        });
+    }
+
+    /**
+     * Like {@link #findOtherGuildByGameGuildId}, but the guild's workspace folder
+     * name - what {@link #switchToGuild} needs.
+     */
+    public Optional<String> findOtherGuildFolderByGameGuildId(long gameGuildId, String excludedFolder) {
         for (String folder : listGuildFolderNames()) {
             if (folder.equals(excludedFolder)) {
                 continue;
@@ -216,7 +231,7 @@ public class GuildService {
             try {
                 GuildRepository.GuildFileSummary summary = GuildRepository.readSummary(guildFile);
                 if (summary.gameGuildId() != null && summary.gameGuildId() == gameGuildId) {
-                    return Optional.of(summary.name().isBlank() ? folder : summary.name());
+                    return Optional.of(folder);
                 }
             } catch (IOException | RuntimeException e) {
                 Logger.logException("Could not read " + guildFile, e);

@@ -118,6 +118,17 @@ public final class JournalRepository {
      * @throws JournalException          on database errors (e.g. an unknown season id)
      */
     public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, Integer seasonId) throws JournalException {
+        return saveLog(parsed, rawCsv, seasonId, false);
+    }
+
+    /**
+     * Like {@link #saveLog(BattleLogParseResult, byte[], Integer)}; with
+     * {@code replaceUnchanged} an existing log with the same SHA-256 is replaced
+     * too (outcome {@link SaveResult.Outcome#REPLACED}) - for parsing a stored
+     * log again with a newer parser or new name mappings.
+     */
+    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, Integer seasonId, boolean replaceUnchanged)
+            throws JournalException {
         if (parsed == null || rawCsv == null) {
             throw new IllegalArgumentException("saveLog needs a parse result and the raw CSV");
         }
@@ -128,11 +139,11 @@ public final class JournalRepository {
         }
         String sha256 = sha256(rawCsv);
         byte[] compressed = gzip(rawCsv);
-        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256, seasonId));
+        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256, seasonId, replaceUnchanged));
     }
 
     private SaveResult save(Connection c, BattleLogParseResult parsed, int rawSize, byte[] compressed, String sha256,
-                            Integer seasonId) throws SQLException, JournalException {
+                            Integer seasonId, boolean replaceUnchanged) throws SQLException, JournalException {
         BattleLog log = parsed.log();
         BattleLogHeader h = log.header();
         LocalDateTime now = now();
@@ -155,7 +166,7 @@ public final class JournalRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     existingLogId = rs.getInt("id");
-                    if (sha256.equals(rs.getString("sha256"))) {
+                    if (!replaceUnchanged && sha256.equals(rs.getString("sha256"))) {
                         if (seasonId != null) {
                             updateSeasonOfBattle(c, battleId, seasonId, now);
                         }
@@ -531,6 +542,73 @@ public final class JournalRepository {
         return id;
     }
 
+    /**
+     * Result of {@link #reparseLog}.
+     *
+     * @param battleId      the battle
+     * @param direction     the log direction
+     * @param problemsBefore parse problems stored before
+     * @param problemsAfter  parse problems now
+     * @param fights         single fights now
+     */
+    public record Reparsed(int battleId, LogDirection direction, int problemsBefore, int problemsAfter, int fights) {
+    }
+
+    /**
+     * Parses the stored original CSV of one log again with {@code parser} (current
+     * parser version and name mappings) and replaces the log - even though the file
+     * is unchanged. The season and the player assignments stay (players keep their
+     * ids because they are found by name); the parser version is updated.
+     *
+     * @return empty if the battle has no log of this direction
+     * @throws JournalException if the stored file cannot be parsed any more, or no longer
+     *                          belongs to this battle (nothing is changed then)
+     */
+    public Optional<Reparsed> reparseLog(int battleId, LogDirection direction, BattleLogParser parser)
+            throws JournalException {
+        if (parser == null) {
+            throw new IllegalArgumentException("reparseLog needs a parser");
+        }
+        return db.transaction(c -> {
+            String fileName;
+            byte[] compressed;
+            int problemsBefore;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT l.file_name, l.raw_csv, (SELECT COUNT(*) FROM parse_problem p WHERE p.battle_log_id = l.id)"
+                            + " FROM battle_log l WHERE l.battle_id = ? AND l.direction = ?")) {
+                ps.setInt(1, battleId);
+                ps.setString(2, direction.name());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return Optional.<Reparsed>empty();
+                    }
+                    fileName = rs.getString(1);
+                    compressed = rs.getBytes(2);
+                    problemsBefore = rs.getInt(3);
+                }
+            }
+            byte[] raw = gunzip(compressed);
+            BattleLogParseResult parsed;
+            try {
+                parsed = parser.parse(fileName, new ByteArrayInputStream(raw));
+            } catch (IOException e) {
+                throw new JournalException("The stored log " + fileName + " cannot be parsed: " + e.getMessage(), e);
+            }
+            BattleLogHeader h = parsed.log().header();
+            if (!h.isComplete() || h.direction() != direction) {
+                throw new JournalException("The stored log " + fileName + " is no longer recognized as the "
+                        + direction + " log of battle " + battleId);
+            }
+            SaveResult saved = save(c, parsed, raw.length, compressed, sha256(raw), null, true);
+            if (saved.battleId() != battleId) {
+                throw new JournalException("The stored log " + fileName + " now belongs to another battle ("
+                        + saved.battleId() + " instead of " + battleId + ")");
+            }
+            return Optional.of(new Reparsed(battleId, direction, problemsBefore, parsed.problems().size(),
+                    parsed.log().fights().size()));
+        });
+    }
+
     // =====================================================================
     // Reading
     // =====================================================================
@@ -706,18 +784,27 @@ public final class JournalRepository {
 
     /** All battles, or those of one season, newest first. */
     public List<BattleSummary> listBattles(Integer seasonIdOrNull) throws JournalException {
+        return battles(seasonIdOrNull == null ? null : "b.season_id = ?", seasonIdOrNull);
+    }
+
+    /** The list row of one battle. */
+    public Optional<BattleSummary> findBattleSummary(int battleId) throws JournalException {
+        return battles("b.id = ?", battleId).stream().findFirst();
+    }
+
+    private List<BattleSummary> battles(String condition, Integer parameter) throws JournalException {
         return db.read(c -> {
             String sql = "SELECT b.id, b.battle_date, b.result, b.status, b.ranking_points, b.season_id,"
                     + " s.season_number, g.name, g.server, g.game_guild_id,"
                     + " (SELECT points_total FROM battle_log l WHERE l.battle_id = b.id AND l.direction = 'ATTACK') AS own_points,"
                     + " (SELECT points_total FROM battle_log l WHERE l.battle_id = b.id AND l.direction = 'DEFENSE') AS opp_points"
                     + " FROM battle b JOIN guild g ON g.id = b.opponent_guild_id LEFT JOIN season s ON s.id = b.season_id"
-                    + (seasonIdOrNull == null ? "" : " WHERE b.season_id = ?")
+                    + (condition == null ? "" : " WHERE " + condition)
                     + " ORDER BY b.battle_date DESC, b.id DESC";
             List<BattleSummary> result = new ArrayList<>();
             try (PreparedStatement ps = c.prepareStatement(sql)) {
-                if (seasonIdOrNull != null) {
-                    ps.setInt(1, seasonIdOrNull);
+                if (condition != null) {
+                    ps.setInt(1, parameter);
                 }
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -744,6 +831,80 @@ public final class JournalRepository {
                 }
             }
             return result;
+        });
+    }
+
+    /** Bookkeeping data of the logs of one battle ({@code null}: of all battles), defense log first. */
+    public List<LogInfo> listLogs(Integer battleIdOrNull) throws JournalException {
+        return db.read(c -> {
+            List<LogInfo> logs = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT l.battle_id, l.direction, l.language, l.file_name, l.imported_at, l.parser_version,"
+                            + " l.points_total,"
+                            + " (SELECT COUNT(*) FROM parse_problem p WHERE p.battle_log_id = l.id) AS problems,"
+                            + " (SELECT COUNT(*) FROM fight f WHERE f.battle_log_id = l.id) AS fights"
+                            + " FROM battle_log l JOIN battle b ON b.id = l.battle_id"
+                            + (battleIdOrNull == null ? "" : " WHERE l.battle_id = ?")
+                            + " ORDER BY b.battle_date DESC, b.id DESC, l.direction DESC")) {
+                if (battleIdOrNull != null) {
+                    ps.setInt(1, battleIdOrNull);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        logs.add(new LogInfo(rs.getInt("battle_id"), LogDirection.valueOf(rs.getString("direction")),
+                                rs.getString("language"), rs.getString("file_name"),
+                                rs.getObject("imported_at", LocalDateTime.class), rs.getInt("parser_version"),
+                                rs.getInt("problems"), rs.getInt("fights"), rs.getInt("points_total")));
+                    }
+                }
+            }
+            return logs;
+        });
+    }
+
+    // =====================================================================
+    // Counting (for confirmations)
+    // =====================================================================
+
+    /** Battles, logs and single fights of the whole journal. */
+    public JournalCounts countAll() throws JournalException {
+        return counts("TRUE", List.of());
+    }
+
+    /** Logs and single fights of these battles (unknown ids are not counted). */
+    public JournalCounts countBattles(Collection<Integer> battleIds) throws JournalException {
+        if (battleIds.isEmpty()) {
+            return JournalCounts.NONE;
+        }
+        List<Integer> ids = List.copyOf(new LinkedHashSet<>(battleIds));
+        return counts("b.id IN (" + String.join(", ", Collections.nCopies(ids.size(), "?")) + ")", ids);
+    }
+
+    /** Battles, logs and single fights assigned to a season. */
+    public JournalCounts countSeason(int seasonId) throws JournalException {
+        return counts("b.season_id = ?", List.of(seasonId));
+    }
+
+    private JournalCounts counts(String condition, List<Integer> parameters) throws JournalException {
+        return db.read(c -> {
+            int[] values = new int[3];
+            String[] queries = {
+                    "SELECT COUNT(*) FROM battle b WHERE " + condition,
+                    "SELECT COUNT(*) FROM battle_log l JOIN battle b ON b.id = l.battle_id WHERE " + condition,
+                    "SELECT COUNT(*) FROM fight f JOIN battle_log l ON l.id = f.battle_log_id"
+                            + " JOIN battle b ON b.id = l.battle_id WHERE " + condition};
+            for (int q = 0; q < queries.length; q++) {
+                try (PreparedStatement ps = c.prepareStatement(queries[q])) {
+                    for (int i = 0; i < parameters.size(); i++) {
+                        ps.setInt(i + 1, parameters.get(i));
+                    }
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        values[q] = rs.getInt(1);
+                    }
+                }
+            }
+            return new JournalCounts(values[0], values[1], values[2]);
         });
     }
 
@@ -850,6 +1011,67 @@ public final class JournalRepository {
         db.transaction(c -> {
             updateSeasonOfBattle(c, battleId, seasonId, now());
             return null;
+        });
+    }
+
+    /** The season containing the battle's date: the subquery used by the reassignment. */
+    private static final String SEASON_BY_DATE =
+            "(SELECT s.id FROM season s WHERE s.start_date <= b.battle_date AND b.battle_date < s.end_date)";
+
+    /**
+     * Assigns every battle to the season containing its date, battles outside all
+     * seasons to none - call after seasons changed, in the same transaction (see
+     * {@link #inTransaction}). A manual "no season" of a battle inside a season is
+     * undone by this.
+     *
+     * @return number of battles whose season changed
+     */
+    public int reassignSeasonsByDate() throws JournalException {
+        LocalDateTime now = now();
+        return db.transaction(c -> {
+            try (PreparedStatement ps = c.prepareStatement("UPDATE battle b SET season_id = " + SEASON_BY_DATE
+                    + ", updated_at = ? WHERE b.season_id IS DISTINCT FROM " + SEASON_BY_DATE)) {
+                ps.setTimestamp(1, Timestamp.valueOf(now));
+                return ps.executeUpdate();
+            }
+        });
+    }
+
+    /** Preview of {@link #reassignSeasonsByDate()}: how many battles would change their season - writes nothing. */
+    public int countSeasonReassignments() throws JournalException {
+        return db.read(c -> {
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM battle b WHERE b.season_id IS DISTINCT FROM "
+                         + SEASON_BY_DATE)) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        });
+    }
+
+    /**
+     * Preview for a planned change of the seasons: how many battles would change
+     * their season if the journal had exactly {@code seasons} (e.g. the stored ones
+     * with one edited, added or removed) and {@link #reassignSeasonsByDate()} ran.
+     * A season with an id not stored yet (a new one) counts as a change for every
+     * battle it would get. Writes nothing.
+     */
+    public int countSeasonReassignments(Collection<Season> seasons) throws JournalException {
+        return db.read(c -> {
+            int changes = 0;
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT battle_date, season_id FROM battle")) {
+                while (rs.next()) {
+                    LocalDate date = rs.getObject(1, LocalDate.class);
+                    Integer current = rs.getObject(2, Integer.class);
+                    Season target = seasons.stream().filter(s -> s.contains(date)).findFirst().orElse(null);
+                    boolean same = target == null ? current == null : current != null && current == target.id();
+                    if (!same) {
+                        changes++;
+                    }
+                }
+            }
+            return changes;
         });
     }
 
@@ -993,6 +1215,119 @@ public final class JournalRepository {
         });
     }
 
+    /**
+     * All own-guild players with assignment and defense statistics - one query, not
+     * one per player. Only DEFENSE logs count (our players are the defenders there);
+     * players seen only in attack logs have 0 defenses. Sorted by name.
+     */
+    public List<OwnPlayerStats> listOwnPlayerStats() throws JournalException {
+        return db.read(c -> {
+            Map<Integer, StatsDraft> drafts = new LinkedHashMap<>();
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery(
+                         "SELECT p.id, p.name, g.game_guild_id, g.is_own, a.member_id, a.status, a.confirmed_at,"
+                                 + " d.battle_date, d.battle_id, d.power"
+                                 + " FROM player p JOIN guild g ON g.id = p.guild_id"
+                                 + " LEFT JOIN player_assignment a ON a.player_id = p.id"
+                                 + " LEFT JOIN (SELECT f.defender_player_id AS player_id, f.defender_team_power AS power,"
+                                 + " f.seq, b.battle_date, b.id AS battle_id FROM fight f"
+                                 + " JOIN battle_log l ON l.id = f.battle_log_id JOIN battle b ON b.id = l.battle_id"
+                                 + " WHERE l.direction = 'DEFENSE') d ON d.player_id = p.id"
+                                 + " WHERE g.is_own ORDER BY p.id, d.battle_date, d.battle_id, d.seq")) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    StatsDraft draft = drafts.get(id);
+                    if (draft == null) {
+                        String status = rs.getString("status");
+                        PlayerAssignment assignment = status == null ? null : new PlayerAssignment(id,
+                                rs.getString("member_id"), AssignmentStatus.valueOf(status),
+                                rs.getObject("confirmed_at", LocalDateTime.class));
+                        draft = new StatsDraft(player(rs), assignment);
+                        drafts.put(id, draft);
+                    }
+                    LocalDate date = rs.getObject("battle_date", LocalDate.class);
+                    if (date != null) {
+                        int battleId = rs.getInt("battle_id");
+                        draft.defenses++;
+                        if (draft.lastSeen == null || !date.equals(draft.lastSeen) || battleId != draft.lastBattleId) {
+                            draft.lastPowers.clear();
+                        }
+                        draft.lastSeen = date;
+                        draft.lastBattleId = battleId;
+                        draft.lastPowers.add(rs.getInt("power"));
+                    }
+                }
+            }
+            List<OwnPlayerStats> result = new ArrayList<>();
+            for (StatsDraft d : drafts.values()) {
+                result.add(new OwnPlayerStats(d.player, d.assignment, d.defenses, d.lastSeen, d.lastPowers));
+            }
+            result.sort(Comparator.comparing((OwnPlayerStats s) -> s.player().name(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(s -> s.player().name()));
+            return result;
+        });
+    }
+
+    private static final class StatsDraft {
+        final JournalPlayer player;
+        final PlayerAssignment assignment;
+        final List<Integer> lastPowers = new ArrayList<>();
+        int defenses;
+        LocalDate lastSeen;
+        int lastBattleId;
+
+        StatsDraft(JournalPlayer player, PlayerAssignment assignment) {
+            this.player = player;
+            this.assignment = assignment;
+        }
+    }
+
+    /**
+     * The defenders of the latest defense logs.
+     *
+     * @param battleDays the days of the considered defense logs, newest first (fewer than asked
+     *                   if the journal has fewer defense logs)
+     * @param playerIds  the own-guild players defending in at least one of them
+     */
+    public record RecentDefenders(List<LocalDate> battleDays, Set<Integer> playerIds) {
+        public RecentDefenders {
+            battleDays = List.copyOf(battleDays);
+            playerIds = Set.copyOf(playerIds);
+        }
+    }
+
+    /** The own players defending in the {@code logCount} latest defense logs (by battle day). */
+    public RecentDefenders recentDefenders(int logCount) throws JournalException {
+        return db.read(c -> {
+            List<Integer> logIds = new ArrayList<>();
+            List<LocalDate> days = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement("SELECT l.id, b.battle_date FROM battle_log l"
+                    + " JOIN battle b ON b.id = l.battle_id WHERE l.direction = 'DEFENSE'"
+                    + " ORDER BY b.battle_date DESC, b.id DESC LIMIT ?")) {
+                ps.setInt(1, Math.max(0, logCount));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        logIds.add(rs.getInt(1));
+                        days.add(rs.getObject(2, LocalDate.class));
+                    }
+                }
+            }
+            Set<Integer> players = new HashSet<>();
+            for (int logId : logIds) {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT DISTINCT defender_player_id FROM fight WHERE battle_log_id = ?")) {
+                    ps.setInt(1, logId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            players.add(rs.getInt(1));
+                        }
+                    }
+                }
+            }
+            return new RecentDefenders(days, players);
+        });
+    }
+
     private static JournalPlayer player(ResultSet rs) throws SQLException {
         return new JournalPlayer(rs.getInt("id"), rs.getString("name"), rs.getLong("game_guild_id"),
                 rs.getBoolean("is_own"));
@@ -1029,6 +1364,25 @@ public final class JournalRepository {
                     return rs.next() ? Optional.of(new NameMapping(kind, rs.getString(1), rs.getString(2)))
                             : Optional.<NameMapping>empty();
                 }
+            }
+        });
+    }
+
+    /**
+     * Removes the manual mapping of {@code rawName} (compared via {@code GameNameNormalizer}).
+     * Stored logs keep their ids until they are parsed again ({@link #reparseLog}).
+     *
+     * @return false if there was no such mapping
+     */
+    public boolean deleteNameMapping(NameMappingKind kind, String rawName) throws JournalException {
+        if (kind == null || rawName == null) {
+            throw new IllegalArgumentException("deleteNameMapping needs a kind and a name");
+        }
+        return db.transaction(c -> {
+            try (PreparedStatement ps = c.prepareStatement("DELETE FROM name_mapping WHERE kind = ? AND name_key = ?")) {
+                ps.setString(1, kind.name());
+                ps.setString(2, GameNameNormalizer.key(rawName));
+                return ps.executeUpdate() == 1;
             }
         });
     }

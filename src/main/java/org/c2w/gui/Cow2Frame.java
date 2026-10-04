@@ -7,6 +7,7 @@ import org.c2w.gui.flag.WarFlagCoreScoreDialog;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.hero.HeroCoreScoreDialog;
+import org.c2w.gui.journal.JournalActions;
 import org.c2w.gui.pet.PetCoreScoreDialog;
 import org.c2w.gui.titan.TitanCoreScoreDialog;
 import org.c2w.i18n.LanguageService;
@@ -83,6 +84,8 @@ public class Cow2Frame extends JFrame {
     private final ToolbarPanel toolbarPanel;
     private final LogPanel logPanel;
     private JDialog logDialog;
+    /** The "Weltenschlacht Journal" menu and windows - created with the menu bar. */
+    private JournalActions journalActions;
 
     public Cow2Frame(AppContext appContext) {
         super(BASE_TITLE);
@@ -102,6 +105,9 @@ public class Cow2Frame extends JFrame {
             }
         });
         this.appContext = appContext;
+        // Listener notifications always on the Swing thread - also for changes made in background tasks
+        // (e.g. the journal import in a SwingWorker).
+        appContext.setEventDispatcher(GuiUtils::runOnEdtAndWait);
         this.guildService = new GuildService(appContext);
         this.lineupService = new LineupService(appContext);
         this.background = IconLoader.getBackgroundImage();
@@ -181,10 +187,20 @@ public class Cow2Frame extends JFrame {
 
         menuBar.add(buildGuildMenu());
         menuBar.add(buildLineupMenu());
+        journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
+        menuBar.add(journalActions.buildMenu());
 
 
 
         return menuBar;
+    }
+
+    /**
+     * Switches to another guild for the journal import ("switch to guild ..."), with the
+     * usual "unsaved changes" prompt - see {@link ToolbarPanel#confirmDiscardUnsavedChanges()}.
+     */
+    private boolean switchGuildFromJournal(String folderName) {
+        return toolbarPanel.confirmDiscardUnsavedChanges() && toolbarPanel.switchToGuild(folderName);
     }
 
     /**
@@ -273,6 +289,10 @@ public class Cow2Frame extends JFrame {
 
         String confirmMessage = LanguageService.displayName(KEY_REMOVE_GUILD_CONFIRM_MESSAGE)
                 .replace("{0}", folderName);
+        String journalNote = journalActions == null ? "" : journalActions.removeGuildJournalNote(folderName);
+        if (!journalNote.isEmpty()) {
+            confirmMessage += "\n" + journalNote;
+        }
         int confirm = JOptionPane.showConfirmDialog(this, confirmMessage,
                 LanguageService.displayName(KEY_REMOVE_GUILD_DIALOG_TITLE), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
