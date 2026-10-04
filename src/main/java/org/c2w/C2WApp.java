@@ -1,12 +1,17 @@
 package org.c2w;
 
+import org.c2w.data.journal.db.JournalException;
 import org.c2w.gui.Cow2Frame;
+import org.c2w.gui.SplashWindow;
+import org.c2w.gui.common.GuiUtils;
 import org.c2w.infra.CatalogVersion;
 import org.c2w.infra.Logger;
+import org.c2w.infra.UpdateChecker;
 import org.c2w.service.AppContext;
 import org.c2w.service.WorkspaceBootstrap;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
 import mdlaf.MaterialLookAndFeel;
 import mdlaf.themes.MaterialOceanicTheme;
 
@@ -18,12 +23,51 @@ public class C2WApp {
         installLookAndFeel();
         installUncaughtExceptionLogging();
 
-        AppContext context = WorkspaceBootstrap.start();
-        logCatalogVersion();
+        SplashWindow splash = SplashWindow.showSplash();
+
+        // Started first and left running in the background - Cow2Frame reports the
+        // result once it is visible, so a slow/missing network never delays startup.
+        splash.setStatus("Checking for updates ...");
+        CompletableFuture<UpdateChecker.UpdateCheckResult> updateCheck = UpdateChecker.checkAsync();
+
+        Cow2Frame[] frame = new Cow2Frame[1];
+        try {
+            AppContext context = WorkspaceBootstrap.start(splash::setStatus);
+            logCatalogVersion();
+
+            splash.setStatus("Starting database ...");
+            openJournal(context);
+
+            splash.setStatus("Building GUI ...");
+            GuiUtils.runOnEdtAndWait(() -> frame[0] = new Cow2Frame(context));
+        } catch (RuntimeException | Error e) {
+            // Without this the (still visible) splash would keep the JVM alive forever.
+            splash.close();
+            throw e;
+        }
+
+        splash.awaitMinimumDisplayTime();
+        SwingUtilities.invokeLater(() -> {
+            frame[0].showMainWindow(updateCheck);
+            splash.close();
+        });
 
         Logger.log("Started: ");
+    }
 
-        SwingUtilities.invokeLater(() -> new Cow2Frame(context));
+    /**
+     * Opens the open guild's journal database (if it has one) already
+     * behind the splash screen, instead of lazily on the first journal
+     * action. Never prevents startup: a failure (e.g. the database is
+     * locked by another running instance) is only logged, and the journal
+     * is simply opened (and the error reported) again on first use.
+     */
+    private static void openJournal(AppContext context) {
+        try {
+            context.journal().repository(false);
+        } catch (JournalException | RuntimeException e) {
+            Logger.logException("Could not open the journal database at startup", e);
+        }
     }
 
     /**

@@ -29,6 +29,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.c2w.C2WApp.BASE_TITLE;
 
@@ -140,10 +141,19 @@ public class Cow2Frame extends JFrame {
 
         setBounds(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds());
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+    }
 
+    /**
+     * Shows the (fully built) frame and reports the startup update check
+     * once it completes - see {@link #checkForUpdatesAtStartup}. Kept out of
+     * the constructor so {@code C2WApp} can build the frame behind the
+     * splash screen and only reveal it when startup is done.
+     *
+     * @param startupCheck the update check started by {@code C2WApp} at the very beginning of startup
+     */
+    public void showMainWindow(CompletableFuture<UpdateChecker.UpdateCheckResult> startupCheck) {
         setVisible(true);
-
-        checkForUpdatesAtStartup();
+        checkForUpdatesAtStartup(startupCheck);
     }
 
     private JMenuBar buildMenuBar() {
@@ -493,19 +503,21 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Silent, best-effort update check run once after the frame becomes
-     * visible (Cow2Win todos 1.1) - only ever surfaces a dialog when a
+     * Silent, best-effort update check started once at startup (by
+     * {@code C2WApp}, behind the splash screen) and reported once the frame
+     * is visible (Cow2Win todos 1.1) - only ever surfaces a dialog when a
      * newer release was actually found ({@link #handleUpdateCheckResult}),
      * so a missing internet connection or an unreachable GitHub never
      * bothers the user on every single startup. Every outcome is still
      * logged (see {@link Logger}), so "did it even check" is visible in the
      * log panel/file if needed.
      */
-    private void checkForUpdatesAtStartup() {
-        checkForUpdates(false);
+    private void checkForUpdatesAtStartup(CompletableFuture<UpdateChecker.UpdateCheckResult> startupCheck) {
+        startupCheck.thenAccept(result ->
+                SwingUtilities.invokeLater(() -> handleUpdateCheckResult(result, false)));
     }
 
-    /** "File" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup()}, always reports back, including "already up to date" and a failed check. */
+    /** "File" > "Check for Updates" menu item - unlike {@link #checkForUpdatesAtStartup}, always reports back, including "already up to date" and a failed check. */
     private void onCheckForUpdates() {
         checkForUpdates(true);
     }
@@ -522,7 +534,7 @@ public class Cow2Frame extends JFrame {
      * (offering to open the release page via {@link #onOpenWeb}) always, or
      * for the other two outcomes only when {@code alwaysShowDialog} is true
      * (i.e. only for the explicit, user-triggered check - see
-     * {@link #onCheckForUpdates()} vs. {@link #checkForUpdatesAtStartup()}).
+     * {@link #onCheckForUpdates()} vs. {@link #checkForUpdatesAtStartup}).
      */
     private void handleUpdateCheckResult(UpdateChecker.UpdateCheckResult result, boolean alwaysShowDialog) {
         switch (result.status()) {

@@ -6,14 +6,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class IconLoader {
 
-    public static final Color GREEN = new Color(78,133,66);
-    public static final Color BLUE = new Color(0,150,136);
-    public static final Color RED = new Color(159,41,54);
+    public static final Color GREEN = new Color(78, 133, 66);
+    public static final Color BLUE = new Color(0, 150, 136);
+    public static final Color RED = new Color(159, 41, 54);
 
 
     static final int TOOLBAR_ICON_SIZE = 20;
@@ -22,13 +24,17 @@ public final class IconLoader {
 
     private static final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();
 
-    /** RGB mask (alpha channel excluded) of a fully black pixel - see {@link #iconFor(String, int, Color)}. */
+    /**
+     * RGB mask (alpha channel excluded) of a fully black pixel - see {@link #iconFor(String, int, Color)}.
+     */
     private static final int BLACK_RGB_MASK = 0x00FFFFFF;
 
     private IconLoader() {
     }
 
-    /** Returns the icon for the given classpath-absolute image path, scaled to size x size, or null if not found. */
+    /**
+     * Returns the icon for the given classpath-absolute image path, scaled to size x size, or null if not found.
+     */
     public static ImageIcon iconFor(String imagePath, int size) {
         if (imagePath == null || imagePath.isBlank()) {
             return null;
@@ -73,10 +79,22 @@ public final class IconLoader {
         return recolored;
     }
 
-    public static ImageIcon iconForButton(String imagePath){
-        Color c = UIManager.getColor("Label.foreground");
-        return iconFor(imagePath,TOOLBAR_ICON_SIZE,c);
+    public static ImageIcon iconForWithDayColor(String imagePath, int size) {
+        Color tmp = new JLabel("").getForeground();
+        if (LocalDate.now().getDayOfWeek() == DayOfWeek.SATURDAY) {
+            tmp = GREEN;
+        }
+        if (LocalDate.now().getDayOfWeek() == DayOfWeek.SUNDAY) {
+            tmp = RED;
+        }
+        return iconFor(imagePath, size, tmp);
     }
+
+    public static ImageIcon iconForButton(String imagePath) {
+        Color c = UIManager.getColor("Label.foreground");
+        return iconFor(imagePath, TOOLBAR_ICON_SIZE, c);
+    }
+
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
         URL resource = IconLoader.class.getResource(imagePath);
         if (resource == null) {
@@ -88,7 +106,9 @@ public final class IconLoader {
         return new ImageIcon(scaled);
     }
 
-    /** Draws {@code icon} into an ARGB {@link BufferedImage} and replaces every fully black pixel's RGB with {@code color}'s, keeping each pixel's original alpha. */
+    /**
+     * Draws {@code icon} into an ARGB {@link BufferedImage} and replaces every fully black pixel's RGB with {@code color}'s, keeping each pixel's original alpha.
+     */
     private static ImageIcon recolorBlackPixels(ImageIcon icon, Color color) {
         int width = icon.getIconWidth();
         int height = icon.getIconHeight();
@@ -110,12 +130,12 @@ public final class IconLoader {
         return new ImageIcon(buffered);
     }
 
-    public static Image getBackgroundImage(){
+    public static Image getBackgroundImage() {
         URL resource = IconLoader.class.getResource(BACKGROUND_IMAGE);
         if (resource == null) {
             Logger.log("Image not found on classpath: " + BACKGROUND_IMAGE);
             return null;
         }
-        return  new ImageIcon(resource).getImage();
+        return new ImageIcon(resource).getImage();
     }
 }

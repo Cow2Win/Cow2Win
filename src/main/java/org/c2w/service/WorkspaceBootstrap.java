@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Everything that has to happen before the first window opens: the first-run
@@ -41,18 +42,26 @@ public final class WorkspaceBootstrap {
      * with the catalogs loaded and the last guild/lineup open (the demo
      * guild on the very first start). Never throws for a missing or broken
      * guild/lineup file - that is logged and an empty one is opened instead.
+     *
+     * @param progress receives a short, human-readable description of each
+     *                 step right before it runs (shown on the splash screen)
      */
-    public static AppContext start() {
+    public static AppContext start(Consumer<String> progress) {
         boolean firstStart = !Config.exists();
         if (firstStart) {
+            progress.accept("Creating workspace ...");
             runInitialSetup();
         }
 
+        progress.accept("Loading configuration ...");
         Config.load();
+        progress.accept("Creating backups ...");
         BackupService.checkAndCreateBackups();
+        progress.accept("Loading catalogs ...");
         Catalog catalog = new Catalog(Config.getWorkspaceDir());
         TeamScoreCalculator.setHeroCombos(catalog.heroCombos().combos());
         AppContext context = new AppContext(catalog);
+        progress.accept("Opening guild and lineup ...");
         loadGuildContext(context);
         loadLineupContext(context);
 
