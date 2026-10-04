@@ -18,15 +18,35 @@ class AppActionTest {
     @DisplayName("Name and tooltip come from LanguageService, actionPerformed runs the handler")
     void nameTooltipAndHandler() {
         AtomicInteger calls = new AtomicInteger();
-        AppAction action = new AppAction(ActionId.GENERATE_REPORT, calls::incrementAndGet);
+        AppAction action = new AppAction(ActionId.RUN_ALGORITHM, calls::incrementAndGet);
 
-        String text = LanguageService.displayName(ActionId.GENERATE_REPORT.textKey());
+        String text = LanguageService.displayName(ActionId.RUN_ALGORITHM.textKey());
         assertEquals(text, action.getValue(Action.NAME));
         assertEquals(text, action.getValue(Action.SHORT_DESCRIPTION));
-        assertSame(ActionId.GENERATE_REPORT, action.id());
+        assertSame(ActionId.RUN_ALGORITHM, action.id());
 
         action.actionPerformed(null);
         assertEquals(1, calls.get());
+    }
+
+    @Test
+    @DisplayName("An action that opens a window gets \" …\" in its name only, the tooltip stays plain")
+    void ellipsisForWindowActions() {
+        String text = LanguageService.displayName(ActionId.GENERATE_REPORT.textKey());
+        AppAction action = new AppAction(ActionId.GENERATE_REPORT, () -> { });
+
+        assertEquals(text + " …", action.getValue(Action.NAME));
+        assertEquals(text, action.getValue(Action.SHORT_DESCRIPTION));
+    }
+
+    @Test
+    @DisplayName("Every menu text of a window-opening action ends with exactly one \"…\", the others with none")
+    void menuTextsEndWithEllipsisOnce() {
+        for (ActionId id : ActionId.values()) {
+            String menuText = AppAction.menuText(id);
+            assertEquals(id.opensWindow(), menuText.endsWith("…"), id + ": " + menuText);
+            assertFalse(menuText.endsWith("… …") || menuText.endsWith("……"), id + ": " + menuText);
+        }
     }
 
     @Test

@@ -2,11 +2,14 @@ package org.c2w.gui;
 
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.action.Stage;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.c2w.gui.action.ActionId.*;
 
@@ -16,34 +19,87 @@ import static org.c2w.gui.action.ActionId.*;
  */
 public final class MainMenuBar extends JMenuBar {
 
-    /** One menu: language file key of its title and its entries, {@code null} standing for a separator. */
-    record MenuSpec(String titleKey, List<ActionId> entries) {
+    /** One entry of a {@link MenuSpec}: an action, a separator or a submenu. */
+    sealed interface Entry permits Item, Separator, MenuSpec {
     }
 
-    /** Placeholder for a separator in {@link MenuSpec#entries()}. */
-    static final ActionId SEPARATOR = null;
+    /** A menu entry bound to the action registered for {@code id}. */
+    record Item(ActionId id) implements Entry {
+    }
 
+    /** A separator line. */
+    record Separator() implements Entry {
+    }
+
+    /** A menu (or submenu): language file key of its title and its entries. */
+    record MenuSpec(String titleKey, List<Entry> entries) implements Entry {
+
+        /** The ids of every action in this menu, including its submenus. */
+        List<ActionId> allActionIds() {
+            List<ActionId> ids = new ArrayList<>();
+            for (Entry entry : entries) {
+                if (entry instanceof Item item) {
+                    ids.add(item.id());
+                } else if (entry instanceof MenuSpec submenu) {
+                    ids.addAll(submenu.allActionIds());
+                }
+            }
+            return ids;
+        }
+    }
+
+    static final Separator SEPARATOR = new Separator();
+
+    /**
+     * The menus in display order: "File" plus one menu per process stage. Every action in a
+     * menu titled with a {@link Stage#menuTextKey()}, submenus included, is of that stage.
+     * "File" also holds the master data entries for now (no menu of their own yet). Every
+     * action appears in exactly one menu, except the {@link #TOOLBAR_ONLY} ones.
+     */
     static final List<MenuSpec> MENUS = List.of(
-            new MenuSpec("menu.file", Arrays.asList(SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS)),
-            new MenuSpec("menu.guild", Arrays.asList(NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD)),
-            new MenuSpec("menu.lineup", Arrays.asList(NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP)),
-            new MenuSpec("menu.journal", Arrays.asList(JOURNAL_IMPORT, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS,
-                    JOURNAL_SYNC, SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS)));
+            menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
+            menu(Stage.INPUT.menuTextKey(),
+                    menu("menu.guild", NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD),
+                    OPEN_GUILD_HERO_ENTRY, OPEN_GUILD_TITAN_ENTRY,
+                    SEPARATOR, JOURNAL_IMPORT, JOURNAL_SYNC,
+                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS),
+            menu(Stage.CONCEPT.menuTextKey(),
+                    menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP),
+                    SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
+                    SEPARATOR, SHOW_HERO_TEAMS, SHOW_TITAN_TEAMS,
+                    SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS),
+            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT));
+
+    /** The actions deliberately offered in the toolbar only, not in any menu. */
+    static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);
 
     public MainMenuBar(MainActions actions) {
         for (MenuSpec spec : MENUS) {
-            JMenu menu = new JMenu(LanguageService.displayName(spec.titleKey()));
-            for (ActionId id : spec.entries()) {
-                if (id == SEPARATOR) {
-                    menu.addSeparator();
-                } else {
-                    JMenuItem item = new JMenuItem(actions.get(id));
+            add(buildMenu(spec, actions));
+        }
+    }
+
+    /** A menu spec from {@link ActionId}s, {@link #SEPARATOR}s and submenu {@link MenuSpec}s. */
+    private static MenuSpec menu(String titleKey, Object... entries) {
+        return new MenuSpec(titleKey, Arrays.stream(entries)
+                .map(entry -> entry instanceof ActionId id ? new Item(id) : (Entry) entry)
+                .toList());
+    }
+
+    private static JMenu buildMenu(MenuSpec spec, MainActions actions) {
+        JMenu menu = new JMenu(LanguageService.displayName(spec.titleKey()));
+        for (Entry entry : spec.entries()) {
+            switch (entry) {
+                case Separator separator -> menu.addSeparator();
+                case MenuSpec submenu -> menu.add(buildMenu(submenu, actions));
+                case Item item -> {
+                    JMenuItem menuItem = new JMenuItem(actions.get(item.id()));
                     // The action's SHORT_DESCRIPTION is meant for toolbar buttons - menu entries have no tooltip.
-                    item.setToolTipText(null);
-                    menu.add(item);
+                    menuItem.setToolTipText(null);
+                    menu.add(menuItem);
                 }
             }
-            add(menu);
         }
+        return menu;
     }
 }

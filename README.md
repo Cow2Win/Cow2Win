@@ -391,7 +391,7 @@ folder (`new Catalog(tempDir)`).
   the **workspace copy** (see "Workspace, configuration & backups"), created
   from the defaults on the first start and completed with defaults for
   entities added by an update. They are edited in-app via "File" >
-  "CowScore ..." - one `CowScoreDialog` with a tab (panel) each for heroes,
+  "CowScore settings ..." - one `CowScoreDialog` with a tab (panel) each for heroes,
   titans, pets and war flags (`HeroCowScorePanel`, `TitanCowScorePanel`,
   `PetCowScorePanel`, `WarFlagCowScorePanel`) -
   whose "restore defaults" button resets the active tab to the shipped values.

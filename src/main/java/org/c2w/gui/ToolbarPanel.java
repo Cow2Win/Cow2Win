@@ -166,24 +166,26 @@ public class ToolbarPanel extends JPanel {
         this.fortificationMapPanel = fortificationMapPanel;
         this.actions = actions;
 
+        // The save actions are toolbar-only; every other action here is also in a menu
+        // (see MainMenuBar), so it gets the same icon for both - menu and toolbar use the same size.
         saveGuildAction = actions.register(new AppAction(ActionId.SAVE_GUILD, this::onSaveGuild));
         actions.register(new AppAction(ActionId.OPEN_GUILD_HERO_ENTRY, this::onOpenGuildHeroEntry)
-                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY)));
+                .withIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_HERO_ENTRY)));
         actions.register(new AppAction(ActionId.OPEN_GUILD_TITAN_ENTRY, this::onOpenGuildTitanEntry)
-                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY)));
+                .withIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_TITAN_ENTRY)));
         saveLineupAction = actions.register(new AppAction(ActionId.SAVE_LINEUP, this::onSaveLineup));
         actions.register(new AppAction(ActionId.GENERATE_REPORT, this::onGenerateReport)
-                .withLargeIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
+                .withIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
         runAlgorithmAction = actions.register(new AppAction(ActionId.RUN_ALGORITHM, this::onRunAlgorithm)
-                .withLargeIcon(IconLoader.iconForButton(ICON_RUN_ALGORITHM)));
+                .withIcon(IconLoader.iconForButton(ICON_RUN_ALGORITHM)));
         actions.register(new AppAction(ActionId.COMPARE_LINEUPS, this::onOpenLineupComparison)
-                .withLargeIcon(IconLoader.iconForButton(ICON_COMPARE_LINEUPS)));
+                .withIcon(IconLoader.iconForButton(ICON_COMPARE_LINEUPS)));
         actions.register(new AppAction(ActionId.OPEN_CHANGE_PLAN, this::onOpenChangePlan)
-                .withLargeIcon(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN)));
+                .withIcon(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN)));
         actions.register(new AppAction(ActionId.SHOW_HERO_TEAMS, this::onOpenHeroTeams)
-                .withLargeIcon(IconLoader.iconForButton(ICON_HERO_TEAMS)));
+                .withIcon(IconLoader.iconForButton(ICON_HERO_TEAMS)));
         actions.register(new AppAction(ActionId.SHOW_TITAN_TEAMS, this::onOpenTitanTeams)
-                .withLargeIcon(IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE,
+                .withIcon(IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE,
                         FortificationTypeStyle.color(FortificationType.TITAN))));
 
         // Shows on the two save buttons WHICH part (guild and/or lineup) has unsaved changes.
@@ -344,7 +346,7 @@ public class ToolbarPanel extends JPanel {
      */
     private void onRunAlgorithm() {
         if (lineupService.isOriginalOpen()) {
-            JOptionPane.showMessageDialog(this,
+            JOptionPane.showMessageDialog(dialogParent(),
                     LanguageService.displayName("toolbar.runAlgorithm.originalMessage"),
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -384,7 +386,7 @@ public class ToolbarPanel extends JPanel {
         try {
             guildService.saveGuild();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
+            JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -422,7 +424,7 @@ public class ToolbarPanel extends JPanel {
         boolean lineupDirty = appContext.isLineupDirty();
         String messageKey = guildDirty && lineupDirty ? "toolbar.unsaved.switchGuildAndLineup"
                 : guildDirty ? "toolbar.unsaved.switchGuild" : "toolbar.unsaved.switchLineup";
-        int choice = JOptionPane.showConfirmDialog(this,
+        int choice = JOptionPane.showConfirmDialog(dialogParent(),
                 LanguageService.displayName(messageKey),
                 LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         return choice == JOptionPane.YES_OPTION;
@@ -449,7 +451,7 @@ public class ToolbarPanel extends JPanel {
     }
 
     private void showGuildLoadError(String messageKey, IOException e) {
-        JOptionPane.showMessageDialog(this, LanguageService.displayName(messageKey) + "\n" + e.getMessage(),
+        JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName(messageKey) + "\n" + e.getMessage(),
                 LanguageService.displayName("common.loadGuildErrorTitle"), JOptionPane.ERROR_MESSAGE);
     }
 
@@ -496,14 +498,14 @@ public class ToolbarPanel extends JPanel {
         try {
             lineupService.selectLineup(fileName);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
+            JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
                     LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void onSaveLineup() {
         if (lineupService.isOriginalOpen()) {
-            JOptionPane.showMessageDialog(this,
+            JOptionPane.showMessageDialog(dialogParent(),
                     LanguageService.displayName("toolbar.saveLineup.originalMessage"),
                     LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -511,7 +513,7 @@ public class ToolbarPanel extends JPanel {
         try {
             lineupService.saveLineup();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveLineupError") + "\n" + ex.getMessage(),
+            JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("common.saveLineupError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -593,6 +595,16 @@ public class ToolbarPanel extends JPanel {
     private void onOpenGuildTitanEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         new GuildTitanEntryDialog(owner, appContext).setVisible(true);
+    }
+
+    /**
+     * Parent of this panel's message and confirmation dialogs: the main window, so they
+     * appear centered on it - with this panel itself as parent they would sit on the
+     * toolbar strip at the top. Falls back to this panel while it is not in a window yet.
+     */
+    private Component dialogParent() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        return window != null ? window : this;
     }
 
     /**

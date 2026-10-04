@@ -16,7 +16,9 @@ import org.junit.jupiter.api.io.TempDir;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
@@ -63,6 +65,18 @@ class Cow2FrameActionsTest {
         MainActions actions = frame.actions();
         for (ActionId id : ActionId.values()) {
             assertTrue(actions.isRegistered(id), id + " is not registered");
+        }
+    }
+
+    @Test
+    @DisplayName("Menu entries that have a toolbar icon show it in the menu as well")
+    void toolbarActionsHaveMenuIcons() throws Exception {
+        SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
+
+        for (ActionId id : List.of(ActionId.OPEN_GUILD_EDITOR, ActionId.OPEN_GUILD_HERO_ENTRY, ActionId.OPEN_GUILD_TITAN_ENTRY,
+                ActionId.RUN_ALGORITHM, ActionId.COMPARE_LINEUPS, ActionId.SHOW_HERO_TEAMS, ActionId.SHOW_TITAN_TEAMS,
+                ActionId.OPEN_CHANGE_PLAN, ActionId.GENERATE_REPORT)) {
+            assertNotNull(frame.actions().get(id).getValue(Action.SMALL_ICON), id + " has no menu icon");
         }
     }
 }
