@@ -78,9 +78,7 @@ public final class ImportWizardModel {
                 .toList();
         this.steps = computeSteps(plan);
         for (PlayerQuestion q : plan.playerQuestions()) {
-            playerAnswers.put(q.id(), q.nameSuggestions().isEmpty()
-                    ? PlayerAnswer.of(PlayerAnswer.Kind.OPEN)
-                    : PlayerAnswer.assign(q.nameSuggestions().get(0).memberId()));
+            playerAnswers.put(q.id(), defaultAnswer(q));
         }
         for (SeasonQuestion q : plan.seasonQuestions()) {
             seasonStarts.put(q.id(), Optional.of(q.suggestedStart()));
@@ -250,6 +248,60 @@ public final class ImportWizardModel {
 
     public void setPlayerAnswer(String questionId, PlayerAnswer answer) {
         playerAnswers.put(questionId, Objects.requireNonNull(answer));
+    }
+
+    /**
+     * Result of {@link #createAllWithoutSuggestion()}.
+     *
+     * @param created        questions now answered with CREATE (including those that already were)
+     * @param skippedByLimit questions left as they were because the guild has no more room
+     */
+    public record CreateAllResult(int created, int skippedByLimit) {
+    }
+
+    /** True if the service had neither a name nor a rename suggestion for the question. */
+    public static boolean hasNoSuggestion(PlayerQuestion question) {
+        return question.nameSuggestions().isEmpty() && question.renameSuggestions().isEmpty();
+    }
+
+    /**
+     * "Create all without suggestion as new members": answers every player question
+     * without name or rename suggestion that allows {@code CREATE} with {@code CREATE},
+     * in question order, as long as the guild has room ({@link Guild#MAX_MEMBERS});
+     * the rest stay as they are. For starting with an empty guild.
+     */
+    public CreateAllResult createAllWithoutSuggestion() {
+        int room = Guild.MAX_MEMBERS - memberCountAfterImport();
+        int created = 0;
+        int skipped = 0;
+        for (PlayerQuestion q : plan.playerQuestions()) {
+            if (!hasNoSuggestion(q) || !q.allowedAnswers().contains(PlayerAnswer.Kind.CREATE)) {
+                continue;
+            }
+            if (playerAnswer(q.id()).kind() == PlayerAnswer.Kind.CREATE) {
+                created++;
+            } else if (room > 0) {
+                playerAnswers.put(q.id(), PlayerAnswer.of(PlayerAnswer.Kind.CREATE));
+                room--;
+                created++;
+            } else {
+                skipped++;
+            }
+        }
+        return new CreateAllResult(created, skipped);
+    }
+
+    /** "Reset all": every player question back to its default (first name suggestion, else OPEN). */
+    public void resetPlayerAnswers() {
+        for (PlayerQuestion q : plan.playerQuestions()) {
+            playerAnswers.put(q.id(), defaultAnswer(q));
+        }
+    }
+
+    private static PlayerAnswer defaultAnswer(PlayerQuestion q) {
+        return q.nameSuggestions().isEmpty()
+                ? PlayerAnswer.of(PlayerAnswer.Kind.OPEN)
+                : PlayerAnswer.assign(q.nameSuggestions().get(0).memberId());
     }
 
     /** Members for "assign to ...": the name suggestions first (closest first), then all others by name. */

@@ -26,7 +26,8 @@ import java.util.function.Predicate;
 /**
  * The "Weltenschlacht Journal" menu and its windows - kept out of
  * {@code Cow2Frame}, which only adds the menu: choose battle logs and run the
- * import assistant, the (single) battle list, battle details (several), and the
+ * import assistant, the (single) battle list, battle details (several), "build
+ * teams from logs", "update teams (sync)", and the
  * maintenance windows for players, seasons and name mappings. After every change
  * of the journal all open journal windows reload. All entries are disabled while
  * no guild is open.
@@ -61,13 +62,16 @@ public final class JournalActions {
         JMenu menu = new JMenu(JournalTexts.text("menu.journal"));
         JMenuItem importItem = item(menu, "menu.journal.import", this::importWithChooser);
         JMenuItem battlesItem = item(menu, "menu.journal.battles", this::openBattleList);
+        JMenuItem teamsItem = item(menu, "menu.journal.buildTeams", this::openTeamBuilder);
+        JMenuItem syncItem = item(menu, "menu.journal.sync", this::openSync);
         menu.addSeparator();
         JMenuItem playersItem = item(menu, "journal.action.players", this::openPlayers);
         JMenuItem seasonsItem = item(menu, "journal.action.seasons", this::openSeasons);
         JMenuItem mappingsItem = item(menu, "journal.action.nameMappings", this::openNameMappings);
         Runnable update = () -> {
             boolean guildOpen = context.guild() != null && context.guildFilePath() != null;
-            for (JMenuItem item : List.of(importItem, battlesItem, playersItem, seasonsItem, mappingsItem)) {
+            for (JMenuItem item : List.of(importItem, battlesItem, teamsItem, syncItem, playersItem, seasonsItem,
+                    mappingsItem)) {
                 item.setEnabled(guildOpen);
             }
         };
@@ -136,7 +140,33 @@ public final class JournalActions {
             public void importFinished() {
                 journalChanged();
             }
+
+            @Override
+            public void openTeamBuilder() {
+                JournalActions.this.openTeamBuilder();
+            }
+
+            @Override
+            public void openSync() {
+                JournalActions.this.openSync();
+            }
         }, files);
+    }
+
+    /** "Update teams (sync)" for the open guild (modal). */
+    public void openSync() {
+        if (context.guild() == null) {
+            return;
+        }
+        JournalSyncDialog.open(frame, context, guildService, this::openTeamBuilder);
+    }
+
+    /** "Build teams from logs" for the open guild (modal). */
+    public void openTeamBuilder() {
+        if (context.guild() == null) {
+            return;
+        }
+        JournalTeamBuilderDialog.open(frame, context, guildService, this::journalChanged);
     }
 
     /** Shows the battle list (one window, brought to front if already open). */

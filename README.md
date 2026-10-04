@@ -221,6 +221,44 @@ guild (see "Workspace, configuration & backups").
 - **Name mappings …:** the manual mappings of unknown names (kind, raw name,
   catalog entry with image) - change or delete. They apply to future imports;
   stored battles follow with **Parse all battles again**.
+- **Starting with an empty guild:** create the guild, then
+  1. import the battle logs (several battles at once is fine) and press
+     **Create all without suggestion as new members** in the "Players" step
+     (respects the limit of 30 members; **Reset all** undoes it) - the
+     members come from the defenders of the defense logs, without teams;
+  2. **Weltenschlacht Journal → Build teams from logs …** (also offered on the
+     import result page): per member the teams of the newest battle it
+     defended in (kind from the fortification, power, fortification/position)
+     are preselected; teams seen only in older battles are offered unchecked.
+     Heroes/titans come only from the defense log's units (rare, e.g.
+     17.09.2026) or from an attack team of the same player in the **same
+     battle with exactly the same power** (no tolerance - verified against a
+     real guild); otherwise the team gets its power only. Compositions known
+     from other battles can be taken over by hand. Teams with heroes/titans
+     are never changed - only missing teams are added and empty teams filled;
+     lineups are not touched. The guild is unsaved afterwards ("Save guild
+     now");
+  3. add the missing heroes/titans by hand in the guild editor. Every further
+     imported battle can complete more teams.
+- **Update teams (sync):** menu **Weltenschlacht Journal → Update teams (sync) …**
+  (also offered on the import result page when the import had a defense log)
+  keeps the existing teams up to date from the **defense log of the newest
+  battle** that has one (never the attack log; older battles never overwrite
+  newer values). Each team of an assigned member in the log is matched to a
+  stored team of the same kind - by the same heroes/titans if the log has
+  units, otherwise by power (one-to-one, smallest total deviation): **≤ 3 %
+  sure**, **≤ 10 % unsure**, another stored team within 0.5 percentage points
+  makes it **ambiguous**, beyond 10 % there is no match (shown below the table,
+  with a link to "Build teams from logs …"). Per row you choose whether to take
+  over the **power** and - only if the defense log has units - the **units**
+  (heroes/titans with pet or totems; war flags are not in the log and stay).
+  Sure matches with a different power are preselected, unless the team was
+  edited after the battle; units never are. The team of a row can be changed
+  (no team twice). Hints show teams edited since the battle, empty teams
+  (power only), and teams that stand elsewhere in the open lineup. No teams or
+  members are created and lineups are never changed. Changed teams get the
+  battle day as modification date; the guild is unsaved afterwards ("Save guild
+  now").
 - **Parse again:** reads the stored original CSVs with the current parser and
   name mappings and replaces the logs - for one, several or all battles.
   Seasons and player assignments stay, no questions are asked and the guild
@@ -235,13 +273,13 @@ roughly from top to bottom:
 | Package | Contents |
 |---|---|
 | `gui` (+ subpackages `fort`, `guild`, `hero`, `titan`, `pet`, `flag`, `journal`, `common`) | Swing frames, panels and dialogs. How data looks on screen (e.g. `FortificationTypeStyle` for the hero/titan colors and slot icons) lives here, not in the model. They only collect input and show results; every change to the open guild/lineup goes through `service`. |
-| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild; `JournalImportService` imports battle logs into it in two steps (`prepare` collects GUI-independent questions in `service.journal`, `execute` applies the answers); `JournalMaintenanceService` deletes battles/seasons, edits seasons (reassigning battles by date in the same transaction), corrects player assignments and name mappings and parses stored logs again - never changing the guild. Cow2Win is about defense: only the defense log may change the guild (player assignment, rename, new members without teams), the attack log is only stored. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
+| `service` | Application layer. `AppContext` holds the open guild/lineup, their files and the unsaved-changes state, and notifies `AppContext.Listener`s (map, toolbar, window title) of every change. `JournalService` owns the journal database of the open guild; `JournalImportService` imports battle logs into it in two steps (`prepare` collects GUI-independent questions in `service.journal`, `execute` applies the answers); `JournalMaintenanceService` deletes battles/seasons, edits seasons (reassigning battles by date in the same transaction), corrects player assignments and name mappings and parses stored logs again - never changing the guild; `JournalTeamBuilderService` proposes defense teams for guild members from the defense logs (`prepare` → `TeamBuildPlan`, `apply` with a `TeamBuildSelection`); `JournalSyncService` updates the existing teams (power, units if the log has them) from the newest defense log (`prepare` → `SyncPlan`, `apply` with a `SyncSelection`); both share the building blocks in `service.journal.JournalTeams` (defenders → members, log teams per fortification/position, stored-team view, building hero/titan teams). Cow2Win is about defense: only the defense log may change the guild (player assignment, rename, new members without teams), the attack log is only stored - with one exception: when building teams, an attack team of the same player with exactly the same power in the same battle may supply the composition. `GuildService`/`LineupService` are the use cases (create/switch/delete/save guilds and lineups, run algorithms, assign teams) and keep context, files and `config.properties` consistent. `WorkspaceBootstrap` does everything before the first window opens (first-run setup, config, backups, catalogs, reopening the last guild/lineup). |
 | `eval` | The lineup algorithms (`LineupAlgorithm`, registered per side in `LineupAlgorithms`). |
 | `domain` | Scoring and lineup analysis: `TeamScoreCalculator` (CowScore), `BuffCalculationService`, `LineupBaseline`, `LineupComparisonService`, `LineupChangePlanService`. |
 | `report` | `ReportGenerator` - the HTML lineup report. |
 | `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
 | `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
-| `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). The GUI is in `gui.journal` (menu `JournalActions`, import assistant, battle list and detail, players/seasons/name mapping windows; the logic in Swing-free models such as `ImportWizardModel`, `BattleDetailModel`, `BattleListFilter`, `JournalPlayersModel`). |
+| `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). The GUI is in `gui.journal` (menu `JournalActions`, import assistant, battle list and detail, players/seasons/name mapping windows; "build teams from logs" (`JournalTeamBuilderDialog`) and "update teams (sync)" (`JournalSyncDialog`); the logic in Swing-free models such as `ImportWizardModel`, `BattleDetailModel`, `BattleListFilter`, `JournalPlayersModel`, `TeamBuilderModel`, `SyncModel`). |
 | `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts` and `GameNameNormalizer` (how in-game names are compared). |
 | `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
 
@@ -340,6 +378,10 @@ folder (`new Catalog(tempDir)`).
   `battlelog/partial/` an earlier export of the running battle of 01.10.2026 -
   test data for the Weltenschlacht journal; `.gitattributes` keeps them
   byte-identical (CRLF) on every machine.
+- `src/test/resources/guild/deutscher-bund.json` is a copy of the real guild
+  "Deutscher Bund" (state 04.10.2026) - the truth for the team compositions
+  the journal's team builder proposes (`JournalTeamBuilderServiceTest`) and
+  the guild the sync is checked against (`JournalSyncServiceTest`).
 - The curated scores are kept OUT of those master data files, one score
   file per catalog: `cowScore.json` (heroes), `titanCowScore.json`,
   `petCowScore.json`, `warFlagCowScore.json`. The split means a wholesale
@@ -540,6 +582,20 @@ folder (`new Catalog(tempDir)`).
   `JournalDialogsSmokeTest`, which builds and paints all journal windows
   off-screen (skipped without a display; `-Djournal.smoke.out=<folder>` saves
   the renderings as PNG).
+  Phase 6: "create all without suggestion" in `ImportWizardModelTest`,
+  `TeamBuilderModelTest`, and `JournalTeamBuilderServiceTest` - end to end
+  (empty guild → 6 battles → create all → build teams; every exact-power
+  composition matches the real guild), exact power without tolerance, limits,
+  older battles, skipped players, filling an empty team, pet/totem
+  validation, and the real guild as open guild (teams with heroes untouched).
+  Phase 7: `JournalSyncServiceTest` - source (newest battle with a defense
+  log, no journal, attack log only), the real guild against the running
+  battle of 01.10. and the units of 17.09., power matching (exact, sure,
+  unsure, no match, ambiguous), optimal one-to-one pairing, empty team, edited
+  since the battle, skipped players, renames, lineup hints, apply (only the
+  selection, lastModified, war flag kept, same team twice refused, dropped
+  pet/totem) and that the attack log never matters; `SyncModelTest` (filters,
+  preselection, swapping targets, hints) and a smoke test of the dialog.
 - `H2SmokeTest` - the H2 dependency: driver registered via
   `META-INF/services`, a file database in a temp directory, a Unicode round
   trip (Cyrillic, accents, umlauts, non-breaking space, emoji) and deleting

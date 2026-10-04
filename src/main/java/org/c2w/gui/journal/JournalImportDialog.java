@@ -1,5 +1,6 @@
 package org.c2w.gui.journal;
 
+import org.c2w.data.journal.LogDirection;
 import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalLockedException;
@@ -8,6 +9,7 @@ import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.JournalImportService;
+import org.c2w.service.JournalSyncService;
 import org.c2w.service.journal.*;
 
 import javax.swing.*;
@@ -45,6 +47,12 @@ public final class JournalImportDialog extends JDialog {
 
         /** Called after a successful import (e.g. to refresh the battle list). */
         void importFinished();
+
+        /** Opens "build teams from logs". */
+        void openTeamBuilder();
+
+        /** Opens "update teams (sync)". */
+        void openSync();
     }
 
     private final AppContext context;
@@ -356,6 +364,34 @@ public final class JournalImportDialog extends JDialog {
                 JButton save = new JButton(JournalTexts.text("journal.result.saveGuild"));
                 save.addActionListener(e -> saveGuild(save, warning));
                 extraButtons.add(save);
+            }
+            if (!result.createdMembers().isEmpty()
+                    || org.c2w.service.JournalTeamBuilderService.hasMembersWithoutTeams(context.guild())) {
+                JButton teams = new JButton(JournalTexts.text("menu.journal.buildTeams"));
+                teams.addActionListener(e -> {
+                    dispose();
+                    host.openTeamBuilder();
+                });
+                extraButtons.add(teams);
+            }
+            Optional<LocalDate> importedDefense = model.plan().battles().stream()
+                    .filter(b -> b.actions().containsKey(LogDirection.DEFENSE)).map(PlannedBattle::date)
+                    .max(Comparator.naturalOrder());
+            if (importedDefense.isPresent()) {
+                JButton sync = new JButton(JournalTexts.text("journal.result.sync"));
+                sync.addActionListener(e -> {
+                    dispose();
+                    host.openSync();
+                });
+                extraButtons.add(sync);
+                JLabel newest = new JLabel(" ");
+                panel.add(newest);
+                JournalSwing.background(this, () -> new JournalSyncService(context, guildService)
+                        .newestDefenseBattleDate(), date -> {
+                    if (date.isPresent() && date.get().isAfter(importedDefense.get())) {
+                        newest.setText(JournalTexts.text("journal.result.syncNewest", JournalTexts.date(date.get())));
+                    }
+                });
             }
             JButton battles = new JButton(JournalTexts.text("journal.result.openBattles"));
             battles.addActionListener(e -> {

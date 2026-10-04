@@ -127,7 +127,10 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
         List<String> prefixes = List.of("journal.detail.", "journal.players.", "journal.seasons.", "journal.mappings.",
                 "journal.delete.", "journal.reparse.", "journal.saveCsv.", "journal.assignSeason.", "journal.action.",
                 "journal.removeGuild.", "journal.noJournal", "journal.outcome.", "journal.assignmentStatus.",
-                "journal.statusFilter.", "journal.resultFilter.", "journal.battles.count");
+                "journal.statusFilter.", "journal.resultFilter.", "journal.battles.count",
+                // phase 6
+                "journal.teams.", "journal.teamKind.", "journal.compositionSource.", "journal.skipReason.",
+                "journal.players.createAll", "journal.players.resetAll", "menu.journal.buildTeams");
         List<String> wrong = new ArrayList<>();
         for (String language : LanguageService.availableLanguages()) {
             Properties props = new Properties();

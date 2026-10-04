@@ -6,7 +6,9 @@ import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.TeamKind;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.parse.BattleLogCheck;
+import org.c2w.data.model.TitanElement;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 import org.c2w.service.journal.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,12 +58,23 @@ class JournalTextsTest {
         GROUPS.put("detail.fort.score", LogDirection.values());
         GROUPS.put("players.memberHint", JournalPlayersModel.HintKind.values());
         GROUPS.put("seasons.conflict", org.c2w.service.JournalMaintenanceService.SeasonConflict.Kind.values());
+        // phase 6
+        GROUPS.put("teamKind", TeamKind.values());
+        GROUPS.put("compositionSource", TeamBuildPlan.CompositionSource.values());
+        GROUPS.put("skipReason", TeamBuildPlan.SkipReason.values());
+        GROUPS.put("teams.target", TeamBuildPlan.Target.Kind.values());
+        GROUPS.put("teams.error", TeamBuildResult.Error.Kind.values());
+        // phase 7
+        GROUPS.put("syncCertainty", SyncRow.Certainty.values());
+        GROUPS.put("sync.empty", SyncPlan.EmptyReason.values());
+        GROUPS.put("sync.error", SyncResult.Error.Kind.values());
+        GROUPS.put("sync.hint", SyncModel.Hint.values());
     }
 
     /** Groups always formatted with arguments - their apostrophes are doubled in the files. */
     private static final List<String> FORMATTED_GROUPS = List.of("planError", "block", "team", "evidence",
             "detail.summary", "detail.fort.undefended", "detail.fort.captured", "detail.fort.score",
-            "players.memberHint", "seasons.conflict");
+            "players.memberHint", "seasons.conflict", "teams.target", "teams.error", "sync.error", "sync.hint");
 
     @Test
     @DisplayName("Every enum value has a non-empty text in every language")
@@ -121,6 +135,29 @@ class JournalTextsTest {
         assertEquals("0", JournalTexts.rankingPoints(0));
         assertEquals("", JournalTexts.rankingPoints(null));
         assertEquals("1.382.741", JournalTexts.number(1_382_741));
+    }
+
+    @Test
+    @DisplayName("Sync: power change with delta and percent, unit changes, certainty")
+    void syncTexts() {
+        String up = JournalTexts.powerChange(1_376_972, 1_400_474);
+        assertTrue(up.contains("1.376.972") && up.contains("1.400.474") && up.contains("+23.502"), up);
+        assertTrue(JournalTexts.powerChange(1_000_000, 990_000).contains("−10.000"));
+        assertTrue(JournalTexts.powerChange(5, 5).contains("5"));
+
+        SyncRow.UnitsChange change = new SyncRow.UnitsChange(List.of("nova"), List.of("sigurd"), null, null,
+                Set.of(TitanElement.FIRE),
+                Set.of(TitanElement.WATER));
+        String text = JournalTexts.unitsChange(change);
+        assertTrue(text.startsWith("+ " + LanguageService.displayName("nova") + ", − "
+                + LanguageService.displayName("sigurd")), text);
+        assertTrue(text.contains(TotemTexts.name(TitanElement.WATER)), text);
+        String pet = JournalTexts.unitsChange(new SyncRow.UnitsChange(List.of(), List.of(), "vex", "albus",
+                Set.of(), Set.of()));
+        assertTrue(pet.contains(LanguageService.displayName("albus")) && !pet.contains("+ "), pet);
+        assertEquals("", JournalTexts.unitsChange(null));
+        assertTrue(JournalTexts.certainty(null).startsWith("✎"));
+        assertTrue(JournalTexts.certainty(SyncRow.Certainty.SURE).contains("3"));
     }
 
     @Test

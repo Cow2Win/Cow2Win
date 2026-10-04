@@ -1,6 +1,8 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.journal.parse.BattleLogTestFiles;
+import org.c2w.data.model.GuildMember;
+import org.c2w.data.repository.GuildRepository;
 import org.c2w.service.JournalMaintenanceService;
 import org.c2w.service.journal.ImportAnswers;
 import org.junit.jupiter.api.AfterEach;
@@ -13,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -131,6 +134,31 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         JournalNameMappingsDialog mappings = onEdt(() -> new JournalNameMappingsDialog(null, context, operations));
         waitFor(() -> find(mappings, JTable.class).getRowCount() == 1);
         paint(mappings);
+    }
+
+    @Test
+    @DisplayName("'Build teams from logs' builds and paints, also its members and proposals")
+    void teamBuilder() throws Exception {
+        JournalTeamBuilderDialog dialog = onEdt(() -> JournalTeamBuilderDialog.create(null, context, guildService));
+        waitFor(() -> dialog.model() != null);
+        assertFalse(dialog.model().plan().members().isEmpty());
+        paint(dialog);
+    }
+
+    @Test
+    @DisplayName("'Update teams (sync)' builds and paints, also its rows")
+    void sync() throws Exception {
+        // Puschel of the real guild: its teams match the 01.10. defense log
+        GuildMember puschel = GuildRepository.load(Path.of("src", "test", "resources", "guild", "deutscher-bund.json"),
+                context.catalog()).members().stream().filter(m -> m.id().equals("Puschel")).findFirst().orElseThrow();
+        List<GuildMember> members = new ArrayList<>(context.guild().members());
+        members.replaceAll(m -> m.id().equals("Puschel") ? puschel : m);
+        setMembers(members);
+
+        JournalSyncDialog dialog = onEdt(() -> JournalSyncDialog.create(null, context, guildService));
+        waitFor(() -> dialog.model() != null);
+        assertFalse(dialog.model().rows().isEmpty(), "Puschel's titan team changed since 01.10.");
+        paint(dialog);
     }
 
     // --- helpers ---

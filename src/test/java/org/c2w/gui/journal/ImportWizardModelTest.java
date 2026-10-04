@@ -244,6 +244,71 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
         assertEquals(List.of(LogDirection.DEFENSE), ImportWizardModel.directions(model.plan().battles().get(0)));
     }
 
+    @Test
+    @DisplayName("'Create all without suggestion': only questions without suggestion, then 'reset all'")
+    void createAllWithoutSuggestion() throws Exception {
+        setSampleMembers();
+        ImportPlan plan = prepare("de", SEP_24, LogDirection.DEFENSE);
+        ImportWizardModel model = new ImportWizardModel(plan, context.guild());
+        PlayerQuestion ordensritter = question(plan, "Ordensritter");
+        PlayerQuestion faern = question(plan, "Faern");
+        assertFalse(ImportWizardModel.hasNoSuggestion(ordensritter));
+        assertTrue(ImportWizardModel.hasNoSuggestion(faern));
+        long withoutSuggestion = plan.playerQuestions().stream().filter(ImportWizardModel::hasNoSuggestion).count();
+        model.setPlayerAnswer(faern.id(), PlayerAnswer.of(PlayerAnswer.Kind.FORMER));
+
+        ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();
+
+        assertEquals(withoutSuggestion, result.created());
+        assertEquals(0, result.skippedByLimit());
+        assertEquals(PlayerAnswer.Kind.CREATE, model.playerAnswer(faern.id()).kind(), "overrides other answers");
+        assertEquals(PlayerAnswer.assign("Ordensriter"), model.playerAnswer(ordensritter.id()), "suggestion untouched");
+        assertEquals(3 + withoutSuggestion, model.memberCountAfterImport());
+        assertEquals(result, model.createAllWithoutSuggestion(), "idempotent");
+
+        model.resetPlayerAnswers();
+        assertEquals(PlayerAnswer.of(PlayerAnswer.Kind.OPEN), model.playerAnswer(faern.id()));
+        assertEquals(PlayerAnswer.assign("Ordensriter"), model.playerAnswer(ordensritter.id()));
+        assertEquals(3, model.memberCountAfterImport());
+    }
+
+    @Test
+    @DisplayName("'Create all' respects the limit of 30 members, in question order")
+    void createAllRespectsLimit() throws Exception {
+        setMembers(dummyMembers(27));
+        ImportPlan plan = prepare("de", SEP_24, LogDirection.DEFENSE);
+        ImportWizardModel model = new ImportWizardModel(plan, context.guild());
+        List<PlayerQuestion> candidates = plan.playerQuestions().stream().filter(ImportWizardModel::hasNoSuggestion)
+                .filter(q -> q.allowedAnswers().contains(PlayerAnswer.Kind.CREATE)).toList();
+        assertTrue(candidates.size() > 3);
+
+        ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();
+
+        assertEquals(3, result.created());
+        assertEquals(candidates.size() - 3, result.skippedByLimit());
+        assertEquals(30, model.memberCountAfterImport());
+        assertFalse(model.isMemberLimitExceeded());
+        for (int i = 0; i < candidates.size(); i++) {
+            assertEquals(i < 3 ? PlayerAnswer.Kind.CREATE : PlayerAnswer.Kind.OPEN,
+                    model.playerAnswer(candidates.get(i).id()).kind(), candidates.get(i).rawName());
+        }
+    }
+
+    @Test
+    @DisplayName("Empty guild, all 6 battles: every defender becomes a new member (27 names, limit kept)")
+    void createAllForEmptyGuild() throws Exception {
+        ImportPlan plan = service().prepare(BattleLogTestFiles.files("de"));
+        ImportWizardModel model = new ImportWizardModel(plan, context.guild());
+
+        ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();
+
+        assertEquals(27, plan.playerQuestions().size());
+        assertEquals(27, result.created());
+        assertEquals(0, result.skippedByLimit());
+        assertEquals(27, model.summary().membersNew());
+        assertTrue(model.blockingProblems().isEmpty());
+    }
+
     private static PlayerQuestion question(ImportPlan plan, String rawName) {
         return plan.playerQuestions().stream().filter(q -> q.rawName().equals(rawName)).findFirst()
                 .orElseThrow(() -> new AssertionError("no question for " + rawName));

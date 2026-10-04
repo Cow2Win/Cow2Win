@@ -36,6 +36,9 @@ final class PlayersStepPanel extends JPanel {
         top.add(JournalImportDialog.wrapLabel(JournalTexts.text("journal.players.hint")));
         memberCount.setAlignmentX(LEFT_ALIGNMENT);
         top.add(memberCount);
+        if (model.plan().playerQuestions().stream().anyMatch(ImportWizardModel::hasNoSuggestion)) {
+            top.add(bulkButtons());
+        }
         if (!model.plan().autoAssignments().isEmpty()) {
             top.add(autoAssignments(model.plan().autoAssignments()));
         }
@@ -70,6 +73,31 @@ final class PlayersStepPanel extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
         refresh();
+    }
+
+    /** "Create all without suggestion as new members" / "Reset all", with a hint if the limit cut it short. */
+    private JComponent bulkButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        panel.setAlignmentX(LEFT_ALIGNMENT);
+        JButton createAll = new JButton(JournalTexts.text("journal.players.createAll"));
+        JButton resetAll = new JButton(JournalTexts.text("journal.players.resetAll"));
+        JLabel hint = new JLabel(" ");
+        createAll.addActionListener(e -> {
+            ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();
+            hint.setText(result.skippedByLimit() == 0 ? " " : JournalTexts.text("journal.players.createAllLimit",
+                    String.valueOf(result.skippedByLimit()), String.valueOf(Guild.MAX_MEMBERS)));
+            hint.setForeground(new Color(200, 120, 0));
+            refresh();
+        });
+        resetAll.addActionListener(e -> {
+            model.resetPlayerAnswers();
+            hint.setText(" ");
+            refresh();
+        });
+        panel.add(createAll);
+        panel.add(resetAll);
+        panel.add(hint);
+        return panel;
     }
 
     private JComponent autoAssignments(List<PlayerAutoAssignment> assignments) {

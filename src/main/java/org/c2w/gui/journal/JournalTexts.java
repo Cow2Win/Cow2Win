@@ -6,18 +6,23 @@ import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.Season;
 import org.c2w.data.model.Guild;
+import org.c2w.data.model.TitanElement;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TotemTexts;
 import org.c2w.service.JournalMaintenanceService;
 import org.c2w.service.journal.PlanError;
 import org.c2w.service.journal.PlayerQuestion;
+import org.c2w.service.journal.SyncRow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -202,6 +207,62 @@ public final class JournalTexts {
     /** "hero team 2" / "titan team 1" (1-based). */
     public static String team(TeamKind kind, int index) {
         return LanguageService.displayName(enumKey("team", kind), String.valueOf(index + 1));
+    }
+
+    /** The certainty of a sync match with its symbol; {@code null} = the user picked another team. */
+    public static String certainty(SyncRow.Certainty certainty) {
+        if (certainty == null) {
+            return "✎ " + text("journal.sync.manual");
+        }
+        String symbol = switch (certainty) {
+            case UNITS -> "🛡 ";
+            case SURE -> "✔ ";
+            case UNSURE -> "? ";
+            case AMBIGUOUS -> "⚠ ";
+        };
+        return symbol + of("syncCertainty", certainty);
+    }
+
+    /** E.g. "1.376.972 → 1.400.474 (+23.502, +1,7 %)" or "1.000.000 (unchanged)". */
+    public static String powerChange(int stored, int log) {
+        if (stored == log) {
+            return text("journal.sync.powerSame", number(log));
+        }
+        long delta = (long) log - stored;
+        double percent = log == 0 ? 100 : 100.0 * delta / log;
+        String sign = delta > 0 ? "+" : "−";
+        return text("journal.sync.powerChange", number(stored), number(log), sign + number(Math.abs(delta)),
+                sign + String.format(locale(), "%.1f", Math.abs(percent)));
+    }
+
+    /** E.g. "+ Nova, − Sigurd · Pet Vex → Albus · Totems Fire → Light, Dark" - {@code ""} without a change. */
+    public static String unitsChange(SyncRow.UnitsChange change) {
+        if (change == null) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>();
+        if (change.unitsChanged()) {
+            List<String> units = new ArrayList<>();
+            change.added().forEach(id -> units.add("+ " + LanguageService.displayName(id)));
+            change.removed().forEach(id -> units.add("− " + LanguageService.displayName(id)));
+            parts.add(String.join(", ", units));
+        }
+        if (change.petChanged()) {
+            parts.add(text("journal.sync.petChange", petName(change.petBefore()), petName(change.petAfter())));
+        }
+        if (change.totemsChanged()) {
+            parts.add(text("journal.sync.totemChange", totemNames(change.totemsBefore()),
+                    totemNames(change.totemsAfter())));
+        }
+        return String.join(" · ", parts);
+    }
+
+    private static String petName(String petId) {
+        return petId == null ? text("journal.sync.none") : LanguageService.displayName(petId);
+    }
+
+    private static String totemNames(Set<TitanElement> totems) {
+        return totems.isEmpty() ? text("journal.sync.none") : TotemTexts.names(totems);
     }
 
     /** E.g. "Power 1.382.741 ≈ hero team 2 (1.380.000)" or "same line-up as titan team 1". */
