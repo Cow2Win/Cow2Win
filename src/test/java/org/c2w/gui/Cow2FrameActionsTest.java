@@ -3,6 +3,7 @@ package org.c2w.gui;
 import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.action.Stage;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
@@ -18,6 +19,8 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -66,6 +69,17 @@ class Cow2FrameActionsTest {
         for (ActionId id : ActionId.values()) {
             assertTrue(actions.isRegistered(id), id + " is not registered");
         }
+    }
+
+    @Test
+    @DisplayName("After building the frame, input and strategic concept have a view (clickable tiles), output not; the concept is shown")
+    void availableStages() throws Exception {
+        SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
+
+        assertTrue(frame.processBar().isStageAvailable(Stage.INPUT));
+        assertTrue(frame.processBar().isStageAvailable(Stage.CONCEPT));
+        assertFalse(frame.processBar().isStageAvailable(Stage.OUTPUT));
+        assertEquals(Stage.CONCEPT, frame.processBar().activeStage());
     }
 
     @Test

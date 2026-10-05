@@ -86,6 +86,26 @@ public abstract class StageView extends JPanel {
         return actionList;
     }
 
+    /**
+     * Called by the main window whenever this view is shown (stage switch) - e.g. to reload
+     * data that changes without an {@code AppContext} event. Does nothing by default.
+     */
+    public void onShown() {
+    }
+
+    /** A transparent panel with the translucent dark fill of the side columns - e.g. behind a table in the work area. */
+    protected static JPanel translucentPanel(LayoutManager layout) {
+        JPanel panel = new JPanel(layout) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                g.setColor(COLUMN_FILL);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        panel.setOpaque(false);
+        return panel;
+    }
+
     /** Makes {@code component} and every panel and scroll pane in it transparent, so the column fill shows through. */
     protected static void makeTransparent(Component component) {
         if (component instanceof JPanel || component instanceof JScrollPane || component instanceof JViewport) {

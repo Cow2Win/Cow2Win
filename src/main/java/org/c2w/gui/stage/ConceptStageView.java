@@ -9,16 +9,16 @@ import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.fort.HeroLineupSummaryPanel;
 import org.c2w.gui.fort.TitanLineupSummaryPanel;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static org.c2w.gui.stage.InfoSections.*;
 
 /**
  * The stage view "strategic concept": the fortification map as work area, the concept actions
@@ -40,9 +40,6 @@ public class ConceptStageView extends StageView {
     private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
-
-    private static final Color HEADING_COLOR = new Color(255, 255, 255, 150);
-    private static final Color MUTED_COLOR = new Color(255, 255, 255, 130);
 
     private final AppContext appContext;
     private final FortificationMapPanel map;
@@ -108,10 +105,7 @@ public class ConceptStageView extends StageView {
 
     @Override
     protected JComponent createInfoPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        JPanel panel = InfoSections.infoPanel();
         addSection(panel, KEY_OVERVIEW, overviewSection);
         addSection(panel, KEY_COMPARISON, comparisonSection);
         addSection(panel, KEY_FORTIFICATION, fortificationSection);
@@ -125,24 +119,6 @@ public class ConceptStageView extends StageView {
         changesToggle.setOpaque(false);
         changesToggle.addActionListener(e -> map.setShowChanges(changesToggle.isSelected()));
         actionList.addExtra(changesToggle);
-    }
-
-    private static void addSection(JPanel panel, String headingKey, JPanel body) {
-        JLabel heading = new JLabel(LanguageService.displayName(headingKey).toUpperCase(JournalTexts.locale()));
-        heading.setForeground(HEADING_COLOR);
-        heading.setFont(heading.getFont().deriveFont(Font.BOLD, heading.getFont().getSize2D() - 1f));
-        heading.setBorder(BorderFactory.createEmptyBorder(panel.getComponentCount() == 0 ? 0 : 14, 0, 6, 0));
-        heading.setAlignmentX(Component.LEFT_ALIGNMENT);
-        body.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(heading);
-        panel.add(body);
-    }
-
-    private static JPanel sectionBody() {
-        JPanel body = new JPanel();
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        body.setOpaque(false);
-        return body;
     }
 
     private void refreshAll() {
@@ -161,7 +137,7 @@ public class ConceptStageView extends StageView {
                 : new TitanLineupSummaryPanel(appContext.lineup(), appContext.guild());
         makeTransparent(summary);
         addLine(overviewSection, summary);
-        revalidateSection(overviewSection);
+        relayout(overviewSection);
     }
 
     // --- comparison with the Original lineup ---
@@ -175,8 +151,8 @@ public class ConceptStageView extends StageView {
             case NO_ORIGINAL -> addLine(comparisonSection, mutedLabel(LanguageService.displayName(KEY_NO_ORIGINAL)));
             case COMPARED -> {
                 addLine(comparisonSection, new JLabel(LanguageService.displayName(KEY_TOTAL_POWER)));
-                addLine(comparisonSection, valueLine(format(comparison.totalPowerBefore()) + " → "
-                        + format(comparison.totalPowerAfter()), comparison.totalPowerDiff()));
+                addLine(comparisonSection, valueLine(number(comparison.totalPowerBefore()) + " → "
+                        + number(comparison.totalPowerAfter()), comparison.totalPowerDiff()));
                 addLine(comparisonSection, Box.createVerticalStrut(4));
                 addLine(comparisonSection, valueLine(LanguageService.displayName(KEY_TYPE_POWER, typeName()),
                         comparison.typePowerDiff()));
@@ -185,7 +161,7 @@ public class ConceptStageView extends StageView {
                         comparison.movedCount(), comparison.addedCount(), comparison.removedCount())));
             }
         }
-        revalidateSection(comparisonSection);
+        relayout(comparisonSection);
     }
 
     private String typeName() {
@@ -197,7 +173,7 @@ public class ConceptStageView extends StageView {
         JPanel line = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         line.setOpaque(false);
         line.add(new JLabel(text + "   "));
-        JLabel diffLabel = new JLabel((diff > 0 ? "+" : "") + format(diff));
+        JLabel diffLabel = new JLabel((diff > 0 ? "+" : "") + number(diff));
         diffLabel.setForeground(diff > 0 ? IconLoader.GREEN : diff < 0 ? IconLoader.RED : MUTED_COLOR);
         line.add(diffLabel);
         return line;
@@ -213,11 +189,9 @@ public class ConceptStageView extends StageView {
             addLine(fortificationSection, mutedLabel(LanguageService.displayName(KEY_FORTIFICATION_NONE)));
         } else {
             Fortification fort = fortification.get();
-            JLabel name = new JLabel(LanguageService.displayName(fort.id()));
-            name.setFont(name.getFont().deriveFont(Font.BOLD, name.getFont().getSize2D() + 1f));
-            addLine(fortificationSection, name);
+            addLine(fortificationSection, titleLabel(LanguageService.displayName(fort.id())));
             ConceptInfoModel.FortificationFacts facts = ConceptInfoModel.factsOf(fort, appContext.lineup(), appContext.guild());
-            String factsText = facts.filledSlots() + "/" + facts.capacity() + "  ·  " + format(facts.totalPower())
+            String factsText = facts.filledSlots() + "/" + facts.capacity() + "  ·  " + number(facts.totalPower())
                     + (facts.buffPercent() == null ? "" : "  ·  " + facts.buffPercent() + " %");
             addLine(fortificationSection, mutedLabel(factsText));
             addLine(fortificationSection, Box.createVerticalStrut(8));
@@ -226,7 +200,7 @@ public class ConceptStageView extends StageView {
             makeTransparent(infoPanel);
             addLine(fortificationSection, infoPanel);
         }
-        revalidateSection(fortificationSection);
+        relayout(fortificationSection);
     }
 
     /** The texts shown in the "selected fortification" section - for tests. */
@@ -241,44 +215,4 @@ public class ConceptStageView extends StageView {
         return changesToggle;
     }
 
-    // --- helpers ---
-
-    private static void collectTexts(Container container, List<String> texts) {
-        for (Component child : container.getComponents()) {
-            if (child instanceof JLabel label && label.getText() != null) {
-                texts.add(label.getText());
-            }
-            if (child instanceof Container nested) {
-                collectTexts(nested, texts);
-            }
-        }
-    }
-
-    private static void addLine(JPanel section, Component line) {
-        if (line instanceof JComponent component) {
-            component.setAlignmentX(Component.LEFT_ALIGNMENT);
-        }
-        section.add(line);
-    }
-
-    /** A muted label that wraps its text within the narrow info panel. */
-    private static JLabel mutedLabel(String text) {
-        JLabel label = new JLabel("<html><body style='width:" + (INFO_PANEL_WIDTH - 50) + "px'>"
-                + escape(text) + "</body></html>");
-        label.setForeground(MUTED_COLOR);
-        return label;
-    }
-
-    private static String escape(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    private static String format(long value) {
-        return NumberFormat.getIntegerInstance(JournalTexts.locale()).format(value);
-    }
-
-    private static void revalidateSection(JPanel section) {
-        section.revalidate();
-        section.repaint();
-    }
 }
