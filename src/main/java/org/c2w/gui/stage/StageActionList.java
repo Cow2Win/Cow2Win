@@ -64,6 +64,12 @@ public class StageActionList extends JPanel {
         addRow(component);
     }
 
+    /** Appends a stage specific action below the menu's actions - a row like theirs, following the action. */
+    public void addExtraAction(Action action) {
+        addRow(new SeparatorRow());
+        addRow(new ActionRow(action, 0));
+    }
+
     private void addRow(JComponent row) {
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
         add(row);

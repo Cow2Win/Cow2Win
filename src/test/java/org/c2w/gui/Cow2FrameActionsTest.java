@@ -72,14 +72,26 @@ class Cow2FrameActionsTest {
     }
 
     @Test
-    @DisplayName("After building the frame, input and strategic concept have a view (clickable tiles), output not; the concept is shown")
+    @DisplayName("After building the frame, all three stages have a view (clickable tiles); the concept is shown")
     void availableStages() throws Exception {
         SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
 
         assertTrue(frame.processBar().isStageAvailable(Stage.INPUT));
         assertTrue(frame.processBar().isStageAvailable(Stage.CONCEPT));
-        assertFalse(frame.processBar().isStageAvailable(Stage.OUTPUT));
+        assertTrue(frame.processBar().isStageAvailable(Stage.OUTPUT));
         assertEquals(Stage.CONCEPT, frame.processBar().activeStage());
+    }
+
+    @Test
+    @DisplayName("\"Change plan\" switches to the output stage instead of opening a dialog")
+    void changePlanShowsOutputStage() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            frame = new Cow2Frame(context);
+            frame.actions().get(ActionId.OPEN_CHANGE_PLAN).actionPerformed(null);
+        });
+
+        assertEquals(Stage.OUTPUT, frame.processBar().activeStage());
+        assertTrue(java.util.Arrays.stream(java.awt.Window.getWindows()).noneMatch(w -> w instanceof JDialog && w.isVisible()));
     }
 
     @Test

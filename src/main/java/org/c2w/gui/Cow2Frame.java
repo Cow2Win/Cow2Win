@@ -14,6 +14,7 @@ import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.journal.JournalActions;
 import org.c2w.gui.stage.ConceptStageView;
 import org.c2w.gui.stage.InputStageView;
+import org.c2w.gui.stage.OutputStageView;
 import org.c2w.gui.stage.StageView;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
@@ -164,11 +165,14 @@ public class Cow2Frame extends JFrame {
         topArea.add(actionBar, BorderLayout.CENTER);
 
         // The center: one stage view per process stage, switched by the process bar's tiles.
-        // Input and strategic concept have a view; output follows (M3c). Start with the concept.
+        // All three stages have a view. Start with the strategic concept.
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
         addStageView(new InputStageView(appContext, actions));
         addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
+        addStageView(new OutputStageView(appContext, actions));
+        // "Change plan" (menu, action lists) switches to the output stage.
+        actionBar.setStageSwitcher(this::showStage);
         ProcessBar processBar = actionBar.processBar();
         processBar.addStageSelectionListener(this::showStage);
         showStage(Stage.CONCEPT);

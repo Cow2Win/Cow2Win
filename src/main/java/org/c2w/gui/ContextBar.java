@@ -285,9 +285,9 @@ public class ContextBar extends JPanel {
     /**
      * "In game: Original, as of 28/09/2026" - the last-modified date of {@code originalFile}
      * in {@code locale}'s short date format - or "In game: no Original lineup yet" if there is
-     * no such file (or it is null).
+     * no such file (or it is null). Public: also shown in the info panel of the output stage view.
      */
-    static String originalStatusText(Path originalFile, Locale locale) {
+    public static String originalStatusText(Path originalFile, Locale locale) {
         if (originalFile == null || !Files.isRegularFile(originalFile)) {
             return LanguageService.displayName(KEY_ORIGINAL_MISSING);
         }

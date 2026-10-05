@@ -24,7 +24,7 @@ chosen separately for the hero side and the titan side (since 2026-09-24):
 
 All strategies are additive: they never change an existing assignment.
 Comparing two lineups (`LineupComparisonDialog`) and turning the difference
-into in-game steps (`LineupChangePlanDialog`) is built in as well.
+into in-game steps (the "Output" stage view, `ChangePlanPanel`) is built in as well.
 
 ## Requirements
 

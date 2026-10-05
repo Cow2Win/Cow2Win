@@ -4,7 +4,6 @@ import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.fort.HeroLineupSummaryPanel;
@@ -151,7 +150,7 @@ public class ConceptStageView extends StageView {
             case NO_ORIGINAL -> addLine(comparisonSection, mutedLabel(LanguageService.displayName(KEY_NO_ORIGINAL)));
             case COMPARED -> {
                 addLine(comparisonSection, new JLabel(LanguageService.displayName(KEY_TOTAL_POWER)));
-                addLine(comparisonSection, valueLine(number(comparison.totalPowerBefore()) + " → "
+                addLine(comparisonSection, valueLine(number(comparison.totalPowerBefore()) + " " + arrow() + " "
                         + number(comparison.totalPowerAfter()), comparison.totalPowerDiff()));
                 addLine(comparisonSection, Box.createVerticalStrut(4));
                 addLine(comparisonSection, valueLine(LanguageService.displayName(KEY_TYPE_POWER, typeName()),
@@ -166,17 +165,6 @@ public class ConceptStageView extends StageView {
 
     private String typeName() {
         return LanguageService.displayName(appContext.fortificationType() == FortificationType.HERO ? KEY_HEROES : KEY_TITANS);
-    }
-
-    /** {@code text} followed by the colored difference: green for a gain, red for a loss. */
-    private static JComponent valueLine(String text, int diff) {
-        JPanel line = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        line.setOpaque(false);
-        line.add(new JLabel(text + "   "));
-        JLabel diffLabel = new JLabel((diff > 0 ? "+" : "") + number(diff));
-        diffLabel.setForeground(diff > 0 ? IconLoader.GREEN : diff < 0 ? IconLoader.RED : MUTED_COLOR);
-        line.add(diffLabel);
-        return line;
     }
 
     // --- selected fortification ---

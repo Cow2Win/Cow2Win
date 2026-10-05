@@ -1,5 +1,6 @@
 package org.c2w.gui.stage;
 
+import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 
@@ -66,11 +67,56 @@ final class InfoSections {
 
     /** A muted label that wraps its text within the narrow info panel. */
     static JLabel mutedLabel(String text) {
-        // An HTML label ignores the foreground color - the color goes into the style instead.
-        JLabel label = new JLabel("<html><body style='width:" + WRAP_WIDTH + "px; color:" + cssColor(MUTED_COLOR) + "'>"
-                + escape(text) + "</body></html>");
+        // An HTML label ignores the foreground color - the color goes into a font tag instead
+        // (a color in the body style would stop the width from wrapping the text).
+        JLabel label = wrappingLabel(colored(escape(text), MUTED_COLOR));
         label.setForeground(MUTED_COLOR);
         return label;
+    }
+
+    /** An HTML label wrapping {@code htmlContent} within the narrow info panel. */
+    private static JLabel wrappingLabel(String htmlContent) {
+        return new WrappingLabel("<html>" + htmlContent + "</html>");
+    }
+
+    /**
+     * An HTML label of fixed width ({@link #WRAP_WIDTH}) whose height fits the wrapped text. A CSS
+     * width in the HTML would not do: Swing scales CSS pixels, so "250px" ends up about a third
+     * wider - wider than the info panel - and a short text is cut instead of wrapped.
+     */
+    private static final class WrappingLabel extends JLabel {
+
+        WrappingLabel(String html) {
+            super(html);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Object view = getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
+            if (!(view instanceof javax.swing.text.View htmlView)) {
+                return super.getPreferredSize();
+            }
+            Insets insets = getInsets();
+            int width = WRAP_WIDTH - insets.left - insets.right;
+            htmlView.setSize(width, 0);
+            int height = (int) Math.ceil(htmlView.getPreferredSpan(javax.swing.text.View.Y_AXIS));
+            return new Dimension(WRAP_WIDTH, height + insets.top + insets.bottom);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return getPreferredSize();
+        }
+    }
+
+    private static String colored(String htmlContent, Color color) {
+        return "<font color='" + cssColor(color) + "'>" + htmlContent + "</font>";
+    }
+
+    /** "→" - or "->" if the label font cannot display the arrow. */
+    static String arrow() {
+        Font font = UIManager.getFont("Label.font");
+        return font == null || font.canDisplay('→') ? "→" : "->";
     }
 
     /** {@code color} as CSS hex - a translucent color blended over the look and feel's panel background. */
@@ -84,6 +130,13 @@ final class InfoSections {
         int green = Math.round(color.getGreen() * alpha + background.getGreen() * (1 - alpha));
         int blue = Math.round(color.getBlue() * alpha + background.getBlue() * (1 - alpha));
         return String.format("#%02x%02x%02x", red, green, blue);
+    }
+
+    /** {@code text} followed by the colored difference: green for a gain, red for a loss (the colors of the "changes" view). */
+    static JComponent valueLine(String text, int diff) {
+        // One wrapping HTML label: the difference moves to the next line if the column is too narrow.
+        Color diffColor = diff > 0 ? IconLoader.GREEN : diff < 0 ? IconLoader.RED : MUTED_COLOR;
+        return wrappingLabel(escape(text) + " &nbsp; " + colored((diff > 0 ? "+" : "") + number(diff), diffColor));
     }
 
     /** A bold label, a little larger - e.g. the name of the selected fortification or member. */

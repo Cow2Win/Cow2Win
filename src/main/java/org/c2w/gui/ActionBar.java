@@ -8,6 +8,7 @@ import org.c2w.eval.ManualLineupAlgorithm;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
@@ -25,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 import static org.c2w.gui.action.ActionId.*;
 
@@ -101,6 +103,9 @@ public class ActionBar extends JPanel {
 
     /** The process bar shown by this bar, see {@link #buildBar}. */
     private ProcessBar processBar;
+
+    /** Switches the main window's stage view, see {@link #setStageSwitcher}. */
+    private Consumer<Stage> stageSwitcher;
 
     /**
      * Registers this bar's actions in {@code actions} - the process bar itself is only added
@@ -306,14 +311,19 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Opens {@link LineupChangePlanDialog} - the step-by-step guide for turning
-     * the guild's fixed "Original" lineup (the actual in-game deployment) into
-     * a chosen target lineup, i.e. exactly which teams to re-arrange in
-     * Hero Wars. Read-only like {@link #onOpenLineupComparison()}.
+     * Switches to the output stage view - the change plan from the guild's fixed "Original"
+     * lineup (the actual in-game deployment) to a target lineup, i.e. exactly which teams to
+     * re-arrange in Hero Wars. Does nothing until {@link #setStageSwitcher} was called.
      */
     private void onOpenChangePlan() {
-        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new LineupChangePlanDialog(owner, appContext).setVisible(true);
+        if (stageSwitcher != null) {
+            stageSwitcher.accept(Stage.OUTPUT);
+        }
+    }
+
+    /** How this bar switches the main window's stage view (e.g. "change plan" shows the output stage). */
+    void setStageSwitcher(Consumer<Stage> stageSwitcher) {
+        this.stageSwitcher = stageSwitcher;
     }
 
     /**
