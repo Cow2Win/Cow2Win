@@ -6,8 +6,7 @@ import java.awt.*;
 
 /**
  * The traffic light of a process stage tile in {@link ProcessBar} (see
- * {@code ProcessBar.StageTile#setStatus}). Not set from real data yet - every tile stays
- * {@link #NONE} until the data status of the stages is evaluated (GUI rework M4).
+ * {@code ProcessBar.StageTile#setStatus}), set from the data status by {@link DataStatusController}.
  */
 public enum StageStatus {
 

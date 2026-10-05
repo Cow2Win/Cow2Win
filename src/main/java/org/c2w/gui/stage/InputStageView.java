@@ -8,6 +8,7 @@ import org.c2w.data.model.Hero;
 import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanTeam;
+import org.c2w.gui.StageStatus;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
@@ -17,9 +18,11 @@ import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
 import org.c2w.service.AppContext;
+import org.c2w.service.DataStatus;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -29,6 +32,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -46,6 +50,9 @@ import static org.c2w.gui.stage.InfoSections.*;
 public class InputStageView extends StageView {
 
     private static final String KEY_COUNT = "memberOverview.count";
+    private static final String KEY_SHOWN = "memberOverview.shown";
+    private static final String KEY_ONLY_STALE = "memberOverview.onlyStale";
+    private static final String KEY_STALE_JOURNAL = "memberOverview.stale.journal";
     private static final String KEY_MEMBER = "stageInfo.member";
     private static final String KEY_MEMBER_NONE = "stageInfo.member.none";
     private static final String KEY_MEMBER_TEAM = "stageInfo.member.team";
@@ -67,18 +74,26 @@ public class InputStageView extends StageView {
             IconLoader.BLUE.getBlue(), 70);
 
     private static final int ROW_HEIGHT = 28;
+    private static final int STATUS_COLUMN_WIDTH = 30;
+    private static final int LIGHT = 10;
 
     private final AppContext appContext;
     private final MainActions actions;
 
     private final MemberTableModel tableModel = new MemberTableModel();
     private final JTable table = new JTable(tableModel);
+    private final TableRowSorter<MemberTableModel> sorter = new TableRowSorter<>(tableModel);
+    /** "Show outdated only" in the action list: hides the green members. */
+    private JCheckBox onlyStaleToggle;
     private final JLabel countLabel = new JLabel();
     private final JPanel memberSection = sectionBody();
     private final JPanel journalSection = sectionBody();
 
     /** Id of the selected member, null if none - kept across rebuilds while the member exists. */
     private String selectedMemberId;
+
+    /** The last data status, null before the first one. */
+    private DataStatus dataStatus;
 
     /** True while {@link #refreshMembers()} rebuilds the table - selection events are then ignored. */
     private boolean refreshing;
@@ -160,13 +175,15 @@ public class InputStageView extends StageView {
                 setText(value instanceof Integer number ? GuiUtils.NUMBER_FORMAT.format(number) : "");
             }
         };
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setCellRenderer(new StatusRenderer());
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setMinWidth(STATUS_COLUMN_WIDTH);
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setMaxWidth(STATUS_COLUMN_WIDTH);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_MEMBER).setCellRenderer(textRenderer);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_TEAMS).setCellRenderer(new TransparentRenderer(SwingConstants.CENTER));
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_TOTAL_POWER).setCellRenderer(numberRenderer);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_STRONGEST_TEAM).setCellRenderer(numberRenderer);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_LAST_MODIFIED).setCellRenderer(new TransparentRenderer(SwingConstants.RIGHT));
 
-        TableRowSorter<MemberTableModel> sorter = new TableRowSorter<>(tableModel);
         sorter.setSortKeys(List.of(new RowSorter.SortKey(MemberTableModel.COLUMN_TOTAL_POWER, SortOrder.DESCENDING)));
         sorter.setSortsOnUpdates(true);
         table.setRowSorter(sorter);
@@ -200,23 +217,72 @@ public class InputStageView extends StageView {
     /** Rebuilds the table for the open guild and the selected fortification type, keeping the selected member. */
     private void refreshMembers() {
         Guild guild = appContext.guild();
+        updateTable(() -> tableModel.setRows(MemberOverviewModel.rows(guild, appContext.fortificationType())));
+    }
+
+    /**
+     * Runs {@code change} (rebuilding or filtering the table) and selects the selected member
+     * again - if it is still shown; then updates the count and the info panel.
+     */
+    private void updateTable(Runnable change) {
         refreshing = true;
         try {
-            tableModel.setRows(MemberOverviewModel.rows(guild, appContext.fortificationType()));
+            change.run();
             int modelRow = selectedMemberId == null ? -1 : tableModel.indexOf(selectedMemberId);
-            if (modelRow < 0) {
+            int viewRow = modelRow < 0 ? -1 : table.convertRowIndexToView(modelRow);
+            if (viewRow < 0) {
                 selectedMemberId = null;
                 table.clearSelection();
             } else {
-                int viewRow = table.convertRowIndexToView(modelRow);
                 table.getSelectionModel().setSelectionInterval(viewRow, viewRow);
             }
         } finally {
             refreshing = false;
         }
+        Guild guild = appContext.guild();
         int count = guild == null || guild.members() == null ? 0 : guild.members().size();
-        countLabel.setText(LanguageService.displayName(KEY_COUNT, count, Guild.MAX_MEMBERS));
+        String countText = LanguageService.displayName(KEY_COUNT, count, Guild.MAX_MEMBERS);
+        if (isOnlyStale()) {
+            countText += " " + LanguageService.displayName(KEY_SHOWN, table.getRowCount());
+        }
+        countLabel.setText(countText);
         showMember();
+    }
+
+    /**
+     * Shows a new data status (from the {@code DataStatusController}): the traffic lights of the
+     * members, the "show outdated only" filter and the deviations of the selected member.
+     */
+    public void setDataStatus(DataStatus status) {
+        dataStatus = status;
+        tableModel.setFindings(status == null ? Map.of() : status.members());
+        refreshMembers();
+    }
+
+    // --- action list: "show outdated only" ---
+
+    @Override
+    protected void addActionListExtras(StageActionList actionList) {
+        onlyStaleToggle = new JCheckBox(LanguageService.displayName(KEY_ONLY_STALE));
+        onlyStaleToggle.setOpaque(false);
+        onlyStaleToggle.addActionListener(e -> applyOnlyStale());
+        actionList.addExtra(onlyStaleToggle);
+    }
+
+    private void applyOnlyStale() {
+        updateTable(() -> sorter.setRowFilter(isOnlyStale() ? new StaleFilter() : null));
+    }
+
+    private boolean isOnlyStale() {
+        return onlyStaleToggle != null && onlyStaleToggle.isSelected();
+    }
+
+    /** Shows only red and orange members. */
+    private static final class StaleFilter extends RowFilter<TableModel, Integer> {
+        @Override
+        public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+            return ((MemberTableModel) entry.getModel()).status(entry.getIdentifier()).isStale();
+        }
     }
 
     // --- info panel ---
@@ -237,6 +303,7 @@ public class InputStageView extends StageView {
             addLine(memberSection, mutedLabel(LanguageService.displayName(KEY_MEMBER_NONE)));
         } else {
             addLine(memberSection, titleLabel(member.get().name()));
+            staleJournalLines(member.get().id()).forEach(line -> addLine(memberSection, line));
             boolean heroes = appContext.fortificationType() == FortificationType.HERO;
             List<JComponent> teamBlocks = heroes ? heroTeamBlocks(member.get()) : titanTeamBlocks(member.get());
             if (teamBlocks.isEmpty()) {
@@ -246,6 +313,28 @@ public class InputStageView extends StageView {
             teamBlocks.forEach(block -> addLine(memberSection, block));
         }
         relayout(memberSection);
+    }
+
+    /**
+     * For a member outdated per journal (red): the date of the defense log and every team the
+     * log shows differently - team number, stored vs. log power. Empty otherwise.
+     */
+    private List<JComponent> staleJournalLines(String memberId) {
+        Optional<DataStatus.MemberFinding> finding = dataStatus == null ? Optional.empty() : dataStatus.member(memberId);
+        if (finding.isEmpty() || finding.get().state() != DataStatus.MemberState.STALE_JOURNAL) {
+            return List.of();
+        }
+        Color red = StageStatus.ACTION_NEEDED.color();
+        List<JComponent> lines = new ArrayList<>();
+        lines.add(coloredLabel(LanguageService.displayName(KEY_STALE_JOURNAL, shortDate(finding.get().logDate())), red));
+        for (DataStatus.TeamDeviation deviation : finding.get().deviations()) {
+            String text = deviation.index() < 0
+                    ? JournalTexts.of("teamKind", deviation.kind()) + ": " + JournalTexts.number(deviation.logPower())
+                    : JournalTexts.team(deviation.kind(), deviation.index()) + ": "
+                    + JournalTexts.powerChange(deviation.storedPower(), deviation.logPower()).replace("→", arrow());
+            lines.add(mutedLabel(text));
+        }
+        return lines;
     }
 
     private Optional<GuildMember> selectedMember() {
@@ -380,6 +469,14 @@ public class InputStageView extends StageView {
         return table;
     }
 
+    JCheckBox onlyStaleToggle() {
+        return onlyStaleToggle;
+    }
+
+    String countText() {
+        return countLabel.getText();
+    }
+
     List<String> memberSectionTexts() {
         List<String> texts = new ArrayList<>();
         collectTexts(memberSection, texts);
@@ -421,6 +518,43 @@ public class InputStageView extends StageView {
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
             super.paintComponent(g);
+        }
+    }
+
+    /** The traffic light of a member's data status: a colored dot with its tooltip, nothing while unknown. */
+    private static final class StatusRenderer extends TransparentRenderer {
+
+        private Color light;
+
+        StatusRenderer() {
+            super(SwingConstants.CENTER);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            MemberTableModel.StatusValue status = (MemberTableModel.StatusValue) value;
+            light = status == null ? null : status.light().color();
+            setText("");
+            setToolTipText(status == null ? null : status.tooltip());
+            return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (light == null) {
+                return;
+            }
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(light);
+                g2.fillOval((getWidth() - LIGHT) / 2, (getHeight() - LIGHT) / 2, LIGHT, LIGHT);
+            } finally {
+                g2.dispose();
+            }
         }
     }
 }

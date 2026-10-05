@@ -79,4 +79,21 @@ class CowScoreDialogTest {
         assertEquals("*" + LanguageService.displayName(CowScoreTab.HEROES.textKey()), dialog.tabTitle(CowScoreTab.HEROES));
         assertEquals(LanguageService.displayName(CowScoreTab.TITANS.textKey()), dialog.tabTitle(CowScoreTab.TITANS));
     }
+
+    @Test
+    @DisplayName("Saving a changed tab runs the save callback; saving without changes does not")
+    void saveCallback() throws Exception {
+        int[] calls = new int[1];
+        SwingUtilities.invokeAndWait(() -> {
+            dialog = CowScoreDialog.open(null, catalog, CowScoreTab.HEROES, () -> calls[0]++);
+            assertTrue(dialog.saveAll());
+            assertEquals(0, calls[0]);
+            @SuppressWarnings("unchecked")
+            JComboBox<FortMark> combo = CowScoreTestSupport.findAll(
+                    (Container) dialog.panel(CowScoreTab.HEROES).component(), JComboBox.class).get(0);
+            combo.setSelectedItem(combo.getSelectedItem() == FortMark.NEGATIVE ? FortMark.POSITIVE : FortMark.NEGATIVE);
+            assertTrue(dialog.saveAll());
+        });
+        assertEquals(1, calls[0]);
+    }
 }

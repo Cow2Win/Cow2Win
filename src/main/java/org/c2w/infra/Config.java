@@ -64,6 +64,16 @@ public final class Config {
     private static final String KEY_LAST_JOURNAL_IMPORT_DIR = "lastJournalImportDir";
     /** Fortification type (HERO/TITAN) selected last in the context bar, restored on the next start. */
     private static final String KEY_LAST_FORTIFICATION_TYPE = "lastFortificationType";
+    /** Whether members are marked as outdated by the age of their teams (data status, "outdated after X days"). */
+    private static final String KEY_STALE_CHECK_ENABLED = "staleCheckEnabled";
+    /** Days after which teams count as outdated with the stale check on. */
+    private static final String KEY_STALE_AFTER_DAYS = "staleAfterDays";
+    /** Whether the user has operated the stale check in the settings - then it is never switched on automatically. */
+    private static final String KEY_STALE_CHECK_USER_SET = "staleCheckUserSet";
+    /** Default and valid range of {@link #KEY_STALE_AFTER_DAYS}. */
+    public static final int DEFAULT_STALE_AFTER_DAYS = 30;
+    public static final int MIN_STALE_AFTER_DAYS = 1;
+    public static final int MAX_STALE_AFTER_DAYS = 365;
     /** Default backup directory: a "backup" folder next to {@link #DEFAULT_WORKSPACE_DIR}, under the same {@link #ROOT} umbrella. */
     private static final String DEFAULT_BACKUP_DIR = ROOT.resolve("backup").toString();
 
@@ -268,5 +278,72 @@ public final class Config {
      */
     public static Path getWorkspaceDir() {
         return Paths.get(getWorkspacePath());
+    }
+
+    // --- staleCheckEnabled / staleAfterDays / staleCheckUserSet ---
+
+    /** Whether teams are marked as outdated by age; off unless switched on (by the user or after the first journal import). */
+    public static boolean isStaleCheckEnabled() {
+        return Boolean.parseBoolean(properties.getProperty(KEY_STALE_CHECK_ENABLED, "false"));
+    }
+
+    public static void setStaleCheckEnabled(boolean enabled) {
+        setProperty(KEY_STALE_CHECK_ENABLED, Boolean.toString(enabled));
+    }
+
+    /** Days after which teams count as outdated, {@link #DEFAULT_STALE_AFTER_DAYS} if none or an invalid value is stored; clamped to 1-365. */
+    public static int getStaleAfterDays() {
+        try {
+            return clampStaleAfterDays(Integer.parseInt(properties.getProperty(KEY_STALE_AFTER_DAYS, "").trim()));
+        } catch (NumberFormatException e) {
+            return DEFAULT_STALE_AFTER_DAYS;
+        }
+    }
+
+    /** Stores {@code days}, clamped to {@link #MIN_STALE_AFTER_DAYS}-{@link #MAX_STALE_AFTER_DAYS}. */
+    public static void setStaleAfterDays(int days) {
+        setProperty(KEY_STALE_AFTER_DAYS, Integer.toString(clampStaleAfterDays(days)));
+    }
+
+    private static int clampStaleAfterDays(int days) {
+        return Math.max(MIN_STALE_AFTER_DAYS, Math.min(MAX_STALE_AFTER_DAYS, days));
+    }
+
+    /** Whether the user has operated the stale check in the settings dialog. */
+    public static boolean isStaleCheckUserSet() {
+        return Boolean.parseBoolean(properties.getProperty(KEY_STALE_CHECK_USER_SET, "false"));
+    }
+
+    public static void setStaleCheckUserSet(boolean userSet) {
+        setProperty(KEY_STALE_CHECK_USER_SET, Boolean.toString(userSet));
+    }
+
+    /**
+     * Called after a successful journal import: switches the stale check on with
+     * {@link #DEFAULT_STALE_AFTER_DAYS} days - once, and only if the user has never operated it
+     * ({@link #isStaleCheckUserSet()}). Does not save; the caller does.
+     *
+     * @return true if this changed the settings
+     */
+    public static boolean enableStaleCheckAfterFirstImport() {
+        if (isStaleCheckUserSet() || isStaleCheckEnabled()) {
+            return false;
+        }
+        setStaleCheckEnabled(true);
+        setStaleAfterDays(DEFAULT_STALE_AFTER_DAYS);
+        return true;
+    }
+
+    /** A copy of all properties - for tests that change settings in memory and restore them afterwards. */
+    static Properties snapshot() {
+        Properties copy = new Properties();
+        copy.putAll(properties);
+        return copy;
+    }
+
+    /** Replaces all properties by {@code snapshot} (see {@link #snapshot()}); never saves. */
+    static void restore(Properties snapshot) {
+        properties.clear();
+        properties.putAll(snapshot);
     }
 }

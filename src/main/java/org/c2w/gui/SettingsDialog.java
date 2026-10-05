@@ -24,7 +24,8 @@ import java.util.List;
  * MainMenuBar). Lets the user change the display language, the
  * default hero and titan lineup algorithms (see {@link org.c2w.gui.ActionBar#onRunAlgorithm}),
  * the backup directory (see org.c2w.infra.BackupService) and the workspace
- * directory (see {@link Config#getWorkspaceDir()}); named generically since
+ * directory (see {@link Config#getWorkspaceDir()}) and the stale check of the data status
+ * (see {@link Config#isStaleCheckEnabled()}); named generically since
  * more application-wide settings are expected to move in here later.
  */
 public class SettingsDialog extends JDialog {
@@ -80,6 +81,12 @@ public class SettingsDialog extends JDialog {
     private final JButton browseBackupDirButton = new JButton("...");
     private final JTextField workspaceDirField = new JTextField(20);
     private final JButton browseWorkspaceDirButton = new JButton("...");
+    /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
+    private final JCheckBox staleCheckBox = new JCheckBox(LanguageService.displayName("settings.staleCheck"));
+    private final JSpinner staleAfterDaysSpinner = new JSpinner(new SpinnerNumberModel(Config.DEFAULT_STALE_AFTER_DAYS,
+            Config.MIN_STALE_AFTER_DAYS, Config.MAX_STALE_AFTER_DAYS, 1));
+    /** Whether the user operated the stale check here - then it is never switched on automatically again. */
+    private boolean staleCheckTouched;
 
     private boolean confirmed = false;
 
@@ -173,10 +180,28 @@ public class SettingsDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(workspaceDirPanel, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        JPanel stalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        stalePanel.add(staleCheckBox);
+        stalePanel.add(Box.createHorizontalStrut(12));
+        stalePanel.add(new JLabel(LanguageService.displayName("settings.staleAfterDays")));
+        stalePanel.add(Box.createHorizontalStrut(6));
+        stalePanel.add(staleAfterDaysSpinner);
+        formPanel.add(stalePanel, gbc);
+        gbc.gridwidth = 1;
+
         add(formPanel, BorderLayout.CENTER);
 
         browseBackupDirButton.addActionListener(e -> onBrowseBackupDir());
         browseWorkspaceDirButton.addActionListener(e -> onBrowseWorkspaceDir());
+        staleCheckBox.addActionListener(e -> {
+            staleCheckTouched = true;
+            staleAfterDaysSpinner.setEnabled(staleCheckBox.isSelected());
+        });
+        staleAfterDaysSpinner.addChangeListener(e -> staleCheckTouched = true);
     }
 
     /**
@@ -207,6 +232,10 @@ public class SettingsDialog extends JDialog {
 
         backupDirField.setText(Config.getBackupDir());
         workspaceDirField.setText(Config.getWorkspacePath());
+        staleCheckBox.setSelected(Config.isStaleCheckEnabled());
+        staleAfterDaysSpinner.setValue(Config.getStaleAfterDays());
+        staleAfterDaysSpinner.setEnabled(staleCheckBox.isSelected());
+        staleCheckTouched = false;
     }
 
     /** Selects the entry of {@code comboBox} equal to {@code configuredAlgorithm}, or the first entry if none matches. */
@@ -304,6 +333,11 @@ public class SettingsDialog extends JDialog {
         }
         Config.setBackupDir(backupDirField.getText().trim());
         Config.setWorkspacePath(workspacePath);
+        Config.setStaleCheckEnabled(staleCheckBox.isSelected());
+        Config.setStaleAfterDays((Integer) staleAfterDaysSpinner.getValue());
+        if (staleCheckTouched) {
+            Config.setStaleCheckUserSet(true);
+        }
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built

@@ -135,4 +135,38 @@ class ProcessBarTest {
         assertTrue(cut.endsWith("…"), cut);
         assertTrue(metrics.stringWidth(cut) <= metrics.stringWidth(text) / 2, cut);
     }
+
+    @Test
+    @DisplayName("setSubtitle replaces the shown subtitle; the tooltip shows short text and static subtitle")
+    void subtitle() {
+        ProcessBar bar = new ProcessBar();
+        ProcessBar.StageTile tile = bar.tile(Stage.INPUT);
+        String staticSubtitle = tile.subtitle();
+        assertEquals(staticSubtitle, tile.shownSubtitle());
+        assertEquals(staticSubtitle, tile.getToolTipText());
+
+        bar.setSubtitle(Stage.INPUT, "2 outdated per journal");
+        assertEquals("2 outdated per journal", tile.shownSubtitle());
+        assertTrue(tile.getToolTipText().contains("2 outdated per journal"), tile.getToolTipText());
+        assertTrue(tile.getToolTipText().contains(staticSubtitle), tile.getToolTipText());
+
+        bar.setSubtitle(Stage.INPUT, null);
+        assertEquals(staticSubtitle, tile.shownSubtitle());
+        assertEquals(staticSubtitle, tile.getToolTipText());
+    }
+
+    @Test
+    @DisplayName("\"Next step\" shows the name of its action")
+    void nextStepText() {
+        ProcessBar bar = new ProcessBar();
+        AbstractAction action = new AbstractAction("Next step → Output") {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+            }
+        };
+        bar.setNextStepAction(action);
+        assertEquals("Next step → Output", bar.nextStepText().replace("->", "→"));
+        action.putValue(Action.NAME, "Next step → Input");
+        assertEquals("Next step → Input", bar.nextStepText().replace("->", "→"));
+    }
 }

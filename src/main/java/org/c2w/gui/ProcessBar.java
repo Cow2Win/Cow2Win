@@ -17,14 +17,14 @@ import java.util.function.Consumer;
 /**
  * The process bar below the {@link ContextBar}: one tile per process stage - input, strategic
  * concept, output (see {@link #STAGES}) - with number, title and subtitle, connected by small
- * arrows, plus a "next step" button on the right (hidden for now).
+ * arrows, plus a "next step" button on the right (only while there is a next step).
  *
  * <p>The {@linkplain #setActiveStage active stage} is highlighted in teal. Only the tiles of
  * {@linkplain #setStageAvailable available} stages - those with a stage view - can be clicked
  * (hand cursor, hover highlight): a click makes the stage active and reports it to the
  * {@linkplain #addStageSelectionListener stage selection listeners}, which switch the view.
- * The other tiles are display only. Each tile already has a traffic light
- * ({@link StageStatus}), not shown until it is set from real data.
+ * The other tiles are display only. Each tile has a traffic light
+ * ({@link StageStatus}) and a short text, both set from the data status (see {@link DataStatusController}).
  */
 public class ProcessBar extends JPanel {
 
@@ -113,12 +113,23 @@ public class ProcessBar extends JPanel {
     }
 
     /**
-     * Binds the "next step" button to {@code action} and shows it - or hides it for
-     * {@code null}; without the button the tiles use the full width.
+     * Shows {@code shortText} (the data status of the stage) instead of the static subtitle;
+     * {@code null} or blank shows the static subtitle again. The tooltip then shows the short
+     * text and the static subtitle.
+     */
+    public void setSubtitle(Stage stage, String shortText) {
+        tile(stage).setShortText(shortText);
+    }
+
+    /**
+     * Binds the "next step" button to {@code action} (its name is the button text, "next step"
+     * if it has none) and shows it - or hides it for {@code null}; without the button the tiles use the full width.
      */
     public void setNextStepAction(Action action) {
         nextStepButton.setAction(action);
-        nextStepButton.setText(LanguageService.displayName(KEY_NEXT_STEP));
+        if (action == null || action.getValue(Action.NAME) == null) {
+            nextStepButton.setText(LanguageService.displayName(KEY_NEXT_STEP));
+        }
         setNextStepVisible(action != null);
     }
 
@@ -131,6 +142,11 @@ public class ProcessBar extends JPanel {
         return nextStepButton.isVisible();
     }
 
+    /** The text of the "next step" button - for tests. */
+    String nextStepText() {
+        return nextStepButton.getText();
+    }
+
     /** The tiles, in display order. */
     List<StageTile> tiles() {
         return List.copyOf(tiles);
@@ -139,6 +155,10 @@ public class ProcessBar extends JPanel {
     StageTile tile(Stage stage) {
         return tiles.stream().filter(tile -> tile.stage() == stage).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No tile for stage " + stage));
+    }
+
+    private static String escape(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /** {@code text} cut with "…" so that it fits into {@code width} pixels of {@code metrics}. */
@@ -180,6 +200,8 @@ public class ProcessBar extends JPanel {
         private final int number;
         private final String title;
         private final String subtitle;
+        /** The data status short text shown instead of {@link #subtitle}, null for none. */
+        private String shortText;
         private boolean active;
         private boolean available;
         private boolean hover;
@@ -255,6 +277,18 @@ public class ProcessBar extends JPanel {
 
         String subtitle() {
             return subtitle;
+        }
+
+        /** The subtitle shown: the short text if set, otherwise the static subtitle. */
+        String shownSubtitle() {
+            return shortText != null ? shortText : subtitle;
+        }
+
+        void setShortText(String shortText) {
+            this.shortText = shortText == null || shortText.isBlank() ? null : shortText;
+            setToolTipText(this.shortText == null ? subtitle
+                    : "<html>" + escape(this.shortText) + "<br>" + escape(subtitle) + "</html>");
+            repaint();
         }
 
         boolean isActive() {
@@ -344,7 +378,7 @@ public class ProcessBar extends JPanel {
                 g2.drawString(ellipsize(title, titleMetrics, textWidth), textX, top + titleMetrics.getAscent());
                 g2.setFont(subtitleFont());
                 g2.setColor(SUBTITLE_COLOR);
-                g2.drawString(ellipsize(subtitle, subtitleMetrics, textWidth), textX,
+                g2.drawString(ellipsize(shownSubtitle(), subtitleMetrics, textWidth), textX,
                         top + titleMetrics.getHeight() + subtitleMetrics.getAscent());
             } finally {
                 g2.dispose();
@@ -396,6 +430,13 @@ public class ProcessBar extends JPanel {
             setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 18));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setVisible(false);
+        }
+
+        /** Shows "->" instead of "→" if the button font cannot display the arrow. */
+        @Override
+        public void setText(String text) {
+            Font font = getFont();
+            super.setText(text != null && font != null && !font.canDisplay('→') ? text.replace("→", "->") : text);
         }
 
         @Override

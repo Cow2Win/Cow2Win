@@ -47,6 +47,8 @@ public final class JournalActions {
     private JournalPlayersDialog players;
     private JournalSeasonsDialog seasons;
     private JournalNameMappingsDialog nameMappings;
+    /** Notified after every change of the journal and after the sync window closed (e.g. the data status). */
+    private final List<Runnable> journalListeners = new ArrayList<>();
 
     /**
      * @param guildSwitcher asks about unsaved changes and switches to the guild in a folder;
@@ -133,6 +135,10 @@ public final class JournalActions {
 
             @Override
             public void importFinished() {
+                // The first successful import switches the stale check on - unless the user set it.
+                if (Config.enableStaleCheckAfterFirstImport()) {
+                    Config.save();
+                }
                 journalChanged();
             }
 
@@ -154,6 +160,7 @@ public final class JournalActions {
             return;
         }
         JournalSyncDialog.open(frame, context, guildService, this::openTeamBuilder);
+        notifyJournalListeners();
     }
 
     /** "Build teams from logs" for the open guild (modal). */
@@ -275,6 +282,16 @@ public final class JournalActions {
         if (nameMappings != null && nameMappings.isDisplayable()) {
             nameMappings.reload();
         }
+        notifyJournalListeners();
+    }
+
+    /** Registers {@code listener} to run after every change of the journal and after the sync window closed. */
+    public void addJournalListener(Runnable listener) {
+        journalListeners.add(Objects.requireNonNull(listener));
+    }
+
+    private void notifyJournalListeners() {
+        List.copyOf(journalListeners).forEach(Runnable::run);
     }
 
     private static void bringToFront(Window window) {

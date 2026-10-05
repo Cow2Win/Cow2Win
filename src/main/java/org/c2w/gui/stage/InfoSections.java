@@ -74,6 +74,13 @@ final class InfoSections {
         return label;
     }
 
+    /** A label in {@code color} that wraps its text within the narrow info panel. */
+    static JLabel coloredLabel(String text, Color color) {
+        JLabel label = wrappingLabel(colored(escape(text), color));
+        label.setForeground(color);
+        return label;
+    }
+
     /** An HTML label wrapping {@code htmlContent} within the narrow info panel. */
     private static JLabel wrappingLabel(String htmlContent) {
         return new WrappingLabel("<html>" + htmlContent + "</html>");

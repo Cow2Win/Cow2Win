@@ -201,7 +201,7 @@ public class ContextBar extends JPanel {
     }
 
     /** The look and feel's panel background, mixed with {@link #BAR_BACKGROUND} - a little darker. */
-    private static Color barBackground() {
+    static Color barBackground() {
         Color panel = UIManager.getColor("Panel.background");
         if (panel == null) {
             panel = Color.DARK_GRAY;

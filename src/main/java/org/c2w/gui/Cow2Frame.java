@@ -95,6 +95,8 @@ public class Cow2Frame extends JFrame {
     private JDialog logDialog;
     /** The "Weltenschlacht Journal" actions and windows. */
     private final JournalActions journalActions;
+    /** Traffic lights, short texts, status bar and "next step" from the data status of the open guild. */
+    private final DataStatusController dataStatusController;
     /** Every action of menu bar and toolbar - see the constructor. */
     private final MainActions actions;
 
@@ -168,7 +170,8 @@ public class Cow2Frame extends JFrame {
         // All three stages have a view. Start with the strategic concept.
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
-        addStageView(new InputStageView(appContext, actions));
+        InputStageView inputView = new InputStageView(appContext, actions);
+        addStageView(inputView);
         addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
         addStageView(new OutputStageView(appContext, actions));
         // "Change plan" (menu, action lists) switches to the output stage.
@@ -177,9 +180,18 @@ public class Cow2Frame extends JFrame {
         processBar.addStageSelectionListener(this::showStage);
         showStage(Stage.CONCEPT);
 
+        // The data status: evaluated again after every change, journal event and stage switch.
+        StatusBar statusBar = new StatusBar();
+        this.dataStatusController = new DataStatusController(appContext, guildService, processBar, statusBar,
+                this::showStage);
+        journalActions.addJournalListener(dataStatusController::requestUpdate);
+        dataStatusController.addListener(inputView::setDataStatus);
+        dataStatusController.requestUpdate();
+
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
         getContentPane().add(topArea, BorderLayout.NORTH);
         getContentPane().add(stageViews, BorderLayout.CENTER);
+        getContentPane().add(statusBar, BorderLayout.SOUTH);
 
         setBounds(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds());
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -201,11 +213,19 @@ public class Cow2Frame extends JFrame {
         ((CardLayout) stageViews.getLayout()).show(stageViews, stage.name());
         actionBar.processBar().setActiveStage(stage);
         view.onShown();
+        if (dataStatusController != null) {
+            dataStatusController.requestUpdate();
+        }
     }
 
     /** The stage views in the center - package-visible for tests. */
     JPanel stageViews() {
         return stageViews;
+    }
+
+    /** The data status controller - package-visible for tests. */
+    DataStatusController dataStatusController() {
+        return dataStatusController;
     }
 
     /** The process bar - package-visible for tests. */
@@ -235,7 +255,9 @@ public class Cow2Frame extends JFrame {
         // Independent of the open guild/lineup - the catalogs are shared by every guild.
         actions.register(new AppAction(ActionId.COWSCORE,
                 () -> CowScoreDialog.open(this, appContext.catalog(),
-                        CowScoreTab.forFortificationType(appContext.fortificationType()))));
+                        CowScoreTab.forFortificationType(appContext.fortificationType()),
+                        // Saved CowScores make the lineup "to recalculate" - show that right away.
+                        () -> dataStatusController.requestUpdate())));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         actions.register(new AppAction(ActionId.OPEN_HERO_WARS, () -> onOpenWeb(HERO_WARS_URL))
                 .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ActionBar.TOOLBAR_ICON_SIZE)));
@@ -478,9 +500,11 @@ public class Cow2Frame extends JFrame {
         lineupService.clearLineup();
     }
 
-    /** Opens {@link SettingsDialog} (currently: choosing the display language). */
+    /** Opens {@link SettingsDialog}; a saved change (e.g. the stale check) is evaluated right away. */
     private void onOpenSettings() {
-        SettingsDialog.show(this);
+        if (SettingsDialog.show(this).isConfirmed()) {
+            dataStatusController.requestUpdate();
+        }
     }
 
     /**

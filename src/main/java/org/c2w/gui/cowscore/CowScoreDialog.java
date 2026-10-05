@@ -49,6 +49,8 @@ public final class CowScoreDialog extends JDialog {
     private final Map<CowScoreTab, CowScorePanel> panels = new EnumMap<>(CowScoreTab.class);
     private final JTabbedPane tabs = new JTabbedPane();
     private final FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    /** Runs after a save that wrote at least one tab, may be null - see {@link #open(Frame, Catalog, CowScoreTab, Runnable)}. */
+    private Runnable onSaved;
 
     /**
      * Shows the CowScore dialog on {@code initialTab}: brings the open one to front and
@@ -57,9 +59,18 @@ public final class CowScoreDialog extends JDialog {
      * @return the (single) dialog
      */
     public static CowScoreDialog open(Frame owner, Catalog catalog, CowScoreTab initialTab) {
+        return open(owner, catalog, initialTab, null);
+    }
+
+    /**
+     * Like {@link #open(Frame, Catalog, CowScoreTab)}; {@code onSaved} runs after every save that
+     * wrote at least one tab (e.g. to evaluate the data status again) - it replaces the one given before.
+     */
+    public static CowScoreDialog open(Frame owner, Catalog catalog, CowScoreTab initialTab, Runnable onSaved) {
         if (instance == null) {
             instance = new CowScoreDialog(owner, catalog);
         }
+        instance.onSaved = onSaved;
         instance.selectTab(initialTab);
         instance.setVisible(true);
         instance.toFront();
@@ -153,8 +164,9 @@ public final class CowScoreDialog extends JDialog {
      *
      * @return true if nothing is left unsaved
      */
-    private boolean saveAll() {
+    boolean saveAll() {
         boolean allSaved = true;
+        boolean savedAny = false;
         for (Map.Entry<CowScoreTab, CowScorePanel> entry : panels.entrySet()) {
             CowScorePanel panel = entry.getValue();
             if (!panel.hasUnsavedChanges()) {
@@ -162,6 +174,7 @@ public final class CowScoreDialog extends JDialog {
             }
             try {
                 panel.save();
+                savedAny = true;
             } catch (IOException ex) {
                 allSaved = false;
                 Logger.logException("Saving the CowScore tab " + entry.getKey() + " failed", ex);
@@ -170,6 +183,9 @@ public final class CowScoreDialog extends JDialog {
                                 + "\n" + LanguageService.displayName(KEY_SAVE_ERROR) + "\n" + ex.getMessage(),
                         LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
             }
+        }
+        if (savedAny && onSaved != null) {
+            onSaved.run();
         }
         return allSaved;
     }
