@@ -351,7 +351,7 @@ public final class JournalSyncDialog extends JDialog {
             JButton save = new JButton(JournalTexts.text("journal.result.saveGuild"));
             save.addActionListener(e -> {
                 try {
-                    guildService.saveGuild();
+                    guildService.saveGuild(GuildService.SaveOrigin.JOURNAL_SYNC);
                     save.setEnabled(false);
                     warning.setText(JournalTexts.text("journal.result.guildSaved"));
                     warning.setForeground(UIManager.getColor("Label.foreground"));

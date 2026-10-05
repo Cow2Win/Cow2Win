@@ -4,6 +4,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 
@@ -47,6 +48,42 @@ public class GuildService {
         }
         this.context = context;
         this.recentFiles = recentFiles;
+    }
+
+    /**
+     * Where a guild save was triggered - named in the guild log entry (see {@link GuildLog}).
+     * Each value carries the language key of its origin text, null for a plain "Guild saved".
+     */
+    public enum SaveOrigin {
+        CONTEXT_BAR(null),
+        GUILD_EDITOR("guildLog.origin.guildEditor"),
+        TEAM_ENTRY("guildLog.origin.teamEntry"),
+        FORTIFICATION_ENTRY("guildLog.origin.fortificationEntry"),
+        HERO_OVERVIEW("guildLog.origin.heroOverview"),
+        TITAN_OVERVIEW("guildLog.origin.titanOverview"),
+        JOURNAL_IMPORT("guildLog.origin.journalImport"),
+        JOURNAL_SYNC("guildLog.origin.journalSync"),
+        JOURNAL_TEAM_BUILDER("guildLog.origin.journalTeamBuilder");
+
+        private final String key;
+
+        SaveOrigin(String key) {
+            this.key = key;
+        }
+
+        /** Language key of the origin text, null for none. */
+        public String key() {
+            return key;
+        }
+    }
+
+    /** Writes the "guild saved" entry (with its origin, if any) to the guild log of {@code guildDir}. */
+    static void logGuildSaved(Path guildDir, SaveOrigin origin) {
+        if (origin == null || origin.key() == null) {
+            GuildLog.event(guildDir, "guildLog.guildSaved");
+        } else {
+            GuildLog.event(guildDir, "guildLog.guildSavedFrom", LanguageService.displayName(origin.key()));
+        }
     }
 
     /**
@@ -114,6 +151,7 @@ public class GuildService {
         Path guildFilePath = createInitialGuildFile(name, guildDir);
         LineupService.createInitialLineupFile(name, guildDir);
         Logger.log("Created guild: " + guildFilePath);
+        GuildLog.event(guildDir, "guildLog.guildCreated", name);
     }
 
     /**
@@ -148,6 +186,7 @@ public class GuildService {
         recentFiles.guildOpened(guildFilePath);
         recentFiles.lineupOpened(lineupPath);
         Logger.log("Switched to guild: " + guildFilePath);
+        GuildLog.event(guildDir, "guildLog.guildOpened");
     }
 
     /**
@@ -177,19 +216,31 @@ public class GuildService {
         return remaining.get(Math.max(0, Math.min(removedIndex, remaining.size() - 1)));
     }
 
-    /** Saves the currently open guild as-is. */
+    /** Saves the currently open guild as-is (from the context bar). */
     public void saveGuild() throws IOException {
+        saveGuild(SaveOrigin.CONTEXT_BAR);
+    }
+
+    /** Saves the currently open guild as-is; {@code origin} is named in the guild log. */
+    public void saveGuild(SaveOrigin origin) throws IOException {
         GuildRepository.save(context.guild(), context.guildFilePath());
         context.setGuildDirty(false);
         Logger.log("Saved: " + context.guildFilePath());
+        logGuildSaved(context.guildFilePath().getParent(), origin);
     }
 
     /** Saves {@code updated} to the current guild file and makes it the open guild. */
     public void saveGuild(Guild updated) throws IOException {
+        saveGuild(updated, SaveOrigin.CONTEXT_BAR);
+    }
+
+    /** Like {@link #saveGuild(Guild)}; {@code origin} is named in the guild log. */
+    public void saveGuild(Guild updated, SaveOrigin origin) throws IOException {
         GuildRepository.save(updated, context.guildFilePath());
         context.setGuild(updated);
         context.setGuildDirty(false);
         Logger.log("Saved: " + context.guildFilePath());
+        logGuildSaved(context.guildFilePath().getParent(), origin);
     }
 
     /**

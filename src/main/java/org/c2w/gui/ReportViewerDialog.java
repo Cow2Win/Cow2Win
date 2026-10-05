@@ -2,6 +2,7 @@ package org.c2w.gui;
 
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
+import org.c2w.service.GuildLog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,8 +26,10 @@ public class ReportViewerDialog extends JDialog {
 
     private final String reportHtml;
     private final String suggestedFileName;
+    /** Folder of the guild the report belongs to - saving it is noted in its guild log; may be null. */
+    private final Path guildDir;
 
-    public ReportViewerDialog(Frame owner, String reportHtml, String suggestedFileName) {
+    public ReportViewerDialog(Frame owner, String reportHtml, String suggestedFileName, Path guildDir) {
         super(owner, LanguageService.displayTitle("report.title"), false);
         if (reportHtml == null) {
             throw new IllegalArgumentException("ReportViewerDialog needs reportHtml");
@@ -36,6 +39,7 @@ public class ReportViewerDialog extends JDialog {
         }
         this.reportHtml = reportHtml;
         this.suggestedFileName = suggestedFileName;
+        this.guildDir = guildDir;
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -97,6 +101,7 @@ public class ReportViewerDialog extends JDialog {
         try {
             Files.writeString(targetFile, reportHtml, StandardCharsets.UTF_8);
             Logger.log("Report saved: " + targetFile);
+            GuildLog.event(guildDir, "guildLog.reportSaved", suggestedFileName);
             JOptionPane.showMessageDialog(this, LanguageService.displayName("report.savedMessage", targetFile),
                     LanguageService.displayName("report.savedTitle"), JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {

@@ -1,6 +1,7 @@
 package org.c2w.data.repository;
 
 import org.c2w.data.model.*;
+import org.c2w.infra.LogCapture;
 import org.c2w.infra.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,10 +65,7 @@ class GuildRepositoryTotemTest {
     }
 
     private static List<String> captureLogSince() {
-        List<String> captured = new ArrayList<>();
-        Logger.addListener(captured::add);
-        captured.clear(); // drop the immediate replay of everything logged before this test
-        return captured;
+        return LogCapture.start();
     }
 
     private static boolean logged(List<String> log, String... fragments) {

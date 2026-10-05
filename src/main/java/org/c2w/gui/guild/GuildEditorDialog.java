@@ -247,7 +247,7 @@ public final class GuildEditorDialog extends JDialog {
         }
         try {
             Guild updated = GuildDraftConverter.toGuild(draft);
-            new GuildService(context).saveGuild(updated);
+            new GuildService(context).saveGuild(updated, GuildService.SaveOrigin.GUILD_EDITOR);
             updateLastSavedLabel();
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.invalidData") + "\n" + ex.getMessage(),

@@ -320,7 +320,7 @@ public class TitanValueOverviewDialog extends JDialog {
     private void saveGuild() {
         try {
             Guild updated = guildWithCurrentSelection();
-            new GuildService(appContext).saveGuild(updated);
+            new GuildService(appContext).saveGuild(updated, GuildService.SaveOrigin.TITAN_OVERVIEW);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, LanguageService.displayName("common.saveGuildError") + "\n" + ex.getMessage(),
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);

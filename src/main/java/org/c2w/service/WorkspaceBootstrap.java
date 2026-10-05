@@ -47,6 +47,16 @@ public final class WorkspaceBootstrap {
      *                 step right before it runs (shown on the splash screen)
      */
     public static AppContext start(Consumer<String> progress) {
+        return start(progress, () -> {
+        });
+    }
+
+    /**
+     * Like {@link #start(Consumer)}; {@code configLoaded} runs right after the
+     * configuration is loaded, before anything else is logged - e.g. to write the
+     * start block of the technical log into the configured workspace.
+     */
+    public static AppContext start(Consumer<String> progress, Runnable configLoaded) {
         boolean firstStart = !Config.exists();
         if (firstStart) {
             progress.accept("Creating workspace ...");
@@ -55,6 +65,7 @@ public final class WorkspaceBootstrap {
 
         progress.accept("Loading configuration ...");
         Config.load();
+        configLoaded.run();
         progress.accept("Creating backups ...");
         BackupService.checkAndCreateBackups();
         progress.accept("Loading catalogs ...");
@@ -62,11 +73,18 @@ public final class WorkspaceBootstrap {
         TeamScoreCalculator.setHeroCombos(catalog.heroCombos().combos());
         AppContext context = new AppContext(catalog);
         progress.accept("Opening guild and lineup ...");
-        loadGuildContext(context);
+        boolean guildLoaded = loadGuildContext(context);
         loadLineupContext(context);
 
         if (firstStart) {
             loadDemo(context);
+        }
+        if (guildLoaded) {
+            Path guildDir = context.guildFilePath().getParent();
+            if (firstStart) {
+                GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME);
+            }
+            GuildLog.event(guildDir, "guildLog.guildOpened");
         }
         return context;
     }
@@ -142,19 +160,24 @@ public final class WorkspaceBootstrap {
         return fileName == null ? base : base.resolve(fileName);
     }
 
-    private static void loadGuildContext(AppContext context) {
+    /** Opens the last guild (an empty one if it cannot be loaded); true if it was loaded. */
+    private static boolean loadGuildContext(AppContext context) {
         Path guildFilePath = reanchorIntoWorkspace(Config.getLastGuildPath());
         Guild guild;
+        boolean loaded;
         try {
             guild = GuildRepository.load(guildFilePath, context.catalog());
+            loaded = true;
         } catch (IOException e) {
             Logger.logException("Could not load guild from " + guildFilePath, e);
             guild = new Guild("guild", "", List.of());
+            loaded = false;
         }
         context.set(guild, guildFilePath);
         // Self-heal config so the corrected, workspace-anchored path is what
         // gets persisted the next time config.properties is written.
         Config.setLastGuildPath(guildFilePath.toString());
+        return loaded;
     }
 
     private static void loadLineupContext(AppContext context) {

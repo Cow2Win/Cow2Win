@@ -344,6 +344,9 @@ public final class JournalTeamBuilderService {
         }
         Logger.log("Team builder: " + applied.created + " team(s) added, " + applied.filled + " filled "
                 + applied.bySource);
+        if (applied.created + applied.filled > 0) {
+            GuildLog.event(GuildLog.dirOf(plan.guildFile()), "guildLog.journalTeamsBuilt", applied.created + applied.filled);
+        }
         return new TeamBuildResult(List.of(), applied.created, applied.filled, applied.bySource, applied.droppedPets,
                 applied.droppedTotems);
     }

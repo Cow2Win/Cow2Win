@@ -42,7 +42,7 @@ class LoggerCharsetTest {
     void writesUtf8() throws IOException {
         String message = "Prüfung Союз";
 
-        Logger.logToFile(message);
+        Logger.log(message);
 
         byte[] fileBytes = Files.readAllBytes(workspace.resolve("cow2win.log"));
         byte[] expected = (message + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);

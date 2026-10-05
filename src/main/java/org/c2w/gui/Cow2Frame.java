@@ -142,6 +142,7 @@ public class Cow2Frame extends JFrame {
             @Override
             public void guildChanged() {
                 updateTitle();
+                updateLogDialogTitle();
             }
 
             @Override
@@ -151,7 +152,7 @@ public class Cow2Frame extends JFrame {
         });
 
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
-        this.logPanel = new LogPanel();
+        this.logPanel = new LogPanel(appContext);
 
         // First every action (with its handler in its owner), then menu bar, context bar and action bar.
         this.actions = new MainActions();
@@ -562,13 +563,14 @@ public class Cow2Frame extends JFrame {
      * (created once, then just re-shown/raised on subsequent calls - see
      * {@link #logDialog}) instead of it being permanently docked in the main
      * window. HIDE_ON_CLOSE (not the default DISPOSE_ON_CLOSE) so closing the
-     * dialog only hides it - logPanel itself, and its Logger listener
-     * registration, are unaffected either way, but this also avoids
-     * recreating the native dialog peer on every open.
+     * dialog only hides it - logPanel itself, and its listener registrations,
+     * are unaffected either way, but this also avoids recreating the native
+     * dialog peer on every open. The panel shows the guild log of the open
+     * guild, named in the title (see {@link #updateLogDialogTitle()}).
      */
     private void onShowLog() {
         if (logDialog == null) {
-            logDialog = new JDialog(this, LanguageService.displayTitle("mainFrame.logTitle"), false);
+            logDialog = new JDialog(this, logDialogTitle(), false);
             logDialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
             logDialog.getContentPane().add(logPanel);
             logDialog.setSize(700, 400);
@@ -576,6 +578,19 @@ public class Cow2Frame extends JFrame {
         }
         logDialog.setVisible(true);
         logDialog.toFront();
+    }
+
+    /** "Log - {guild name}" for the log dialog. */
+    private String logDialogTitle() {
+        var guild = appContext.guild();
+        return LanguageService.displayName("mainFrame.logTitle.guild", guildDisplayName(guild.name(), guild.id()));
+    }
+
+    /** Follows the open guild in the log dialog's title, if the dialog exists. */
+    private void updateLogDialogTitle() {
+        if (logDialog != null) {
+            logDialog.setTitle(logDialogTitle());
+        }
     }
 
     private void onOpenGuildEditor() {

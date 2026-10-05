@@ -564,6 +564,7 @@ public final class JournalImportService {
                     + " file(s), " + written.battles.size() + " battle(s), " + written.fights + " fights, "
                     + created.size() + " new member(s), " + renamed.size() + " renamed, "
                     + written.assignments + " assignment(s)");
+            GuildLog.event(GuildLog.dirOf(plan.guildFile()), "guildLog.journalImported", written.battles.size());
             return new ImportResult(List.of(), written.files, written.battles, written.fights, created, renamed,
                     written.assignments, written.nameMappings, link, written.warnings);
         } catch (JournalException | RuntimeException e) {

@@ -14,6 +14,7 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
+import org.c2w.service.GuildLog;
 import org.c2w.service.LiveApplyService;
 
 import javax.swing.*;
@@ -88,6 +89,8 @@ public class ChangePlanPanel extends JPanel {
     private ChangePlanOutline outline;
     /** The checks of the shown plan (see {@link ChangePlanChecks}), saved in the guild folder after every change. */
     private ChangePlanChecks checks = ChangePlanChecks.EMPTY;
+    /** The target of the shown plan as shown to the user - named in the guild log on "apply to live". */
+    private String targetDisplayName = "";
 
     /**
      * @param offerCurrentLineup true to offer "current lineup" (the one open in the context bar,
@@ -213,13 +216,19 @@ public class ChangePlanPanel extends JPanel {
         if (isCurrentTarget()) {
             target = new ChangePlanModel.CurrentLineup(appContext.lineup(), appContext.lineupFilePath());
             targetLabel = "current:" + (appContext.lineupFilePath() == null ? "" : appContext.lineupFilePath().getFileName());
+            targetDisplayName = appContext.lineupFilePath() == null ? ""
+                    : LineupFiles.displayName(appContext.lineupFilePath().getFileName().toString());
         } else if (savedLineupRadio.isSelected()) {
             target = new ChangePlanModel.SavedLineup((String) targetLineupCombo.getSelectedItem());
             targetLabel = String.valueOf(targetLineupCombo.getSelectedItem());
+            targetDisplayName = LineupFiles.displayName((String) targetLineupCombo.getSelectedItem());
         } else {
-            target = new ChangePlanModel.Algorithms((LineupAlgorithm) heroAlgorithmCombo.getSelectedItem(),
-                    (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem());
+            LineupAlgorithm heroAlgorithm = (LineupAlgorithm) heroAlgorithmCombo.getSelectedItem();
+            LineupAlgorithm titanAlgorithm = (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem();
+            target = new ChangePlanModel.Algorithms(heroAlgorithm, titanAlgorithm);
             targetLabel = "algorithm";
+            targetDisplayName = (heroAlgorithm == null ? "" : heroAlgorithm.localizedName()) + " / "
+                    + (titanAlgorithm == null ? "" : titanAlgorithm.localizedName());
         }
         show(ChangePlanModel.plan(appContext.guildFilePath(), appContext.guild(), target), targetLabel);
     }
@@ -393,6 +402,7 @@ public class ChangePlanPanel extends JPanel {
         }
         LiveApplyService.archive(guildDir, now);
         LiveApplyService.saveLive(guildDir, applied.live());
+        GuildLog.event(guildDir, "guildLog.appliedToLive", applied.applied().size(), targetDisplayName);
         checks = checks.without(applied.appliedIds());
         saveChecks();
         if (LineupFiles.isOriginal(appContext.lineupFilePath())) {

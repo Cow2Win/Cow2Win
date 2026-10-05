@@ -8,6 +8,7 @@ import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 
@@ -130,6 +131,7 @@ public class LineupService {
         LineupRepository.save(lineup, lineupPath);
         open(lineup, lineupPath);
         Logger.log("Created: " + lineupPath);
+        GuildLog.event(guildDirOrNull(), "guildLog.lineupCreated", LineupFiles.displayName(fileName));
     }
 
     /**
@@ -148,6 +150,7 @@ public class LineupService {
     public void deleteLineup(String fileName) throws IOException {
         LineupRepository.delete(guildDir().resolve(fileName));
         Logger.log("Removed: " + fileName);
+        GuildLog.event(guildDirOrNull(), "guildLog.lineupRemoved", LineupFiles.displayName(fileName));
     }
 
     /**
@@ -173,6 +176,7 @@ public class LineupService {
         LineupRepository.save(context.lineup(), context.lineupFilePath());
         context.markLineupSaved();
         Logger.log("Saved: " + context.lineupFilePath());
+        GuildLog.event(guildDirOrNull(), "guildLog.lineupSaved", lineupDisplayName());
     }
 
     /** Removes every team assignment from the open lineup (in memory only, until saved). */
@@ -183,6 +187,7 @@ public class LineupService {
         }
         update(withEntries(current, List.of()));
         Logger.log("Cleared: " + context.lineupFilePath());
+        GuildLog.event(guildDirOrNull(), "guildLog.lineupCleared", lineupDisplayName());
     }
 
     /**
@@ -233,6 +238,8 @@ public class LineupService {
         }
         Logger.log("Heroes (" + run.heroAlgorithm().displayName() + "): " + run.heroesAssigned() + " team(s) newly assigned.");
         Logger.log("Titans (" + run.titanAlgorithm().displayName() + "): " + run.titansAssigned() + " team(s) newly assigned.");
+        GuildLog.event(guildDirOrNull(), "guildLog.algorithmRun", run.heroAlgorithm().localizedName(), run.heroesAssigned(),
+                run.titanAlgorithm().localizedName(), run.titansAssigned());
         return true;
     }
 
@@ -292,6 +299,7 @@ public class LineupService {
         context.setLineup(lineup);
         context.setGuildDirty(false);
         context.markLineupSaved();
+        logGuildAndLineupSaved(context.lineupFilePath(), GuildService.SaveOrigin.FORTIFICATION_ENTRY);
     }
 
     /**
@@ -306,6 +314,25 @@ public class LineupService {
         context.setGuild(guild);
         context.setGuildDirty(false);
         open(original, originalLineupPath);
+        logGuildAndLineupSaved(originalLineupPath, GuildService.SaveOrigin.TEAM_ENTRY);
+    }
+
+    /** One guild log entry for saving the guild together with the lineup at {@code lineupPath}. */
+    private void logGuildAndLineupSaved(Path lineupPath, GuildService.SaveOrigin origin) {
+        GuildLog.event(guildDirOrNull(), "guildLog.guildAndLineupSaved",
+                LineupFiles.displayName(lineupPath.getFileName().toString()),
+                LanguageService.displayName(origin.key()));
+    }
+
+    /** Folder of the open guild for its guild log, null if none is open. */
+    private Path guildDirOrNull() {
+        return context.guildFilePath() == null ? null : context.guildFilePath().getParent();
+    }
+
+    /** The open lineup's name as shown in the UI. */
+    private String lineupDisplayName() {
+        Path lineupPath = context.lineupFilePath();
+        return lineupPath == null ? "" : LineupFiles.displayName(lineupPath.getFileName().toString());
     }
 
     /**

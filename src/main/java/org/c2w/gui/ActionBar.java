@@ -19,6 +19,7 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.report.ReportGenerator;
 import org.c2w.service.AppContext;
+import org.c2w.service.GuildLog;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
 
@@ -284,7 +285,7 @@ public class ActionBar extends JPanel {
                 appContext.lineup(), appContext.guild(), suggestedFileName);
         Logger.log("Report generated for: " + lineupFilePath);
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new ReportViewerDialog(owner, reportHtml, suggestedFileName).setVisible(true);
+        new ReportViewerDialog(owner, reportHtml, suggestedFileName, GuildLog.dirOf(appContext.guildFilePath())).setVisible(true);
     }
 
     /**

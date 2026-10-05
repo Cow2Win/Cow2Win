@@ -8,6 +8,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.infra.Logger;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Supplier;
@@ -72,9 +73,12 @@ public final class JournalMaintenanceService {
         if (battleIds.isEmpty()) {
             return 0;
         }
-        int deleted = existing().inTransaction(r -> {
+        JournalRepository repo = existing();
+        Set<Integer> ids = new LinkedHashSet<>(battleIds);
+        Optional<BattleSummary> single = ids.size() == 1 ? repo.findBattleSummary(ids.iterator().next()) : Optional.empty();
+        int deleted = repo.inTransaction(r -> {
             int n = 0;
-            for (int id : new LinkedHashSet<>(battleIds)) {
+            for (int id : ids) {
                 if (r.deleteBattle(id)) {
                     n++;
                 }
@@ -82,7 +86,26 @@ public final class JournalMaintenanceService {
             return n;
         });
         Logger.log("Journal: deleted " + deleted + " battle(s)");
+        if (deleted == 1 && single.isPresent()) {
+            logBattleEvent(repo, "guildLog.battleDeleted", single.get());
+        } else if (deleted > 0) {
+            GuildLog.event(guildDir(repo), "guildLog.battlesDeleted", deleted);
+        }
         return deleted;
+    }
+
+    /** The guild folder of the journal {@code repo} - where its guild log is written. */
+    private static Path guildDir(JournalRepository repo) {
+        return repo.database() == null ? null : repo.database().guildDir();
+    }
+
+    /** A guild log entry about one battle: {@code key} gets its date and opponent, then {@code more}. */
+    private static void logBattleEvent(JournalRepository repo, String key, BattleSummary battle, Object... more) {
+        Object[] args = new Object[2 + more.length];
+        args[0] = battle.date() == null ? "" : battle.date().toString();
+        args[1] = battle.opponent() == null ? "?" : battle.opponent().name();
+        System.arraycopy(more, 0, args, 2, more.length);
+        GuildLog.event(guildDir(repo), key, args);
     }
 
     /** The seasons a battle of {@code date} may be assigned to by hand: those containing the date. */
@@ -105,14 +128,20 @@ public final class JournalMaintenanceService {
         JournalRepository repo = existing();
         BattleSummary battle = repo.findBattleSummary(battleId)
                 .orElseThrow(() -> new JournalException("Unknown battle id " + battleId));
+        Season season = null;
         if (seasonId != null) {
-            Season season = repo.listSeasons().stream().filter(s -> s.id() == seasonId).findFirst()
+            season = repo.listSeasons().stream().filter(s -> s.id() == seasonId).findFirst()
                     .orElseThrow(() -> new JournalException("Unknown season id " + seasonId));
             if (!season.contains(battle.date())) {
                 throw new IllegalArgumentException("Season " + season.number() + " does not contain " + battle.date());
             }
         }
         repo.assignSeason(battleId, seasonId);
+        if (season != null) {
+            logBattleEvent(repo, "guildLog.battleSeasonAssigned", battle, season.number());
+        } else {
+            logBattleEvent(repo, "guildLog.battleSeasonRemoved", battle);
+        }
     }
 
     // =====================================================================
@@ -211,7 +240,8 @@ public final class JournalMaintenanceService {
      * @throws JournalException if the season collides with another one (see {@link #findConflict})
      */
     public SeasonChange saveSeason(Season season) throws JournalException {
-        SeasonChange change = existing().inTransaction(r -> {
+        JournalRepository repo = existing();
+        SeasonChange change = repo.inTransaction(r -> {
             Season saved = season.id() == 0
                     ? withNote(r.createSeason(season.number(), season.start(), season.end()), season.note(), r)
                     : r.updateSeason(season);
@@ -219,6 +249,8 @@ public final class JournalMaintenanceService {
         });
         Logger.log("Journal: saved season " + change.season().number() + " (" + change.season().start() + " - "
                 + change.season().lastDay() + "), " + change.reassigned() + " battle(s) reassigned");
+        GuildLog.event(guildDir(repo), season.id() == 0 ? "guildLog.seasonCreated" : "guildLog.seasonChanged",
+                change.season().number());
         return change;
     }
 
@@ -234,7 +266,10 @@ public final class JournalMaintenanceService {
      * season) - and reassigns the remaining battles by date, in one transaction.
      */
     public SeasonChange deleteSeason(int seasonId, boolean includeBattles) throws JournalException {
-        SeasonChange change = existing().inTransaction(r -> {
+        JournalRepository repo = existing();
+        Integer number = repo.listSeasons().stream().filter(s -> s.id() == seasonId).map(Season::number)
+                .findFirst().orElse(null);
+        SeasonChange change = repo.inTransaction(r -> {
             int battles = includeBattles ? r.countSeason(seasonId).battles() : 0;
             if (!r.deleteSeason(seasonId, includeBattles)) {
                 throw new JournalException("Unknown season id " + seasonId);
@@ -242,6 +277,7 @@ public final class JournalMaintenanceService {
             return new SeasonChange(null, r.reassignSeasonsByDate(), battles);
         });
         Logger.log("Journal: deleted season " + seasonId + (includeBattles ? " with " + change.deleted() + " battle(s)" : ""));
+        GuildLog.event(guildDir(repo), "guildLog.seasonDeleted", number == null ? seasonId : number);
         return change;
     }
 
@@ -262,7 +298,12 @@ public final class JournalMaintenanceService {
         if (member != null && guild.members().stream().map(GuildMember::id).noneMatch(member::equals)) {
             throw new IllegalArgumentException("Unknown member " + member);
         }
-        return existing().setAssignment(playerId, member, status);
+        JournalRepository repo = existing();
+        PlayerAssignment assignment = repo.setAssignment(playerId, member, status);
+        String playerName = repo.listPlayers(true).stream().filter(p -> p.id() == playerId).map(JournalPlayer::name)
+                .findFirst().orElse(String.valueOf(playerId));
+        GuildLog.event(guildDir(repo), "guildLog.playerAssignmentChanged", playerName);
+        return assignment;
     }
 
     // =====================================================================
@@ -284,12 +325,19 @@ public final class JournalMaintenanceService {
         if (!isValidMappingTarget(kind, catalogId)) {
             throw new IllegalArgumentException("Not a valid " + kind + " id: " + catalogId);
         }
-        existing().putNameMapping(kind, rawName, catalogId);
+        JournalRepository repo = existing();
+        repo.putNameMapping(kind, rawName, catalogId);
+        GuildLog.event(guildDir(repo), "guildLog.nameMappingChanged", rawName);
     }
 
     /** Removes a manual name mapping; false if there was none. */
     public boolean deleteNameMapping(NameMappingKind kind, String rawName) throws JournalException {
-        return existing().deleteNameMapping(kind, rawName);
+        JournalRepository repo = existing();
+        boolean deleted = repo.deleteNameMapping(kind, rawName);
+        if (deleted) {
+            GuildLog.event(guildDir(repo), "guildLog.nameMappingDeleted", rawName);
+        }
+        return deleted;
     }
 
     // =====================================================================
@@ -357,7 +405,25 @@ public final class JournalMaintenanceService {
         }
         Logger.log("Journal: parsed " + done + " log(s) again, parse problems " + before + " -> " + after
                 + (failures.isEmpty() ? "" : ", " + failures.size() + " failed"));
+        if (done > 0) {
+            logReparsed(repo, battleIdsOrNull);
+        }
         return new ReparseResult(done, before, after, failures);
+    }
+
+    /** The guild log entry for {@link #reparse}: all battles, one battle (date, opponent) or a number of battles. */
+    private static void logReparsed(JournalRepository repo, Collection<Integer> battleIdsOrNull) throws JournalException {
+        if (battleIdsOrNull == null) {
+            GuildLog.event(guildDir(repo), "guildLog.allBattlesReparsed");
+            return;
+        }
+        Set<Integer> ids = new LinkedHashSet<>(battleIdsOrNull);
+        Optional<BattleSummary> single = ids.size() == 1 ? repo.findBattleSummary(ids.iterator().next()) : Optional.empty();
+        if (single.isPresent()) {
+            logBattleEvent(repo, "guildLog.battleReparsed", single.get());
+        } else {
+            GuildLog.event(guildDir(repo), "guildLog.battlesReparsed", ids.size());
+        }
     }
 
     private synchronized BattleLogParser baseParser() {

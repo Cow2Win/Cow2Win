@@ -26,7 +26,7 @@ import java.io.IOException;
  * <p>Read once and cached, same convention as the catalog repositories'
  * own {@code ensureLoaded()} pattern. A missing or malformed file never
  * breaks app startup - it just falls back to {@value #UNKNOWN} and logs
- * why (visible in the app's log panel via {@link Logger}).
+ * why (written to the technical log via {@link Logger}).
  */
 public final class CatalogVersion {
 

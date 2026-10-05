@@ -298,7 +298,7 @@ public final class FortificationEntryDialog extends JDialog {
      * (via scoreBreakdownOf, see {@link #heroScoreBreakdown}/{@link
      * #titanScoreBreakdown}) in
      * parentheses, e.g. "2 (4.5)". Also logs the breakdown to {@link Logger}
-     * (and thus the log panel) for debugging - see
+     * (the technical log file) for debugging - see
      * {@link #logSortScoreBreakdown}.
      */
     private static <T> void updateBuffCountLabel(JLabel buffCountLabel, TeamDraft<T> teamDraft,
@@ -336,7 +336,7 @@ public final class FortificationEntryDialog extends JDialog {
             message.append(" + ").append(String.format(Locale.ROOT, "%.2f", memberScore));
         }
         message.append(" = ").append(String.format(Locale.ROOT, "%.2f", breakdown.total()));
-        Logger.logToFile(message.toString());
+        Logger.log(message.toString());
     }
 
     /**

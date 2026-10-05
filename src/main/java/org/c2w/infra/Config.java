@@ -129,7 +129,7 @@ public final class Config {
      * logs that via {@link Logger#log} (e.g. "Config changed: language =
      * \"deutsch\" (previously \"english\")") - this is how every
      * {@code setXxx} method below reports a "technical change" to the log
-     * file/LogPanel, without each of them having to do it individually.
+     * file, without each of them having to do it individually.
      * Never logs anything during {@link #load()}, since that only replays
      * values already on disk rather than changing them.
      */

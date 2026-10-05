@@ -13,6 +13,7 @@ import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanTeam;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.i18n.LanguageService;
 import org.c2w.service.journal.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,27 @@ class JournalImportServiceTest extends ServiceTestSupport {
 
     private static final long OWN_GAME_ID = 193861L;
     private static final String SEP_24 = "24-09-2026";
+
+    // --- guild log ---
+
+    @Test
+    @DisplayName("A successful import writes exactly one 'imported' entry; a refused one writes none")
+    void importIsLoggedOnce() throws Exception {
+        int before = GuildLog.read(alphaDir()).size();
+
+        ImportResult result = service().execute(service().prepare(files("de", SEP_24, LogDirection.ATTACK)),
+                ImportAnswers.defaults());
+
+        assertTrue(result.isSuccess(), result.errors().toString());
+        List<String> lines = GuildLog.read(alphaDir());
+        assertEquals(before + 1, lines.size());
+        assertEquals(LanguageService.displayName("guildLog.journalImported", 1), lines.get(before).substring(21));
+
+        setGuild(context.guild().withGameGuildId(1L));
+        ImportPlan foreign = service().prepare(files("de", SEP_24, LogDirection.ATTACK));
+        assertFalse(service().execute(foreign, ImportAnswers.defaults()).isSuccess());
+        assertEquals(before + 1, GuildLog.read(alphaDir()).size());
+    }
 
     // --- guild link, seasons, files ---
 

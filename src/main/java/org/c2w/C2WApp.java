@@ -4,7 +4,10 @@ import org.c2w.data.journal.db.JournalException;
 import org.c2w.gui.Cow2Frame;
 import org.c2w.gui.SplashWindow;
 import org.c2w.gui.common.GuiUtils;
+import org.c2w.i18n.LanguageService;
+import org.c2w.infra.AppVersion;
 import org.c2w.infra.CatalogVersion;
+import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.infra.UpdateChecker;
 import org.c2w.service.AppContext;
@@ -32,8 +35,7 @@ public class C2WApp {
 
         Cow2Frame[] frame = new Cow2Frame[1];
         try {
-            AppContext context = WorkspaceBootstrap.start(splash::setStatus);
-            logCatalogVersion();
+            AppContext context = WorkspaceBootstrap.start(splash::setStatus, C2WApp::logStartBlock);
 
             splash.setStatus("Starting database ...");
             openJournal(context);
@@ -52,7 +54,6 @@ public class C2WApp {
             splash.close();
         });
 
-        Logger.log("Started: ");
     }
 
     /**
@@ -90,7 +91,7 @@ public class C2WApp {
 
     /**
      * Makes sure that literally every exception reaches {@link Logger}
-     * (LogPanel + the persistent log file), even ones that are not already
+     * (the technical log file), even ones that are not already
      * wrapped in a {@code try}/{@code catch} that itself calls
      * {@link Logger#logException} - the last line of defense for "a) alle
      * Exceptions" from the log-file todo item.
@@ -125,14 +126,22 @@ public class C2WApp {
     }
 
     /**
-     * Logs the {@link CatalogVersion} of heroes.json/titans.json/fortifications.json
-     * at startup (visible in the app's log panel), so it's clear at a glance
-     * which game/patch state the catalog data was last checked against
-     * without having to go dig through the data files themselves.
+     * Writes the start block of the technical log right after the configuration
+     * is loaded (so it lands in the configured workspace), showing at a glance
+     * what this session works with: version, Java, operating system, workspace,
+     * UI language and the {@link CatalogVersion} the catalog data was last
+     * checked against. Also registers the "closed" entry for the end of the session.
      */
-    private static void logCatalogVersion() {
+    private static void logStartBlock() {
+        Logger.log("Cow2Win " + AppVersion.current() + " started");
+        Logger.log("Java: " + System.getProperty("java.version") + " (" + System.getProperty("java.vendor") + ")");
+        Logger.log("Operating system: " + System.getProperty("os.name") + " " + System.getProperty("os.version")
+                + " (" + System.getProperty("os.arch") + ")");
+        Logger.log("Workspace: " + Config.getWorkspaceDir().toAbsolutePath());
+        Logger.log("UI language: " + LanguageService.configuredLanguage());
         String suffix = CatalogVersion.note().isBlank() ? "" : " (" + CatalogVersion.note() + ")";
-        Logger.logToFile("Catalog data version: " + CatalogVersion.dataVersion() + suffix);
+        Logger.log("Catalog data version: " + CatalogVersion.dataVersion() + suffix);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> Logger.log("Cow2Win closed"), "c2w-log-closed"));
     }
 
 }

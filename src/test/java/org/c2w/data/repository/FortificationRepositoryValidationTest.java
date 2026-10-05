@@ -1,11 +1,11 @@
 package org.c2w.data.repository;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.infra.LogCapture;
 import org.c2w.infra.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,16 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * expected message for each kind of problem - and nothing extra for valid data.
  *
  * <p>{@link Logger} is a process-wide singleton with no reset, so every test here
- * registers its own listener and immediately clears the replayed history before acting,
+ * captures the log file from its current end before acting (see {@link LogCapture}),
  * then only inspects entries logged after that point.
  */
 class FortificationRepositoryValidationTest {
 
     private static List<String> captureLogSince() {
-        List<String> captured = new ArrayList<>();
-        Logger.addListener(captured::add);
-        captured.clear(); // drop the immediate replay of everything logged before this test
-        return captured;
+        return LogCapture.start();
     }
 
     @Test

@@ -4,6 +4,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -94,6 +95,50 @@ class GuildServiceTest extends ServiceTestSupport {
         assertSame(renamed, context.guild());
         assertFalse(context.isGuildDirty());
         assertEquals("Alpha renamed", GuildRepository.load(context.guildFilePath(), context.catalog()).name());
+    }
+
+    // --- guild log ---
+
+    /** The guild log lines of a guild folder without the date/time prefix. */
+    private List<String> guildLogTexts(String folder) {
+        return GuildLog.read(workspace.resolve(folder)).stream().map(line -> line.substring(21)).toList();
+    }
+
+    @Test
+    @DisplayName("creating and opening a guild write 'created' and 'opened' into that guild's log")
+    void createAndSwitchAreLogged() throws Exception {
+        guildService.createGuild("Beta");
+        guildService.switchToGuild("Beta");
+
+        assertEquals(List.of(LanguageService.displayName("guildLog.guildCreated", "Beta"),
+                LanguageService.displayName("guildLog.guildOpened")), guildLogTexts("Beta"));
+    }
+
+    @Test
+    @DisplayName("saving the guild writes exactly one 'guild saved' entry, with its origin if given")
+    void saveGuildIsLoggedOnce() throws Exception {
+        int before = guildLogTexts("Alpha").size();
+
+        guildService.saveGuild();
+        guildService.saveGuild(context.guild(), GuildService.SaveOrigin.GUILD_EDITOR);
+
+        List<String> texts = guildLogTexts("Alpha");
+        assertEquals(before + 2, texts.size());
+        assertEquals(LanguageService.displayName("guildLog.guildSaved"), texts.get(before));
+        assertEquals(LanguageService.displayName("guildLog.guildSavedFrom",
+                LanguageService.displayName("guildLog.origin.guildEditor")), texts.get(before + 1));
+    }
+
+    @Test
+    @DisplayName("a failing guild save writes no guild log entry")
+    void failedSaveIsNotLogged() throws Exception {
+        int before = guildLogTexts("Alpha").size();
+        Files.delete(context.guildFilePath());
+        Files.createDirectory(context.guildFilePath()); // cannot be written as a file
+
+        assertThrows(Exception.class, () -> guildService.saveGuild());
+
+        assertEquals(before, guildLogTexts("Alpha").size());
     }
 
     @Test

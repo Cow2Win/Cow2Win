@@ -442,7 +442,7 @@ public final class JournalImportDialog extends JDialog {
 
     private void saveGuild(JButton save, JLabel warning) {
         try {
-            guildService.saveGuild();
+            guildService.saveGuild(GuildService.SaveOrigin.JOURNAL_IMPORT);
             save.setEnabled(false);
             warning.setText(JournalTexts.text("journal.result.guildSaved"));
             warning.setForeground(UIManager.getColor("Label.foreground"));

@@ -5,6 +5,7 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupBaseline;
 import org.c2w.eval.ManualLineupAlgorithm;
+import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,34 @@ class LineupServiceTest extends ServiceTestSupport {
 
     private static Fortification firstFortification() {
         return FortificationRepository.findAll().get(0);
+    }
+
+    /** The guild log lines of the open guild without the date/time prefix. */
+    private List<String> guildLogTexts() {
+        return GuildLog.read(context.guildFilePath().getParent()).stream().map(line -> line.substring(21)).toList();
+    }
+
+    @Test
+    @DisplayName("creating a lineup writes exactly one 'lineup created' entry into the guild log")
+    void createLineupIsLoggedOnce() throws Exception {
+        int before = guildLogTexts().size();
+
+        lineupService.createLineup("Plan A.lineup");
+
+        List<String> texts = guildLogTexts();
+        assertEquals(before + 1, texts.size());
+        assertEquals(LanguageService.displayName("guildLog.lineupCreated", "Plan A"), texts.get(before));
+    }
+
+    @Test
+    @DisplayName("a lineup that cannot be created writes no guild log entry")
+    void failedCreateLineupIsNotLogged() throws Exception {
+        Files.createDirectory(context.guildFilePath().getParent().resolve("Plan B.lineup"));
+        int before = guildLogTexts().size();
+
+        assertThrows(IOException.class, () -> lineupService.createLineup("Plan B.lineup"));
+
+        assertEquals(before, guildLogTexts().size());
     }
 
     @Test

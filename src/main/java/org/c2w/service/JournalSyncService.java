@@ -397,6 +397,9 @@ public final class JournalSyncService {
         }
         Logger.log("Sync: " + applied.teams + " team(s) changed (power " + applied.power + ", units " + applied.units
                 + "), dropped pets " + applied.droppedPets.size() + ", dropped totems " + applied.droppedTotems.size());
+        if (applied.teams > 0) {
+            GuildLog.event(GuildLog.dirOf(plan.guildFile()), "guildLog.journalSynced", applied.teams);
+        }
         return new SyncResult(List.of(), applied.teams, applied.power, applied.units, applied.droppedPets,
                 applied.droppedTotems);
     }
