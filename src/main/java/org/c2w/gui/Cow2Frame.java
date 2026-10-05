@@ -13,6 +13,7 @@ import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.journal.JournalActions;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
+import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.infra.UpdateChecker;
 import org.c2w.service.AppContext;
@@ -75,7 +76,10 @@ public class Cow2Frame extends JFrame {
     /** Background image painted by {@link #getContentPane()} (a {@link BackgroundPanel}) - loaded once in the constructor, see {@link IconLoader#getBackgroundImage()}. */
     private final Image background;
     private final FortificationMapPanel fortificationMapPanel;
-    private final ToolbarPanel toolbarPanel;
+    /** The process bar (one tile per process stage) and the handlers of the stage actions - see {@link ActionBar}. */
+    private final ActionBar actionBar;
+    /** Guild, fortification type and lineup selection - see {@link ContextBar}. */
+    private final ContextBar contextBar;
     private final LogPanel logPanel;
     private JDialog logDialog;
     /** The "Weltenschlacht Journal" actions and windows. */
@@ -104,6 +108,15 @@ public class Cow2Frame extends JFrame {
         // Listener notifications always on the Swing thread - also for changes made in background tasks
         // (e.g. the journal import in a SwingWorker).
         appContext.setEventDispatcher(GuiUtils::runOnEdtAndWait);
+        // The fortification type selected last is active again, and every change is remembered.
+        appContext.setFortificationType(Config.getLastFortificationType());
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void fortificationTypeChanged() {
+                Config.setLastFortificationType(appContext.fortificationType());
+                Config.save();
+            }
+        });
         this.guildService = new GuildService(appContext);
         this.lineupService = new LineupService(appContext);
         this.background = IconLoader.getBackgroundImage();
@@ -124,21 +137,28 @@ public class Cow2Frame extends JFrame {
         this.fortificationMapPanel = new FortificationMapPanel(appContext);
         this.logPanel = new LogPanel();
 
-        // First every action (with its handler in its owner), then menu bar and toolbar built from them.
+        // First every action (with its handler in its owner), then menu bar, context bar and action bar.
         this.actions = new MainActions();
         registerActions(actions);
-        this.toolbarPanel = new ToolbarPanel(appContext, fortificationMapPanel, actions);
+        this.actionBar = new ActionBar(appContext, actions);
         this.journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
         journalActions.registerActions(actions);
         setJMenuBar(new MainMenuBar(actions));
-        toolbarPanel.buildToolbar();
+        this.contextBar = new ContextBar(appContext, actions);
+        actionBar.buildBar();
 
         JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
         fortificationScrollPane.setOpaque(false);
         fortificationScrollPane.getViewport().setOpaque(false);
 
+        // Two rows on top: what is selected (context bar), and what can be done with it (action bar).
+        JPanel topArea = new JPanel(new BorderLayout());
+        topArea.setOpaque(false);
+        topArea.add(contextBar, BorderLayout.NORTH);
+        topArea.add(actionBar, BorderLayout.CENTER);
+
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
-        getContentPane().add(toolbarPanel, BorderLayout.NORTH);
+        getContentPane().add(topArea, BorderLayout.NORTH);
         getContentPane().add(fortificationScrollPane, BorderLayout.CENTER);
 
         setBounds(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds());
@@ -166,22 +186,23 @@ public class Cow2Frame extends JFrame {
         actions.register(new AppAction(ActionId.SETTINGS, this::onOpenSettings));
         // Independent of the open guild/lineup - the catalogs are shared by every guild.
         actions.register(new AppAction(ActionId.COWSCORE,
-                () -> CowScoreDialog.open(this, appContext.catalog(), CowScoreTab.HEROES)));
+                () -> CowScoreDialog.open(this, appContext.catalog(),
+                        CowScoreTab.forFortificationType(appContext.fortificationType()))));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         actions.register(new AppAction(ActionId.OPEN_HERO_WARS, () -> onOpenWeb(HERO_WARS_URL))
-                .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ToolbarPanel.TOOLBAR_ICON_SIZE)));
+                .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ActionBar.TOOLBAR_ICON_SIZE)));
 
         actions.register(new AppAction(ActionId.NEW_GUILD, this::onNewGuild)
-                .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
         actions.register(new AppAction(ActionId.OPEN_GUILD_EDITOR, this::onOpenGuildEditor)
                 .withSmallIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_EDITOR)));
         actions.register(new AppAction(ActionId.REMOVE_GUILD, this::onRemoveGuild)
-                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED)));
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
 
         actions.register(new AppAction(ActionId.NEW_LINEUP, this::onNewLineup)
-                .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
         actions.register(new AppAction(ActionId.REMOVE_LINEUP, this::onRemoveLineup)
-                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ToolbarPanel.TOOLBAR_ICON_SIZE, IconLoader.RED)));
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
         actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup)
                 .withSmallIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP)));
     }
@@ -193,18 +214,18 @@ public class Cow2Frame extends JFrame {
 
     /**
      * Switches to another guild for the journal import ("switch to guild ..."), with the
-     * usual "unsaved changes" prompt - see {@link ToolbarPanel#confirmDiscardUnsavedChanges()}.
+     * usual "unsaved changes" prompt - see {@link ContextBar#confirmDiscardUnsavedChanges()}.
      */
     private boolean switchGuildFromJournal(String folderName) {
-        return toolbarPanel.confirmDiscardUnsavedChanges() && toolbarPanel.switchToGuild(folderName);
+        return contextBar.confirmDiscardUnsavedChanges() && contextBar.switchToGuild(folderName);
     }
 
     /**
      * Creates a new guild folder and switches to it (see {@link
-     * GuildService#createGuild}). {@link #toolbarPanel} owns the
+     * GuildService#createGuild}). {@link #contextBar} owns the
      * "unsaved changes" prompt and the error handling of a guild switch, so
-     * this reuses its {@link ToolbarPanel#confirmDiscardUnsavedChanges()}/
-     * {@link ToolbarPanel#switchToGuild} instead of duplicating them.
+     * this reuses its {@link ContextBar#confirmDiscardUnsavedChanges()}/
+     * {@link ContextBar#switchToGuild} instead of duplicating them.
      */
     private void onNewGuild() {
         String input = JOptionPane.showInputDialog(this, LanguageService.displayName("mainFrame.newGuild.prompt"),
@@ -219,9 +240,9 @@ public class Cow2Frame extends JFrame {
                     LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (ToolbarPanel.containsIllegalFilenameChar(name)) {
+        if (ActionBar.containsIllegalFilenameChar(name)) {
             JOptionPane.showMessageDialog(this,
-                    LanguageService.displayName("common.illegalFilenameChars", ToolbarPanel.ILLEGAL_FILENAME_CHARS),
+                    LanguageService.displayName("common.illegalFilenameChars", ActionBar.ILLEGAL_FILENAME_CHARS),
                     LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -230,12 +251,12 @@ public class Cow2Frame extends JFrame {
                     LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (!toolbarPanel.confirmDiscardUnsavedChanges()) {
+        if (!contextBar.confirmDiscardUnsavedChanges()) {
             return;
         }
 
         guildService.createGuild(name);
-        toolbarPanel.switchToGuild(name);
+        contextBar.switchToGuild(name);
     }
 
     /**
@@ -281,7 +302,7 @@ public class Cow2Frame extends JFrame {
 
         String nextFolderName = guildService.guildAfterRemoval(index);
         if (nextFolderName != null) {
-            toolbarPanel.switchToGuild(nextFolderName);
+            contextBar.switchToGuild(nextFolderName);
         }
     }
 
@@ -305,9 +326,9 @@ public class Cow2Frame extends JFrame {
                     LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (ToolbarPanel.containsIllegalFilenameChar(name)) {
+        if (ActionBar.containsIllegalFilenameChar(name)) {
             JOptionPane.showMessageDialog(this,
-                    LanguageService.displayName("common.illegalFilenameChars", ToolbarPanel.ILLEGAL_FILENAME_CHARS),
+                    LanguageService.displayName("common.illegalFilenameChars", ActionBar.ILLEGAL_FILENAME_CHARS),
                     LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -356,7 +377,7 @@ public class Cow2Frame extends JFrame {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                LanguageService.displayName("mainFrame.removeLineup.confirmMessage", ToolbarPanel.stripLineupSuffix(fileName)),
+                LanguageService.displayName("mainFrame.removeLineup.confirmMessage", ContextBar.stripLineupSuffix(fileName)),
                 LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;

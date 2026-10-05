@@ -1,5 +1,7 @@
 package org.c2w.gui.cowscore;
 
+import org.c2w.data.model.FortificationType;
+
 /** The tabs of {@link CowScoreDialog}, in display order. */
 public enum CowScoreTab {
 
@@ -17,5 +19,10 @@ public enum CowScoreTab {
     /** Language file key of the tab title. */
     public String textKey() {
         return textKey;
+    }
+
+    /** The tab the dialog opens on for the selected fortification type: heroes or titans. */
+    public static CowScoreTab forFortificationType(FortificationType fortificationType) {
+        return fortificationType == FortificationType.TITAN ? TITANS : HEROES;
     }
 }

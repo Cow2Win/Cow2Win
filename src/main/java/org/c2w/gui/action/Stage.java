@@ -42,4 +42,12 @@ public enum Stage {
     public String stageTextKey() {
         return stageTextKey;
     }
+
+    /**
+     * Language file key of the process stage's short description (the subtitle of its tile in
+     * the process bar), or {@code null} if this is not one of the three process stages.
+     */
+    public String subtitleKey() {
+        return stageTextKey == null ? null : stageTextKey + ".subtitle";
+    }
 }

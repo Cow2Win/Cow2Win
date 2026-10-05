@@ -1,0 +1,104 @@
+package org.c2w.gui;
+
+import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.IconLoader;
+import org.c2w.i18n.LanguageService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/** {@link ProcessBar}: tiles, highlight, display only, traffic light, "next step" - headless, never shown. */
+class ProcessBarTest {
+
+    @Test
+    @DisplayName("Three tiles: input, strategic concept, output - numbered 1 to 3, titled with the stage names")
+    void tiles() {
+        ProcessBar bar = new ProcessBar();
+
+        List<ProcessBar.StageTile> tiles = bar.tiles();
+        assertEquals(List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT), tiles.stream().map(ProcessBar.StageTile::stage).toList());
+        assertEquals(List.of(1, 2, 3), tiles.stream().map(ProcessBar.StageTile::number).toList());
+        for (ProcessBar.StageTile tile : tiles) {
+            assertEquals(LanguageService.displayName(tile.stage().stageTextKey()), tile.title());
+            assertEquals(LanguageService.displayName(tile.stage().subtitleKey()), tile.subtitle());
+            assertEquals(tile.subtitle(), tile.getToolTipText());
+        }
+    }
+
+    @Test
+    @DisplayName("The tiles are display only: default cursor, no mouse listener except the tooltip's")
+    void tilesAreNotClickable() {
+        ProcessBar bar = new ProcessBar();
+
+        for (ProcessBar.StageTile tile : bar.tiles()) {
+            assertEquals(Cursor.DEFAULT_CURSOR, tile.getCursor().getType(), tile.stage().name());
+            // setToolTipText registers the ToolTipManager as mouse listener - that one is expected.
+            for (Object listener : tile.getMouseListeners()) {
+                assertInstanceOf(ToolTipManager.class, listener, tile.stage().name());
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("The strategic concept is active by default; setActiveStage moves the highlight")
+    void activeStage() {
+        ProcessBar bar = new ProcessBar();
+        assertEquals(Stage.CONCEPT, bar.activeStage());
+        assertEquals(1, bar.tiles().stream().filter(ProcessBar.StageTile::isActive).count());
+
+        bar.setActiveStage(Stage.INPUT);
+        assertEquals(Stage.INPUT, bar.activeStage());
+        assertTrue(bar.tile(Stage.INPUT).isActive());
+        assertFalse(bar.tile(Stage.CONCEPT).isActive());
+    }
+
+    @Test
+    @DisplayName("No traffic light by default; a status is kept and has the expected color")
+    void status() {
+        ProcessBar bar = new ProcessBar();
+        bar.tiles().forEach(tile -> assertEquals(StageStatus.NONE, tile.status()));
+
+        bar.setStatus(Stage.OUTPUT, StageStatus.ACTION_NEEDED);
+        assertEquals(StageStatus.ACTION_NEEDED, bar.tile(Stage.OUTPUT).status());
+
+        assertNull(StageStatus.NONE.color());
+        assertEquals(IconLoader.GREEN, StageStatus.OK.color());
+        assertEquals(ContextBar.UNSAVED_COLOR, StageStatus.ATTENTION.color());
+        assertEquals(IconLoader.RED, StageStatus.ACTION_NEEDED.color());
+    }
+
+    @Test
+    @DisplayName("\"Next step\" is hidden by default and shown once it gets an action")
+    void nextStep() {
+        ProcessBar bar = new ProcessBar();
+        assertFalse(bar.isNextStepVisible());
+
+        bar.setNextStepAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+            }
+        });
+        assertTrue(bar.isNextStepVisible());
+
+        bar.setNextStepAction(null);
+        assertFalse(bar.isNextStepVisible());
+    }
+
+    @Test
+    @DisplayName("Texts that do not fit are cut with \"…\"")
+    void ellipsize() {
+        FontMetrics metrics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()
+                .getFontMetrics(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        String text = "Strategic concept";
+        assertEquals(text, ProcessBar.ellipsize(text, metrics, 1000));
+        String cut = ProcessBar.ellipsize(text, metrics, metrics.stringWidth(text) / 2);
+        assertTrue(cut.endsWith("…"), cut);
+        assertTrue(metrics.stringWidth(cut) <= metrics.stringWidth(text) / 2, cut);
+    }
+}

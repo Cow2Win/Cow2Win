@@ -25,16 +25,29 @@ public class AppAction extends AbstractAction {
     private final transient Runnable handler;
 
     public AppAction(ActionId id, Runnable handler) {
-        super(menuText(Objects.requireNonNull(id, "id")));
-        this.id = id;
+        this.id = Objects.requireNonNull(id, "id");
         this.handler = Objects.requireNonNull(handler, "handler");
-        putValue(SHORT_DESCRIPTION, LanguageService.displayName(id.textKey()));
+        setText(id.textKey());
     }
 
     /** The menu entry text of {@code id}: its text, plus " …" if it opens a window and the text does not end with "…" yet. */
     public static String menuText(ActionId id) {
-        String text = LanguageService.displayName(id.textKey());
+        return menuText(id, id.textKey());
+    }
+
+    /** {@link #menuText(ActionId)} for another text key of the same action, see {@link #setText}. */
+    public static String menuText(ActionId id, String textKey) {
+        String text = LanguageService.displayName(textKey);
         return id.opensWindow() && !text.endsWith(ELLIPSIS) ? text + " " + ELLIPSIS : text;
+    }
+
+    /**
+     * Sets name and tooltip from {@code textKey} - for an action whose text follows a
+     * selection, e.g. the fortification type. Bound menu entries and buttons update themselves.
+     */
+    public void setText(String textKey) {
+        putValue(NAME, menuText(id, textKey));
+        putValue(SHORT_DESCRIPTION, LanguageService.displayName(textKey));
     }
 
     /** Sets the icon shown in front of a menu entry. */

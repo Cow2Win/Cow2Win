@@ -202,7 +202,7 @@ public class LineupService {
     /**
      * Runs {@code heroAlgorithm}, then {@code titanAlgorithm} on {@code lineup}
      * - a pure computation that touches no shared state, so it may run on a
-     * background thread (see {@code ToolbarPanel#onRunAlgorithm}). Both
+     * background thread (see {@code ActionBar#onRunAlgorithm}). Both
      * algorithms only ever add assignments. Apply the result with
      * {@link #applyAlgorithmRun}.
      */

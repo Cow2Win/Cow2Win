@@ -60,13 +60,13 @@ public final class MainMenuBar extends JMenuBar {
             menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
             menu(Stage.INPUT.menuTextKey(),
                     menu("menu.guild", NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD),
-                    OPEN_GUILD_HERO_ENTRY, OPEN_GUILD_TITAN_ENTRY,
+                    OPEN_GUILD_TEAM_ENTRY,
                     SEPARATOR, JOURNAL_IMPORT, JOURNAL_SYNC,
                     SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS),
             menu(Stage.CONCEPT.menuTextKey(),
                     menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP),
                     SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
-                    SEPARATOR, SHOW_HERO_TEAMS, SHOW_TITAN_TEAMS,
+                    SEPARATOR, SHOW_TEAMS,
                     SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS),
             menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT));
 
@@ -86,20 +86,30 @@ public final class MainMenuBar extends JMenuBar {
                 .toList());
     }
 
-    private static JMenu buildMenu(MenuSpec spec, MainActions actions) {
-        JMenu menu = new JMenu(LanguageService.displayName(spec.titleKey()));
+    /**
+     * The entries of {@code spec} as Swing components - menu items bound to the actions,
+     * separators and submenus - to be added to a {@link JMenu}.
+     */
+    static List<JComponent> menuItems(MenuSpec spec, MainActions actions) {
+        List<JComponent> items = new ArrayList<>();
         for (Entry entry : spec.entries()) {
             switch (entry) {
-                case Separator separator -> menu.addSeparator();
-                case MenuSpec submenu -> menu.add(buildMenu(submenu, actions));
+                case Separator separator -> items.add(new JPopupMenu.Separator());
+                case MenuSpec submenu -> items.add(buildMenu(submenu, actions));
                 case Item item -> {
                     JMenuItem menuItem = new JMenuItem(actions.get(item.id()));
                     // The action's SHORT_DESCRIPTION is meant for toolbar buttons - menu entries have no tooltip.
                     menuItem.setToolTipText(null);
-                    menu.add(menuItem);
+                    items.add(menuItem);
                 }
             }
         }
+        return items;
+    }
+
+    private static JMenu buildMenu(MenuSpec spec, MainActions actions) {
+        JMenu menu = new JMenu(LanguageService.displayName(spec.titleKey()));
+        menuItems(spec, actions).forEach(menu::add);
         return menu;
     }
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Registry of the main window's {@link AppAction}s, one per {@link ActionId}. The
- * owners of the handlers ({@code Cow2Frame}, {@code ToolbarPanel},
+ * owners of the handlers ({@code Cow2Frame}, {@code ActionBar},
  * {@code JournalActions}) register their actions here; menu bar and toolbar are
  * then built from it.
  */

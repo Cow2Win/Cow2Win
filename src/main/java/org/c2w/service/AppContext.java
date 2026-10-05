@@ -1,6 +1,7 @@
 package org.c2w.service;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
@@ -16,7 +17,8 @@ import java.util.function.Consumer;
 
 /**
  * The guild and lineup currently open in the application, the files they
- * belong to, and whether either of them has unsaved changes.
+ * belong to, whether either of them has unsaved changes, and the fortification
+ * type (heroes or titans) the user currently works on.
  *
  * <p>Observable: every change fires the matching {@link Listener} callback,
  * so views (fortification map, toolbar combo boxes, window title, ...)
@@ -40,6 +42,10 @@ public class AppContext {
         /** {@link #isGuildDirty()} and/or {@link #isLineupDirty()} changed. */
         default void dirtyStateChanged() {
         }
+
+        /** {@link #fortificationType()} changed. */
+        default void fortificationTypeChanged() {
+        }
     }
 
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
@@ -54,6 +60,8 @@ public class AppContext {
     private Path lineupFilePath;
     private boolean guildDirty;
     private boolean lineupDirty;
+    /** The fortification type the user works on, see {@link #fortificationType()}. */
+    private FortificationType fortificationType = FortificationType.HERO;
 
     /**
      * Snapshot of totalPower/buffMemberCount PER FORTIFICATION (keyed by
@@ -242,6 +250,34 @@ public class AppContext {
         this.loadedFortificationBaselines = computeFortificationBaselines(lineup, guild);
         fireLineupChanged();
         setLineupDirty(false);
+    }
+
+    // --- fortification type ---
+
+    /**
+     * The fortification type the user currently works on ({@link FortificationType#HERO} by
+     * default) - applies everywhere: the map greys out the other type, and the type-dependent
+     * actions (team assignment, team overview, CowScore tab) follow it. Independent of the
+     * open guild and lineup: switching either leaves it unchanged.
+     */
+    public FortificationType fortificationType() {
+        return fortificationType;
+    }
+
+    /**
+     * Selects the fortification type and notifies {@link Listener#fortificationTypeChanged()} -
+     * not if it already is the selected one.
+     *
+     * @throws IllegalArgumentException if {@code fortificationType} is null
+     */
+    public void setFortificationType(FortificationType fortificationType) {
+        if (fortificationType == null) {
+            throw new IllegalArgumentException("fortificationType must not be null");
+        }
+        if (this.fortificationType != fortificationType) {
+            this.fortificationType = fortificationType;
+            eventDispatcher.accept(() -> listeners.forEach(Listener::fortificationTypeChanged));
+        }
     }
 
     // --- listeners ---

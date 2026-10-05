@@ -71,7 +71,7 @@ public final class GuildEditorDialog extends JDialog {
 
         // Refreshes the last-saved timestamp whenever this non-modal dialog
         // regains focus, since the guild file can be saved from elsewhere
-        // (ToolbarPanel's "save guild" button) while this dialog
+        // (ActionBar's "save guild" button) while this dialog
         // stays open - see class Javadoc.
         addWindowFocusListener(new WindowAdapter() {
             @Override

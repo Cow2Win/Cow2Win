@@ -20,8 +20,11 @@ public enum ActionId {
     /** Input, not master data: members and their teams are the ever-changing data of one guild. */
     OPEN_GUILD_EDITOR("teamsOverview.openGuildEditor", Stage.INPUT, Opens.WINDOW),
     SAVE_GUILD("teamsOverview.saveGuild", Stage.INPUT),
-    OPEN_GUILD_HERO_ENTRY("toolbar.openGuildHeroEntry", Stage.INPUT, Opens.WINDOW),
-    OPEN_GUILD_TITAN_ENTRY("toolbar.openGuildTitanEntry", Stage.INPUT, Opens.WINDOW),
+    /**
+     * Team assignment of the selected fortification type - its text, tooltip and icon follow
+     * the type ({@link #textKey()} is the hero variant), see {@code ActionBar}.
+     */
+    OPEN_GUILD_TEAM_ENTRY("toolbar.openGuildHeroEntry", Stage.INPUT, Opens.WINDOW),
     JOURNAL_IMPORT("menu.journal.import", Stage.INPUT, Opens.WINDOW),
     JOURNAL_SYNC("menu.journal.sync", Stage.INPUT, Opens.WINDOW),
     JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.INPUT, Opens.WINDOW),
@@ -34,8 +37,8 @@ public enum ActionId {
     SAVE_LINEUP("toolbar.saveLineup", Stage.CONCEPT),
     RUN_ALGORITHM("teamsOverview.runAlgorithm", Stage.CONCEPT),
     COMPARE_LINEUPS("toolbar.compareLineups", Stage.CONCEPT, Opens.WINDOW),
-    SHOW_HERO_TEAMS("toolbar.heroTeams", Stage.CONCEPT, Opens.WINDOW),
-    SHOW_TITAN_TEAMS("toolbar.titanTeams", Stage.CONCEPT, Opens.WINDOW),
+    /** Team overview of the selected fortification type - follows the type like {@link #OPEN_GUILD_TEAM_ENTRY}. */
+    SHOW_TEAMS("toolbar.heroTeams", Stage.CONCEPT, Opens.WINDOW),
     JOURNAL_BATTLES("menu.journal.battles", Stage.CONCEPT, Opens.WINDOW),
     JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.CONCEPT, Opens.WINDOW),
 

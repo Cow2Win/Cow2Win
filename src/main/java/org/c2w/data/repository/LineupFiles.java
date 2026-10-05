@@ -28,7 +28,7 @@ import java.nio.file.Path;
  */
 public final class LineupFiles {
 
-    /** File name suffix shared by every ".lineup" file (see {@code ToolbarPanel.LINEUP_FILE_SUFFIX}, kept in sync). */
+    /** File name suffix shared by every ".lineup" file (see {@code ContextBar#stripLineupSuffix}). */
     public static final String SUFFIX = ".lineup";
 
     /** Fixed file name of the per-guild "Original" baseline lineup. */

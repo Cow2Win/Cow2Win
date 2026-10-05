@@ -33,10 +33,10 @@ class MainMenuBarTest {
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.input: {" + LanguageService.displayName("menu.guild") + ": NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD}, "
-                    + "OPEN_GUILD_HERO_ENTRY, OPEN_GUILD_TITAN_ENTRY, ---, "
+                    + "OPEN_GUILD_TEAM_ENTRY, ---, "
                     + "JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
-                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_HERO_TEAMS, SHOW_TITAN_TEAMS, ---, "
+                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS, ---, "
                     + "JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS",
             "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT");
 

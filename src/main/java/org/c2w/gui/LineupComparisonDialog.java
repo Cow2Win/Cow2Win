@@ -66,13 +66,13 @@ public class LineupComparisonDialog extends JDialog {
     private static final String KEY_NONE = "common.none";
 
     /**
-     * Glob pattern for lineup files - same as {@code ToolbarPanel}'s own
-     * private constant, deliberately duplicated here rather than exposing
+     * Glob pattern for lineup files - same suffix as {@code LineupFiles.SUFFIX},
+     * deliberately duplicated here rather than exposing
      * it (see class Javadoc / {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}'s own
      * "redundant copy" convention). {@link LineupRepository#findAll()} is
      * NOT used for this - it always returns an empty map (its backing
      * loader is a stub), so listing a guild's lineup files has to go
-     * through the file system directly, exactly like {@code ToolbarPanel}
+     * through the file system directly, exactly like {@code ContextBar}
      * already does for its own lineup combo box.
      */
     private static final String LINEUP_FILE_GLOB = "*.lineup";

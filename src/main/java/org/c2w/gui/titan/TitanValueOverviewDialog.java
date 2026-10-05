@@ -37,7 +37,7 @@ import java.util.function.Supplier;
  * team, same editable "Fortification" assignment column, same per-fortification
  * extra columns whose displayed value (score or role-match count) is toggled
  * via {@link ValueMode} (see {@link #buildValueModeCombo()}). Opened from
- * its own toolbar button (see {@code ToolbarPanel}).
+ * its own toolbar button (see {@code ActionBar}).
  *
  * <p>Column 0 ("Power") is editable (see {@link TitanValueTableModel#isCellEditable});
  * {@link #buildSaveButton()} puts a "save guild" {@link FlatButton} in the
@@ -61,7 +61,7 @@ public class TitanValueOverviewDialog extends JDialog {
     /** Preferred width of each per-fortification value column (see class Javadoc). */
     private static final int VALUE_COLUMN_WIDTH = 70;
 
-    /** Size of {@link #buildSaveButton()}'s icon - matches {@code ToolbarPanel}'s own TOOLBAR_ICON_SIZE. */
+    /** Size of {@link #buildSaveButton()}'s icon - matches {@code ActionBar}'s own TOOLBAR_ICON_SIZE. */
     private static final int SAVE_ICON_SIZE = 20;
 
     private static final String COLUMN_KEY_POWER = "teamsOverview.power";
@@ -75,10 +75,10 @@ public class TitanValueOverviewDialog extends JDialog {
     /** Language file key for the label in front of {@link #buildValueModeCombo()}. */
     private static final String KEY_VALUE_MODE_LABEL = "teamsOverview.valueMode";
 
-    /** Language file key (see {@code ToolbarPanel}'s own "save guild" button) for {@link #buildSaveButton()}'s tooltip - reused since this button does the exact same thing. */
+    /** Language file key (see {@code ActionBar}'s own "save guild" button) for {@link #buildSaveButton()}'s tooltip - reused since this button does the exact same thing. */
     private static final String KEY_SAVE_GUILD = "teamsOverview.saveGuild";
 
-    /** Classpath path of {@link #buildSaveButton()}'s icon (see {@link IconLoader}) - same file {@code ToolbarPanel}'s own "save guild" button uses. */
+    /** Classpath path of {@link #buildSaveButton()}'s icon (see {@link IconLoader}) - same file {@code ActionBar}'s own "save guild" button uses. */
     private static final String ICON_SAVE_GUILD = "/images/app/save.png";
 
     /** What the per-fortification value columns show - toggled via {@link #buildValueModeCombo()}. */
@@ -149,7 +149,7 @@ public class TitanValueOverviewDialog extends JDialog {
      * values (see {@link TitanValueTableModel#isCellEditable}) to the guild
      * file - {@link #saveGuild()}, triggered by this button, is otherwise
      * the exact counterpart of {@code TeamsOverviewPanel#saveGuild()}/
-     * {@code ToolbarPanel}'s own "save guild" button, reusing the same
+     * {@code ActionBar}'s own "save guild" button, reusing the same
      * tooltip key/icon since it does the same thing.
      */
     private FlatButton buildSaveButton() {
@@ -291,7 +291,7 @@ public class TitanValueOverviewDialog extends JDialog {
      * for {@code newPower} (both otherwise-static value columns are derived
      * from Power, see {@link #matchCountsFor}/{@link #scoresFor}) and marks
      * the guild dirty, so {@link #buildSaveButton()}'s save (and the "unsaved
-     * changes" prompt in {@code ToolbarPanel#confirmDiscardUnsavedChanges})
+     * changes" prompt in {@code ContextBar#confirmDiscardUnsavedChanges})
      * pick it up exactly like a {@code TeamsOverviewPanel} Power edit would.
      */
     private boolean handlePowerEdited(TitanValueTableModel.Row row, int newPower) {

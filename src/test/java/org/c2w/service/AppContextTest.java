@@ -41,6 +41,11 @@ class AppContextTest {
         public void dirtyStateChanged() {
             events.add("dirty");
         }
+
+        @Override
+        public void fortificationTypeChanged() {
+            events.add("fortificationType");
+        }
     }
 
     private static Guild guild(String id) {
@@ -198,5 +203,46 @@ class AppContextTest {
         context.markLineupSaved();
 
         assertEquals(List.of("lineup"), listener.events);
+    }
+
+    @Test
+    @DisplayName("the fortification type is HERO by default")
+    void fortificationTypeDefaultsToHero() {
+        assertEquals(FortificationType.HERO, openContext().fortificationType());
+    }
+
+    @Test
+    @DisplayName("setFortificationType notifies exactly once, setting the same type again does not")
+    void setFortificationTypeNotifiesOnChangeOnly() {
+        AppContext context = openContext();
+        RecordingListener listener = new RecordingListener();
+        context.addListener(listener);
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(FortificationType.TITAN, context.fortificationType());
+        assertEquals(List.of("fortificationType"), listener.events);
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(List.of("fortificationType"), listener.events);
+    }
+
+    @Test
+    @DisplayName("setFortificationType(null) is rejected")
+    void setFortificationTypeRejectsNull() {
+        AppContext context = openContext();
+        assertThrows(IllegalArgumentException.class, () -> context.setFortificationType(null));
+        assertEquals(FortificationType.HERO, context.fortificationType());
+    }
+
+    @Test
+    @DisplayName("switching guild or lineup leaves the fortification type unchanged")
+    void guildAndLineupSwitchKeepFortificationType() {
+        AppContext context = openContext();
+        context.setFortificationType(FortificationType.TITAN);
+
+        context.switchTo(guild("b"), GUILD_B, lineup("b"), LINEUP_B);
+        context.set(lineup("b2"), LINEUP_B);
+
+        assertEquals(FortificationType.TITAN, context.fortificationType());
     }
 }

@@ -58,7 +58,7 @@ public final class ReportGenerator {
 
     /**
      * Builds and returns the report HTML for the given lineup/guild WITHOUT
-     * writing it anywhere. {@code ToolbarPanel#onGenerateReport()} hands this HTML straight to
+     * writing it anywhere. {@code ActionBar#onGenerateReport()} hands this HTML straight to
      * {@code ReportViewerDialog}, whose "Save report..." toolbar button lets
      * the user pick a directory and write it there. {@code reportFileName}
      * only feeds the report's "Lineup" meta row (see {@link

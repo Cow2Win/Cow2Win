@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * MainMenuBar). Lets the user change the display language, the
- * default hero and titan lineup algorithms (see {@link org.c2w.gui.ToolbarPanel#onRunAlgorithm}),
+ * default hero and titan lineup algorithms (see {@link org.c2w.gui.ActionBar#onRunAlgorithm}),
  * the backup directory (see org.c2w.infra.BackupService) and the workspace
  * directory (see {@link Config#getWorkspaceDir()}); named generically since
  * more application-wide settings are expected to move in here later.
@@ -307,7 +307,7 @@ public class SettingsDialog extends JDialog {
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built
-        // once at startup, see ToolbarPanel/Cow2Frame) still needs
+        // once at startup, see ActionBar/Cow2Frame) still needs
         // a restart to actually re-render with it - see the notice below.
         LanguageService.resetCache();
         confirmed = true;

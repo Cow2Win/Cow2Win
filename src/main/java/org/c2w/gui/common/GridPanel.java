@@ -2,6 +2,7 @@ package org.c2w.gui.common;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +35,44 @@ public class GridPanel extends JPanel {
 
     public int columns() {
         return columns;
+    }
+
+    /**
+     * Keeps every row and column of the grid, even an empty one: each column is
+     * at least {@code minCellSize.width} wide, each row at least
+     * {@code minCellSize.height} high, and extra space is shared equally. Without
+     * this, {@link GridBagLayout} collapses empty rows/columns to nothing, so the
+     * remaining components move whenever a cell is emptied.
+     */
+    public void setUniformCells(Dimension minCellSize) {
+        GridBagLayout layout = (GridBagLayout) getLayout();
+        layout.columnWidths = filled(columns, minCellSize.width + hGap);
+        layout.rowHeights = filled(rows, minCellSize.height + vGap);
+        layout.columnWeights = filled(columns, 1.0);
+        layout.rowWeights = filled(rows, 1.0);
+        revalidate();
+    }
+
+    /** Removes the components of all cells. */
+    public void clearAllCells() {
+        for (JComponent component : componentsByCell.values()) {
+            remove(component);
+        }
+        componentsByCell.clear();
+        revalidate();
+        repaint();
+    }
+
+    private static int[] filled(int length, int value) {
+        int[] result = new int[length];
+        Arrays.fill(result, value);
+        return result;
+    }
+
+    private static double[] filled(int length, double value) {
+        double[] result = new double[length];
+        Arrays.fill(result, value);
+        return result;
     }
 
     /**

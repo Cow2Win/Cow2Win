@@ -1,47 +1,86 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
-import org.c2w.data.repository.LineupFiles;
-import org.c2w.gui.common.FlatButton;
+import org.c2w.data.model.FortificationType;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
-import org.c2w.service.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.function.Consumer;
 
+/**
+ * One fortification on the {@link FortificationMapPanel}: a flat, self-painted tile with
+ * the name at the top and "filled/capacity · power" plus the buff percentage at the
+ * bottom. The stripe on the left shows the fill level (see {@link #fillLevel}). A click
+ * reports the fortification to the map, which keeps track of the selection.
+ */
 public class FortificationPanel extends JPanel {
-    private JPanel headerPanel;
-    private JLabel displayLbl;
-    private JLabel bufflbl;
-    private JLabel buffPercentLbl;
-    private JLabel powerlbl;
-    private JList<JLabel> slotlabel;
-    private Fortification fortification;
+
+    /** How many of a fortification's places are taken - the color of the stripe on the left. */
+    enum FillLevel {
+        /** No place taken. */
+        EMPTY,
+        /** At least one place, but not all of them taken. */
+        PARTIAL,
+        /** Every place taken. */
+        FULL
+    }
+
+    /** Language file key of the compact power value, e.g. "{0} Mio". */
+    private static final String KEY_POWER_MILLIONS = "fortification.powerMillions";
+
+    private static final int MILLIONS_THRESHOLD = 1_000_000;
+
+    /**
+     * Preferred width of every tile, independent of its texts: the map's columns then all
+     * get the same width (see FortificationMapPanel#MIN_CELL_SIZE), so they do not shift
+     * when the fortification type is switched.
+     */
+    static final int PREFERRED_WIDTH = 120;
+
+    private static final int ARC = 10;
+    private static final int STRIPE_WIDTH = 4;
+    private static final Color SURFACE = new Color(255, 255, 255, 22);
+    private static final Color OUTLINE = new Color(255, 255, 255, 40);
+    private static final Color SELECTED_SURFACE = new Color(
+            IconLoader.BLUE.getRed(), IconLoader.BLUE.getGreen(), IconLoader.BLUE.getBlue(), 60);
+    /** Gold of a partly filled fortification - the same gold as the titan color. */
+    private static final Color PARTIAL_COLOR = FortificationTypeStyle.color(FortificationType.TITAN);
+
+    private final Fortification fortification;
     private final int filledSlots;
     private final int totalPower;
-    /** Change of {@link #totalPower} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true (see {@link #getPowerLabel()}). */
+    /** Change of {@link #totalPower} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true. */
     private final int totalPowerDiff;
-    /** True while the "Changes" checkbox in the toolbar (see ToolbarPanel / FortificationMapPanel#setShowChanges) is selected - then {@link #getPowerLabel()} shows {@link #totalPowerDiff} instead of {@link #totalPower}. */
+    /** True while the change view is on (see FortificationMapPanel#setShowChanges) - then power and buff show their change instead of their current value. */
     private final boolean showChanges;
     private final int buffPercent;
-    /** Change of {@link #buffPercent} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true (see {@link #getBuffPercentLabel()}). */
+    /** Change of {@link #buffPercent} since the lineup was loaded or last saved - only shown when {@link #showChanges} is true. */
     private final int buffPercentDiff;
-    /** Change of the number of buff-matching heroes/titans since the lineup was loaded or last saved - shown in the power label's tooltip (see {@link #powerTooltip()}). */
+    /** Change of the number of buff-matching heroes/titans since the lineup was loaded or last saved - shown in the power tooltip (see {@link #powerTooltip()}). */
     private final int buffMemberCountDiff;
-    private final AppContext appContext;
-    private ImageIcon slot_set;
-    private ImageIcon slot_open;
+    private boolean selected;
 
+    private JLabel nameLbl;
+    private JLabel powerLbl;
+    private JLabel buffPercentLbl;
 
+    /**
+     * @param onClick receives {@code fortification} whenever the tile is clicked
+     */
     public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
                               boolean showChanges, int buffPercent, int buffPercentDiff,
-                              int buffMemberCountDiff, AppContext appContext){
+                              int buffMemberCountDiff, boolean selected, Consumer<Fortification> onClick) {
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
@@ -50,138 +89,177 @@ public class FortificationPanel extends JPanel {
         this.buffPercent = buffPercent;
         this.buffPercentDiff = buffPercentDiff;
         this.buffMemberCountDiff = buffMemberCountDiff;
-        this.appContext = appContext;
-        init();
+        this.selected = selected;
+        init(onClick);
     }
 
-
-    /**
-     * Initializes the panel layout and components.
-     */
-    private void init(){
-        slot_open = IconLoader.iconFor(FortificationTypeStyle.openSlotIconPath(fortification.type()), 24,FortificationTypeStyle.color(fortification.type()) );
-        slot_set = IconLoader.iconFor(FortificationTypeStyle.filledSlotIconPath(fortification.type()), 24,FortificationTypeStyle.color(fortification.type()) );
-        setLayout(new FlowLayout());
-        add(getHeaderPanel());
+    private void init(Consumer<Fortification> onClick) {
+        setLayout(new BorderLayout(0, 4));
         setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(6, STRIPE_WIDTH + 8, 6, 8));
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-    }
+        JPanel bottom = new JPanel(new BorderLayout(8, 0));
+        bottom.setOpaque(false);
+        bottom.add(getPowerLabel(), BorderLayout.CENTER);
+        bottom.add(getBuffPercentLabel(), BorderLayout.EAST);
+        add(getNameLabel(), BorderLayout.NORTH);
+        add(bottom, BorderLayout.SOUTH);
 
-    /**
-     * Gets or creates the display label showing the fortification name.
-     *
-     * @return The fortification name label
-     */
-    private JLabel getDisplayLbl(){
-        if(displayLbl == null){
-            displayLbl = new FortificationDisplayLabel(fortification);
-            displayLbl.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    openEntryDialog();
+        // The labels have tooltips and therefore their own mouse listeners, which keep
+        // clicks on them from reaching this panel - so every one of them listens, too.
+        MouseAdapter clickListener = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    onClick.accept(fortification);
                 }
-            });
-        }
-        return displayLbl;
-    }
-
-
-    private void openEntryDialog(){
-        Window window = SwingUtilities.getWindowAncestor(this);
-        Frame owner = window instanceof Frame f ? f : null;
-        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
-            // The "Original" lineup is the fixed record of the actual in-game
-            // deployment and may only be changed through the two guild
-            // team-entry dialogs (see LineupFiles) - not by editing a single
-            // fortification here.
-            JOptionPane.showMessageDialog(owner,
-                    LanguageService.displayName("common.originalReadOnly"),
-                    LanguageService.displayName("common.originalReadOnlyTitle"), JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        FortificationEntryDialog dialog = new FortificationEntryDialog(owner, fortification, appContext);
-        dialog.setVisible(true);
-    }
-
-    /**
-     * Gets or creates the header shown at the top of this panel: the name
-     * label (see {@link #getDisplayLbl()}) with the buff percentage label
-     * (see {@link #getBuffPercentLabel()}) directly underneath it - a small
-     * {@link GridLayout}(2, 1) sub-panel, so the percentage always stays
-     * directly under the name no matter how much horizontal space the
-     * surrounding {@link FlowLayout} (see {@link #init()}) actually gives
-     * this panel; a {@link FlowLayout} re-wraps its own direct children on
-     * every resize, which would not reliably keep the two stacked if they
-     * were added to it separately instead of nested in their own panel.
-     *
-     * @return The header panel (name + buff percentage)
-     */
-    private JPanel getHeaderPanel(){
-        if(headerPanel == null){
-            headerPanel = new JPanel(new GridLayout(3, 1));
-            headerPanel.add(getDisplayLbl());
-            headerPanel.setOpaque(false);
-            JPanel powerPanel = new JPanel(new GridLayout(1,2));
-            powerPanel.setOpaque(false);
-            powerPanel.add(getBuffPercentLabel());
-            powerPanel.add(getPowerLabel());
-            headerPanel.add(powerPanel);
-
-            headerPanel.add(getSlotPanel());
-        }
-        return headerPanel;
-    }
-
-    /**
-     * Gets or creates the label displaying the buff percentage - either
-     * {@link #buffPercent} (default), e.g. "35%", or, while the "Changes"
-     * checkbox is selected (see {@link #showChanges}), {@link #buffPercentDiff}
-     * against the baseline loaded from disk, colored {@link IconLoader#GREEN}
-     * for a gain, {@link IconLoader#RED} for a loss (see {@link #diffColor}) -
-     * shown directly under the name label (see {@link #getHeaderPanel()}).
-     * (the buff's own descriptive text, e.g. "+10% Power" - currently
-     * unused, not added to this panel by {@link #init()}).
-     *
-     * @return The buff percentage/change label
-     */
-    private JLabel getBuffPercentLabel(){
-        if(buffPercentLbl == null){
-            buffPercentLbl = new JLabel("",JLabel.LEFT);
-            if(fortification.buff() != null){
-                String text = showChanges ? formatPercentDiff(buffPercentDiff) : (buffPercent + "%");
-                Color color = showChanges ? diffColor(buffPercentDiff) : FortificationTypeStyle.color(fortification.type());
-                buffPercentLbl.setText(text);
-                buffPercentLbl.setToolTipText(BuffTexts.describe(fortification.buff()));
-                buffPercentLbl.setForeground(color);
             }
+        };
+        addMouseListener(clickListener);
+        nameLbl.addMouseListener(clickListener);
+        powerLbl.addMouseListener(clickListener);
+        buffPercentLbl.addMouseListener(clickListener);
+    }
 
+    Fortification fortification() {
+        return fortification;
+    }
+
+    boolean isSelected() {
+        return selected;
+    }
+
+    /** Highlights this tile as the selected fortification (see FortificationMapPanel#selectedFortification). */
+    void setSelected(boolean selected) {
+        if (this.selected != selected) {
+            this.selected = selected;
+            repaint();
+        }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(PREFERRED_WIDTH, super.getPreferredSize().height);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int width = getWidth();
+            int height = getHeight();
+            RoundRectangle2D.Float shape = new RoundRectangle2D.Float(0, 0, width - 1f, height - 1f, ARC, ARC);
+
+            g2.setColor(selected ? SELECTED_SURFACE : SURFACE);
+            g2.fill(shape);
+
+            // Stripe on the left, clipped to the rounded outline.
+            Shape oldClip = g2.getClip();
+            g2.clip(shape);
+            g2.setColor(fillLevelColor(fillLevel(filledSlots, fortification.capacity())));
+            g2.fillRect(0, 0, STRIPE_WIDTH, height);
+            g2.setClip(oldClip);
+
+            g2.setColor(selected ? IconLoader.BLUE : OUTLINE);
+            g2.draw(shape);
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    /** {@link FillLevel#EMPTY} for no taken place, {@link FillLevel#FULL} for all of them, {@link FillLevel#PARTIAL} in between. */
+    static FillLevel fillLevel(int filled, int capacity) {
+        if (filled <= 0) {
+            return FillLevel.EMPTY;
+        }
+        return filled >= capacity ? FillLevel.FULL : FillLevel.PARTIAL;
+    }
+
+    private static Color fillLevelColor(FillLevel level) {
+        return switch (level) {
+            case EMPTY -> IconLoader.RED;
+            case PARTIAL -> PARTIAL_COLOR;
+            case FULL -> IconLoader.GREEN;
+        };
+    }
+
+    /** The fortification name, bold; cut off with an ellipsis if too long, the full name is in the tooltip. */
+    private JLabel getNameLabel() {
+        if (nameLbl == null) {
+            String name = LanguageService.displayName(fortification.id());
+            nameLbl = new JLabel(name, JLabel.LEFT);
+            nameLbl.setFont(nameLbl.getFont().deriveFont(Font.BOLD));
+            nameLbl.setForeground(foreground());
+            nameLbl.setToolTipText(name);
+            // Small minimum width, so a long name is cut off instead of widening the column.
+            nameLbl.setMinimumSize(new Dimension(0, nameLbl.getPreferredSize().height));
+            nameLbl.setPreferredSize(new Dimension(0, nameLbl.getPreferredSize().height));
+        }
+        return nameLbl;
+    }
+
+    /**
+     * "filled/capacity · power", e.g. "5/5 · 1,05 Mio" - or, while the "Changes" checkbox is
+     * selected (see {@link #showChanges}), "filled/capacity · {@link #totalPowerDiff}", colored
+     * green for a gain and red for a loss (see {@link #diffColor}).
+     */
+    private JLabel getPowerLabel() {
+        if (powerLbl == null) {
+            String places = filledSlots + "/" + fortification.capacity() + " · ";
+            String power = showChanges ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
+            powerLbl = new JLabel(places + power, JLabel.LEFT);
+            powerLbl.setForeground(showChanges ? diffColor(totalPowerDiff, mutedForeground()) : mutedForeground());
+            powerLbl.setToolTipText(powerTooltip());
+            powerLbl.setMinimumSize(new Dimension(0, powerLbl.getPreferredSize().height));
+        }
+        return powerLbl;
+    }
+
+    /**
+     * The buff percentage, e.g. "+8 %" - or, while the "Changes" checkbox is selected (see
+     * {@link #showChanges}), {@link #buffPercentDiff}, colored green for a gain and red for a
+     * loss (see {@link #diffColor}). Empty for a fortification without a buff.
+     */
+    private JLabel getBuffPercentLabel() {
+        if (buffPercentLbl == null) {
+            buffPercentLbl = new JLabel("", JLabel.RIGHT);
+            if (fortification.buff() != null) {
+                int value = showChanges ? buffPercentDiff : buffPercent;
+                buffPercentLbl.setText(formatPercent(value));
+                buffPercentLbl.setForeground(showChanges ? diffColor(buffPercentDiff, foreground()) : foreground());
+                buffPercentLbl.setToolTipText(BuffTexts.describe(fortification.buff()));
+            }
         }
         return buffPercentLbl;
     }
 
-    /** "+5%"/"-5%"/"0%". */
-    private static String formatPercentDiff(int diff) {
-        return (diff > 0 ? "+" : "") + diff + "%";
+    /** "+8 %"/"-5 %"/"0 %". */
+    static String formatPercent(int percent) {
+        return (percent > 0 ? "+" : "") + percent + " %";
+    }
+
+    /** {@code power} in compact form for the configured language, see {@link #compactPower(int, Locale, String)}. */
+    private static String compactPower(int power) {
+        return compactPower(power, JournalTexts.locale(), LanguageService.displayName(KEY_POWER_MILLIONS));
     }
 
     /**
-     * Gets or creates the label showing this fortification's power - either
-     * {@link #totalPower} (default) or, while the "Changes" checkbox is
-     * selected (see {@link #showChanges}), {@link #totalPowerDiff} against
-     * the baseline loaded from disk, colored {@link IconLoader#GREEN} for a
-     * gain, {@link IconLoader#RED} for a loss (see {@link #diffColor}).
-     *
-     * @return The power/change label
+     * GUI-free core of the compact power value: from one million on with two decimals in
+     * {@code locale} and {@code millionsPattern} (e.g. "{0} Mio"), e.g. "1,05 Mio"; below
+     * that the full number with {@link GuiUtils#NUMBER_FORMAT}, e.g. "812.345".
      */
-    private JLabel getPowerLabel(){
-        if(powerlbl == null){
-            String text = showChanges ? formatPowerDiff(totalPowerDiff) : GuiUtils.NUMBER_FORMAT.format(totalPower);
-            Color color = showChanges ? diffColor(totalPowerDiff) : FortificationTypeStyle.color(fortification.type());
-            powerlbl = new JLabel(text, JLabel.RIGHT);
-            powerlbl.setForeground(color);
-            powerlbl.setToolTipText(powerTooltip());
+    static String compactPower(int power, Locale locale, String millionsPattern) {
+        if (Math.abs(power) < MILLIONS_THRESHOLD) {
+            return GuiUtils.NUMBER_FORMAT.format(power);
         }
-        return powerlbl;
+        NumberFormat format = NumberFormat.getInstance(locale);
+        format.setGroupingUsed(false);
+        format.setMinimumFractionDigits(2);
+        format.setMaximumFractionDigits(2);
+        String millions = format.format(power / (double) MILLIONS_THRESHOLD);
+        return millionsPattern.replace("{0}", millions);
     }
 
     /**
@@ -214,47 +292,31 @@ public class FortificationPanel extends JPanel {
         return LanguageService.displayName("fortification.diffTooltipNoBuff", formatPowerDiff(totalPowerDiff));
     }
 
-    /** "+1.234"/"-1.234"/"0" -{@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
+    /** "+1.234"/"-1.234"/"0" - {@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */
     private static String formatPowerDiff(int diff) {
         String formatted = GuiUtils.NUMBER_FORMAT.format(diff);
         return diff > 0 ? "+" + formatted : formatted;
     }
 
-    /** {@link IconLoader#GREEN} for a gain, {@link IconLoader#RED} for a loss, this fortification's own type color when unchanged. */
-    private Color diffColor(int diff) {
+    /** {@link IconLoader#GREEN} for a gain, {@link IconLoader#RED} for a loss, {@code unchanged} otherwise. */
+    private static Color diffColor(int diff, Color unchanged) {
         if (diff > 0) {
             return IconLoader.GREEN;
         }
         if (diff < 0) {
             return IconLoader.RED;
         }
-        return FortificationTypeStyle.color(fortification.type());
+        return unchanged;
     }
 
-    /**
-     * Creates a panel displaying slot indicators.
-     * Shows filled slots (occupancy) and empty slots (available capacity).
-     *
-     * @return A panel containing slot buttons
-     */
-    private JPanel getSlotPanel(){
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p,BoxLayout.LINE_AXIS));
-        p.setOpaque(false);
-        for (int i = 0; i < fortification.capacity() ; i++) {
-            p.add(new FlatButton(i<filledSlots ?  slot_set : slot_open, false));
-            //p.add(getSlot(i<filledSlots));
-        }
-
-        return p;
+    private static Color foreground() {
+        Color color = UIManager.getColor("Label.foreground");
+        return color != null ? color : Color.WHITE;
     }
 
-    private JButton getSlot(boolean open){
-        ImageIcon icon = open ?  slot_set : slot_open;
-        JButton button = new JButton(icon);
-        button.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
-        return button;
+    /** {@link #foreground()}, dimmed - for the secondary "filled/capacity · power" text. */
+    private static Color mutedForeground() {
+        Color color = foreground();
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), 150);
     }
-
 }
-

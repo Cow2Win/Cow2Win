@@ -1,5 +1,7 @@
 package org.c2w.infra;
 
+import org.c2w.data.model.FortificationType;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,7 +27,7 @@ public final class Config {
      * Logger}'s log file, unless {@link #KEY_WORKSPACE_PATH} points
      * elsewhere (see {@link #getWorkspaceDir()}). Also used by {@link
      * BackupService} (what gets backed up) and, as a fallback, {@code
-     * org.c2w.gui.ToolbarPanel}.
+     * org.c2w.gui.ActionBar}.
      */
     private static final Path DEFAULT_WORKSPACE_DIR = ROOT.resolve("workspace");
 
@@ -60,6 +62,8 @@ public final class Config {
     private static final String KEY_WORKSPACE_PATH = "workspacePath";
     /** Folder the last battle logs were imported from (Weltenschlacht journal). */
     private static final String KEY_LAST_JOURNAL_IMPORT_DIR = "lastJournalImportDir";
+    /** Fortification type (HERO/TITAN) selected last in the context bar, restored on the next start. */
+    private static final String KEY_LAST_FORTIFICATION_TYPE = "lastFortificationType";
     /** Default backup directory: a "backup" folder next to {@link #DEFAULT_WORKSPACE_DIR}, under the same {@link #ROOT} umbrella. */
     private static final String DEFAULT_BACKUP_DIR = ROOT.resolve("backup").toString();
 
@@ -137,6 +141,23 @@ public final class Config {
 
     public static void setLastJournalImportDir(String lastJournalImportDir) {
         setProperty(KEY_LAST_JOURNAL_IMPORT_DIR, lastJournalImportDir == null ? "" : lastJournalImportDir);
+    }
+
+    // --- lastFortificationType ---
+
+    /** The fortification type selected last, {@link FortificationType#HERO} if none (or an unknown value) is stored. */
+    public static FortificationType getLastFortificationType() {
+        String value = properties.getProperty(KEY_LAST_FORTIFICATION_TYPE, "");
+        for (FortificationType type : FortificationType.values()) {
+            if (type.name().equals(value)) {
+                return type;
+            }
+        }
+        return FortificationType.HERO;
+    }
+
+    public static void setLastFortificationType(FortificationType fortificationType) {
+        setProperty(KEY_LAST_FORTIFICATION_TYPE, fortificationType == null ? "" : fortificationType.name());
     }
 
     // --- lastGuildPath ---
@@ -227,7 +248,7 @@ public final class Config {
      * Configured workspace directory (guilds, lineups, {@link Logger}'s log
      * file), or {@link #DEFAULT_WORKSPACE_DIR} if none was ever saved. See
      * {@link #getWorkspaceDir()} for the resolved {@link Path} - callers
-     * throughout the app (e.g. {@code C2WApp}, {@code ToolbarPanel}, {@link
+     * throughout the app (e.g. {@code C2WApp}, {@code ActionBar}, {@link
      * BackupService}, {@link Logger}) should go through that rather than
      * this raw getter, so a configured workspace actually takes effect
      * everywhere.

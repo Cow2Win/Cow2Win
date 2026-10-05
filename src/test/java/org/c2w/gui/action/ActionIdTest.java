@@ -46,6 +46,7 @@ class ActionIdTest {
                 assertNull(stage.stageTextKey());
             } else {
                 assertKeyInAllLanguages(stage.stageTextKey(), stage.name());
+                assertKeyInAllLanguages(stage.subtitleKey(), stage.name());
             }
         }
     }
