@@ -113,4 +113,84 @@ class OutputStageViewTest {
         assertTrue(view.planPanel().messageText().contains(LanguageService.displayName("changePlan.originalIsOpen")));
         assertFalse(view.copyPlanAction().isEnabled());
     }
+
+    /** Live: m1 and m2 in the bastion; the open lineup (unsaved): m2 in the bastion, m3 in the citadel. */
+    private Path liveAndTarget() throws Exception {
+        Path guildDir = context.guildFilePath().getParent();
+        LineupRepository.save(new Lineup(context.guild().id(), context.guild().name(), "", LocalDateTime.now(), List.of(
+                        new Lineup.Entry("bastion", "m1", Lineup.TeamType.HERO, 0),
+                        new Lineup.Entry("bastion", "m2", Lineup.TeamType.HERO, 0))),
+                LineupFiles.originalPathFor(guildDir));
+        context.setLineup(new Lineup(context.lineup().guildId(), context.lineup().guildName(), "", LocalDateTime.now(), List.of(
+                new Lineup.Entry("bastion", "m2", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("citadel", "m3", Lineup.TeamType.HERO, 0))));
+        context.setLineupDirty(true);
+        return guildDir;
+    }
+
+    private static String idOf(ChangePlanPanel panel, String memberId) {
+        return panel.outline().items().stream().filter(item -> item.teamKey().teamMemberId().equals(memberId))
+                .findFirst().orElseThrow().id();
+    }
+
+    @Test
+    @DisplayName("A check only changes the checks; they are saved and still there in a new view and after a rebuild")
+    void checks() throws Exception {
+        Path guildDir = liveAndTarget();
+        String liveBefore = java.nio.file.Files.readString(LineupFiles.originalPathFor(guildDir));
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+        assertEquals(2, panel.outline().items().size());
+        assertTrue(actions.get(ActionId.APPLY_TO_LIVE).isEnabled());
+
+        String removeM1 = idOf(panel, "m1");
+        panel.checkBox(removeM1).doClick();
+
+        assertTrue(panel.checks().isChecked(removeM1));
+        assertEquals(LanguageService.displayName("changePlan.checkedSummary", 2, 1), panel.summaryText());
+        assertTrue(view.infoTexts().stream().anyMatch(text -> text.contains(LanguageService.displayName("stageInfo.plan.checked", 1, 2))),
+                view.infoTexts().toString());
+        assertEquals(liveBefore, java.nio.file.Files.readString(LineupFiles.originalPathFor(guildDir)), "live unchanged");
+        assertTrue(context.isLineupDirty(), "the open lineup is untouched");
+        assertTrue(panel.plainTextPlan().contains("[x]") && panel.plainTextPlan().contains("[ ]"), panel.plainTextPlan());
+
+        OutputStageView restarted = new OutputStageView(context, actions);
+        assertTrue(restarted.planPanel().checkBox(removeM1).isSelected());
+
+        // Another unsaved change: the plan is rebuilt, the check of the still existing entry stays.
+        context.setLineup(new Lineup(context.lineup().guildId(), context.lineup().guildName(), "", LocalDateTime.now(), List.of(
+                new Lineup.Entry("bastion", "m2", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("citadel", "m3", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("citadel", "m4", Lineup.TeamType.HERO, 0))));
+        assertEquals(3, panel.outline().items().size());
+        assertTrue(panel.checks().isChecked(removeM1));
+    }
+
+    @Test
+    @DisplayName("Apply to live: only checked entries go into live, the old live is archived, the rest stays in the plan")
+    void applyToLive() throws Exception {
+        Path guildDir = liveAndTarget();
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+
+        org.c2w.service.LiveApplyService.Result nothing = panel.applyToLive();
+        assertEquals(org.c2w.service.LiveApplyService.Outcome.NOTHING_CHECKED, nothing.outcome());
+        assertEquals(LanguageService.displayName("applyToLive.nothingChecked"), OutputStageView.applyMessage(nothing));
+        assertFalse(java.nio.file.Files.exists(guildDir.resolve("live-history")));
+
+        panel.setChecked(idOf(panel, "m3"), true);
+        org.c2w.service.LiveApplyService.Result applied = panel.applyToLive();
+
+        assertEquals(org.c2w.service.LiveApplyService.Outcome.APPLIED, applied.outcome());
+        assertEquals(LanguageService.displayName("applyToLive.done", 1), OutputStageView.applyMessage(applied));
+        Lineup live = LineupRepository.load(LineupFiles.originalPathFor(guildDir));
+        assertTrue(live.entries().contains(new Lineup.Entry("citadel", "m3", Lineup.TeamType.HERO, 0)));
+        assertTrue(live.entries().contains(new Lineup.Entry("bastion", "m1", Lineup.TeamType.HERO, 0)), "not checked");
+        try (var history = java.nio.file.Files.list(guildDir.resolve("live-history"))) {
+            assertEquals(1, history.count());
+        }
+        assertEquals(1, panel.outline().items().size(), "only the removal of m1 is left");
+        assertEquals(java.util.Set.of(), panel.checks().checkedIds());
+        assertTrue(context.isLineupDirty(), "the target lineup stays open and unsaved");
+    }
 }

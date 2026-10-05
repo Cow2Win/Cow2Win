@@ -1,6 +1,7 @@
 package org.c2w.data.repository;
 
 import org.c2w.eval.LineupAlgorithm;
+import org.c2w.i18n.LanguageService;
 
 import java.nio.file.Path;
 
@@ -23,16 +24,22 @@ import java.nio.file.Path;
  *
  * <p>The file name is a fixed, non-localized identifier ({@value #ORIGINAL_FILE_NAME})
  * so the Original lineup stays recognizable regardless of the display
- * language. The combo box strips the {@value #SUFFIX} suffix, so it simply
- * shows up as "Original".
+ * language. In the UI it is called "Live" (see {@link #displayName(String)}) - only the
+ * file name and the internal identifiers keep "Original".
  */
 public final class LineupFiles {
 
-    /** File name suffix shared by every ".lineup" file (see {@code ContextBar#stripLineupSuffix}). */
+    /** File name suffix shared by every ".lineup" file (see {@link #displayName(String)}). */
     public static final String SUFFIX = ".lineup";
 
-    /** Fixed file name of the per-guild "Original" baseline lineup. */
+    /** Fixed file name of the per-guild "Original" baseline lineup - shown as "Live" in the UI. */
     public static final String ORIGINAL_FILE_NAME = "Original" + SUFFIX;
+
+    /** File name a new lineup must not get either: it would look like the Original, which is shown as "Live". */
+    private static final String LIVE_FILE_NAME = "Live" + SUFFIX;
+
+    /** Language file key of the Original lineup's display name ("Live"). */
+    private static final String KEY_LIVE = "lineup.live";
 
     private LineupFiles() {
     }
@@ -54,5 +61,27 @@ public final class LineupFiles {
             throw new IllegalArgumentException("guildDir must not be null");
         }
         return guildDir.resolve(ORIGINAL_FILE_NAME);
+    }
+
+    /**
+     * True if {@code fileName} is reserved and must not be used for a new lineup: the Original
+     * file name and "Live.lineup" (the Original's display name), both case-insensitive.
+     */
+    public static boolean isReservedFileName(String fileName) {
+        return isOriginalFileName(fileName) || (fileName != null && fileName.equalsIgnoreCase(LIVE_FILE_NAME));
+    }
+
+    /**
+     * The name of a lineup file as shown in the UI: "Live" (in the configured language) for the
+     * Original lineup, otherwise the file name without the {@value #SUFFIX} suffix.
+     */
+    public static String displayName(String fileName) {
+        if (fileName == null) {
+            return "";
+        }
+        if (isOriginalFileName(fileName)) {
+            return LanguageService.displayName(KEY_LIVE);
+        }
+        return fileName.endsWith(SUFFIX) ? fileName.substring(0, fileName.length() - SUFFIX.length()) : fileName;
     }
 }

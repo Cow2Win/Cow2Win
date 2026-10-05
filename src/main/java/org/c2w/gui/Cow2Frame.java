@@ -66,6 +66,7 @@ public class Cow2Frame extends JFrame {
 
     /** Icon paths of the menu entries (see {@link #registerActions}). */
     private static final String ICON_HERO_WARS = "/images/app/herowars32.png";
+    private static final String ICON_APPLY_TO_LIVE = "/images/app/save.png";
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
     private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
@@ -97,6 +98,8 @@ public class Cow2Frame extends JFrame {
     private final JournalActions journalActions;
     /** Traffic lights, short texts, status bar and "next step" from the data status of the open guild. */
     private final DataStatusController dataStatusController;
+    /** The output stage view - "apply to live" runs there. */
+    private OutputStageView outputView;
     /** Every action of menu bar and toolbar - see the constructor. */
     private final MainActions actions;
 
@@ -173,7 +176,8 @@ public class Cow2Frame extends JFrame {
         InputStageView inputView = new InputStageView(appContext, actions);
         addStageView(inputView);
         addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
-        addStageView(new OutputStageView(appContext, actions));
+        this.outputView = new OutputStageView(appContext, actions);
+        addStageView(outputView);
         // "Change plan" (menu, action lists) switches to the output stage.
         actionBar.setStageSwitcher(this::showStage);
         ProcessBar processBar = actionBar.processBar();
@@ -186,6 +190,10 @@ public class Cow2Frame extends JFrame {
                 this::showStage);
         journalActions.addJournalListener(dataStatusController::requestUpdate);
         dataStatusController.addListener(inputView::setDataStatus);
+        outputView.setLiveChangedListener(() -> {
+            contextBar.refreshLiveStatus();
+            dataStatusController.requestUpdate();
+        });
         dataStatusController.requestUpdate();
 
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
@@ -259,6 +267,9 @@ public class Cow2Frame extends JFrame {
                         // Saved CowScores make the lineup "to recalculate" - show that right away.
                         () -> dataStatusController.requestUpdate())));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
+        // The change plan lives in the output view, created after the actions.
+        actions.register(new AppAction(ActionId.APPLY_TO_LIVE, () -> outputView.applyToLive())
+                .withIcon(IconLoader.iconForButton(ICON_APPLY_TO_LIVE)));
         actions.register(new AppAction(ActionId.OPEN_HERO_WARS, () -> onOpenWeb(HERO_WARS_URL))
                 .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ActionBar.TOOLBAR_ICON_SIZE)));
 
@@ -404,7 +415,7 @@ public class Cow2Frame extends JFrame {
         }
 
         String fileName = LineupService.toLineupFileName(name);
-        if (LineupFiles.isOriginalFileName(fileName)) {
+        if (LineupFiles.isReservedFileName(fileName)) {
             JOptionPane.showMessageDialog(this,
                     LanguageService.displayName("mainFrame.newLineup.reservedName"),
                     LanguageService.displayName("mainFrame.newLineup.title"), JOptionPane.WARNING_MESSAGE);
@@ -447,7 +458,7 @@ public class Cow2Frame extends JFrame {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                LanguageService.displayName("mainFrame.removeLineup.confirmMessage", ContextBar.stripLineupSuffix(fileName)),
+                LanguageService.displayName("mainFrame.removeLineup.confirmMessage", LineupFiles.displayName(fileName)),
                 LanguageService.displayName(KEY_REMOVE_LINEUP), JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;

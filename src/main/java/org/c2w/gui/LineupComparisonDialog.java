@@ -4,6 +4,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupComparisonService.FortificationDiff;
 import org.c2w.domain.LineupComparisonService.LineupComparison;
@@ -76,7 +77,6 @@ public class LineupComparisonDialog extends JDialog {
      * already does for its own lineup combo box.
      */
     private static final String LINEUP_FILE_GLOB = "*.lineup";
-    private static final String LINEUP_FILE_SUFFIX = ".lineup";
 
     private final AppContext appContext;
     private final Guild guild;
@@ -231,7 +231,7 @@ public class LineupComparisonDialog extends JDialog {
                                                           boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof String fileName) {
-                    setText(stripLineupSuffix(fileName));
+                    setText(LineupFiles.displayName(fileName));
                 }
                 return this;
             }
@@ -250,12 +250,6 @@ public class LineupComparisonDialog extends JDialog {
         if (currentFileName != null && fileNames.contains(currentFileName)) {
             lineupBeforeCombo.setSelectedItem(currentFileName);
         }
-    }
-
-    private static String stripLineupSuffix(String fileName) {
-        return fileName.endsWith(LINEUP_FILE_SUFFIX)
-                ? fileName.substring(0, fileName.length() - LINEUP_FILE_SUFFIX.length())
-                : fileName;
     }
 
     /** Every ".lineup" file directly inside the current guild's folder, sorted alphabetically - see class Javadoc on {@link #LINEUP_FILE_GLOB}. */

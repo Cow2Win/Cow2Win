@@ -68,7 +68,7 @@ public final class MainMenuBar extends JMenuBar {
                     SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
                     SEPARATOR, SHOW_TEAMS,
                     SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS),
-            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT));
+            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE));
 
     /** The actions deliberately offered in the toolbar only, not in any menu. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);

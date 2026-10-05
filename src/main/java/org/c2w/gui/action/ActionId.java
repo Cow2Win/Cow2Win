@@ -43,7 +43,9 @@ public enum ActionId {
     JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.CONCEPT, Opens.WINDOW),
 
     OPEN_CHANGE_PLAN("toolbar.openChangePlan", Stage.OUTPUT, Opens.WINDOW),
-    GENERATE_REPORT("toolbar.generateReport", Stage.OUTPUT, Opens.WINDOW);
+    GENERATE_REPORT("toolbar.generateReport", Stage.OUTPUT, Opens.WINDOW),
+    /** Takes the checked entries of the change plan into the live lineup - see {@code ChangePlanPanel#applyToLive}. */
+    APPLY_TO_LIVE("action.applyToLive", Stage.OUTPUT);
 
     /**
      * Readability marker for the constructor: {@code Opens.WINDOW} = the action opens a window

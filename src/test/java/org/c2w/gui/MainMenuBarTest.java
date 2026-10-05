@@ -38,7 +38,7 @@ class MainMenuBarTest {
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
                     + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS, ---, "
                     + "JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS",
-            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT");
+            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE");
 
     /** Deliberately toolbar-only actions - the only ones not in any menu. */
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);

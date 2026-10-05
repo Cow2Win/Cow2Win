@@ -1,26 +1,41 @@
 package org.c2w.gui.stage;
 
+import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
+import org.c2w.data.repository.ChangePlanCheckRepository;
+import org.c2w.data.repository.LineupRepository;
+import org.c2w.domain.ChangePlanChecks;
+import org.c2w.domain.ChangePlanOutline;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
+import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
+import org.c2w.service.LiveApplyService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The change plan ("Umstell-Anleitung"): choose a target - the lineup open in the context bar
  * (optional, see the constructor), another saved lineup or a candidate of two algorithms -
- * generate, and read the steps from the guild's Original lineup to that target. Hints and
- * errors appear right above the plan (details in the log), never as a dialog. The logic lives
- * in {@link ChangePlanModel}, the text in {@link ChangePlanRenderer}.
+ * generate, and work through the checklist from the guild's live lineup (file "Original") to
+ * that target: grouped by fortification type, removals and additions, fortifications - one
+ * checkbox per team ({@link ChangePlanOutline}). The checks are saved in the guild folder
+ * ({@link ChangePlanCheckRepository}); {@link #applyToLive()} takes the checked entries into the
+ * live lineup. Hints and errors appear right above the plan (details in the log), never as a
+ * dialog. The logic lives in {@link ChangePlanModel}, the texts in {@link ChangePlanRenderer}.
  *
  * <p>Transparent, with the look and feel's label color for the plan text, so it fits the dark
  * stage views.
@@ -39,6 +54,11 @@ public class ChangePlanPanel extends JPanel {
     private static final String KEY_DIFFERENT_GUILD = "changePlan.differentGuild";
     private static final String KEY_ORIGINAL_IS_OPEN = "changePlan.originalIsOpen";
 
+    /** Indentation of a checklist level in pixels. */
+    private static final int INDENT = 18;
+    /** Client property of an entry's checkbox: its plain text. */
+    private static final String ITEM_TEXT = "c2w.changePlan.itemText";
+
     private final AppContext appContext;
 
     /** Null if the open lineup is not offered as target (see the constructor). */
@@ -54,14 +74,20 @@ public class ChangePlanPanel extends JPanel {
     private final JButton generateButton = new JButton(LanguageService.displayName(KEY_GENERATE));
 
     private final JLabel messageLabel = new JLabel();
-    private final JEditorPane outputPane = new JEditorPane();
+    /** The checklist of the plan: headings and one checkbox per entry. */
+    private final JPanel checklist = new JPanel();
+    private final JLabel summaryLabel = new JLabel();
+    /** Per entry id its checkbox - for updating the look and for tests. */
+    private final Map<String, JCheckBox> checkBoxes = new LinkedHashMap<>();
 
     private final List<Runnable> planListeners = new ArrayList<>();
 
     /** The result shown, null before the first generation. */
     private ChangePlanModel.Result result;
-    /** Plain-text form of the shown plan, "" without a plan. */
-    private String plainTextPlan = "";
+    /** The checklist of the shown plan, null without a plan. */
+    private ChangePlanOutline outline;
+    /** The checks of the shown plan (see {@link ChangePlanChecks}), saved in the guild folder after every change. */
+    private ChangePlanChecks checks = ChangePlanChecks.EMPTY;
 
     /**
      * @param offerCurrentLineup true to offer "current lineup" (the one open in the context bar,
@@ -116,20 +142,14 @@ public class ChangePlanPanel extends JPanel {
         messageLabel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
         messageLabel.setVisible(false);
 
-        outputPane.setEditable(false);
-        outputPane.setContentType("text/html");
-        // Plan text in the look and feel's label color on the transparent (dark) background.
-        outputPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-        outputPane.setOpaque(false);
-        Color foreground = UIManager.getColor("Label.foreground");
-        if (foreground != null) {
-            outputPane.setForeground(foreground);
-        }
-        Font font = UIManager.getFont("Label.font");
-        if (font != null) {
-            outputPane.setFont(font);
-        }
-        JScrollPane outputScrollPane = new JScrollPane(outputPane);
+        checklist.setOpaque(false);
+        checklist.setLayout(new BoxLayout(checklist, BoxLayout.Y_AXIS));
+        checklist.setBorder(BorderFactory.createEmptyBorder(4, 12, 12, 12));
+        JPanel checklistHolder = new JPanel(new BorderLayout());
+        checklistHolder.setOpaque(false);
+        checklistHolder.add(checklist, BorderLayout.NORTH);
+        JScrollPane outputScrollPane = new JScrollPane(checklistHolder);
+        outputScrollPane.getVerticalScrollBar().setUnitIncrement(16);
         outputScrollPane.setOpaque(false);
         outputScrollPane.getViewport().setOpaque(false);
         outputScrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -189,33 +209,198 @@ public class ChangePlanPanel extends JPanel {
     /** Computes and shows the plan for the chosen target. */
     public void generate() {
         ChangePlanModel.Target target;
+        String targetLabel;
         if (isCurrentTarget()) {
             target = new ChangePlanModel.CurrentLineup(appContext.lineup(), appContext.lineupFilePath());
+            targetLabel = "current:" + (appContext.lineupFilePath() == null ? "" : appContext.lineupFilePath().getFileName());
         } else if (savedLineupRadio.isSelected()) {
             target = new ChangePlanModel.SavedLineup((String) targetLineupCombo.getSelectedItem());
+            targetLabel = String.valueOf(targetLineupCombo.getSelectedItem());
         } else {
             target = new ChangePlanModel.Algorithms((LineupAlgorithm) heroAlgorithmCombo.getSelectedItem(),
                     (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem());
+            targetLabel = "algorithm";
         }
-        show(ChangePlanModel.plan(appContext.guildFilePath(), appContext.guild(), target));
+        show(ChangePlanModel.plan(appContext.guildFilePath(), appContext.guild(), target), targetLabel);
     }
 
-    private void show(ChangePlanModel.Result newResult) {
+    private void show(ChangePlanModel.Result newResult, String targetLabel) {
         result = newResult;
+        checklist.removeAll();
+        checkBoxes.clear();
         if (newResult.isOk()) {
-            ChangePlanRenderer.RenderedPlan rendered = ChangePlanRenderer.render(newResult.steps(), appContext.guild());
             messageLabel.setVisible(false);
-            outputPane.setText(rendered.html());
-            outputPane.setCaretPosition(0);
-            plainTextPlan = rendered.plainText();
+            outline = ChangePlanOutline.of(newResult.steps(), appContext.guild());
+            loadChecks(targetLabel);
+            buildChecklist();
         } else {
             showMessage(newResult);
-            outputPane.setText("");
-            plainTextPlan = "";
+            outline = null;
         }
         revalidate();
         repaint();
         List.copyOf(planListeners).forEach(Runnable::run);
+    }
+
+    // --- checklist ---
+
+    /**
+     * The checks of the guild for the new plan: those of entries that still exist for the same
+     * target, none for another target - saved again if that changed anything.
+     */
+    private void loadChecks(String targetLabel) {
+        Path guildDir = guildDir();
+        if (guildDir == null) {
+            checks = ChangePlanChecks.EMPTY;
+            return;
+        }
+        ChangePlanChecks saved = ChangePlanCheckRepository.load(guildDir);
+        checks = saved.forPlan(targetLabel, outline.items().stream().map(ChangePlanOutline.Item::id).toList());
+        if (!checks.equals(saved)) {
+            saveChecks();
+        }
+    }
+
+    private void saveChecks() {
+        Path guildDir = guildDir();
+        if (guildDir == null) {
+            return;
+        }
+        try {
+            ChangePlanCheckRepository.save(guildDir, checks);
+        } catch (IOException e) {
+            Logger.logException("Could not save the change plan checks in " + guildDir, e);
+        }
+    }
+
+    private Path guildDir() {
+        Path guildFilePath = appContext.guildFilePath();
+        return guildFilePath == null ? null : guildFilePath.getParent();
+    }
+
+    /** Heading and summary, then type → section → fortification → one checkbox per entry. */
+    private void buildChecklist() {
+        Guild guild = appContext.guild();
+        addRow(styled(new JLabel(ChangePlanRenderer.heading()), Font.BOLD, 4f), 0, 2);
+        if (outline.isEmpty()) {
+            addRow(styled(new JLabel(ChangePlanRenderer.noChanges()), Font.BOLD, 0f), 0, 4);
+            return;
+        }
+        summaryLabel.setBorder(null);
+        addRow(summaryLabel, 0, 4);
+        summaryLabel.setForeground(InfoSections.MUTED_COLOR);
+        updateSummary();
+        for (ChangePlanOutline.TypeGroup type : outline.types()) {
+            addRow(styled(new JLabel(ChangePlanRenderer.typeHeading(type.type())), Font.BOLD, 3f), 0, 12);
+            for (ChangePlanOutline.Section section : type.sections()) {
+                addRow(styled(new JLabel(ChangePlanRenderer.sectionHeading(section)), Font.BOLD, 1f), INDENT, 8);
+                for (ChangePlanOutline.FortificationGroup group : section.fortifications()) {
+                    addRow(styled(new JLabel(ChangePlanRenderer.fortificationName(group.fortificationId())), Font.BOLD, 0f),
+                            2 * INDENT, 4);
+                    for (ChangePlanOutline.Item item : group.items()) {
+                        JCheckBox checkBox = new JCheckBox();
+                        checkBox.setOpaque(false);
+                        checkBox.putClientProperty(ITEM_TEXT, ChangePlanRenderer.itemText(item, guild));
+                        checkBox.setSelected(checks.isChecked(item.id()));
+                        checkBox.addActionListener(e -> setChecked(item.id(), checkBox.isSelected()));
+                        styleCheckBox(checkBox);
+                        checkBoxes.put(item.id(), checkBox);
+                        addRow(checkBox, 3 * INDENT, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    private void addRow(JComponent component, int indent, int top) {
+        component.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(top, indent, 0, 0),
+                component.getBorder()));
+        component.setAlignmentX(Component.LEFT_ALIGNMENT);
+        checklist.add(component);
+    }
+
+    /** {@code label} in {@code style}, {@code larger} points larger - "->" instead of "→" if the font lacks the arrow. */
+    private static JLabel styled(JLabel label, int style, float larger) {
+        label.setFont(label.getFont().deriveFont(style, label.getFont().getSize2D() + larger));
+        if (!label.getFont().canDisplay('→')) {
+            label.setText(label.getText().replace("→", "->"));
+        }
+        return label;
+    }
+
+    /** A checked entry is muted and struck through. */
+    private static void styleCheckBox(JCheckBox checkBox) {
+        String text = ((String) checkBox.getClientProperty(ITEM_TEXT))
+                .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        if (checkBox.isSelected()) {
+            checkBox.setText("<html><s>" + text + "</s></html>");
+            checkBox.setForeground(InfoSections.MUTED_COLOR);
+        } else {
+            checkBox.setText("<html>" + text + "</html>");
+            checkBox.setForeground(UIManager.getColor("Label.foreground"));
+        }
+    }
+
+    private void updateSummary() {
+        summaryLabel.setText(ChangePlanRenderer.checkedSummary(outline.items().size(), checks.checkedIds().size()));
+    }
+
+    /** Checks or unchecks one entry - only that, nothing else changes - and saves the checks right away. */
+    public void setChecked(String itemId, boolean checked) {
+        if (outline == null || outline.item(itemId).isEmpty()) {
+            return;
+        }
+        checks = checks.with(itemId, checked);
+        saveChecks();
+        JCheckBox checkBox = checkBoxes.get(itemId);
+        if (checkBox != null) {
+            checkBox.setSelected(checked);
+            styleCheckBox(checkBox);
+        }
+        updateSummary();
+        List.copyOf(planListeners).forEach(Runnable::run);
+    }
+
+    /** The checklist of the shown plan, null without a plan. */
+    public ChangePlanOutline outline() {
+        return outline;
+    }
+
+    /** The checks of the shown plan. */
+    public ChangePlanChecks checks() {
+        return checks;
+    }
+
+    /**
+     * "Apply to live": takes the checked entries into the live lineup (see {@link LiveApplyService}),
+     * archiving the old one first, and shows the plan again. Writes nothing unless the result is
+     * {@link LiveApplyService.Outcome#APPLIED}.
+     *
+     * @return the result; null without a plan
+     * @throws IOException if the live lineup could not be read, archived or saved - it is then unchanged
+     */
+    public LiveApplyService.Result applyToLive() throws IOException {
+        Path guildDir = guildDir();
+        if (!hasPlan() || outline == null || guildDir == null) {
+            return null;
+        }
+        Path liveFile = LineupFiles.originalPathFor(guildDir);
+        LocalDateTime now = LocalDateTime.now();
+        LiveApplyService.Result applied = LiveApplyService.apply(LineupRepository.load(liveFile), outline,
+                checks.checkedIds(), now);
+        if (applied.outcome() != LiveApplyService.Outcome.APPLIED) {
+            return applied;
+        }
+        LiveApplyService.archive(guildDir, now);
+        LiveApplyService.saveLive(guildDir, applied.live());
+        checks = checks.without(applied.appliedIds());
+        saveChecks();
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            // Should not happen in the output stage - but an open live lineup must show the new state.
+            appContext.set(applied.live(), appContext.lineupFilePath());
+        }
+        generate();
+        return applied;
     }
 
     /** A hint (muted) or an error (red, with the exception's message) above the empty plan. */
@@ -246,16 +431,26 @@ public class ChangePlanPanel extends JPanel {
         return result != null && result.isOk();
     }
 
-    /** The shown plan as plain text, "" without a plan. */
+    /** The shown plan as plain text with "[x]" / "[ ]", "" without a plan. */
     public String plainTextPlan() {
-        return plainTextPlan;
+        return outline == null ? "" : ChangePlanRenderer.plainText(outline, checks.checkedIds(), appContext.guild());
     }
 
     /** Copies the shown plan as plain text to the clipboard - nothing without a plan. */
     public void copyPlan() {
         if (hasPlan()) {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(plainTextPlan), null);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(plainTextPlan()), null);
         }
+    }
+
+    /** The checkbox of the entry {@code itemId}, null if none is shown - for tests. */
+    JCheckBox checkBox(String itemId) {
+        return checkBoxes.get(itemId);
+    }
+
+    /** The summary "{n} entries, {k} checked" - for tests. */
+    String summaryText() {
+        return summaryLabel.getText();
     }
 
     /** {@code listener} runs after every (re)generation of the plan. */
@@ -303,8 +498,8 @@ public class ChangePlanPanel extends JPanel {
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof String fileName && fileName.endsWith(LineupFiles.SUFFIX)) {
-                    setText(fileName.substring(0, fileName.length() - LineupFiles.SUFFIX.length()));
+                if (value instanceof String fileName) {
+                    setText(LineupFiles.displayName(fileName));
                 }
                 return this;
             }

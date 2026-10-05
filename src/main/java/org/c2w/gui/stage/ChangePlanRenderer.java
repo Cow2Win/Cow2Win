@@ -1,121 +1,108 @@
 package org.c2w.gui.stage;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.repository.FortificationRepository;
-import org.c2w.domain.LineupChangePlanService.ChangeStep;
-import org.c2w.domain.LineupChangePlanService.ChangeType;
-import org.c2w.domain.LineupComparisonService.TeamKey;
+import org.c2w.domain.ChangePlanOutline;
+import org.c2w.domain.ChangePlanOutline.FortificationGroup;
+import org.c2w.domain.ChangePlanOutline.Item;
+import org.c2w.domain.ChangePlanOutline.Section;
+import org.c2w.domain.ChangePlanOutline.TypeGroup;
 import org.c2w.i18n.LanguageService;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
- * GUI-free text of a change plan: the steps as HTML (heading, intro, summary, then the
- * sections remove / move / place as numbered lists) and the same as plain text for the
- * clipboard. Steps are named "member · team (type)" and fortifications by their display name.
+ * GUI-free texts of the change plan checklist ({@link ChangePlanOutline}): headings of
+ * fortification types and sections, fortification names, the text of an entry ("member · team",
+ * for a fortification change with "→ new" / "← old fortification") and the whole plan as
+ * indented plain text with "[x]" / "[ ]" for the clipboard.
  */
 public final class ChangePlanRenderer {
 
     private static final String KEY_HEADING = "changePlan.heading";
-    private static final String KEY_INTRO = "changePlan.intro";
     private static final String KEY_NO_CHANGES = "changePlan.noChanges";
-    private static final String KEY_SUMMARY = "changePlan.summary";
+    private static final String KEY_CHECKED_SUMMARY = "changePlan.checkedSummary";
     private static final String KEY_SECTION_REMOVE = "changePlan.sectionRemove";
-    private static final String KEY_SECTION_MOVE = "changePlan.sectionMove";
-    private static final String KEY_SECTION_PLACE = "changePlan.sectionPlace";
-    private static final String KEY_STEP_REMOVE = "changePlan.stepRemove";
-    private static final String KEY_STEP_MOVE = "changePlan.stepMove";
-    private static final String KEY_STEP_PLACE = "changePlan.stepPlace";
+    private static final String KEY_SECTION_ADD = "changePlan.sectionAdd";
+    private static final String KEY_MOVED_TO = "changePlan.movedTo";
+    private static final String KEY_MOVED_FROM = "changePlan.movedFrom";
+
+    private static final String INDENT = "  ";
 
     private ChangePlanRenderer() {
     }
 
-    /** The plan as HTML (for an editor pane) and as plain text (for the clipboard). */
-    public record RenderedPlan(String html, String plainText) {
+    /** The heading of the plan, "Change plan: Live → target". */
+    static String heading() {
+        return LanguageService.displayName(KEY_HEADING);
     }
 
-    /** Renders {@code steps}; member names come from {@code guild}. */
-    public static RenderedPlan render(List<ChangeStep> steps, Guild guild) {
-        Map<ChangeType, List<ChangeStep>> byType = new EnumMap<>(ChangeType.class);
-        for (ChangeType type : ChangeType.values()) {
-            byType.put(type, new ArrayList<>());
+    /** "No changes needed …". */
+    static String noChanges() {
+        return LanguageService.displayName(KEY_NO_CHANGES);
+    }
+
+    /** "{n} entries, {k} checked". */
+    static String checkedSummary(int entries, int checked) {
+        return LanguageService.displayName(KEY_CHECKED_SUMMARY, entries, checked);
+    }
+
+    /** "Heroes" / "Titans". */
+    static String typeHeading(FortificationType type) {
+        return LanguageService.displayName("teamType." + type.name());
+    }
+
+    /** "Remove ({n})" / "Add ({n})". */
+    static String sectionHeading(Section section) {
+        return LanguageService.displayName(section.kind() == ChangePlanOutline.Kind.REMOVE ? KEY_SECTION_REMOVE : KEY_SECTION_ADD,
+                section.itemCount());
+    }
+
+    /** One entry, e.g. "Anna · Team 1" or, for a fortification change, "Anna · Team 1 → Bastion". */
+    static String itemText(Item item, Guild guild) {
+        String text = memberName(item.teamKey().teamMemberId(), guild) + " · "
+                + GuildMember.teamLabel(item.teamKey().teamIndex());
+        if (item.isMovePart()) {
+            String other = fortificationName(item.otherFortificationId());
+            text += " " + LanguageService.displayName(
+                    item.kind() == ChangePlanOutline.Kind.REMOVE ? KEY_MOVED_TO : KEY_MOVED_FROM, other);
         }
-        steps.forEach(step -> byType.get(step.type()).add(step));
-
-        long removeCount = byType.get(ChangeType.REMOVE).size();
-        long moveCount = byType.get(ChangeType.MOVE).size();
-        long placeCount = byType.get(ChangeType.PLACE).size();
-
-        StringBuilder html = new StringBuilder("<html><body style='font-family:sans-serif; margin:6px;'>");
-        html.append("<h2>").append(escape(LanguageService.displayName(KEY_HEADING))).append("</h2>");
-        html.append("<p>").append(escape(LanguageService.displayName(KEY_INTRO))).append("</p>");
-
-        StringBuilder plain = new StringBuilder();
-        plain.append(LanguageService.displayName(KEY_HEADING)).append("\n");
-
-        if (steps.isEmpty()) {
-            html.append("<p><b>").append(escape(LanguageService.displayName(KEY_NO_CHANGES))).append("</b></p>");
-            plain.append(LanguageService.displayName(KEY_NO_CHANGES)).append("\n");
-        } else {
-            String summary = LanguageService.displayName(KEY_SUMMARY,
-                    steps.size(), removeCount, moveCount, placeCount);
-            html.append("<p><b>").append(escape(summary)).append("</b></p>");
-            plain.append(summary).append("\n");
-
-            appendSection(html, plain, KEY_SECTION_REMOVE, byType.get(ChangeType.REMOVE), guild);
-            appendSection(html, plain, KEY_SECTION_MOVE, byType.get(ChangeType.MOVE), guild);
-            appendSection(html, plain, KEY_SECTION_PLACE, byType.get(ChangeType.PLACE), guild);
-        }
-        html.append("</body></html>");
-        return new RenderedPlan(html.toString(), plain.toString());
+        return text;
     }
 
-    private static void appendSection(StringBuilder html, StringBuilder plain, String sectionKey,
-                                      List<ChangeStep> steps, Guild guild) {
-        if (steps.isEmpty()) {
-            return;
-        }
-        String heading = LanguageService.displayName(sectionKey) + " (" + steps.size() + ")";
-        html.append("<h3>").append(escape(heading)).append("</h3><ol>");
-        plain.append("\n").append(heading).append("\n");
-        int number = 1;
-        for (ChangeStep step : steps) {
-            String sentence = sentenceFor(step, guild);
-            html.append("<li>").append(escape(sentence)).append("</li>");
-            plain.append(number++).append(". ").append(sentence).append("\n");
-        }
-        html.append("</ol>");
-    }
-
-    /** One step as a sentence, e.g. "Anna · Team 1 (heroes) von Rathaus nach Bastion verschieben". */
-    static String sentenceFor(ChangeStep step, Guild guild) {
-        String team = teamDesignation(step.teamKey(), guild);
-        return switch (step.type()) {
-            case REMOVE -> LanguageService.displayName(KEY_STEP_REMOVE, team,
-                    fortificationName(step.fromFortificationId()));
-            case MOVE -> LanguageService.displayName(KEY_STEP_MOVE, team,
-                    fortificationName(step.fromFortificationId()), fortificationName(step.toFortificationId()));
-            case PLACE -> LanguageService.displayName(KEY_STEP_PLACE, team,
-                    fortificationName(step.toFortificationId()));
-        };
-    }
-
-    private static String teamDesignation(TeamKey teamKey, Guild guild) {
-        return memberName(teamKey.teamMemberId(), guild) + " · "
-                + GuildMember.teamLabel(teamKey.teamIndex()) + " ("
-                + LanguageService.displayName("teamType." + teamKey.teamType().name()) + ")";
-    }
-
-    private static String fortificationName(String fortificationId) {
+    /** The display name of a fortification, its id if unknown. */
+    static String fortificationName(String fortificationId) {
         return fortificationId == null
                 ? LanguageService.displayName("common.none")
                 : FortificationRepository.findById(fortificationId)
                         .map(f -> LanguageService.displayName(f.id()))
                         .orElse(fortificationId);
+    }
+
+    /** The whole plan as indented plain text, "[x]" before checked and "[ ]" before open entries. */
+    static String plainText(ChangePlanOutline outline, Set<String> checkedIds, Guild guild) {
+        StringBuilder text = new StringBuilder(heading()).append("\n");
+        if (outline.isEmpty()) {
+            return text.append(noChanges()).append("\n").toString();
+        }
+        int checked = (int) outline.items().stream().filter(item -> checkedIds.contains(item.id())).count();
+        text.append(checkedSummary(outline.items().size(), checked)).append("\n");
+        for (TypeGroup type : outline.types()) {
+            text.append("\n").append(typeHeading(type.type())).append("\n");
+            for (Section section : type.sections()) {
+                text.append(INDENT).append(sectionHeading(section)).append("\n");
+                for (FortificationGroup group : section.fortifications()) {
+                    text.append(INDENT.repeat(2)).append(fortificationName(group.fortificationId())).append("\n");
+                    for (Item item : group.items()) {
+                        text.append(INDENT.repeat(3)).append(checkedIds.contains(item.id()) ? "[x] " : "[ ] ")
+                                .append(itemText(item, guild)).append("\n");
+                    }
+                }
+            }
+        }
+        return text.toString();
     }
 
     /** The member's name in {@code guild}, or the id if the guild has no such member. */
@@ -128,10 +115,5 @@ public final class ChangePlanRenderer {
                 .findFirst()
                 .map(GuildMember::name)
                 .orElse(memberId);
-    }
-
-    /** Minimal HTML escaping for the dynamic strings (member/fortification names, translated text). */
-    private static String escape(String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

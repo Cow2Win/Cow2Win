@@ -137,7 +137,7 @@ public class ContextBar extends JPanel {
                                                           boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof String fileName) {
-                    setText(stripLineupSuffix(fileName));
+                    setText(LineupFiles.displayName(fileName));
                 }
                 return this;
             }
@@ -275,6 +275,11 @@ public class ContextBar extends JPanel {
 
     // --- "Original" lineup status ---
 
+    /** Shows the date of the live lineup again - after "apply to live" changed it without a lineup event. */
+    public void refreshLiveStatus() {
+        updateOriginalStatus();
+    }
+
     private void updateOriginalStatus() {
         Path guildFilePath = appContext.guildFilePath();
         Path originalFile = guildFilePath == null || guildFilePath.getParent() == null ? null
@@ -283,7 +288,7 @@ public class ContextBar extends JPanel {
     }
 
     /**
-     * "In game: Original, as of 28/09/2026" - the last-modified date of {@code originalFile}
+     * "Live, as of 28/09/2026" - the last-modified date of {@code originalFile}
      * in {@code locale}'s short date format - or "In game: no Original lineup yet" if there is
      * no such file (or it is null). Public: also shown in the info panel of the output stage view.
      */
@@ -412,17 +417,6 @@ public class ContextBar extends JPanel {
             JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
                     LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    /**
-     * Display text for a lineup file name in the combo box - the file name without its
-     * {@link LineupFiles#SUFFIX} (purely cosmetic). Package-visible (not {@code private}) so
-     * {@code Cow2Frame#onRemoveLineup()} can reuse it in its confirmation dialog.
-     */
-    static String stripLineupSuffix(String fileName) {
-        return fileName.endsWith(LineupFiles.SUFFIX)
-                ? fileName.substring(0, fileName.length() - LineupFiles.SUFFIX.length())
-                : fileName;
     }
 
     /** Parent of this bar's message dialogs: the main window, so they appear centered on it. */
