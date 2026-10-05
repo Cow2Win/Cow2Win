@@ -12,6 +12,8 @@ import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -62,8 +64,7 @@ public final class WorkspaceBootstrap {
         TeamScoreCalculator.setHeroCombos(catalog.heroCombos().combos());
         AppContext context = new AppContext(catalog);
         progress.accept("Opening guild and lineup ...");
-        loadGuildContext(context);
-        loadLineupContext(context);
+        openLastGuildAndLineup(context);
 
         if (firstStart) {
             loadDemo(context);
@@ -126,15 +127,21 @@ public final class WorkspaceBootstrap {
      * startup, so a {@code lastGuildPath}/{@code lastLineUpPath} that still
      * points at a previous workspace no longer silently pulls the app back to
      * that old location (the "config says one workspace but the app really uses
-     * another" mismatch). A blank saved path (nothing ever opened) resolves to
-     * the workspace directory itself.
+     * another" mismatch). Returns null for a blank saved path (nothing ever
+     * opened) - the caller falls back to what is in the workspace then.
      */
     private static Path reanchorIntoWorkspace(String savedPath) {
-        Path workspace = Config.getWorkspaceDir();
         if (savedPath == null || savedPath.isBlank()) {
-            return workspace;
+            return null;
         }
-        Path saved = Paths.get(savedPath);
+        Path workspace = Config.getWorkspaceDir();
+        Path saved;
+        try {
+            saved = Paths.get(savedPath);
+        } catch (InvalidPathException e) {
+            Logger.logException("Ignoring invalid saved path " + savedPath, e);
+            return null;
+        }
         Path fileName = saved.getFileName();
         Path guildDir = saved.getParent();
         Path guildFolder = guildDir == null ? null : guildDir.getFileName();
@@ -142,8 +149,83 @@ public final class WorkspaceBootstrap {
         return fileName == null ? base : base.resolve(fileName);
     }
 
-    private static void loadGuildContext(AppContext context) {
-        Path guildFilePath = reanchorIntoWorkspace(Config.getLastGuildPath());
+    /**
+     * Opens the guild and lineup to start with and remembers both in the
+     * config. Takes the re-anchored {@code lastGuildPath}/{@code lastLineUpPath}
+     * if they point to existing files; otherwise falls back to the first guild
+     * folder in the workspace (creating an empty {@value #DEFAULT_GUILD_NAME}
+     * guild if there is none) and the lineup of that guild - see
+     * {@link #resolveGuildFile} / {@link #resolveLineupFile}. Only paths of
+     * existing files are written to the config, so a broken entry can never
+     * get worse from one start to the next.
+     */
+    static void openLastGuildAndLineup(AppContext context) {
+        Path guildFilePath = resolveGuildFile(context);
+        Path lineupFilePath = resolveLineupFile(guildFilePath);
+        loadGuildContext(context, guildFilePath);
+        loadLineupContext(context, lineupFilePath);
+    }
+
+    /**
+     * The guild file to open: the re-anchored {@code lastGuildPath} if it
+     * exists, else guild.json of the first guild folder in the workspace,
+     * else that of a newly created, empty {@value #DEFAULT_GUILD_NAME} guild.
+     */
+    private static Path resolveGuildFile(AppContext context) {
+        String saved = Config.getLastGuildPath();
+        Path candidate = reanchorIntoWorkspace(saved);
+        if (candidate != null && Files.isRegularFile(candidate)) {
+            return candidate;
+        }
+
+        GuildService guildService = new GuildService(context);
+        List<String> folders = guildService.listGuildFolderNames();
+        Path fallback;
+        if (!folders.isEmpty()) {
+            fallback = guildService.guildDir(folders.get(0)).resolve(GuildService.GUILD_FILE_NAME);
+        } else {
+            Path guildDir = guildService.guildDir(DEFAULT_GUILD_NAME);
+            fallback = GuildService.createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
+            if (!Files.isRegularFile(guildDir.resolve(LineupService.DEFAULT_LINEUP_FILE_NAME))) {
+                LineupService.createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
+            }
+        }
+        Logger.log("Last guild " + describe(saved, candidate) + " not found, opening " + fallback + " instead");
+        return fallback;
+    }
+
+    /**
+     * The lineup file to open: the re-anchored {@code lastLineUpPath} if it
+     * exists (and, if the guild is not the one from the config, belongs to
+     * that guild), else the first lineup in the guild's folder, else a newly
+     * created default lineup there.
+     */
+    private static Path resolveLineupFile(Path guildFilePath) {
+        Path guildDir = guildFilePath.getParent();
+        String saved = Config.getLastLineUpPath();
+        Path candidate = reanchorIntoWorkspace(saved);
+        boolean guildFromConfig = guildFilePath.equals(reanchorIntoWorkspace(Config.getLastGuildPath()));
+        if (candidate != null && Files.isRegularFile(candidate)
+                && (guildFromConfig || guildDir.equals(candidate.getParent()))) {
+            return candidate;
+        }
+
+        List<String> lineupFileNames = LineupService.listLineupFileNames(guildDir);
+        Path fallback = lineupFileNames.isEmpty()
+                ? LineupService.createInitialLineupFile(guildDir.getFileName().toString(), guildDir)
+                : guildDir.resolve(lineupFileNames.get(0));
+        Logger.log("Last lineup " + describe(saved, candidate) + " not usable, opening " + fallback + " instead");
+        return fallback;
+    }
+
+    private static String describe(String saved, Path reanchored) {
+        if (saved == null || saved.isBlank()) {
+            return "(not set)";
+        }
+        return reanchored == null ? "\"" + saved + "\"" : reanchored.toString();
+    }
+
+    private static void loadGuildContext(AppContext context, Path guildFilePath) {
         Guild guild;
         try {
             guild = GuildRepository.load(guildFilePath, context.catalog());
@@ -153,12 +235,14 @@ public final class WorkspaceBootstrap {
         }
         context.set(guild, guildFilePath);
         // Self-heal config so the corrected, workspace-anchored path is what
-        // gets persisted the next time config.properties is written.
-        Config.setLastGuildPath(guildFilePath.toString());
+        // gets persisted the next time config.properties is written - but
+        // never replace the saved entry with a path that does not exist.
+        if (Files.isRegularFile(guildFilePath)) {
+            Config.setLastGuildPath(guildFilePath.toString());
+        }
     }
 
-    private static void loadLineupContext(AppContext context) {
-        Path lineupFilePath = reanchorIntoWorkspace(Config.getLastLineUpPath());
+    private static void loadLineupContext(AppContext context, Path lineupFilePath) {
         Lineup lineup;
         try {
             lineup = LineupRepository.load(lineupFilePath);
@@ -167,6 +251,8 @@ public final class WorkspaceBootstrap {
             lineup = LineupRepository.createEmptyLineup();
         }
         context.set(lineup, lineupFilePath);
-        Config.setLastLineUpPath(lineupFilePath.toString());
+        if (Files.isRegularFile(lineupFilePath)) {
+            Config.setLastLineUpPath(lineupFilePath.toString());
+        }
     }
 }
