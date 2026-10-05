@@ -8,19 +8,23 @@ import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * The process bar below the {@link ContextBar}: one tile per process stage - input, strategic
  * concept, output (see {@link #STAGES}) - with number, title and subtitle, connected by small
  * arrows, plus a "next step" button on the right (hidden for now).
  *
- * <p>The {@linkplain #setActiveStage active stage} is highlighted in teal; as long as there are
- * no separate stage views yet, that is the strategic concept (the main window shows the
- * fortification map). The tiles are display only until the stage views of M3 exist - a click
- * does nothing yet; in M3 it will switch to the stage's view. Each tile already has a traffic
- * light ({@link StageStatus}), not shown until it is set from real data.
+ * <p>The {@linkplain #setActiveStage active stage} is highlighted in teal. Only the tiles of
+ * {@linkplain #setStageAvailable available} stages - those with a stage view - can be clicked
+ * (hand cursor, hover highlight): a click makes the stage active and reports it to the
+ * {@linkplain #addStageSelectionListener stage selection listeners}, which switch the view.
+ * The other tiles are display only. Each tile already has a traffic light
+ * ({@link StageStatus}), not shown until it is set from real data.
  */
 public class ProcessBar extends JPanel {
 
@@ -37,6 +41,7 @@ public class ProcessBar extends JPanel {
 
     private final List<StageTile> tiles = new ArrayList<>();
     private final NextStepButton nextStepButton = new NextStepButton();
+    private final List<Consumer<Stage>> stageSelectionListeners = new ArrayList<>();
 
     public ProcessBar() {
         super(new GridBagLayout());
@@ -56,7 +61,7 @@ public class ProcessBar extends JPanel {
                 c.insets = new Insets(0, 4, 0, 4);
                 add(new Arrow(), c);
             }
-            StageTile tile = new StageTile(stage, i + 1);
+            StageTile tile = new StageTile(stage, i + 1, this::onTileClicked);
             tiles.add(tile);
             c.weightx = 1;
             c.insets = new Insets(0, 0, 0, 0);
@@ -77,6 +82,29 @@ public class ProcessBar extends JPanel {
     /** The highlighted stage. */
     public Stage activeStage() {
         return tiles.stream().filter(StageTile::isActive).map(StageTile::stage).findFirst().orElse(null);
+    }
+
+    /**
+     * Makes {@code stage}'s tile clickable (hand cursor, hover highlight) - for a stage with a
+     * stage view - or display only again.
+     */
+    public void setStageAvailable(Stage stage, boolean available) {
+        tile(stage).setAvailable(available);
+    }
+
+    public boolean isStageAvailable(Stage stage) {
+        return tile(stage).isAvailable();
+    }
+
+    /** {@code listener} is told the stage whose (available) tile was clicked. */
+    public void addStageSelectionListener(Consumer<Stage> listener) {
+        stageSelectionListeners.add(listener);
+    }
+
+    /** A click on an available tile: makes its stage active and reports it. */
+    private void onTileClicked(Stage stage) {
+        setActiveStage(stage);
+        List.copyOf(stageSelectionListeners).forEach(listener -> listener.accept(stage));
     }
 
     /** Sets the traffic light of {@code stage}'s tile. */
@@ -128,9 +156,9 @@ public class ProcessBar extends JPanel {
 
     /**
      * One stage of the process bar: rounded tile with the number in a circle, the stage name
-     * as title, a short description as subtitle and - once set - a traffic light on the right.
-     * Display only until the stage views of M3 exist: not clickable, no hover effect, only the
-     * subtitle as tooltip.
+     * as title, a short description as subtitle (also its tooltip) and - once set - a traffic
+     * light on the right. Clickable with hover highlight only while {@linkplain #setAvailable
+     * available}; otherwise display only, without any mouse listener of its own.
      */
     static final class StageTile extends JComponent {
 
@@ -142,7 +170,9 @@ public class ProcessBar extends JPanel {
         private static final int MIN_WIDTH = 120;
 
         private static final Color FILL = new Color(255, 255, 255, 18);
+        private static final Color FILL_HOVER = new Color(255, 255, 255, 34);
         private static final Color ACTIVE_FILL = new Color(ACCENT.getRed(), ACCENT.getGreen(), ACCENT.getBlue(), 48);
+        private static final Color ACTIVE_FILL_HOVER = new Color(ACCENT.getRed(), ACCENT.getGreen(), ACCENT.getBlue(), 72);
         private static final Color CIRCLE_FILL = new Color(255, 255, 255, 30);
         private static final Color SUBTITLE_COLOR = new Color(255, 255, 255, 140);
 
@@ -151,9 +181,14 @@ public class ProcessBar extends JPanel {
         private final String title;
         private final String subtitle;
         private boolean active;
+        private boolean available;
+        private boolean hover;
         private StageStatus status = StageStatus.NONE;
 
-        StageTile(Stage stage, int number) {
+        /** Hover highlight and click - only registered while {@link #available}. */
+        private final MouseAdapter clickHandler;
+
+        StageTile(Stage stage, int number, Consumer<Stage> onClick) {
             this.stage = stage;
             this.number = number;
             this.title = LanguageService.displayName(stage.stageTextKey());
@@ -162,6 +197,48 @@ public class ProcessBar extends JPanel {
             setToolTipText(subtitle);
             Font base = UIManager.getFont("Label.font");
             setFont(base != null ? base : new JLabel().getFont());
+            clickHandler = new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    setHover(true);
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    setHover(false);
+                }
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onClick.accept(stage);
+                }
+            };
+        }
+
+        boolean isAvailable() {
+            return available;
+        }
+
+        /** Clickable with hand cursor and hover highlight, or display only. */
+        void setAvailable(boolean available) {
+            if (this.available == available) {
+                return;
+            }
+            this.available = available;
+            if (available) {
+                addMouseListener(clickHandler);
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            } else {
+                removeMouseListener(clickHandler);
+                setCursor(Cursor.getDefaultCursor());
+                hover = false;
+            }
+            repaint();
+        }
+
+        private void setHover(boolean hover) {
+            this.hover = hover;
+            repaint();
         }
 
         Stage stage() {
@@ -230,7 +307,7 @@ public class ProcessBar extends JPanel {
                 int w = getWidth() - 1;
                 int h = getHeight() - 1;
 
-                g2.setColor(active ? ACTIVE_FILL : FILL);
+                g2.setColor(active ? (hover ? ACTIVE_FILL_HOVER : ACTIVE_FILL) : (hover ? FILL_HOVER : FILL));
                 g2.fillRoundRect(0, 0, w, h, ARC, ARC);
                 g2.setColor(active ? ACCENT : LINE_COLOR);
                 g2.drawRoundRect(0, 0, w, h, ARC, ARC);

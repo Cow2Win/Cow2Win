@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,7 +34,7 @@ class ProcessBarTest {
     }
 
     @Test
-    @DisplayName("The tiles are display only: default cursor, no mouse listener except the tooltip's")
+    @DisplayName("By default the tiles are display only: default cursor, no mouse listener except the tooltip's")
     void tilesAreNotClickable() {
         ProcessBar bar = new ProcessBar();
 
@@ -43,6 +45,38 @@ class ProcessBarTest {
                 assertInstanceOf(ToolTipManager.class, listener, tile.stage().name());
             }
         }
+    }
+
+    @Test
+    @DisplayName("Only available tiles are clickable: hand cursor, a click reports the stage and makes it active")
+    void availableTilesAreClickable() {
+        ProcessBar bar = new ProcessBar();
+        List<Stage> selected = new ArrayList<>();
+        bar.addStageSelectionListener(selected::add);
+        bar.setActiveStage(Stage.INPUT);
+
+        bar.setStageAvailable(Stage.CONCEPT, true);
+        assertEquals(Cursor.HAND_CURSOR, bar.tile(Stage.CONCEPT).getCursor().getType());
+        assertEquals(Cursor.DEFAULT_CURSOR, bar.tile(Stage.INPUT).getCursor().getType());
+        assertEquals(Cursor.DEFAULT_CURSOR, bar.tile(Stage.OUTPUT).getCursor().getType());
+
+        click(bar.tile(Stage.OUTPUT));
+        assertEquals(List.of(), selected, "a tile without a view reports nothing");
+        assertEquals(Stage.INPUT, bar.activeStage());
+
+        click(bar.tile(Stage.CONCEPT));
+        assertEquals(List.of(Stage.CONCEPT), selected);
+        assertEquals(Stage.CONCEPT, bar.activeStage());
+
+        bar.setStageAvailable(Stage.CONCEPT, false);
+        assertEquals(Cursor.DEFAULT_CURSOR, bar.tile(Stage.CONCEPT).getCursor().getType());
+        click(bar.tile(Stage.CONCEPT));
+        assertEquals(List.of(Stage.CONCEPT), selected);
+    }
+
+    private static void click(Component tile) {
+        tile.dispatchEvent(new MouseEvent(tile, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                5, 5, 1, false, MouseEvent.BUTTON1));
     }
 
     @Test

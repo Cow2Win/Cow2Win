@@ -41,13 +41,28 @@ public class FortificationInfoPanel extends JPanel {
     private record MarkedEntry(String id, String imagePath, FortMark mark) {
     }
 
+    /** Column count and scroll size of the avatar grids in the {@linkplain #FortificationInfoPanel(Fortification, List, List, boolean) compact} layout - fits a narrow side panel. */
+    private static final int COMPACT_GROUP_COLUMNS = 8;
+    private static final Dimension COMPACT_GROUP_SCROLL_SIZE = new Dimension(250, 32);
+
     private final Fortification fortification;
 
     /**
+     * The layout of {@link FortificationEntryDialog}: facts and avatar groups side by side.
+     *
      * @param heroes the hero catalog - shown for a {@link FortificationType#HERO} fortification
      * @param titans the titan catalog - shown for a {@link FortificationType#TITAN} fortification
      */
     public FortificationInfoPanel(Fortification fortification, List<Hero> heroes, List<Titan> titans) {
+        this(fortification, heroes, titans, false);
+    }
+
+    /**
+     * @param compact true for a narrow column (e.g. the info panel of a stage view): facts and
+     *                avatar groups stacked, narrower avatar grids; false for the side-by-side
+     *                layout of {@link FortificationEntryDialog}
+     */
+    public FortificationInfoPanel(Fortification fortification, List<Hero> heroes, List<Titan> titans, boolean compact) {
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationInfoPanel needs a fortification");
         }
@@ -56,17 +71,26 @@ public class FortificationInfoPanel extends JPanel {
         }
         this.fortification = fortification;
 
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        setLayout(new BoxLayout(this, compact ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+        int columns = compact ? COMPACT_GROUP_COLUMNS : GROUP_COLUMNS;
+        Dimension scrollSize = compact ? COMPACT_GROUP_SCROLL_SIZE : GROUP_SCROLL_SIZE;
         JPanel infoPanel = buildInfoPanel();
         JPanel markedPanel = fortification.type() == FortificationType.TITAN
                 ? buildMarkedPanel(entries(titans, Titan::id, Titan::imagePath, t -> t.fortMark(fortification.id())),
-                        KEY_NEGATIVE_TITANS_HEADER, KEY_GOOD_TITANS_HEADER)
+                        KEY_NEGATIVE_TITANS_HEADER, KEY_GOOD_TITANS_HEADER, columns, scrollSize)
                 : buildMarkedPanel(entries(heroes, Hero::id, Hero::imagePath, h -> h.fortMark(fortification.id())),
-                        KEY_NEGATIVE_HEROES_HEADER, KEY_GOOD_HEROES_HEADER);
-        infoPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-        markedPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-        add(infoPanel);
-        add(Box.createHorizontalStrut(12));
+                        KEY_NEGATIVE_HEROES_HEADER, KEY_GOOD_HEROES_HEADER, columns, scrollSize);
+        if (compact) {
+            infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            markedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            add(infoPanel);
+            add(Box.createVerticalStrut(8));
+        } else {
+            infoPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+            markedPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+            add(infoPanel);
+            add(Box.createHorizontalStrut(12));
+        }
         add(markedPanel);
     }
 
@@ -130,12 +154,15 @@ public class FortificationInfoPanel extends JPanel {
      * {@link FortMark#NEGATIVE} on top ("rather avoid these"), those marked
      * {@link FortMark#POSITIVE} below ("good fits"). Purely informational.
      */
-    private JPanel buildMarkedPanel(List<MarkedEntry> entries, String negativeHeaderKey, String goodHeaderKey) {
+    private JPanel buildMarkedPanel(List<MarkedEntry> entries, String negativeHeaderKey, String goodHeaderKey,
+                                    int columns, Dimension scrollSize) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JPanel negativeGroup = buildGroupPanel(LanguageService.displayName(negativeHeaderKey), marked(entries, FortMark.NEGATIVE));
-        JPanel goodGroup = buildGroupPanel(LanguageService.displayName(goodHeaderKey), marked(entries, FortMark.POSITIVE));
+        JPanel negativeGroup = buildGroupPanel(LanguageService.displayName(negativeHeaderKey),
+                marked(entries, FortMark.NEGATIVE), columns, scrollSize);
+        JPanel goodGroup = buildGroupPanel(LanguageService.displayName(goodHeaderKey),
+                marked(entries, FortMark.POSITIVE), columns, scrollSize);
         negativeGroup.setAlignmentX(Component.LEFT_ALIGNMENT);
         goodGroup.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(negativeGroup);
@@ -157,10 +184,10 @@ public class FortificationInfoPanel extends JPanel {
      * A titled, read-only, scrollable grid of avatars (see
      * {@link #buildIconLabel}) - or {@code common.none} if {@code entries}
      * is empty. The grid is wrapped in a {@link JScrollPane} of fixed size
-     * ({@link #GROUP_SCROLL_SIZE}) rather than sized to fit every entry, so
+     * ({@code scrollSize}) rather than sized to fit every entry, so
      * a large catalog scrolls instead of growing this panel unpredictably.
      */
-    private static JPanel buildGroupPanel(String title, List<MarkedEntry> entries) {
+    private static JPanel buildGroupPanel(String title, List<MarkedEntry> entries, int columns, Dimension scrollSize) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBorder(BorderFactory.createTitledBorder(title));
 
@@ -169,7 +196,7 @@ public class FortificationInfoPanel extends JPanel {
             return wrapper;
         }
 
-        JPanel grid = new JPanel(new GridLayout(0, GROUP_COLUMNS, 2, 2));
+        JPanel grid = new JPanel(new GridLayout(0, columns, 2, 2));
         for (MarkedEntry entry : entries) {
             grid.add(buildIconLabel(entry));
         }
@@ -178,7 +205,7 @@ public class FortificationInfoPanel extends JPanel {
 
         JScrollPane scrollPane = new JScrollPane(gridHolder,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setPreferredSize(GROUP_SCROLL_SIZE);
+        scrollPane.setPreferredSize(scrollSize);
         scrollPane.getVerticalScrollBar().setUnitIncrement(ICON_SIZE);
         wrapper.add(scrollPane, BorderLayout.CENTER);
         return wrapper;

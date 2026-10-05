@@ -49,17 +49,17 @@ class FortificationMapPanelTypeTest {
     }
 
     @Test
-    @DisplayName("Only fortifications of the selected type are on the map, each at its catalog cell; the summary follows the type")
+    @DisplayName("Only fortifications of the selected type are on the map, each at its catalog cell; no summary in the top corners")
     void mapFollowsFortificationType() {
         FortificationMapPanel map = new FortificationMapPanel(context);
         assertShowsOnly(map, FortificationType.HERO);
-        assertInstanceOf(HeroLineupSummaryPanel.class, map.componentAt(0, 0));
+        assertNull(map.componentAt(0, 0), "no summary on the map");
         assertNull(map.componentAt(0, map.columns() - 1));
 
         context.setFortificationType(FortificationType.TITAN);
         assertShowsOnly(map, FortificationType.TITAN);
         assertNull(map.componentAt(0, 0));
-        assertInstanceOf(TitanLineupSummaryPanel.class, map.componentAt(0, map.columns() - 1));
+        assertNull(map.componentAt(0, map.columns() - 1), "no summary on the map");
     }
 
     @Test

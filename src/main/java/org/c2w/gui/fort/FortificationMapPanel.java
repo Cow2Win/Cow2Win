@@ -24,8 +24,8 @@ import java.util.function.Consumer;
  * The map of the fortifications of the {@linkplain AppContext#fortificationType() selected
  * fortification type}, one {@link FortificationPanel} each; the cells of the other type stay
  * empty, and the grid keeps every row and column (see {@link GridPanel#setUniformCells}) so a
- * fortification is at the same place for both types. Only the selected type's lineup summary
- * is shown (heroes top left, titans top right).
+ * fortification is at the same place for both types. The lineup summary is not on the map (see
+ * the info panel of {@code org.c2w.gui.stage.ConceptStageView}).
  *
  * <p>A click on a fortification selects it, a second click clears the selection - see
  * {@link #selectedFortification()} and {@link #addSelectionListener}.
@@ -37,7 +37,7 @@ public class FortificationMapPanel extends GridPanel {
 
     private final AppContext appContext;
 
-    /** True while the change view is on (see {@link #setShowChanges}; currently not offered in the UI) - then every {@link FortificationPanel} shows its power change against the lineup as loaded or last saved instead of its current total power (see AppContext#fortificationDiffFromLoaded). */
+    /** True while the change view is on (see {@link #setShowChanges}) - then every {@link FortificationPanel} shows its power change against the lineup as loaded or last saved instead of its current total power (see AppContext#fortificationDiffFromLoaded). */
     private boolean showChanges = false;
 
     /** Id of the selected fortification, null if none is selected. */
@@ -121,24 +121,8 @@ public class FortificationMapPanel extends GridPanel {
         if (!selectionVisible) {
             setSelectedId(null);
         }
-
-        // Only the selected fortification type's summary: heroes top left, titans top right (same row).
-        if (selectedType == FortificationType.HERO) {
-            setComponentAt(0, 0, withUniformWidth(new HeroLineupSummaryPanel(lineup, guild)));
-        } else {
-            setComponentAt(0, columns() - 1, withUniformWidth(new TitanLineupSummaryPanel(lineup, guild)));
-        }
-    }
-
-    /**
-     * Gives {@code component} the same preferred width as a {@link FortificationPanel}, so a
-     * wider summary does not widen its column - every column then has the same width for
-     * both fortification types.
-     */
-    private static JComponent withUniformWidth(JComponent component) {
-        component.setPreferredSize(new Dimension(FortificationPanel.PREFERRED_WIDTH,
-                component.getPreferredSize().height));
-        return component;
+        // The lineup summary of the selected type is not part of the map: it is shown in the
+        // info panel of the concept stage view (see org.c2w.gui.stage.ConceptStageView).
     }
 
     /**
@@ -197,7 +181,7 @@ public class FortificationMapPanel extends GridPanel {
         return showChanges;
     }
 
-    /** Switches every {@link FortificationPanel} between total power and power change - currently not called: the "changes" checkbox was removed from the action bar, the change view has no switch in the UI yet. */
+    /** Switches every {@link FortificationPanel} between total power and power change - driven by the "changes" toggle in the action list of the concept stage view. */
     public void setShowChanges(boolean showChanges) {
         this.showChanges = showChanges;
         init();

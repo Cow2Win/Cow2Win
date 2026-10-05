@@ -20,22 +20,22 @@ import static org.c2w.gui.action.ActionId.*;
 public final class MainMenuBar extends JMenuBar {
 
     /** One entry of a {@link MenuSpec}: an action, a separator or a submenu. */
-    sealed interface Entry permits Item, Separator, MenuSpec {
+    public sealed interface Entry permits Item, Separator, MenuSpec {
     }
 
     /** A menu entry bound to the action registered for {@code id}. */
-    record Item(ActionId id) implements Entry {
+    public record Item(ActionId id) implements Entry {
     }
 
     /** A separator line. */
-    record Separator() implements Entry {
+    public record Separator() implements Entry {
     }
 
     /** A menu (or submenu): language file key of its title and its entries. */
-    record MenuSpec(String titleKey, List<Entry> entries) implements Entry {
+    public record MenuSpec(String titleKey, List<Entry> entries) implements Entry {
 
         /** The ids of every action in this menu, including its submenus. */
-        List<ActionId> allActionIds() {
+        public List<ActionId> allActionIds() {
             List<ActionId> ids = new ArrayList<>();
             for (Entry entry : entries) {
                 if (entry instanceof Item item) {
@@ -84,6 +84,17 @@ public final class MainMenuBar extends JMenuBar {
         return new MenuSpec(titleKey, Arrays.stream(entries)
                 .map(entry -> entry instanceof ActionId id ? new Item(id) : (Entry) entry)
                 .toList());
+    }
+
+    /**
+     * The top-level menu titled with {@code stage}'s {@link Stage#menuTextKey()} - also the
+     * source of that stage's action list (see {@code org.c2w.gui.stage.StageActionList}).
+     */
+    public static MenuSpec menuFor(Stage stage) {
+        return MENUS.stream()
+                .filter(spec -> spec.titleKey().equals(stage.menuTextKey()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No menu for stage " + stage));
     }
 
     /**

@@ -4,6 +4,7 @@ import org.c2w.data.repository.LineupFiles;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.cowscore.CowScoreDialog;
@@ -11,6 +12,8 @@ import org.c2w.gui.cowscore.CowScoreTab;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.journal.JournalActions;
+import org.c2w.gui.stage.ConceptStageView;
+import org.c2w.gui.stage.StageView;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
 import org.c2w.infra.Config;
@@ -29,8 +32,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.c2w.C2WApp.BASE_TITLE;
@@ -76,6 +81,10 @@ public class Cow2Frame extends JFrame {
     /** Background image painted by {@link #getContentPane()} (a {@link BackgroundPanel}) - loaded once in the constructor, see {@link IconLoader#getBackgroundImage()}. */
     private final Image background;
     private final FortificationMapPanel fortificationMapPanel;
+    /** The stage views in the center (a {@link CardLayout}, one card per stage name) - see {@link #showStage}. */
+    private final JPanel stageViews;
+    /** The stages that have a view in {@link #stageViews}. */
+    private final Set<Stage> availableStages = EnumSet.noneOf(Stage.class);
     /** The process bar (one tile per process stage) and the handlers of the stage actions - see {@link ActionBar}. */
     private final ActionBar actionBar;
     /** Guild, fortification type and lineup selection - see {@link ContextBar}. */
@@ -147,22 +156,48 @@ public class Cow2Frame extends JFrame {
         this.contextBar = new ContextBar(appContext, actions);
         actionBar.buildBar();
 
-        JScrollPane fortificationScrollPane = new JScrollPane(fortificationMapPanel);
-        fortificationScrollPane.setOpaque(false);
-        fortificationScrollPane.getViewport().setOpaque(false);
-
-        // Two rows on top: what is selected (context bar), and what can be done with it (action bar).
+        // Two rows on top: what is selected (context bar), and the process bar (action bar).
         JPanel topArea = new JPanel(new BorderLayout());
         topArea.setOpaque(false);
         topArea.add(contextBar, BorderLayout.NORTH);
         topArea.add(actionBar, BorderLayout.CENTER);
 
+        // The center: one stage view per process stage, switched by the process bar's tiles.
+        // So far only the strategic concept has a view; input and output follow (M3b, M3c).
+        this.stageViews = new JPanel(new CardLayout());
+        stageViews.setOpaque(false);
+        addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
+        ProcessBar processBar = actionBar.processBar();
+        processBar.addStageSelectionListener(this::showStage);
+        showStage(Stage.CONCEPT);
+
         setContentPane(new BackgroundPanel(new BorderLayout(), background));
         getContentPane().add(topArea, BorderLayout.NORTH);
-        getContentPane().add(fortificationScrollPane, BorderLayout.CENTER);
+        getContentPane().add(stageViews, BorderLayout.CENTER);
 
         setBounds(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds());
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+    }
+
+    /** Adds {@code view} as a card of {@link #stageViews} and makes its stage's tile clickable. */
+    private void addStageView(StageView view) {
+        stageViews.add(view, view.stage().name());
+        availableStages.add(view.stage());
+        actionBar.processBar().setStageAvailable(view.stage(), true);
+    }
+
+    /** Shows the view of {@code stage} (if it has one) and highlights its tile. */
+    private void showStage(Stage stage) {
+        if (!availableStages.contains(stage)) {
+            return;
+        }
+        ((CardLayout) stageViews.getLayout()).show(stageViews, stage.name());
+        actionBar.processBar().setActiveStage(stage);
+    }
+
+    /** The stage views in the center - package-visible for tests. */
+    JPanel stageViews() {
+        return stageViews;
     }
 
     /**
