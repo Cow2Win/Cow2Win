@@ -262,7 +262,7 @@ public final class JournalBattleListDialog extends JDialog {
 
     /** Reads the journal of the open guild again in the background; the selected battles stay selected. */
     public void reload() {
-        setTitle(JournalTexts.text("journal.battles.title", context.guild() == null ? "" : context.guild().name()));
+        setTitle(JournalTexts.text("journal.battles.title", context.guild() == null ? "" : context.guild().displayName()));
         Set<Integer> selected = Set.copyOf(selectedBattles().stream().map(BattleSummary::battleId).toList());
         int generation = ++loadGeneration;
         new SwingWorker<JournalBattleTableModel.Data, Void>() {

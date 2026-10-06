@@ -124,4 +124,18 @@ class JournalPlayersModelTest extends JournalGuiTestSupport {
     private static JournalPlayersModel.Row row(JournalPlayersModel model, String name) {
         return model.allRows().stream().filter(r -> r.stats().player().name().equals(name)).findFirst().orElseThrow();
     }
+
+    @Test
+    @DisplayName("Members without a name are sorted by their id")
+    void membersWithoutNameSortedById() throws Exception {
+        setMembers(List.of(new GuildMember("zeta", "Zeta", List.of(), List.of()),
+                new GuildMember("beta", "", List.of(), List.of()),
+                new GuildMember("delta", null, List.of(), List.of()),
+                new GuildMember("x", "Alpha", List.of(), List.of())));
+        JournalPlayersModel.Data data = JournalPlayersModel.load(context.journal().repository(false));
+        JournalPlayersModel model = new JournalPlayersModel(data, context.guild());
+
+        assertEquals(List.of("Alpha", "beta", "delta", "Zeta"),
+                model.members().stream().map(GuildMember::displayName).toList());
+    }
 }

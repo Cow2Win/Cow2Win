@@ -47,7 +47,7 @@ public final class MemberOverviewModel {
                     newest = team.lastModified();
                 }
             }
-            rows.add(new MemberRow(member.id(), member.name(), teams.size(), total, strongest, newest));
+            rows.add(new MemberRow(member.id(), member.displayName(), teams.size(), total, strongest, newest));
         }
         return rows;
     }

@@ -86,7 +86,7 @@ public final class JournalSeasonsDialog extends JDialog {
 
     /** Reads the seasons and their battle counts again (background). */
     public void reload() {
-        setTitle(JournalTexts.text("journal.seasons.title", context.guild() == null ? "" : context.guild().name()));
+        setTitle(JournalTexts.text("journal.seasons.title", context.guild() == null ? "" : context.guild().displayName()));
         JournalSwing.background(this, () -> {
             Optional<JournalRepository> repo = service.repository();
             if (repo.isEmpty()) {

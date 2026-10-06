@@ -358,7 +358,7 @@ public class TitanValueOverviewDialog extends JDialog {
         Lineup currentLineup = appContext.lineup();
         List<TitanValueTableModel.Row> titanRows = new ArrayList<>();
         for (GuildMember member : currentGuild.members()) {
-            String memberLabel = memberLabel(member);
+            String memberLabel = member.displayName();
 
             List<TitanTeam> titanTeams = member.titanTeams();
             for (int i = 0; i < titanTeams.size(); i++) {
@@ -422,11 +422,6 @@ public class TitanValueOverviewDialog extends JDialog {
             }
         }
         return null;
-    }
-
-    private static String memberLabel(GuildMember member) {
-        String name = member.name();
-        return (name == null || name.isBlank()) ? member.id() : name;
     }
 
     /**

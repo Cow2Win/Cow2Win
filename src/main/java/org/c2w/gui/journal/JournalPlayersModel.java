@@ -82,7 +82,7 @@ public final class JournalPlayersModel {
         this.guild = guild;
         Map<String, String> names = new HashMap<>();
         if (guild != null) {
-            guild.members().forEach(m -> names.put(m.id(), m.name() == null || m.name().isBlank() ? m.id() : m.name()));
+            guild.members().forEach(m -> names.put(m.id(), m.displayName()));
         }
         Map<String, Integer> perMember = new HashMap<>();
         for (OwnPlayerStats p : data.players()) {
@@ -179,7 +179,7 @@ public final class JournalPlayersModel {
             return List.of();
         }
         List<GuildMember> members = new ArrayList<>(guild.members());
-        members.sort(Comparator.comparing(m -> m.name() == null ? m.id() : m.name(), String.CASE_INSENSITIVE_ORDER));
+        members.sort(Comparator.comparing(GuildMember::displayName, String.CASE_INSENSITIVE_ORDER));
         return members;
     }
 }

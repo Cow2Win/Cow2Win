@@ -78,6 +78,11 @@ public record GuildMember(
         }
     }
 
+    /** The name to show to the user - the id if there is no name. */
+    public String displayName() {
+        return name == null || name.isBlank() ? id : name;
+    }
+
     /**
      * Generic, 1-based display name for a team based on its position in the
      * list, in the configured language (language file key {@code common.teamLabel}).

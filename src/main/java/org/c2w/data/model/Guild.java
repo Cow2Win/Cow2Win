@@ -42,6 +42,11 @@ public record Guild(
         this(id, name, members, null);
     }
 
+    /** The name to show to the user - the id if there is no name. */
+    public String displayName() {
+        return name == null || name.isBlank() ? id : name;
+    }
+
     /** This guild with other members - id, name and game guild id stay. */
     public Guild withMembers(List<GuildMember> newMembers) {
         return new Guild(id, name, newMembers, gameGuildId);

@@ -4,6 +4,7 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.infra.AppVersion;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
@@ -72,14 +73,25 @@ class Cow2FrameActionsTest {
     }
 
     @Test
-    @DisplayName("After building the frame, all three stages have a view (clickable tiles); the concept is shown")
+    @DisplayName("After building the frame, all three stages have a view (clickable tiles); the input stage is shown")
     void availableStages() throws Exception {
         SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
 
         assertTrue(frame.processBar().isStageAvailable(Stage.INPUT));
         assertTrue(frame.processBar().isStageAvailable(Stage.CONCEPT));
         assertTrue(frame.processBar().isStageAvailable(Stage.OUTPUT));
-        assertEquals(Stage.CONCEPT, frame.processBar().activeStage());
+        assertEquals(Stage.INPUT, frame.processBar().activeStage());
+    }
+
+    @Test
+    @DisplayName("The window title stays \"Cow2Win {version}\" - with unsaved changes too")
+    void titleStaysFixed() throws Exception {
+        SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
+        String expected = Cow2Frame.titleFor(AppVersion.current());
+        assertEquals(expected, frame.getTitle());
+
+        SwingUtilities.invokeAndWait(() -> context.setGuildDirty(true));
+        assertEquals(expected, frame.getTitle());
     }
 
     @Test

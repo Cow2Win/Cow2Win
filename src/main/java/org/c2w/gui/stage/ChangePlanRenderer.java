@@ -113,7 +113,7 @@ public final class ChangePlanRenderer {
         return guild.members().stream()
                 .filter(m -> m.id().equals(memberId))
                 .findFirst()
-                .map(GuildMember::name)
+                .map(GuildMember::displayName)
                 .orElse(memberId);
     }
 }

@@ -203,7 +203,7 @@ public final class BattleDetailModel {
         Map<String, String> memberNames = new HashMap<>();
         if (guild != null) {
             for (GuildMember m : guild.members()) {
-                memberNames.put(m.id(), m.name() == null || m.name().isBlank() ? m.id() : m.name());
+                memberNames.put(m.id(), m.displayName());
             }
         }
         GuildRef own = null;

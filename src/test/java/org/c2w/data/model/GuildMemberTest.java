@@ -56,4 +56,12 @@ class GuildMemberTest {
         assertNull(team.pet());
         assertNull(team.warFlag());
     }
+
+    @Test
+    void displayNameIsNameOrId() {
+        assertEquals("Puschel", new GuildMember("m1", "Puschel", List.of(), List.of()).displayName());
+        assertEquals("m1", new GuildMember("m1", "", List.of(), List.of()).displayName());
+        assertEquals("m1", new GuildMember("m1", "  ", List.of(), List.of()).displayName());
+        assertEquals("m1", new GuildMember("m1", null, List.of(), List.of()).displayName());
+    }
 }

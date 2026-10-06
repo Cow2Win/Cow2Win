@@ -69,7 +69,7 @@ public final class JournalPlayersDialog extends JDialog {
         onlyProblems.addActionListener(e -> applyFilter());
 
         status.setRenderer(PlayersStepPanel.textRenderer(v -> JournalTexts.of("assignmentStatus", (Enum<?>) v)));
-        member.setRenderer(PlayersStepPanel.textRenderer(v -> v instanceof GuildMember m ? memberName(m) : ""));
+        member.setRenderer(PlayersStepPanel.textRenderer(v -> v instanceof GuildMember m ? m.displayName() : ""));
         status.addActionListener(e -> member.setEnabled(status.getSelectedItem() == AssignmentStatus.ASSIGNED));
         apply.addActionListener(e -> applyEdit());
         JPanel edit = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
@@ -112,7 +112,7 @@ public final class JournalPlayersDialog extends JDialog {
 
     /** Reads the players again (background). */
     public void reload() {
-        setTitle(JournalTexts.text("journal.players.title", context.guild() == null ? "" : context.guild().name()));
+        setTitle(JournalTexts.text("journal.players.title", context.guild() == null ? "" : context.guild().displayName()));
         Integer selected = selectedRow() == null ? null : selectedRow().stats().player().id();
         JournalSwing.background(this, () -> JournalPlayersModel.load(service.repository()), data -> {
             model = new JournalPlayersModel(data, context.guild());
@@ -150,12 +150,8 @@ public final class JournalPlayersDialog extends JDialog {
             return JournalTexts.text("journal.players.noHints");
         }
         return list.stream().map(h -> JournalTexts.text("journal.players.memberHint." + h.kind().name(),
-                        memberName(h.member()), String.valueOf(model.data().recentLogs())))
+                        h.member().displayName(), String.valueOf(model.data().recentLogs())))
                 .collect(Collectors.joining("\n"));
-    }
-
-    private static String memberName(GuildMember m) {
-        return m.name() == null || m.name().isBlank() ? m.id() : m.name();
     }
 
     private JournalPlayersModel.Row selectedRow() {

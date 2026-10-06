@@ -104,7 +104,7 @@ public class Cow2Frame extends JFrame {
     private final MainActions actions;
 
     public Cow2Frame(AppContext appContext) {
-        super(BASE_TITLE);
+        super(titleFor(AppVersion.current()));
         // Not EXIT_ON_CLOSE: that close operation exits the
         // JVM unconditionally once the window-closing event has been
         // dispatched to any listeners, regardless of what they do - so a
@@ -136,18 +136,11 @@ public class Cow2Frame extends JFrame {
         this.guildService = new GuildService(appContext);
         this.lineupService = new LineupService(appContext);
         this.background = IconLoader.getBackgroundImage();
-        updateTitle();
         loadFrameIcon().ifPresent(icon -> setIconImage(icon.getImage()));
         appContext.addListener(new AppContext.Listener() {
             @Override
             public void guildChanged() {
-                updateTitle();
                 updateLogDialogTitle();
-            }
-
-            @Override
-            public void dirtyStateChanged() {
-                updateTitle();
             }
         });
 
@@ -171,7 +164,7 @@ public class Cow2Frame extends JFrame {
         topArea.add(actionBar, BorderLayout.CENTER);
 
         // The center: one stage view per process stage, switched by the process bar's tiles.
-        // All three stages have a view. Start with the strategic concept.
+        // All three stages have a view.
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
         InputStageView inputView = new InputStageView(appContext, actions);
@@ -183,7 +176,8 @@ public class Cow2Frame extends JFrame {
         actionBar.setStageSwitcher(this::showStage);
         ProcessBar processBar = actionBar.processBar();
         processBar.addStageSelectionListener(this::showStage);
-        showStage(Stage.CONCEPT);
+        // Always start with the input stage - the first step of the process chain.
+        showStage(Stage.INPUT);
 
         // The data status: evaluated again after every change, journal event and stage switch.
         StatusBar statusBar = new StatusBar();
@@ -582,8 +576,7 @@ public class Cow2Frame extends JFrame {
 
     /** "Log - {guild name}" for the log dialog. */
     private String logDialogTitle() {
-        var guild = appContext.guild();
-        return LanguageService.displayName("mainFrame.logTitle.guild", guildDisplayName(guild.name(), guild.id()));
+        return LanguageService.displayName("mainFrame.logTitle.guild", appContext.guild().displayName());
     }
 
     /** Follows the open guild in the log dialog's title, if the dialog exists. */
@@ -614,28 +607,14 @@ public class Cow2Frame extends JFrame {
         System.exit(0);
     }
 
-    /** Sets the window title for the open guild, see {@link #titleFor}. */
-    private void updateTitle() {
-        var guild = appContext.guild();
-        setTitle(titleFor(guildDisplayName(guild.name(), guild.id()), AppVersion.current(),
-                appContext.hasUnsavedChanges()));
-    }
-
-    /** The guild's name for the window title, or its id if the name is blank. */
-    static String guildDisplayName(String guildName, String guildId) {
-        return guildName.isBlank() ? guildId : guildName;
-    }
-
     /**
-     * The window title, e.g. "Cow2Win 1.0.2 - Testgilde" - prefixed with "*"
-     * while the guild or the lineup has unsaved changes (see
-     * {@link AppContext#hasUnsavedChanges()}). GUI-free so it can be tested
-     * directly.
-     *
-     * @param guildDisplayName the guild's name, or its id if the name is blank
+     * The window title, e.g. "Cow2Win 1.0.6" - application name and version
+     * only. It is set once and stays the same: the open guild and unsaved
+     * changes are shown in the {@link ContextBar}. GUI-free so it can be
+     * tested directly.
      */
-    static String titleFor(String guildDisplayName, String version, boolean unsaved) {
-        return (unsaved ? "*" : "") + BASE_TITLE + " " + version + " - " + guildDisplayName;
+    static String titleFor(String version) {
+        return BASE_TITLE + " " + version;
     }
 
 

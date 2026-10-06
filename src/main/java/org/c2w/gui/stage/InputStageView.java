@@ -302,7 +302,7 @@ public class InputStageView extends StageView {
         if (member.isEmpty()) {
             addLine(memberSection, mutedLabel(LanguageService.displayName(KEY_MEMBER_NONE)));
         } else {
-            addLine(memberSection, titleLabel(member.get().name()));
+            addLine(memberSection, titleLabel(member.get().displayName()));
             staleJournalLines(member.get().id()).forEach(line -> addLine(memberSection, line));
             boolean heroes = appContext.fortificationType() == FortificationType.HERO;
             List<JComponent> teamBlocks = heroes ? heroTeamBlocks(member.get()) : titanTeamBlocks(member.get());

@@ -96,7 +96,7 @@ public final class JournalNameMappingsDialog extends JDialog {
 
     /** Reads the mappings again (background). */
     public void reload() {
-        setTitle(JournalTexts.text("journal.mappings.title", context.guild() == null ? "" : context.guild().name()));
+        setTitle(JournalTexts.text("journal.mappings.title", context.guild() == null ? "" : context.guild().displayName()));
         JournalSwing.background(this, () -> {
             Optional<JournalRepository> repo = service.repository();
             return repo.isEmpty() ? Optional.<List<NameMapping>>empty() : Optional.of(repo.get().listNameMappings());

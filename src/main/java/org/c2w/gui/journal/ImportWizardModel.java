@@ -73,7 +73,7 @@ public final class ImportWizardModel {
     public ImportWizardModel(ImportPlan plan, Guild guild) {
         this.plan = Objects.requireNonNull(plan);
         this.members = guild == null ? List.of() : guild.members().stream()
-                .map(m -> new MemberChoice(m.id(), m.name()))
+                .map(m -> new MemberChoice(m.id(), m.displayName()))
                 .sorted(Comparator.comparing(MemberChoice::memberName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
         this.steps = computeSteps(plan);

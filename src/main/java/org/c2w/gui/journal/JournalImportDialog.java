@@ -247,7 +247,7 @@ public final class JournalImportDialog extends JDialog {
         JPanel panel = verticalPanel();
         panel.add(new JLabel(JournalTexts.text("journal.guild.question", escape(q.gameGuild().name()),
                 String.valueOf(q.gameGuild().server()), String.valueOf(q.gameGuild().gameGuildId()),
-                escape(context.guild().name()))));
+                escape(context.guild().displayName()))));
         JRadioButton yes = new JRadioButton(JournalTexts.text("journal.guild.yes"), model.linkGuild());
         JRadioButton no = new JRadioButton(JournalTexts.text("journal.guild.no"), !model.linkGuild());
         ButtonGroup group = new ButtonGroup();

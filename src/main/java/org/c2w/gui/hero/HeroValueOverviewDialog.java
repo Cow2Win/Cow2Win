@@ -362,7 +362,7 @@ public class HeroValueOverviewDialog extends JDialog {
         Lineup currentLineup = appContext.lineup();
         List<HeroValueTableModel.Row> heroRows = new ArrayList<>();
         for (GuildMember member : currentGuild.members()) {
-            String memberLabel = memberLabel(member);
+            String memberLabel = member.displayName();
 
             List<HeroTeam> heroTeams = member.heroTeams();
             for (int i = 0; i < heroTeams.size(); i++) {
@@ -426,11 +426,6 @@ public class HeroValueOverviewDialog extends JDialog {
             }
         }
         return null;
-    }
-
-    private static String memberLabel(GuildMember member) {
-        String name = member.name();
-        return (name == null || name.isBlank()) ? member.id() : name;
     }
 
     /**

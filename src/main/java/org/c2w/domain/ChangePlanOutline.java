@@ -167,7 +167,7 @@ public final class ChangePlanOutline {
         return guild.members().stream()
                 .filter(member -> member.id().equals(memberId))
                 .findFirst()
-                .map(GuildMember::name)
+                .map(GuildMember::displayName)
                 .orElse(memberId);
     }
 
