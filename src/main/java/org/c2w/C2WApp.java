@@ -4,6 +4,7 @@ import org.c2w.data.journal.db.JournalException;
 import org.c2w.gui.Cow2Frame;
 import org.c2w.gui.SplashWindow;
 import org.c2w.gui.common.GuiUtils;
+import org.c2w.gui.common.MeasuredLabelUI;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
 import org.c2w.infra.CatalogVersion;
@@ -84,6 +85,8 @@ public class C2WApp {
     private static void installLookAndFeel() {
         try {
             UIManager.setLookAndFeel(new MaterialLookAndFeel(new MaterialOceanicTheme()));
+            // Label text painted as wide as it is measured - otherwise the end of long labels is cut off.
+            UIManager.put("LabelUI", MeasuredLabelUI.class.getName());
         } catch (UnsupportedLookAndFeelException e) {
             Logger.logException("Could not install the MaterialOceanicTheme look and feel", e);
         }
