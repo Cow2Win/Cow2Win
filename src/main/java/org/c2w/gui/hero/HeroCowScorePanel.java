@@ -19,8 +19,8 @@ import java.util.Map;
 /**
  * "Heroes" tab of the CowScore dialog: one {@link FortMark} (neutral / positive /
  * negative) per hero and fortification of type {@link FortificationType#HERO}. Each row
- * also shows the role the fortification's {@link RoleBuff} asks for, with the automatic,
- * read-only BUFF marker when the hero's role matches - then the mark is locked to
+ * also shows the role the fortification's {@link RoleBuff} asks for, green when the hero's
+ * role matches - then the mark is locked to
  * "Positive (buff)" and none is kept (the buff already counts). Saving writes every hero to the
  * workspace copy of {@code cowScore.json} (see {@code FortMarkFiles} for the format).
  */

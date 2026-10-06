@@ -272,11 +272,12 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
         }
     }
 
-    /** The role/element label of a hero/titan row, green with the BUFF marker when the entry matches the fortification's buff. */
+    /**
+     * The role/element label of a hero/titan row, green when the entry matches the fortification's buff -
+     * the locked "Positive (buff)" combo box next to it says the rest.
+     */
     protected static void addBuffLabel(JPanel row, String buffText, boolean matches) {
-        String text = buffText == null ? ""
-                : buffText + (matches ? "  " + LanguageService.displayName("fortMark.buffMarker") : "");
-        JLabel label = new JLabel(text);
+        JLabel label = new JLabel(buffText == null ? "" : buffText);
         label.setForeground(matches ? IconLoader.GREEN : Color.WHITE);
         label.setPreferredSize(new Dimension(BUFF_LABEL_WIDTH, label.getPreferredSize().height));
         row.add(label);
