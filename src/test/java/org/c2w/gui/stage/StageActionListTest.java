@@ -44,6 +44,17 @@ class StageActionListTest {
     }
 
     @Test
+    @DisplayName("For the input stage: no guild group, the list starts with the team assignment")
+    void inputStageHasNoGuildGroup() {
+        StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.INPUT), allActions());
+
+        assertEquals(List.of(
+                "OPEN_GUILD_TEAM_ENTRY",
+                "---", "JOURNAL_IMPORT", "JOURNAL_SYNC",
+                "---", "JOURNAL_PLAYERS", "JOURNAL_SEASONS", "JOURNAL_NAME_MAPPINGS"), describe(list));
+    }
+
+    @Test
     @DisplayName("A row follows its action: disabled, new name and icon; a click performs it only while enabled")
     void rowFollowsItsAction() {
         MainActions actions = new MainActions();

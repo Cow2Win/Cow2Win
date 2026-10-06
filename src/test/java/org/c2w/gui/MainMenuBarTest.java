@@ -27,13 +27,13 @@ class MainMenuBarTest {
     private static final String SEPARATOR = "---";
 
     /**
-     * "menu title key: entries" - the target structure of milestone M1 (steps 1.1-1.5):
-     * "File" plus one menu per process stage. A submenu is written as {title: entries}.
+     * "menu title key: entries" - the target structure of milestone M1 (steps 1.1-1.5)
+     * plus the "Guild" menu: "File", "Guild" and one menu per process stage. A submenu is written as {title: entries}.
      */
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
-            "menu.input: {" + LanguageService.displayName("menu.guild") + ": NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD}, "
-                    + "OPEN_GUILD_TEAM_ENTRY, ---, "
+            "menu.guild: NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD",
+            "menu.input: OPEN_GUILD_TEAM_ENTRY, ---, "
                     + "JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
                     + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS, ---, "
@@ -44,13 +44,13 @@ class MainMenuBarTest {
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);
 
     @Test
-    @DisplayName("Menu titles, submenus, entries and separators match the expected menu bar - exactly four menus")
+    @DisplayName("Menu titles, submenus, entries and separators match the expected menu bar - exactly five menus")
     void structureMatchesExpectedMenuBar() {
         MainActions actions = allActions();
 
         MainMenuBar menuBar = new MainMenuBar(actions);
 
-        assertEquals(4, menuBar.getMenuCount());
+        assertEquals(5, menuBar.getMenuCount());
         assertEquals(EXPECTED.size(), menuBar.getMenuCount());
         for (int i = 0; i < EXPECTED.size(); i++) {
             String[] parts = EXPECTED.get(i).split(": ", 2);
@@ -61,7 +61,7 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("Every action in a menu titled after a stage, submenus included, is of that stage - all three process menus exist")
+    @DisplayName("Every action in a menu titled after a stage, submenus included, is of that stage - the guild and all three process menus exist")
     void stageMenusHoldOnlyTheirStage() {
         Set<Stage> stageMenusFound = EnumSet.noneOf(Stage.class);
         for (MainMenuBar.MenuSpec spec : MainMenuBar.MENUS) {
@@ -75,7 +75,7 @@ class MainMenuBarTest {
                 }
             }
         }
-        assertEquals(EnumSet.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT), stageMenusFound);
+        assertEquals(EnumSet.of(Stage.GUILD, Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT), stageMenusFound);
     }
 
     @Test
@@ -103,9 +103,10 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("The guild editor is input, the CowScore settings stay master data")
+    @DisplayName("The guild editor is in the guild menu, the team assignment is input, the CowScore settings stay master data")
     void stageAssignment() {
-        assertEquals(Stage.INPUT, ActionId.OPEN_GUILD_EDITOR.stage());
+        assertEquals(Stage.GUILD, ActionId.OPEN_GUILD_EDITOR.stage());
+        assertEquals(Stage.INPUT, ActionId.OPEN_GUILD_TEAM_ENTRY.stage());
         assertEquals(Stage.MASTER_DATA, ActionId.COWSCORE.stage());
     }
 

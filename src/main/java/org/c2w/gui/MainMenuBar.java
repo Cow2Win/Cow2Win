@@ -51,15 +51,15 @@ public final class MainMenuBar extends JMenuBar {
     static final Separator SEPARATOR = new Separator();
 
     /**
-     * The menus in display order: "File" plus one menu per process stage. Every action in a
+     * The menus in display order: "File", "Guild" plus one menu per process stage. Every action in a
      * menu titled with a {@link Stage#menuTextKey()}, submenus included, is of that stage.
      * "File" also holds the master data entries for now (no menu of their own yet). Every
      * action appears in exactly one menu, except the {@link #TOOLBAR_ONLY} ones.
      */
     static final List<MenuSpec> MENUS = List.of(
             menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
+            menu(Stage.GUILD.menuTextKey(), NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD),
             menu(Stage.INPUT.menuTextKey(),
-                    menu("menu.guild", NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD),
                     OPEN_GUILD_TEAM_ENTRY,
                     SEPARATOR, JOURNAL_IMPORT, JOURNAL_SYNC,
                     SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS),

@@ -2,9 +2,9 @@ package org.c2w.gui.action;
 
 /**
  * Where an {@link ActionId} belongs in the process-oriented user interface: the three
- * process stages input, strategic concept and output, plus master data and general
- * functions. Each process stage has a menu of its own, see {@code MainMenuBar}; master
- * data and general functions are in the "File" menu.
+ * process stages input, strategic concept and output, plus the guild, master data and
+ * general functions. Each process stage has a menu of its own, see {@code MainMenuBar}, and
+ * so has the guild (next to "File"); master data and general functions are in the "File" menu.
  */
 public enum Stage {
 
@@ -17,9 +17,13 @@ public enum Stage {
      */
     MASTER_DATA("menu.masterData", null),
     /**
-     * Entering the ever-changing data of one guild: the guild itself (create, remove), its
-     * members and their teams (guild editor, team assignment), and the battle logs of the
-     * Weltenschlacht journal.
+     * Functions about the guild as a whole (create, edit, remove) - the frame all three
+     * process stages work in, so not part of one of them; menu of its own next to "File".
+     */
+    GUILD("menu.guild", null),
+    /**
+     * Entering the ever-changing data of one guild: the teams of its members (team
+     * assignment) and the battle logs of the Weltenschlacht journal.
      */
     INPUT("menu.input", "stage.input"),
     CONCEPT("menu.concept", "stage.concept"),

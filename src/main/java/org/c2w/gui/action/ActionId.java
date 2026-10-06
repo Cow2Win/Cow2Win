@@ -14,12 +14,12 @@ public enum ActionId {
     /** Master data: the CowScore marks apply to every guild (menu "File" for now, see {@link Stage#MASTER_DATA}). */
     COWSCORE("menu.cowScoreDialog", Stage.MASTER_DATA, Opens.WINDOW),
 
-    /** Input: creating and removing a guild, like editing it, is about the data of one guild. */
-    NEW_GUILD("toolbar.newGuild", Stage.INPUT, Opens.WINDOW),
-    REMOVE_GUILD("toolbar.removeGuild", Stage.INPUT),
-    /** Input, not master data: members and their teams are the ever-changing data of one guild. */
-    OPEN_GUILD_EDITOR("teamsOverview.openGuildEditor", Stage.INPUT, Opens.WINDOW),
-    SAVE_GUILD("teamsOverview.saveGuild", Stage.INPUT),
+    /** The guild as a whole: creating, editing and removing it - menu "Guild", see {@link Stage#GUILD}. */
+    NEW_GUILD("toolbar.newGuild", Stage.GUILD, Opens.WINDOW),
+    REMOVE_GUILD("toolbar.removeGuild", Stage.GUILD),
+    OPEN_GUILD_EDITOR("teamsOverview.openGuildEditor", Stage.GUILD, Opens.WINDOW),
+    /** The same guild - but in the context bar only, not in the menu (see {@code MainMenuBar.TOOLBAR_ONLY}). */
+    SAVE_GUILD("teamsOverview.saveGuild", Stage.GUILD),
     /**
      * Team assignment of the selected fortification type - its text, tooltip and icon follow
      * the type ({@link #textKey()} is the hero variant), see {@code ActionBar}.

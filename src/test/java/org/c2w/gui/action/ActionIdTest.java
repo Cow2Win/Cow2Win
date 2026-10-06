@@ -33,7 +33,7 @@ class ActionIdTest {
     }
 
     @Test
-    @DisplayName("Every stage but GENERAL has a menu text, the three process stages also a stage text")
+    @DisplayName("Every stage but GENERAL has a menu text, the three process stages also a stage text (not master data and guild)")
     void stageTextKeys() {
         for (Stage stage : Stage.values()) {
             if (stage == Stage.GENERAL) {
@@ -42,7 +42,7 @@ class ActionIdTest {
                 continue;
             }
             assertKeyInAllLanguages(stage.menuTextKey(), stage.name());
-            if (stage == Stage.MASTER_DATA) {
+            if (stage == Stage.MASTER_DATA || stage == Stage.GUILD) {
                 assertNull(stage.stageTextKey());
             } else {
                 assertKeyInAllLanguages(stage.stageTextKey(), stage.name());
