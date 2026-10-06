@@ -302,9 +302,11 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
             }
         });
         combo.setName("mark:" + fortification.id());
+        JComboBox<String> locked = new JComboBox<>(new String[]{LanguageService.displayName("fortMark.BUFF")});
+        // Every mark combo box as wide as the wider of the two - so the column stays straight.
+        Dimension size = new Dimension(Math.max(combo.getPreferredSize().width, locked.getPreferredSize().width),
+                combo.getPreferredSize().height);
         if (buffMatch) {
-            Dimension size = combo.getPreferredSize();
-            JComboBox<String> locked = new JComboBox<>(new String[]{LanguageService.displayName("fortMark.BUFF")});
             locked.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public void setForeground(Color color) {
@@ -315,10 +317,11 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
             locked.setEnabled(false);
             locked.setToolTipText(LanguageService.displayName(lockedTooltipKey));
             locked.setName(combo.getName());
-            locked.setPreferredSize(new Dimension(Math.max(size.width, locked.getPreferredSize().width), size.height));
+            locked.setPreferredSize(size);
             row.add(locked);
             return;
         }
+        combo.setPreferredSize(size);
         combo.setSelectedItem(marks.get(fortification.id()));
         combo.addActionListener(e -> setMark(marks, fortification.id(), (FortMark) combo.getSelectedItem()));
         row.add(combo);
