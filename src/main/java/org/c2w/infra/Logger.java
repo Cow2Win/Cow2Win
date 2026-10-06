@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The technical, application-wide log: version, start and end, exceptions,
@@ -43,9 +45,42 @@ public final class Logger {
     private Logger() {
     }
 
+    /** Entries held back by {@link #holdEntries()}, {@code null} while entries are written directly. */
+    private static List<String> heldEntries;
+
     /** Appends one entry (message prefixed with date and time) to the log file - see class Javadoc. */
     public static synchronized void log(String message) {
-        appendToLogFile(formatEntry(LocalDateTime.now(), message));
+        String entry = formatEntry(LocalDateTime.now(), message);
+        if (heldEntries != null) {
+            heldEntries.add(entry);
+        } else {
+            appendToLogFile(entry);
+        }
+    }
+
+    /**
+     * From now on keeps entries in memory instead of writing them - e.g. at startup while the
+     * workspace (and so the log file's place) may still change. See {@link #releaseHeldEntries()}.
+     */
+    public static synchronized void holdEntries() {
+        if (heldEntries == null) {
+            heldEntries = new ArrayList<>();
+        }
+    }
+
+    /**
+     * Writes entries directly again and returns the ones held back since {@link #holdEntries()}
+     * (with their original time) - to be written with {@link #writeEntries}.
+     */
+    public static synchronized List<String> releaseHeldEntries() {
+        List<String> entries = heldEntries == null ? List.of() : heldEntries;
+        heldEntries = null;
+        return entries;
+    }
+
+    /** Writes already formatted entries (see {@link #releaseHeldEntries()}) to the log file. */
+    public static synchronized void writeEntries(List<String> entries) {
+        entries.forEach(Logger::appendToLogFile);
     }
 
     /** One log entry: "[yyyy-MM-dd HH:mm:ss] message". */

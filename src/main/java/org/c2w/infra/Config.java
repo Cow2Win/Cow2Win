@@ -70,6 +70,10 @@ public final class Config {
     private static final String KEY_STALE_AFTER_DAYS = "staleAfterDays";
     /** Whether the user has operated the stale check in the settings - then it is never switched on automatically. */
     private static final String KEY_STALE_CHECK_USER_SET = "staleCheckUserSet";
+    /** Backup ZIP the workspace is restored from on the next start (see {@link WorkspaceMaintenance}). */
+    private static final String KEY_PENDING_RESTORE_ZIP = "pendingRestoreZip";
+    /** Folder the workspace is moved to on the next start (see {@link WorkspaceMaintenance}). */
+    private static final String KEY_PENDING_WORKSPACE_MOVE = "pendingWorkspaceMove";
     /** Default and valid range of {@link #KEY_STALE_AFTER_DAYS}. */
     public static final int DEFAULT_STALE_AFTER_DAYS = 30;
     public static final int MIN_STALE_AFTER_DAYS = 1;
@@ -332,6 +336,42 @@ public final class Config {
         setStaleCheckEnabled(true);
         setStaleAfterDays(DEFAULT_STALE_AFTER_DAYS);
         return true;
+    }
+
+    // --- pendingRestoreZip / pendingWorkspaceMove ---
+
+    /** Backup ZIP to restore the workspace from on the next start, {@code ""} if none. */
+    public static String getPendingRestoreZip() {
+        return properties.getProperty(KEY_PENDING_RESTORE_ZIP, "");
+    }
+
+    /**
+     * Schedules restoring the workspace from {@code zip} on the next start - replaces a scheduled
+     * move, at most one operation is pending. Does not save; the caller does.
+     */
+    public static void setPendingRestoreZip(String zip) {
+        properties.remove(KEY_PENDING_WORKSPACE_MOVE);
+        setProperty(KEY_PENDING_RESTORE_ZIP, zip);
+    }
+
+    /** Folder to move the workspace to on the next start, {@code ""} if none. */
+    public static String getPendingWorkspaceMove() {
+        return properties.getProperty(KEY_PENDING_WORKSPACE_MOVE, "");
+    }
+
+    /**
+     * Schedules moving the workspace to {@code target} on the next start - replaces a scheduled
+     * restore, at most one operation is pending. Does not save; the caller does.
+     */
+    public static void setPendingWorkspaceMove(String target) {
+        properties.remove(KEY_PENDING_RESTORE_ZIP);
+        setProperty(KEY_PENDING_WORKSPACE_MOVE, target);
+    }
+
+    /** Removes both scheduled operations. Does not save; the caller does. */
+    public static void clearPendingOperations() {
+        properties.remove(KEY_PENDING_RESTORE_ZIP);
+        properties.remove(KEY_PENDING_WORKSPACE_MOVE);
     }
 
     /** A copy of all properties - for tests that change settings in memory and restore them afterwards. */

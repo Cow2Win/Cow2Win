@@ -9,17 +9,24 @@ import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.infra.BackupService;
 import org.c2w.infra.Config;
 import org.c2w.infra.JsonSupport;
+import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
+import org.c2w.infra.WorkspaceMaintenance;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
  * Everything that has to happen before the first window opens: the first-run
- * setup, loading config.properties, the startup backup, loading the
+ * setup, loading config.properties, a restore or move of the workspace scheduled
+ * in the settings (see {@link WorkspaceMaintenance}), the startup backup, loading the
  * catalogs (and handing the hero combos to {@link TeamScoreCalculator}; this also
  * creates the titan team templates' workspace file from the shipped defaults
  * if it is missing, see {@link org.c2w.data.repository.TeamTemplateRepository}) and
@@ -32,8 +39,56 @@ public final class WorkspaceBootstrap {
     private static final Path DEMO_GUILD_PATH = JsonSupport.resolveDataFile("data", "guild.json");
     private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
 
+    /** Date and time of a restored backup in the notice after the start. */
+    private static final DateTimeFormatter BACKUP_TIME_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm");
+
+    /** A message for the user once the main window is open - see {@link #startupNotices()}. */
+    public record StartupNotice(String text, boolean warning) {
+    }
+
+    /** The notices of the last {@link #start}. */
+    private static List<StartupNotice> startupNotices = List.of();
+
     private WorkspaceBootstrap() {
         // Utility class, no instantiation
+    }
+
+    /**
+     * Messages from the last {@link #start} to show once the main window is open (not on the
+     * splash screen) - e.g. that the workspace was restored from a backup.
+     */
+    public static List<StartupNotice> startupNotices() {
+        return startupNotices;
+    }
+
+    /** The message for the user about a restore or move run at startup. */
+    static StartupNotice noticeFor(WorkspaceMaintenance.Outcome outcome) {
+        return switch (outcome) {
+            case WorkspaceMaintenance.Restored r -> new StartupNotice(LanguageService.displayName(
+                    "workspaceMaintenance.restore.done", formatBackupTime(r.backupTime())), false);
+            case WorkspaceMaintenance.RestoreFailed f -> new StartupNotice(LanguageService.displayName(
+                    "workspaceMaintenance.restore.failed", f.zip().toString()), true);
+            case WorkspaceMaintenance.Moved m -> m.oldWorkspaceRemoved()
+                    ? new StartupNotice(LanguageService.displayName("workspaceMaintenance.move.done", m.to().toString()), false)
+                    : new StartupNotice(LanguageService.displayName("workspaceMaintenance.move.done", m.to().toString())
+                    + "\n" + LanguageService.displayName("workspaceMaintenance.move.oldNotDeleted", m.from().toString()), true);
+            case WorkspaceMaintenance.MoveFailed f -> new StartupNotice(f.problem() != null
+                    ? LanguageService.displayName("workspaceMaintenance.move.rejected", f.from().toString())
+                    + "\n" + moveProblemText(f.problem(), f.from(), f.to())
+                    : LanguageService.displayName("workspaceMaintenance.move.failed", f.from().toString(), f.to().toString()), true);
+        };
+    }
+
+    /** "06.10.2026, 19:12" - the time a backup ZIP was written. */
+    public static String formatBackupTime(FileTime time) {
+        return BACKUP_TIME_FORMAT.format(time.toInstant().atZone(ZoneId.systemDefault()));
+    }
+
+    /** Why the workspace cannot be moved from {@code from} to {@code to}, in the user's language. */
+    public static String moveProblemText(WorkspaceMaintenance.MoveProblem problem, Path from, Path to) {
+        Path parent = to.toAbsolutePath().normalize().getParent();
+        return LanguageService.displayName("workspaceMaintenance.move.problem." + problem.name(),
+                from.toString(), to.toString(), parent == null ? "" : parent.toString());
     }
 
     /**
@@ -65,7 +120,20 @@ public final class WorkspaceBootstrap {
 
         progress.accept("Loading configuration ...");
         Config.load();
-        configLoaded.run();
+        // A restore or move scheduled in the settings runs first - before backups and journal
+        // databases. Its log entries are written after the start block (a move: into the new log).
+        Logger.holdEntries();
+        Optional<WorkspaceMaintenance.Outcome> maintenance = Optional.empty();
+        try {
+            maintenance = WorkspaceMaintenance.runPendingOperation(progress);
+        } catch (RuntimeException e) {
+            Logger.logException("Pending workspace operation failed", e);
+        } finally {
+            List<String> heldEntries = Logger.releaseHeldEntries();
+            configLoaded.run();
+            Logger.writeEntries(heldEntries);
+        }
+        startupNotices = maintenance.map(WorkspaceBootstrap::noticeFor).map(List::of).orElse(List.of());
         progress.accept("Creating backups ...");
         BackupService.checkAndCreateBackups();
         progress.accept("Loading catalogs ...");

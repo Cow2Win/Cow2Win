@@ -34,6 +34,10 @@ import java.util.zip.ZipOutputStream;
  * weekly backup is (re)created when it wasn't last written in the current
  * ISO-8601 week (Monday-Sunday, see {@link IsoFields#WEEK_OF_WEEK_BASED_YEAR}).
  *
+ * <p>The way back: "Restore workspace from backup" in the settings dialog schedules one of
+ * these ZIPs, and {@link WorkspaceMaintenance} replaces the workspace with it on the next start
+ * (after saving the current state as {@value WorkspaceMaintenance#BEFORE_RESTORE_FILE_NAME}).
+ *
  * <p>Any failure (missing workspace folder, unwritable backup directory,
  * ...) is only logged to stderr, the same way {@link Config#load()}/
  * {@link Config#save()} handle I/O problems elsewhere in this class - a
@@ -99,7 +103,7 @@ public class BackupService {
      * plus a move into place, so an interrupted run never leaves a half-written
      * ZIP behind under the fixed backup name.
      */
-    private static void createBackup(Path workspaceDir, Path backupFile) throws IOException {
+    static void createBackup(Path workspaceDir, Path backupFile) throws IOException {
         Path backupDir = backupFile.toAbsolutePath().normalize().getParent();
         if (backupDir != null) {
             Files.createDirectories(backupDir);

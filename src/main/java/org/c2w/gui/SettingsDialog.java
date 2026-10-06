@@ -8,6 +8,8 @@ import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
+import org.c2w.infra.WorkspaceMaintenance;
+import org.c2w.service.WorkspaceBootstrap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +29,18 @@ import java.util.List;
  * directory (see {@link Config#getWorkspaceDir()}) and the stale check of the data status
  * (see {@link Config#isStaleCheckEnabled()}); named generically since
  * more application-wide settings are expected to move in here later.
+ *
+ * <p>Two buttons behind the directories act on the workspace itself (see
+ * {@link WorkspaceMaintenance}), both on the next start - Cow2Win ends for it:
+ * <ul>
+ *   <li>"Restore workspace from backup" (behind the backup directory) replaces the workspace with
+ *       the daily or weekly backup in the directory shown in the field;</li>
+ *   <li>"Move workspace" (behind the workspace directory) moves the data of the workspace to an
+ *       empty folder - unlike "...", which only switches to another workspace and leaves the data
+ *       where it is.</li>
+ * </ul>
+ * The dialog is about 50% wider than its packed size, so long paths stay readable; its directory
+ * choosers are 50% larger than the default.
  */
 public class SettingsDialog extends JDialog {
 
@@ -56,13 +70,29 @@ public class SettingsDialog extends JDialog {
      * mixing guilds/lineups/log into an arbitrary user-picked directory (e.g.
      * a Documents folder that already holds unrelated files).
      */
-    private static final String WORKSPACE_MARKER_DIR_NAME = ".cow2Win";
+    private static final String WORKSPACE_MARKER_DIR_NAME = WorkspaceMaintenance.WORKSPACE_DIR_NAME;
 
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
     private static final String ICON_SAVE_SETTINGS = "/images/app/save.png";
 
     /** Target size of the toolbar icon. */
     private static final int TOOLBAR_ICON_SIZE = 20;
+
+    /** Classpath paths of the "restore workspace from backup" and "move workspace" icons. */
+    private static final String ICON_RESTORE_WORKSPACE = "/images/app/restore.png";
+    private static final String ICON_MOVE_WORKSPACE = "/images/app/move.png";
+
+    /** The dialog and its directory choosers are this much larger than their packed/default size. */
+    static final double SIZE_FACTOR = 1.5;
+
+    /** How the dialog ends the application for a scheduled restore or move - implemented by the main window. */
+    public interface AppExit {
+        /** True if nothing is unsaved or the user agrees to close anyway. */
+        boolean confirmUnsavedChanges();
+
+        /** Ends the application without asking. */
+        void exit();
+    }
 
     private final JComboBox<String> languageComboBox = new JComboBox<>();
 
@@ -81,6 +111,13 @@ public class SettingsDialog extends JDialog {
     private final JButton browseBackupDirButton = new JButton("...");
     private final JTextField workspaceDirField = new JTextField(20);
     private final JButton browseWorkspaceDirButton = new JButton("...");
+    private final FlatButton restoreWorkspaceButton = new FlatButton(
+            IconLoader.iconFor(ICON_RESTORE_WORKSPACE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    private final FlatButton moveWorkspaceButton = new FlatButton(
+            IconLoader.iconFor(ICON_MOVE_WORKSPACE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    private final AppExit appExit;
+    /** Width of the dialog after {@code pack()}, before it is widened by {@link #SIZE_FACTOR}. */
+    private final int packedWidth;
     /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
     private final JCheckBox staleCheckBox = new JCheckBox(LanguageService.displayName("settings.staleCheck"));
     private final JSpinner staleAfterDaysSpinner = new JSpinner(new SpinnerNumberModel(Config.DEFAULT_STALE_AFTER_DAYS,
@@ -90,13 +127,18 @@ public class SettingsDialog extends JDialog {
 
     private boolean confirmed = false;
 
-    public SettingsDialog(Frame owner) {
+    public SettingsDialog(Frame owner, AppExit appExit) {
         super(owner, LanguageService.displayTitle("menu.settings"), true);
+        this.appExit = appExit;
         setLayout(new BorderLayout());
         add(buildToolbarPanel(), BorderLayout.NORTH);
         buildUi();
         preselectCurrentValues();
         pack();
+        // Wider than packed, so long paths stay readable - computed from the packed width, so it
+        // fits every language and font. The extra width goes to the second column (weightx).
+        packedWidth = getWidth();
+        setSize((int) Math.round(packedWidth * SIZE_FACTOR), getHeight());
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
@@ -133,56 +175,20 @@ public class SettingsDialog extends JDialog {
         gbc.insets = new Insets(4, 4, 4, 4);
         gbc.anchor = GridBagConstraints.WEST;
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_LANGUAGE)), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(languageComboBox, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_HERO_ALGORITHM)), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(heroAlgorithmComboBox, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_DEFAULT_TITAN_ALGORITHM)), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(titanAlgorithmComboBox, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_BACKUP_DIRECTORY)), gbc);
-
-        JPanel backupDirPanel = new JPanel(new BorderLayout(4, 0));
-        backupDirPanel.add(backupDirField, BorderLayout.CENTER);
-        backupDirPanel.add(browseBackupDirButton, BorderLayout.EAST);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(backupDirPanel, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel(LanguageService.displayName(KEY_WORKSPACE_DIRECTORY)), gbc);
-
-        JPanel workspaceDirPanel = new JPanel(new BorderLayout(4, 0));
-        workspaceDirPanel.add(workspaceDirField, BorderLayout.CENTER);
-        workspaceDirPanel.add(browseWorkspaceDirButton, BorderLayout.EAST);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(workspaceDirPanel, gbc);
+        addRow(formPanel, gbc, 0, KEY_LANGUAGE, languageComboBox);
+        addRow(formPanel, gbc, 1, KEY_DEFAULT_HERO_ALGORITHM, heroAlgorithmComboBox);
+        addRow(formPanel, gbc, 2, KEY_DEFAULT_TITAN_ALGORITHM, titanAlgorithmComboBox);
+        restoreWorkspaceButton.setToolTipText(LanguageService.displayName("settingsDialog.restoreWorkspace"));
+        addRow(formPanel, gbc, 3, KEY_BACKUP_DIRECTORY,
+                directoryPanel(backupDirField, browseBackupDirButton, restoreWorkspaceButton));
+        moveWorkspaceButton.setToolTipText(LanguageService.displayName("settingsDialog.moveWorkspace"));
+        addRow(formPanel, gbc, 4, KEY_WORKSPACE_DIRECTORY,
+                directoryPanel(workspaceDirField, browseWorkspaceDirButton, moveWorkspaceButton));
 
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 2;
+        gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         JPanel stalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         stalePanel.add(staleCheckBox);
@@ -197,11 +203,44 @@ public class SettingsDialog extends JDialog {
 
         browseBackupDirButton.addActionListener(e -> onBrowseBackupDir());
         browseWorkspaceDirButton.addActionListener(e -> onBrowseWorkspaceDir());
+        restoreWorkspaceButton.addActionListener(e -> onRestoreWorkspace());
+        moveWorkspaceButton.addActionListener(e -> onMoveWorkspace());
         staleCheckBox.addActionListener(e -> {
             staleCheckTouched = true;
             staleAfterDaysSpinner.setEnabled(staleCheckBox.isSelected());
         });
         staleAfterDaysSpinner.addChangeListener(e -> staleCheckTouched = true);
+    }
+
+    /** One form row: label in the first column, {@code component} in the second, which takes all extra width. */
+    private static void addRow(JPanel formPanel, GridBagConstraints gbc, int row, String labelKey, JComponent component) {
+        gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel(LanguageService.displayName(labelKey)), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(component, gbc);
+    }
+
+    /** Directory field with its "..." button and, behind it, an icon button of the same height. */
+    private static JPanel directoryPanel(JTextField field, JButton browseButton, JButton iconButton) {
+        int height = browseButton.getPreferredSize().height;
+        Dimension size = new Dimension(Math.max(iconButton.getPreferredSize().width, height), height);
+        iconButton.setPreferredSize(size);
+        iconButton.setMaximumSize(size);
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
+        buttons.setOpaque(false);
+        buttons.add(browseButton);
+        buttons.add(Box.createHorizontalStrut(4));
+        buttons.add(iconButton);
+        JPanel panel = new JPanel(new BorderLayout(4, 0));
+        panel.add(field, BorderLayout.CENTER);
+        panel.add(buttons, BorderLayout.EAST);
+        return panel;
     }
 
     /**
@@ -274,9 +313,7 @@ public class SettingsDialog extends JDialog {
      * dialog was cancelled.
      */
     private String browseForDirectory(String currentPath, String dialogTitle) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle(dialogTitle);
+        JFileChooser chooser = createDirectoryChooser(dialogTitle);
         String trimmedPath = currentPath.trim();
         if (!trimmedPath.isEmpty()) {
             File currentDir = new File(trimmedPath);
@@ -286,6 +323,102 @@ public class SettingsDialog extends JDialog {
             return chooser.getSelectedFile().getPath();
         }
         return null;
+    }
+
+    /** A directory-only chooser {@link #SIZE_FACTOR} times as wide and high as the default - for long paths. */
+    static JFileChooser createDirectoryChooser(String dialogTitle) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setDialogTitle(dialogTitle);
+        Dimension size = chooser.getPreferredSize();
+        chooser.setPreferredSize(new Dimension((int) Math.round(size.width * SIZE_FACTOR),
+                (int) Math.round(size.height * SIZE_FACTOR)));
+        return chooser;
+    }
+
+    /**
+     * "Restore workspace from backup": offers the daily and weekly backup of the backup directory
+     * in the field (also a value not saved yet), asks for confirmation, schedules the restore for
+     * the next start and ends Cow2Win - without asking about unsaved changes (the restore replaces
+     * them anyway) and without saving the other values of this dialog.
+     */
+    private void onRestoreWorkspace() {
+        String backupDirText = backupDirField.getText().trim();
+        Path backupDir = backupDirText.isEmpty() ? Config.getBackupDirPath() : Paths.get(backupDirText);
+        List<WorkspaceMaintenance.BackupChoice> backups = WorkspaceMaintenance.availableBackups(backupDir);
+        String title = LanguageService.displayName("settingsDialog.restoreWorkspace");
+        if (backups.isEmpty()) {
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("workspaceMaintenance.restore.noBackup"),
+                    title, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String[] labels = backups.stream().map(SettingsDialog::backupLabel).toArray(String[]::new);
+        Object selected = JOptionPane.showInputDialog(this, LanguageService.displayName("workspaceMaintenance.restore.select"),
+                title, JOptionPane.QUESTION_MESSAGE, null, labels, labels[0]);
+        if (selected == null) {
+            return;
+        }
+        WorkspaceMaintenance.BackupChoice backup = backups.get(List.of(labels).indexOf(selected));
+        String confirmLabel = LanguageService.displayName("workspaceMaintenance.restore.confirmButton");
+        if (!confirmed(LanguageService.displayName("workspaceMaintenance.restore.confirm",
+                WorkspaceMaintenance.BEFORE_RESTORE_FILE_NAME), title, confirmLabel)) {
+            return;
+        }
+        Config.setPendingRestoreZip(backup.zip().toString());
+        Config.save();
+        dispose();
+        appExit.exit();
+    }
+
+    /** "Daily backup of 06.10.2026, 19:12". */
+    private static String backupLabel(WorkspaceMaintenance.BackupChoice backup) {
+        String key = backup.kind() == WorkspaceMaintenance.BackupKind.DAILY
+                ? "workspaceMaintenance.restore.daily" : "workspaceMaintenance.restore.weekly";
+        return LanguageService.displayName(key, WorkspaceBootstrap.formatBackupTime(backup.time()));
+    }
+
+    /**
+     * "Move workspace": lets the user choose an empty folder for the data of the workspace in use,
+     * checks it, asks for confirmation and about unsaved changes (they can still be saved - no data
+     * is lost here), schedules the move for the next start and ends Cow2Win. The other values of
+     * this dialog are not saved.
+     */
+    private void onMoveWorkspace() {
+        Path workspace = Config.getWorkspaceDir().toAbsolutePath().normalize();
+        Path parent = workspace.getParent();
+        String chosen = browseForDirectory(parent == null ? workspace.toString() : parent.toString(),
+                LanguageService.displayName("settingsDialog.selectMoveTarget"));
+        if (chosen == null) {
+            return;
+        }
+        Path target = WorkspaceMaintenance.normalizeWorkspaceDir(Paths.get(chosen.trim())).toAbsolutePath().normalize();
+        String title = LanguageService.displayName("settingsDialog.moveWorkspace");
+        WorkspaceMaintenance.MoveProblem problem = WorkspaceMaintenance.checkMoveTarget(workspace, target);
+        if (problem != null) {
+            JOptionPane.showMessageDialog(this, WorkspaceBootstrap.moveProblemText(problem, workspace, target),
+                    title, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String confirmLabel = LanguageService.displayName("workspaceMaintenance.move.confirmButton");
+        if (!confirmed(LanguageService.displayName("workspaceMaintenance.move.confirm", workspace.toString(), target.toString()),
+                title, confirmLabel)) {
+            return;
+        }
+        if (!appExit.confirmUnsavedChanges()) {
+            return;
+        }
+        Config.setPendingWorkspaceMove(target.toString());
+        Config.save();
+        dispose();
+        appExit.exit();
+    }
+
+    /** Asks with the buttons "{@code confirmLabel}" and "Cancel"; true for the first. */
+    private boolean confirmed(String message, String title, String confirmLabel) {
+        Object[] options = {confirmLabel, LanguageService.displayName("workspaceMaintenance.cancel")};
+        int choice = JOptionPane.showOptionDialog(this, message, title, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+        return choice == 0;
     }
 
     /**
@@ -303,11 +436,7 @@ public class SettingsDialog extends JDialog {
         if (chosen == null || chosen.isBlank()) {
             return chosen;
         }
-        Path selected = Paths.get(chosen.trim());
-        Path folderName = selected.getFileName();
-        boolean alreadyMarker = folderName != null
-                && folderName.toString().equalsIgnoreCase(WORKSPACE_MARKER_DIR_NAME);
-        Path workspace = alreadyMarker ? selected : selected.resolve(WORKSPACE_MARKER_DIR_NAME);
+        Path workspace = WorkspaceMaintenance.normalizeWorkspaceDir(Paths.get(chosen.trim()));
         try {
             Files.createDirectories(workspace);
         } catch (IOException e) {
@@ -381,6 +510,28 @@ public class SettingsDialog extends JDialog {
         }
     }
 
+    /** Width after {@code pack()}, before widening - package-visible for tests. */
+    int packedWidth() {
+        return packedWidth;
+    }
+
+    /** The "..." buttons and the restore/move buttons behind them - package-visible for tests. */
+    JButton browseBackupDirButton() {
+        return browseBackupDirButton;
+    }
+
+    JButton browseWorkspaceDirButton() {
+        return browseWorkspaceDirButton;
+    }
+
+    JButton restoreWorkspaceButton() {
+        return restoreWorkspaceButton;
+    }
+
+    JButton moveWorkspaceButton() {
+        return moveWorkspaceButton;
+    }
+
     /** True if the dialog was confirmed via the save button (rather than the window close button). */
     public boolean isConfirmed() {
         return confirmed;
@@ -390,10 +541,11 @@ public class SettingsDialog extends JDialog {
      * Shows the dialog modally and waits for user input.
      *
      * @param owner parent window (may be null)
+     * @param appExit how a scheduled restore or move ends the application
      * @return the dialog after it was closed - check {@link #isConfirmed()} to see whether the user saved a change
      */
-    public static SettingsDialog show(Frame owner) {
-        SettingsDialog dialog = new SettingsDialog(owner);
+    public static SettingsDialog show(Frame owner, AppExit appExit) {
+        SettingsDialog dialog = new SettingsDialog(owner, appExit);
         dialog.setVisible(true);
         return dialog;
     }

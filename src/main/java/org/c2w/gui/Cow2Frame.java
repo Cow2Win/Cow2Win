@@ -24,6 +24,7 @@ import org.c2w.infra.UpdateChecker;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
 import org.c2w.service.LineupService;
+import org.c2w.service.WorkspaceBootstrap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -243,9 +244,14 @@ public class Cow2Frame extends JFrame {
      * splash screen and only reveal it when startup is done.
      *
      * @param startupCheck the update check started by {@code C2WApp} at the very beginning of startup
+     * @param notices      messages from the startup to show once the window is visible (e.g. a restored workspace)
      */
-    public void showMainWindow(CompletableFuture<UpdateChecker.UpdateCheckResult> startupCheck) {
+    public void showMainWindow(CompletableFuture<UpdateChecker.UpdateCheckResult> startupCheck,
+                               List<WorkspaceBootstrap.StartupNotice> notices) {
         setVisible(true);
+        SwingUtilities.invokeLater(() -> notices.forEach(notice -> JOptionPane.showMessageDialog(this, notice.text(),
+                LanguageService.displayTitle("workspaceMaintenance.title"),
+                notice.warning() ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE)));
         checkForUpdatesAtStartup(startupCheck);
     }
 
@@ -508,7 +514,18 @@ public class Cow2Frame extends JFrame {
 
     /** Opens {@link SettingsDialog}; a saved change (e.g. the stale check) is evaluated right away. */
     private void onOpenSettings() {
-        if (SettingsDialog.show(this).isConfirmed()) {
+        SettingsDialog.AppExit appExit = new SettingsDialog.AppExit() {
+            @Override
+            public boolean confirmUnsavedChanges() {
+                return confirmDiscardUnsavedChanges();
+            }
+
+            @Override
+            public void exit() {
+                exitApplication();
+            }
+        };
+        if (SettingsDialog.show(this, appExit).isConfirmed()) {
             dataStatusController.requestUpdate();
         }
     }
@@ -593,16 +610,26 @@ public class Cow2Frame extends JFrame {
 
 
     private void onWindowClosing() {
-        if (appContext.hasUnsavedChanges()) {
-            String messageKey = appContext.isGuildDirty() && appContext.isLineupDirty() ? "mainFrame.unsaved.closeGuildAndLineup"
-                    : appContext.isGuildDirty() ? "mainFrame.unsaved.closeGuild" : "mainFrame.unsaved.closeLineup";
-            int choice = JOptionPane.showConfirmDialog(this,
-                    LanguageService.displayName(messageKey),
-                    LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (choice != JOptionPane.YES_OPTION) {
-                return;
-            }
+        if (confirmDiscardUnsavedChanges()) {
+            exitApplication();
         }
+    }
+
+    /** True if nothing is unsaved or the user agrees to close anyway. */
+    private boolean confirmDiscardUnsavedChanges() {
+        if (!appContext.hasUnsavedChanges()) {
+            return true;
+        }
+        String messageKey = appContext.isGuildDirty() && appContext.isLineupDirty() ? "mainFrame.unsaved.closeGuildAndLineup"
+                : appContext.isGuildDirty() ? "mainFrame.unsaved.closeGuild" : "mainFrame.unsaved.closeLineup";
+        int choice = JOptionPane.showConfirmDialog(this,
+                LanguageService.displayName(messageKey),
+                LanguageService.displayName("common.unsavedChangesTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        return choice == JOptionPane.YES_OPTION;
+    }
+
+    /** Closes the journal database and ends the application - without asking. */
+    private void exitApplication() {
         appContext.journal().closeCurrent();
         System.exit(0);
     }

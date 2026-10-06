@@ -51,7 +51,7 @@ public class C2WApp {
 
         splash.awaitMinimumDisplayTime();
         SwingUtilities.invokeLater(() -> {
-            frame[0].showMainWindow(updateCheck);
+            frame[0].showMainWindow(updateCheck, WorkspaceBootstrap.startupNotices());
             splash.close();
         });
 
