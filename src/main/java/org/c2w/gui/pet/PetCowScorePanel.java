@@ -29,7 +29,7 @@ public final class PetCowScorePanel extends AbstractCowScorePanel<Pet> {
             throw new IllegalArgumentException("PetCowScorePanel needs a PetRepository");
         }
         this.repository = repository;
-        init(repository.findAll(), 180);
+        init(repository.findAll());
     }
 
     @Override
@@ -76,6 +76,11 @@ public final class PetCowScorePanel extends AbstractCowScorePanel<Pet> {
     @Override
     protected Map<String, FortMark> workingCopy(FortMarks fortMarks) {
         return positiveMarksOnly(fortMarks);
+    }
+
+    @Override
+    protected List<String> columnHeaderKeys() {
+        return List.of("fortMarks.column.positiveRating");
     }
 
     @Override

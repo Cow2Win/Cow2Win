@@ -111,6 +111,26 @@ class TeamScoreCalculatorHeroTest {
     }
 
     @Test
+    @DisplayName("a mark on a buff-matching hero is ignored - the role buff (1.5 %) still counts")
+    void buffMatchingMarkIgnored() {
+        for (FortMark mark : FortMark.values()) {
+            TeamScoreCalculator.HeroBonus bonus = TeamScoreCalculator.heroBonus(
+                    team(1_000_000, null, null, hero("t", Role.TANK, "foundry", mark)), FOUNDRY, TeamCombos.NONE);
+            assertEquals(0.0, bonus.relationPercent(), EPS, mark.name());
+            assertEquals(TeamScoreCalculator.ROLE_MATCH_PERCENT, bonus.totalPercent(), EPS, mark.name());
+        }
+    }
+
+    @Test
+    @DisplayName("a mark on a hero whose role does not match counts as before (+-1.25 %)")
+    void nonMatchingMarkCounts() {
+        assertEquals(1.25, TeamScoreCalculator.heroBonus(team(1_000_000, null, null,
+                hero("m", Role.MAGE, "foundry", FortMark.POSITIVE)), FOUNDRY, TeamCombos.NONE).relationPercent(), EPS);
+        assertEquals(-1.25, TeamScoreCalculator.heroBonus(team(1_000_000, null, null,
+                hero("m", Role.MAGE, "foundry", FortMark.NEGATIVE)), FOUNDRY, TeamCombos.NONE).relationPercent(), EPS);
+    }
+
+    @Test
     @DisplayName("the role-match count (buffFitScore) ignores war flag and pet")
     void roleMatchCountIgnoresPetWarFlag() {
         assertEquals(1, team(1, new Pet("albus"), new WarFlag("flag-frost"), hero("h", Role.TANK)).buffFitScore(FOUNDRY.buff()));

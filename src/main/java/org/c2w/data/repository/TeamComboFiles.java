@@ -26,8 +26,8 @@ import java.util.*;
  *
  * <p>Like {@link FortMarkFiles}, each file exists twice: the <b>shipped
  * defaults</b> (a read-only classpath resource, see {@link #loadDefaults})
- * and the <b>workspace copy</b> the app actually reads, which the user
- * maintains by hand for now (see {@link #loadWorkspace}).
+ * and the <b>workspace copy</b> the app actually reads (see {@link #loadWorkspace}) - maintained
+ * in the "Hero combos" tab of the CowScore dialog, which writes it with {@link #save}, or by hand.
  *
  * <p>File format: a JSON array with one object per combo -
  * <pre>
@@ -48,7 +48,8 @@ import java.util.*;
  * adapted by the user, see {@link ComboSource}) and the optional {@code
  * deactivated} date switches a combo off. <b>Whoever edits or deactivates a
  * shipped combo by hand has to set its {@code source} to {@code USER}</b> -
- * otherwise the next start replaces it with the default version again.
+ * otherwise the next start replaces it with the default version again (the
+ * CowScore dialog does this itself).
  *
  * <p>Invalid combos are logged and ignored, never fatal - see {@link #toCombos}.
  */
@@ -222,6 +223,57 @@ final class TeamComboFiles {
             }
         }
         return new TeamCombos(result);
+    }
+
+    /**
+     * Writes {@code combos} as the workspace copy {@code workspaceFile} in the file format above
+     * ({@code name} and {@code deactivated} only if set). An existing file is first copied to
+     * {@code <name>.before-update-<date>.bak}; if that fails, nothing is written.
+     *
+     * @param membersField e.g. {@code "heroIds"}
+     * @throws IOException if the backup or the write failed
+     */
+    static void save(Path workspaceFile, List<TeamCombo> combos, String membersField) throws IOException {
+        if (Files.isRegularFile(workspaceFile) && !backup(workspaceFile)) {
+            throw new IOException("Could not back up " + workspaceFile + " - not saved");
+        }
+        JsonSupport.writeJsonFile(toTree(combos, membersField), workspaceFile);
+    }
+
+    /** The file entries of {@code combos} - see {@link #save}. */
+    static JsonArray toTree(List<TeamCombo> combos, String membersField) {
+        JsonArray array = new JsonArray();
+        for (TeamCombo combo : combos) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty(FIELD_ID, combo.id());
+            if (combo.hasCustomName()) {
+                obj.addProperty(FIELD_NAME, combo.name());
+            }
+            JsonArray members = new JsonArray();
+            combo.memberIds().forEach(members::add);
+            obj.add(membersField, members);
+            obj.addProperty(FIELD_SOURCE, combo.source().name());
+            if (combo.deactivated() != null) {
+                obj.addProperty(FIELD_DEACTIVATED, combo.deactivated().toString());
+            }
+            array.add(obj);
+        }
+        return array;
+    }
+
+    /**
+     * The shipped {@code defaults} as validated combos, all with source {@link ComboSource#C2W}.
+     */
+    static TeamCombos defaultCombos(JsonArray defaults, String membersField, Set<String> knownMemberIds, String fileName) {
+        JsonArray entries = new JsonArray();
+        for (JsonElement element : defaults) {
+            if (element.isJsonObject()) {
+                JsonObject copy = element.getAsJsonObject().deepCopy();
+                copy.addProperty(FIELD_SOURCE, ComboSource.C2W.name());
+                entries.add(copy);
+            }
+        }
+        return toCombos(entries, membersField, knownMemberIds, fileName);
     }
 
     // --- private ---

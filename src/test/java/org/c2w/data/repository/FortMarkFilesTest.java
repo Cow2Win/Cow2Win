@@ -151,4 +151,85 @@ class FortMarkFilesTest {
         HeroRepository reloaded = new HeroRepository(workspace);
         assertEquals(FortMark.NEGATIVE, reloaded.findById(first.id()).orElseThrow().fortMark("foundry"));
     }
+
+    @Test
+    @DisplayName("loadWorkspace: marks on buff-matching entries are removed, the file is backed up and rewritten")
+    void loadWorkspaceRemovesBuffMatchingMarks(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("cowScore.json");
+        Files.writeString(file, """
+                [
+                  {"id": "corvus", "fortMarks": {"foundry": "POSITIVE", "city-hall": "NEGATIVE"}},
+                  {"id": "galahad", "fortMarks": {"bastion": "NEGATIVE"}}
+                ]
+                """, StandardCharsets.UTF_8);
+        Map<String, FortMarks> defaults = new LinkedHashMap<>();
+        defaults.put("corvus", FortMarks.NONE);
+        defaults.put("galahad", FortMarks.NONE);
+
+        Map<String, FortMarks> result = FortMarkFiles.loadWorkspace(file, defaults, true, "hero",
+                (id, fortificationId) -> id.equals("corvus") && fortificationId.equals("foundry")
+                        || id.equals("galahad") && fortificationId.equals("bastion"));
+
+        assertEquals(Map.of("city-hall", FortMark.NEGATIVE), result.get("corvus").marks());
+        assertTrue(result.get("galahad").isEmpty());
+        assertEquals(1, backups(dir).size(), "backed up before the cleanup");
+        Map<String, FortMarks> written = FortMarkFiles.parse(Files.readString(file, StandardCharsets.UTF_8),
+                "cowScore.json", true, "hero").marksById();
+        assertEquals(result, written);
+    }
+
+    @Test
+    @DisplayName("loadWorkspace: nothing to clean up - the file is neither backed up nor written")
+    void loadWorkspaceWithoutBuffMatchingMarksWritesNothing(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("cowScore.json");
+        String content = """
+                [
+                  {"id": "corvus", "fortMarks": {"city-hall": "NEGATIVE"}}
+                ]
+                """;
+        Files.writeString(file, content, StandardCharsets.UTF_8);
+
+        FortMarkFiles.loadWorkspace(file, Map.of("corvus", FortMarks.NONE), true, "hero", (id, fortificationId) ->
+                fortificationId.equals("foundry"));
+
+        assertEquals(content, Files.readString(file, StandardCharsets.UTF_8));
+        assertTrue(backups(dir).isEmpty());
+    }
+
+    @Test
+    @DisplayName("HeroRepository: a workspace mark on a buff-matching hero (Corvus at the foundry) is removed on loading")
+    void heroRepositoryRemovesBuffMatchingMarks(@TempDir Path workspace) throws IOException {
+        HeroRepository heroes = new HeroRepository(workspace);
+        Hero corvus = heroes.findById("corvus").orElseThrow();
+        assertTrue(corvus.matchesBuff(FortificationRepository.findById("foundry").orElseThrow().buff()));
+        heroes.saveCowScores(heroes.findAll().stream()
+                .map(h -> h.id().equals("corvus")
+                        ? new Hero(h.id(), h.roles(), h.imagePath(), new FortMarks(Map.of("foundry", FortMark.POSITIVE)))
+                        : h)
+                .toList());
+
+        HeroRepository reloaded = new HeroRepository(workspace);
+
+        assertNull(reloaded.findById("corvus").orElseThrow().fortMark("foundry"));
+        assertEquals(1, backups(workspace).size());
+    }
+
+    @Test
+    @DisplayName("The shipped cowScore.json has no mark on a buff-matching hero")
+    void shippedHeroMarksHaveNoBuffMatches(@TempDir Path workspace) {
+        HeroRepository heroes = new HeroRepository(workspace);
+        Map<String, FortMarks> defaults = heroes.loadDefaultCowScores();
+        for (Hero hero : heroes.findAll()) {
+            for (String fortificationId : defaults.get(hero.id()).marks().keySet()) {
+                assertFalse(hero.matchesBuff(FortificationRepository.findById(fortificationId).orElseThrow().buff()),
+                        hero.id() + " / " + fortificationId);
+            }
+        }
+    }
+
+    private static List<Path> backups(Path dir) throws IOException {
+        try (var files = Files.list(dir)) {
+            return files.filter(p -> p.getFileName().toString().contains(".before-update-")).toList();
+        }
+    }
 }

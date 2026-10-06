@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 
 /**
  * Reading and writing of a fortification-mark file - {@code cowScore.json}
@@ -35,6 +36,11 @@ import java.util.TreeMap;
  * {@code [{"id": "corvus", "fortMarks": {"foundry": "POSITIVE"}}, {"id": "adam"}, ...]}.
  * An entity without marks is written with its id only. The workspace copy
  * lists every catalog entity.
+ *
+ * <p>A hero/titan whose role/element matches a fortification's buff carries no mark there -
+ * the buff already counts on its own (see {@code TeamScoreCalculator}). Such marks in the
+ * workspace copy are removed on loading (see {@link #loadWorkspace(Path, Map, boolean, String,
+ * java.util.function.BiPredicate)}).
  *
  * <h2>Migration of the former tier-based format</h2>
  * An entry in the former format ({@code generalScore} / {@code buffFitScores}
@@ -107,6 +113,19 @@ final class FortMarkFiles {
      */
     static Map<String, FortMarks> loadWorkspace(Path workspaceFile, Map<String, FortMarks> defaults,
                                                 boolean allowNegative, String entityLabel) {
+        return loadWorkspace(workspaceFile, defaults, allowNegative, entityLabel, (entityId, fortificationId) -> false);
+    }
+
+    /**
+     * Like {@link #loadWorkspace(Path, Map, boolean, String)}, and also removes every mark for
+     * which {@code buffMatches} (entity id, fortification id) is true - the entity's role/element
+     * matches the fortification's buff, which already counts on its own (see {@code
+     * TeamScoreCalculator}). If that removes anything, the file is rewritten after a
+     * {@code <name>.before-update-<date>.bak} backup - without a backup only in memory.
+     */
+    static Map<String, FortMarks> loadWorkspace(Path workspaceFile, Map<String, FortMarks> defaults,
+                                                boolean allowNegative, String entityLabel,
+                                                BiPredicate<String, String> buffMatches) {
         String fileName = String.valueOf(workspaceFile.getFileName());
         Parsed stored = null;
         if (Files.isRegularFile(workspaceFile)) {
@@ -139,15 +158,25 @@ final class FortMarkFiles {
             }
         }
 
+        int removed = removeBuffMatchingMarks(result, buffMatches);
+        if (removed > 0) {
+            Logger.log(fileName + ": removed " + removed + " mark(s) on buff-matching entries - the buff already counts");
+        }
+
         boolean legacy = stored != null && stored.containsLegacyEntries();
         if (legacy && !backupLegacyFile(workspaceFile)) {
             // Never overwrite the user's former file without a backup - work with the migrated values in memory only.
             return result;
         }
-        if (!complete || legacy) {
+        boolean cleaned = stored != null && removed > 0;
+        if (cleaned && !backupBeforeUpdate(workspaceFile)) {
+            return result;
+        }
+        if (!complete || legacy || cleaned) {
             try {
                 JsonSupport.writeJsonFile(toTree(result), workspaceFile);
-                String what = stored == null ? "created" : legacy ? "migrated to fortification marks" : "completed";
+                String what = stored == null ? "created" : legacy ? "migrated to fortification marks"
+                        : cleaned ? "cleaned up" : "completed";
                 Logger.log(fileName + ": " + what + " " + workspaceFile);
             } catch (IOException e) {
                 Logger.logException("Could not write " + workspaceFile, e);
@@ -250,6 +279,43 @@ final class FortMarkFiles {
      * before it is rewritten. Returns false if that failed - the caller then
      * leaves the file untouched.
      */
+    /** Removes the marks {@code buffMatches} applies to from {@code marksById}; returns how many. */
+    private static int removeBuffMatchingMarks(Map<String, FortMarks> marksById, BiPredicate<String, String> buffMatches) {
+        int removed = 0;
+        for (var entry : marksById.entrySet()) {
+            Map<String, FortMark> kept = new LinkedHashMap<>();
+            for (var mark : entry.getValue().marks().entrySet()) {
+                if (buffMatches.test(entry.getKey(), mark.getKey())) {
+                    removed++;
+                } else {
+                    kept.put(mark.getKey(), mark.getValue());
+                }
+            }
+            if (kept.size() != entry.getValue().marks().size()) {
+                entry.setValue(kept.isEmpty() ? FortMarks.NONE : new FortMarks(kept));
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Copies {@code workspaceFile} to {@code <name>.before-update-<date>.bak} before it is
+     * cleaned up (an existing backup of the same day is kept). Returns false if that failed.
+     */
+    private static boolean backupBeforeUpdate(Path workspaceFile) {
+        Path backup = workspaceFile.resolveSibling(workspaceFile.getFileName() + ".before-update-" + LocalDate.now() + ".bak");
+        try {
+            if (!Files.exists(backup)) {
+                Files.copy(workspaceFile, backup, StandardCopyOption.COPY_ATTRIBUTES);
+                Logger.log(workspaceFile.getFileName() + ": saved the previous version as " + backup);
+            }
+            return true;
+        } catch (IOException e) {
+            Logger.logException("Could not back up " + workspaceFile + " before cleaning it up - left unchanged", e);
+            return false;
+        }
+    }
+
     private static boolean backupLegacyFile(Path workspaceFile) {
         Path backup = workspaceFile.resolveSibling(workspaceFile.getFileName() + ".legacy-" + LocalDate.now() + ".bak");
         try {

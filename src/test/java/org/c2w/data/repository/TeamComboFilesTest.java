@@ -253,6 +253,51 @@ class TeamComboFilesTest {
         }
     }
 
+    @Nested
+    @DisplayName("saving (HeroComboRepository.save)")
+    class Saving {
+
+        @Test
+        @DisplayName("writes the file format (name and deactivated only if set), backs up the old file, reloads the same combos")
+        void saveRoundTrip(@TempDir Path workspace) throws IOException {
+            HeroComboRepository repository = new HeroComboRepository(workspace, HERO_IDS);
+            String before = Files.readString(repository.comboFile(), StandardCharsets.UTF_8);
+            List<TeamCombo> combos = List.of(
+                    new TeamCombo("sebastian-nebula", null, List.of("sebastian", "nebula"), ComboSource.C2W, null),
+                    new TeamCombo("krista-lars", "Ice", List.of("krista", "lars"), ComboSource.USER, LocalDate.of(2026, 10, 6)),
+                    new TeamCombo("astaroth-orion", null, List.of("astaroth", "orion"), ComboSource.USER, null));
+
+            repository.save(combos);
+
+            assertEquals(combos, repository.combos().combos());
+            Path backup = workspace.resolve("heroCombos.json.before-update-" + LocalDate.now() + ".bak");
+            assertEquals(before, Files.readString(backup, StandardCharsets.UTF_8));
+            JsonArray written = json(Files.readString(repository.comboFile(), StandardCharsets.UTF_8));
+            var plain = written.get(0).getAsJsonObject();
+            assertFalse(plain.has("name") || plain.has("deactivated"), plain.toString());
+            assertEquals("C2W", plain.get("source").getAsString());
+            var user = written.get(1).getAsJsonObject();
+            assertEquals("Ice", user.get("name").getAsString());
+            assertEquals("2026-10-06", user.get("deactivated").getAsString());
+            assertEquals(List.of("krista", "lars"), user.getAsJsonArray("heroIds").asList().stream()
+                    .map(e -> e.getAsString()).toList());
+
+            HeroComboRepository reloaded = new HeroComboRepository(workspace, HERO_IDS);
+            assertTrue(reloaded.combos().combos().containsAll(combos), reloaded.combos().toString());
+        }
+
+        @Test
+        @DisplayName("defaultCombos: the shipped combos, all C2W")
+        void defaultCombos(@TempDir Path workspace) {
+            List<String> heroIds = new HeroRepository(workspace).findAll().stream().map(org.c2w.data.model.Hero::id).toList();
+            HeroComboRepository repository = new HeroComboRepository(workspace, heroIds);
+
+            assertEquals(ids(TeamComboFiles.loadDefaults(HeroComboRepository.class, "/data/heroCombos.json")),
+                    ids(repository.defaultCombos()));
+            assertTrue(repository.defaultCombos().combos().stream().allMatch(c -> c.source() == ComboSource.C2W));
+        }
+    }
+
     private static List<Path> listFiles(Path dir) throws IOException {
         try (Stream<Path> files = Files.list(dir)) {
             return files.toList();

@@ -20,7 +20,8 @@ import java.util.Map;
  * "Heroes" tab of the CowScore dialog: one {@link FortMark} (neutral / positive /
  * negative) per hero and fortification of type {@link FortificationType#HERO}. Each row
  * also shows the role the fortification's {@link RoleBuff} asks for, with the automatic,
- * read-only BUFF marker when the hero's role matches. Saving writes every hero to the
+ * read-only BUFF marker when the hero's role matches - then the mark is locked to
+ * "Positive (buff)" and none is kept (the buff already counts). Saving writes every hero to the
  * workspace copy of {@code cowScore.json} (see {@code FortMarkFiles} for the format).
  */
 public final class HeroCowScorePanel extends AbstractCowScorePanel<Hero> {
@@ -33,7 +34,7 @@ public final class HeroCowScorePanel extends AbstractCowScorePanel<Hero> {
             throw new IllegalArgumentException("HeroCowScorePanel needs a HeroRepository");
         }
         this.repository = repository;
-        init(repository.findAll(), 220);
+        init(repository.findAll());
     }
 
     @Override
@@ -78,10 +79,22 @@ public final class HeroCowScorePanel extends AbstractCowScorePanel<Hero> {
     }
 
     @Override
+    protected List<String> columnHeaderKeys() {
+        return List.of("fortMarks.column.buff", "fortMarks.column.rating");
+    }
+
+    /** The hero's role matches the fortification's buff - no mark there, the buff already counts. */
+    @Override
+    protected boolean buffMatches(Hero hero, Fortification fortification) {
+        return hero.matchesBuff(fortification.buff());
+    }
+
+    @Override
     protected void addRowControls(JPanel row, Hero hero, Fortification fortification, Map<String, FortMark> marks) {
         String roleText = fortification.buff() instanceof RoleBuff roleBuff ? roleLabel(roleBuff.role()) : null;
-        addBuffLabel(row, roleText, roleText != null && hero.matchesBuff(fortification.buff()));
-        addFortMarkCombo(row, fortification, marks);
+        boolean buffMatch = roleText != null && buffMatches(hero, fortification);
+        addBuffLabel(row, roleText, buffMatch);
+        addFortMarkCombo(row, fortification, marks, buffMatch, "fortMarks.buffLockedTooltip.hero");
     }
 
     /** The localized display name for a {@link Role} (language file key {@code role.<NAME>}). */

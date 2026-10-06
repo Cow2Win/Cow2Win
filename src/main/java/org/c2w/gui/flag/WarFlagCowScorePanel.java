@@ -29,7 +29,7 @@ public final class WarFlagCowScorePanel extends AbstractCowScorePanel<WarFlag> {
             throw new IllegalArgumentException("WarFlagCowScorePanel needs a WarFlagRepository");
         }
         this.repository = repository;
-        init(repository.findAll(), 180);
+        init(repository.findAll());
     }
 
     @Override
@@ -76,6 +76,11 @@ public final class WarFlagCowScorePanel extends AbstractCowScorePanel<WarFlag> {
     @Override
     protected Map<String, FortMark> workingCopy(FortMarks fortMarks) {
         return positiveMarksOnly(fortMarks);
+    }
+
+    @Override
+    protected List<String> columnHeaderKeys() {
+        return List.of("fortMarks.column.positiveRating");
     }
 
     @Override

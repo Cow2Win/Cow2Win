@@ -1,26 +1,8 @@
 [
   {
-    "id": "corvus",
-    "fortMarks": {
-      "foundry": "POSITIVE"
-    }
-  },
-  {
-    "id": "electra",
-    "fortMarks": {
-      "foundry": "POSITIVE"
-    }
-  },
-  {
     "id": "fluffy",
     "fortMarks": {
       "foundry": "NEGATIVE"
-    }
-  },
-  {
-    "id": "galahad",
-    "fortMarks": {
-      "bastion": "POSITIVE"
     }
   },
   {
@@ -33,18 +15,6 @@
     "id": "judge",
     "fortMarks": {
       "shooting-range": "NEGATIVE"
-    }
-  },
-  {
-    "id": "markus",
-    "fortMarks": {
-      "city-hall": "POSITIVE"
-    }
-  },
-  {
-    "id": "mushy-and-shroom",
-    "fortMarks": {
-      "foundry": "POSITIVE"
     }
   }
 ]

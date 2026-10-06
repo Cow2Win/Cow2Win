@@ -58,8 +58,9 @@ class TeamScoreCalculatorTitanTest {
         void bastionOfFire() {
             Fortification bastion = fortification("bastion-of-fire");
             TitanTeam team = team(600_000, Set.of(TitanElement.FIRE, TitanElement.WATER),
-                    marked("f1", TitanElement.FIRE, bastion.id(), FortMark.POSITIVE), titan("f2", TitanElement.FIRE),
-                    titan("f3", TitanElement.FIRE), titan("w1", TitanElement.WATER), titan("w2", TitanElement.WATER));
+                    titan("f1", TitanElement.FIRE), titan("f2", TitanElement.FIRE),
+                    titan("f3", TitanElement.FIRE), marked("w1", TitanElement.WATER, bastion.id(), FortMark.POSITIVE),
+                    titan("w2", TitanElement.WATER));
 
             assertEquals(8.25, TeamScoreCalculator.titanBonus(team, bastion).totalPercent(), EPS);
             assertEquals(6.495, TeamScoreCalculator.scoreFor(team, bastion).total(), EPS);
@@ -79,9 +80,9 @@ class TeamScoreCalculatorTitanTest {
         void moonTemple() {
             Fortification moonTemple = fortification("moon-temple");
             TitanTeam team = team(500_000,
-                    marked("d1", TitanElement.DARK, moonTemple.id(), FortMark.POSITIVE),
+                    marked("l2", TitanElement.LIGHT, moonTemple.id(), FortMark.POSITIVE),
                     marked("l1", TitanElement.LIGHT, moonTemple.id(), FortMark.NEGATIVE),
-                    titan("d2", TitanElement.DARK));
+                    titan("d1", TitanElement.DARK), titan("d2", TitanElement.DARK));
 
             assertEquals(3.0, TeamScoreCalculator.titanBonus(team, moonTemple).totalPercent(), EPS);
             assertEquals(5.15, TeamScoreCalculator.scoreFor(team, moonTemple).total(), EPS);
@@ -179,14 +180,36 @@ class TeamScoreCalculatorTitanTest {
         void otherFortification() {
             assertEquals(0.0, relation(marked("t1", TitanElement.FIRE, "fire-fort", FortMark.POSITIVE)), EPS);
         }
+
+        @Test
+        @DisplayName("a mark on a buff-matching titan is ignored - the element buff (1.5 %) still counts")
+        void buffMatchingMarkIgnored() {
+            for (FortMark mark : FortMark.values()) {
+                TeamScoreCalculator.TitanBonus bonus = TeamScoreCalculator.titanBonus(
+                        team(1_000_000, marked("f1", TitanElement.FIRE, "fire-fort", mark)), FIRE_FORT);
+                assertEquals(0.0, bonus.relationPercent(), EPS, mark.name());
+                assertEquals(TeamScoreCalculator.ELEMENT_MATCH_PERCENT, bonus.totalPercent(), EPS, mark.name());
+            }
+        }
+
+        @Test
+        @DisplayName("a mark on a titan whose element does not match counts as before (+-1.25 %)")
+        void nonMatchingMarkCounts() {
+            assertEquals(1.25, TeamScoreCalculator.titanBonus(
+                    team(1_000_000, marked("w1", TitanElement.WATER, "fire-fort", FortMark.POSITIVE)), FIRE_FORT)
+                    .relationPercent(), EPS);
+            assertEquals(-1.25, TeamScoreCalculator.titanBonus(
+                    team(1_000_000, marked("w1", TitanElement.WATER, "fire-fort", FortMark.NEGATIVE)), FIRE_FORT)
+                    .relationPercent(), EPS);
+        }
     }
 
     @Test
     @DisplayName("breakdown: three components (element, relation, totems) in score points, total = powerTerm + sum")
     void breakdown() {
         TitanTeam team = team(1_000_000, Set.of(TitanElement.FIRE),
-                marked("f1", TitanElement.FIRE, "fire-fort", FortMark.NEGATIVE), titan("f2", TitanElement.FIRE),
-                titan("w1", TitanElement.WATER));
+                titan("f1", TitanElement.FIRE), titan("f2", TitanElement.FIRE),
+                marked("w1", TitanElement.WATER, "fire-fort", FortMark.NEGATIVE));
         TeamScoreCalculator.Breakdown breakdown = TeamScoreCalculator.scoreFor(team, FIRE_FORT);
 
         assertEquals(10.0, breakdown.powerTerm(), EPS);

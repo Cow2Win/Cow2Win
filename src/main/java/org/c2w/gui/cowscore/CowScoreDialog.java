@@ -4,6 +4,7 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
+import org.c2w.gui.hero.HeroComboPanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
 import org.c2w.gui.pet.PetCowScorePanel;
 import org.c2w.gui.titan.TitanCowScorePanel;
@@ -20,9 +21,13 @@ import java.util.Map;
 
 /**
  * Non-modal dialog for maintaining the CowScore marks of heroes, titans, pets and war
- * flags - one {@link CowScorePanel} per {@link CowScoreTab}. Opened from the "File" menu,
- * independent of the currently open guild/lineup, since the catalogs are shared across
- * every guild. Only one instance exists at a time, see {@link #open}.
+ * flags and the hero combos - one {@link CowScorePanel} per {@link CowScoreTab}. Opened from
+ * the "File" menu, independent of the currently open guild/lineup, since the catalogs are
+ * shared across every guild. Only one instance exists at a time, see {@link #open}.
+ *
+ * <p>Every tab has the same layout: the list on the left is equally wide in all tabs (wide
+ * enough for the longest entry, see {@link CowScoreLayout#listWidth}), and the dialog is high
+ * enough to show every hero fortification without scrolling (see {@link #sizeToContent}).
  *
  * <p>The shared toolbar saves every tab with unsaved changes and restores the defaults of
  * the active tab only. A tab with unsaved changes shows a {@code *} in front of its title,
@@ -42,6 +47,10 @@ public final class CowScoreDialog extends JDialog {
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
     private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
     private static final int TOOLBAR_ICON_SIZE = 20;
+
+    /** Width with the list at {@link CowScoreLayout#MIN_LIST_WIDTH}, and the minimum height - see {@link #sizeToContent}. */
+    private static final int BASE_WIDTH = 740;
+    private static final int MIN_HEIGHT = 560;
 
     /** The open dialog, or null - see {@link #open}. */
     private static CowScoreDialog instance;
@@ -83,6 +92,10 @@ public final class CowScoreDialog extends JDialog {
         panels.put(CowScoreTab.TITANS, new TitanCowScorePanel(catalog.titans()));
         panels.put(CowScoreTab.PETS, new PetCowScorePanel(catalog.pets()));
         panels.put(CowScoreTab.WAR_FLAGS, new WarFlagCowScorePanel(catalog.warFlags()));
+        panels.put(CowScoreTab.HERO_COMBOS, new HeroComboPanel(catalog.heroCombos(), catalog.heroes()));
+        // The list on the left is equally wide in every tab - wide enough for the longest entry of all tabs.
+        int listWidth = CowScoreLayout.listWidth(panels.values().stream().flatMap(p -> p.listLabels().stream()).toList());
+        panels.values().forEach(panel -> panel.setListWidth(listWidth));
         panels.forEach((tab, panel) -> {
             tabs.addTab(LanguageService.displayName(tab.textKey()), panel.component());
             panel.addChangeListener(e -> updateUnsavedState());
@@ -99,8 +112,26 @@ public final class CowScoreDialog extends JDialog {
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
         updateUnsavedState();
-        setSize(740, 560);
+        sizeToContent(owner, listWidth);
         setLocationRelativeTo(owner);
+    }
+
+    /**
+     * Width: {@link #BASE_WIDTH} plus whatever the list is wider than {@link CowScoreLayout#MIN_LIST_WIDTH}
+     * (the detail area keeps its width). Height: the packed height - the lists are kept small, so the
+     * tallest detail area decides, and all hero fortifications fit without scrolling. At least
+     * {@link #MIN_HEIGHT}, at most the usable screen (then the detail area scrolls).
+     */
+    private void sizeToContent(Window owner, int listWidth) {
+        pack();
+        GraphicsConfiguration screen = owner != null ? owner.getGraphicsConfiguration() : getGraphicsConfiguration();
+        Rectangle bounds = screen.getBounds();
+        Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(screen);
+        int usableWidth = bounds.width - screenInsets.left - screenInsets.right;
+        int usableHeight = bounds.height - screenInsets.top - screenInsets.bottom;
+        int width = Math.max(BASE_WIDTH + listWidth - CowScoreLayout.MIN_LIST_WIDTH, getWidth());
+        int height = Math.max(MIN_HEIGHT, getHeight());
+        setSize(Math.min(width, usableWidth), Math.min(height, usableHeight));
     }
 
     @Override

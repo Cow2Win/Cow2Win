@@ -32,7 +32,7 @@ public final class TitanCowScorePanel extends AbstractCowScorePanel<Titan> {
             throw new IllegalArgumentException("TitanCowScorePanel needs a TitanRepository");
         }
         this.repository = repository;
-        init(repository.findAll(), 220);
+        init(repository.findAll());
     }
 
     @Override
@@ -77,10 +77,22 @@ public final class TitanCowScorePanel extends AbstractCowScorePanel<Titan> {
     }
 
     @Override
+    protected List<String> columnHeaderKeys() {
+        return List.of("fortMarks.column.buff", "fortMarks.column.rating");
+    }
+
+    /** The titan's element matches the fortification's buff - no mark there, the buff already counts. */
+    @Override
+    protected boolean buffMatches(Titan titan, Fortification fortification) {
+        return titan.matchesBuff(fortification.buff());
+    }
+
+    @Override
     protected void addRowControls(JPanel row, Titan titan, Fortification fortification, Map<String, FortMark> marks) {
         String elementText = fortification.buff() instanceof ElementBuff elementBuff ? elementLabel(elementBuff.element()) : null;
-        addBuffLabel(row, elementText, elementText != null && titan.matchesBuff(fortification.buff()));
-        addFortMarkCombo(row, fortification, marks);
+        boolean buffMatch = elementText != null && buffMatches(titan, fortification);
+        addBuffLabel(row, elementText, buffMatch);
+        addFortMarkCombo(row, fortification, marks, buffMatch, "fortMarks.buffLockedTooltip.titan");
     }
 
     /** The localized display name for a {@link TitanElement} (language file key {@code titanElement.<NAME>}). */

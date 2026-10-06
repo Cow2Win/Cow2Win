@@ -56,7 +56,7 @@ class TitanRepositoryTest {
         TitanRepository repository = new TitanRepository(workspace);
         Titan ignis = repository.findById("ignis").orElseThrow();
         Titan nova = repository.findById("nova").orElseThrow();
-        FortMarks ignisMarks = new FortMarks(Map.of("bastion-of-fire", FortMark.POSITIVE, "moon-temple", FortMark.NEGATIVE));
+        FortMarks ignisMarks = new FortMarks(Map.of("sun-temple", FortMark.POSITIVE, "moon-temple", FortMark.NEGATIVE));
         FortMarks novaMarks = new FortMarks(Map.of("bridge", FortMark.NEGATIVE));
 
         List<Titan> catalog = repository.findAll().stream()
@@ -86,7 +86,7 @@ class TitanRepositoryTest {
         String legacy = """
                 [
                   {"id": "ignis", "generalScore": "GREAT",
-                   "buffFitScores": {"bastion-of-fire": "GREAT", "moon-temple": "NEGATIVE", "bridge": "MODERATE"}},
+                   "buffFitScores": {"sun-temple": "GREAT", "moon-temple": "NEGATIVE", "bridge": "MODERATE"}},
                   {"id": "nova", "generalScore": "AVERAGE", "buffFitScores": {"bridge": "GOOD"}},
                   {"id": "vulcan", "generalScore": "GOOD"}
                 ]
@@ -96,7 +96,7 @@ class TitanRepositoryTest {
 
         TitanRepository repository = new TitanRepository(workspace);
 
-        assertEquals(Map.of("bastion-of-fire", FortMark.POSITIVE, "moon-temple", FortMark.NEGATIVE),
+        assertEquals(Map.of("sun-temple", FortMark.POSITIVE, "moon-temple", FortMark.NEGATIVE),
                 repository.findById("ignis").orElseThrow().fortMarks().marks());
         assertTrue(repository.findById("nova").orElseThrow().fortMarks().isEmpty());
         assertTrue(repository.findById("vulcan").orElseThrow().fortMarks().isEmpty());

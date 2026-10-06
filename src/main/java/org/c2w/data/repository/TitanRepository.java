@@ -160,7 +160,7 @@ public class TitanRepository {
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), ALLOW_NEGATIVE, ENTITY_LABEL);
             Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, ALLOW_NEGATIVE,
-                    ENTITY_LABEL);
+                    ENTITY_LABEL, (titanId, fortificationId) -> buffMatches(masterData.get(titanId), fortificationId));
             Map<String, Titan> result = new LinkedHashMap<>();
             for (Titan titan : masterData.values()) {
                 result.put(titan.id(), new Titan(titan.id(), titan.element(), titan.imagePath(), fortMarks.get(titan.id())));
@@ -169,6 +169,12 @@ public class TitanRepository {
         } catch (IOException e) {
             throw new RuntimeException("Failed to load titan catalog from " + TITANS_JSON_PATH, e);
         }
+    }
+
+    /** True if {@code titan}'s element matches the buff of the fortification {@code fortificationId} - a mark there is not kept. */
+    private static boolean buffMatches(Titan titan, String fortificationId) {
+        return titan != null && FortificationRepository.findById(fortificationId)
+                .map(fortification -> titan.matchesBuff(fortification.buff())).orElse(false);
     }
 
     private static Map<String, Titan> parseTitansJson(String json) {

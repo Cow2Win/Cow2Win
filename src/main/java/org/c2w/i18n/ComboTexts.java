@@ -2,6 +2,7 @@ package org.c2w.i18n;
 
 import org.c2w.data.model.TeamCombo;
 
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,11 @@ public final class ComboTexts {
     /** Display name of {@code combo} in the configured language, or {@code ""} for {@code null}. */
     public static String displayName(TeamCombo combo) {
         return displayName(combo, LanguageService::displayName);
+    }
+
+    /** The localized names of {@code memberIds}, joined like a combo's display name - also for a combo still being edited. */
+    public static String memberNames(List<String> memberIds) {
+        return memberIds.stream().map(LanguageService::displayName).collect(Collectors.joining(SEPARATOR));
     }
 
     /** Like {@link #displayName(TeamCombo)}, resolving each member id via {@code memberName}. */

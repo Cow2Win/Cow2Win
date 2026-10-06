@@ -22,7 +22,8 @@ import java.util.List;
  *     <li><b>hero/fortification relation</b>: +{@link #RELATION_PERCENT} once
  *     if at least one hero is marked {@link FortMark#POSITIVE} for this
  *     fortification, -{@link #RELATION_PERCENT} once if at least one hero is
- *     marked {@link FortMark#NEGATIVE} (both: net 0);</li>
+ *     marked {@link FortMark#NEGATIVE} (both: net 0); a mark on a buff-matching hero is
+ *     ignored - the buff already counts;</li>
  *     <li><b>pet</b>: {@link #PET_MARKED_PERCENT} if the team's pet is marked
  *     for this fortification (its strength is already part of the power, so
  *     merely having one adds nothing);</li>
@@ -58,7 +59,8 @@ import java.util.List;
  *     <li><b>titan/fortification relation</b>: +{@link #RELATION_PERCENT}
  *     once if at least one titan is marked {@link FortMark#POSITIVE} for this
  *     fortification, -{@link #RELATION_PERCENT} once if at least one titan is
- *     marked {@link FortMark#NEGATIVE} (both: net 0);</li>
+ *     marked {@link FortMark#NEGATIVE} (both: net 0); a mark on a buff-matching titan is ignored -
+ *     the buff already counts;</li>
  *     <li><b>totems</b>: {@link #TOTEM_PERCENT} per totem (at most 2 totems
  *     = 2.5 %, see {@link TitanTeam#totems()}) - independent of the
  *     fortification. Totems do not count as buff matches.</li>
@@ -171,8 +173,11 @@ public final class TeamScoreCalculator {
         long roleMatches = team.heroes().stream().filter(h -> h.matchesBuff(buff)).count();
         double role = roleMatches * ROLE_MATCH_PERCENT;
 
-        boolean anyPositive = team.heroes().stream().anyMatch(h -> h.fortMark(fortificationId) == FortMark.POSITIVE);
-        boolean anyNegative = team.heroes().stream().anyMatch(h -> h.fortMark(fortificationId) == FortMark.NEGATIVE);
+        // A mark on a buff-matching hero is ignored - the buff already counts.
+        boolean anyPositive = team.heroes().stream().filter(h -> !h.matchesBuff(buff))
+                .anyMatch(h -> h.fortMark(fortificationId) == FortMark.POSITIVE);
+        boolean anyNegative = team.heroes().stream().filter(h -> !h.matchesBuff(buff))
+                .anyMatch(h -> h.fortMark(fortificationId) == FortMark.NEGATIVE);
         double relation = (anyPositive ? RELATION_PERCENT : 0) - (anyNegative ? RELATION_PERCENT : 0);
 
         double pet = team.pet() != null && team.pet().isMarkedFor(fortificationId) ? PET_MARKED_PERCENT : 0;
@@ -253,8 +258,11 @@ public final class TeamScoreCalculator {
         long elementMatches = team.titans().stream().filter(t -> t.matchesBuff(buff)).count();
         double element = elementMatches * ELEMENT_MATCH_PERCENT;
 
-        boolean anyPositive = team.titans().stream().anyMatch(t -> t.fortMark(fortificationId) == FortMark.POSITIVE);
-        boolean anyNegative = team.titans().stream().anyMatch(t -> t.fortMark(fortificationId) == FortMark.NEGATIVE);
+        // A mark on a buff-matching titan is ignored - the buff already counts.
+        boolean anyPositive = team.titans().stream().filter(t -> !t.matchesBuff(buff))
+                .anyMatch(t -> t.fortMark(fortificationId) == FortMark.POSITIVE);
+        boolean anyNegative = team.titans().stream().filter(t -> !t.matchesBuff(buff))
+                .anyMatch(t -> t.fortMark(fortificationId) == FortMark.NEGATIVE);
         double relation = (anyPositive ? RELATION_PERCENT : 0) - (anyNegative ? RELATION_PERCENT : 0);
 
         double totems = team.totems().size() * TOTEM_PERCENT;

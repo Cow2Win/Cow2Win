@@ -147,7 +147,8 @@ public class HeroRepository {
             Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), true, "hero");
-            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, true, "hero");
+            Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, true, "hero",
+                    (heroId, fortificationId) -> buffMatches(masterData.get(heroId), fortificationId));
             Map<String, Hero> result = new LinkedHashMap<>();
             for (Hero hero : masterData.values()) {
                 result.put(hero.id(), new Hero(hero.id(), hero.roles(), hero.imagePath(), fortMarks.get(hero.id())));
@@ -156,6 +157,12 @@ public class HeroRepository {
         } catch (IOException e) {
             throw new RuntimeException("Failed to load hero catalog from " + HEROES_JSON_PATH, e);
         }
+    }
+
+    /** True if {@code hero}'s role matches the buff of the fortification {@code fortificationId} - a mark there is not kept. */
+    private static boolean buffMatches(Hero hero, String fortificationId) {
+        return hero != null && FortificationRepository.findById(fortificationId)
+                .map(fortification -> hero.matchesBuff(fortification.buff())).orElse(false);
     }
 
     private static Map<String, Hero> parseHeroesJson(String json, Map<String, FortMarks> cowScores) {
