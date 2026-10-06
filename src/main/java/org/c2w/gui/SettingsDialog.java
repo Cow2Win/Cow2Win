@@ -370,7 +370,7 @@ public class SettingsDialog extends JDialog {
         appExit.exit();
     }
 
-    /** "Daily backup of 06.10.2026, 19:12". */
+    /** "Daily backup of 2026-10-06 19:12". */
     private static String backupLabel(WorkspaceMaintenance.BackupChoice backup) {
         String key = backup.kind() == WorkspaceMaintenance.BackupKind.DAILY
                 ? "workspaceMaintenance.restore.daily" : "workspaceMaintenance.restore.weekly";

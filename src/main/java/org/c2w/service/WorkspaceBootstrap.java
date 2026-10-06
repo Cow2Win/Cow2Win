@@ -40,7 +40,7 @@ public final class WorkspaceBootstrap {
     private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
 
     /** Date and time of a restored backup in the notice after the start. */
-    private static final DateTimeFormatter BACKUP_TIME_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm");
+    private static final DateTimeFormatter BACKUP_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /** A message for the user once the main window is open - see {@link #startupNotices()}. */
     public record StartupNotice(String text, boolean warning) {
@@ -79,7 +79,7 @@ public final class WorkspaceBootstrap {
         };
     }
 
-    /** "06.10.2026, 19:12" - the time a backup ZIP was written. */
+    /** "2026-10-06 19:12" - the time a backup ZIP was written. */
     public static String formatBackupTime(FileTime time) {
         return BACKUP_TIME_FORMAT.format(time.toInstant().atZone(ZoneId.systemDefault()));
     }

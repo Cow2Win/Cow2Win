@@ -54,7 +54,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
     private static final String ICON_DELETE = "/images/app/delete.png";
     private static final int BUTTON_ICON_SIZE = 16;
     private static final int HERO_ICON_SIZE = 20;
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     /** Text color of an invalid combo in the list - readable on the dark background. */
     private static final Color INVALID_COLOR = new Color(229, 115, 115);
 
