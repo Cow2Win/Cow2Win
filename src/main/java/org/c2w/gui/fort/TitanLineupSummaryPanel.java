@@ -4,6 +4,12 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.CowScoreBonuses;
+import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.gui.journal.JournalTexts;
+import org.c2w.i18n.LanguageService;
+
+import java.text.NumberFormat;
 
 /** {@link LineupSummaryPanel} for the titan teams - total titan power and summed titan CowScore. */
 public class TitanLineupSummaryPanel extends LineupSummaryPanel {
@@ -21,5 +27,15 @@ public class TitanLineupSummaryPanel extends LineupSummaryPanel {
     @Override
     protected double sumCowScore(Lineup lineup, Guild guild) {
         return BuffCalculationService.sumTitanCowScore(lineup, guild);
+    }
+
+    /** The formula with the current percentages: element buff, relation and totem (see {@link CowScoreBonuses}). */
+    @Override
+    protected String cowScoreTooltip(String key) {
+        CowScoreBonuses b = TeamScoreCalculator.bonuses();
+        NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
+        format.setMaximumFractionDigits(2);
+        return LanguageService.displayName(key, format.format(b.elementPercent()), format.format(b.relationPercent()),
+                format.format(b.totemPercent()));
     }
 }

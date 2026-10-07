@@ -527,6 +527,11 @@ public class Cow2Frame extends JFrame {
         };
         if (SettingsDialog.show(this, appExit).isConfirmed()) {
             dataStatusController.requestUpdate();
+            // The CowScore bonuses may have changed - the open CowScore dialog names them.
+            CowScoreDialog cowScoreDialog = CowScoreDialog.openInstance();
+            if (cowScoreDialog != null) {
+                cowScoreDialog.refreshInfoTexts();
+            }
         }
     }
 

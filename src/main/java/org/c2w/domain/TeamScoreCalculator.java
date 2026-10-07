@@ -17,26 +17,25 @@ import java.util.List;
  * </pre>
  * where the bonus {@code B} is the sum of (see {@link HeroBonus}):
  * <ul>
- *     <li><b>role buff</b>: {@link #ROLE_MATCH_PERCENT} per hero whose role
- *     matches the fortification's {@link RoleBuff} (the automatic BUFF mark);</li>
- *     <li><b>hero/fortification relation</b>: +{@link #RELATION_PERCENT} once
- *     if at least one hero is marked {@link FortMark#POSITIVE} for this
- *     fortification, -{@link #RELATION_PERCENT} once if at least one hero is
+ *     <li><b>role buff</b>: {@link CowScoreBonuses#rolePercent()} (default 1.5 %) per hero whose
+ *     role matches the fortification's {@link RoleBuff} (the automatic BUFF mark);</li>
+ *     <li><b>hero/fortification relation</b>: +{@link CowScoreBonuses#relationPercent()} (default
+ *     1.25 %) once if at least one hero is marked {@link FortMark#POSITIVE} for this
+ *     fortification, minus the same once if at least one hero is
  *     marked {@link FortMark#NEGATIVE} (both: net 0); a mark on a buff-matching hero is
  *     ignored - the buff already counts;</li>
- *     <li><b>pet</b>: {@link #PET_MARKED_PERCENT} if the team's pet is marked
- *     for this fortification (its strength is already part of the power, so
+ *     <li><b>pet</b>: {@link CowScoreBonuses#petPercent()} (default 1.25 %) if the team's pet is
+ *     marked for this fortification (its strength is already part of the power, so
  *     merely having one adds nothing);</li>
- *     <li><b>war flag</b>: {@link #WAR_FLAG_MARKED_PERCENT} if the team's war
- *     flag is marked for this fortification, otherwise
+ *     <li><b>war flag</b>: {@link CowScoreBonuses#warFlagPercent()} (default 1.25 %) if the team's
+ *     war flag is marked for this fortification, otherwise
  *     {@link #WAR_FLAG_PRESENT_PERCENT} for merely having one (its strength
  *     is not part of the power);</li>
- *     <li><b>team combos</b>: +{@link #COMBO_PERCENT} once if at least one
- *     active {@link TeamCombo} matches the team (all of its heroes are in
+ *     <li><b>team combos</b>: +{@link CowScoreBonuses#comboPercent()} (default 1.25 %) once if at
+ *     least one active {@link TeamCombo} matches the team (all of its heroes are in
  *     the team) - no matter how many match, and independent of the
  *     fortification (see {@link #matchingCombos(HeroTeam)}).</li>
  * </ul>
- * Theoretical range of B: -1.25 % ... +12.5 %.
  * Power stays the dominating factor - the bonus only decides between teams
  * of similar power.
  *
@@ -52,22 +51,27 @@ import java.util.List;
  * </pre>
  * where the bonus {@code B} is the sum of (see {@link TitanBonus}):
  * <ul>
- *     <li><b>element buff</b>: {@link #ELEMENT_MATCH_PERCENT} per titan whose
- *     element matches the fortification's {@link ElementBuff} (the automatic
- *     BUFF mark, at most 5 x 1.5 % = 7.5 %) - a double titan such as
+ *     <li><b>element buff</b>: {@link CowScoreBonuses#elementPercent()} (default 1.5 %) per titan
+ *     whose element matches the fortification's {@link ElementBuff} (the automatic
+ *     BUFF mark, at most 5 per team) - a double titan such as
  *     "Asherona and Pyro" is one catalog entry and thus counts once;</li>
- *     <li><b>titan/fortification relation</b>: +{@link #RELATION_PERCENT}
+ *     <li><b>titan/fortification relation</b>: +{@link CowScoreBonuses#relationPercent()}
  *     once if at least one titan is marked {@link FortMark#POSITIVE} for this
- *     fortification, -{@link #RELATION_PERCENT} once if at least one titan is
+ *     fortification, minus the same once if at least one titan is
  *     marked {@link FortMark#NEGATIVE} (both: net 0); a mark on a buff-matching titan is ignored -
  *     the buff already counts;</li>
- *     <li><b>totems</b>: {@link #TOTEM_PERCENT} per totem (at most 2 totems
- *     = 2.5 %, see {@link TitanTeam#totems()}) - independent of the
+ *     <li><b>totems</b>: {@link CowScoreBonuses#totemPercent()} (default 1.25 %) per totem (at most
+ *     2 totems, see {@link TitanTeam#totems()}) - independent of the
  *     fortification. Totems do not count as buff matches.</li>
  * </ul>
- * Theoretical range of B: -1.25 % ... +11.25 %. There are no titan team
- * combos yet - once they exist they will add +{@link #COMBO_PERCENT} like
- * the hero combos do.
+ * There are no titan team combos yet - once they exist they will add a combo bonus like the
+ * hero combos do.
+ *
+ * <h2>Adjustable percentages</h2>
+ * Every percentage except {@link #WAR_FLAG_PRESENT_PERCENT} can be adjusted in the settings
+ * (see {@link CowScoreBonuses} for the ranges and the rule that a buff is the biggest bonus of
+ * its side). They are registered via {@link #setBonuses} at startup and whenever the settings are
+ * saved; until then (and in tests that do not set them) the defaults apply.
  */
 public final class TeamScoreCalculator {
 
@@ -78,33 +82,11 @@ public final class TeamScoreCalculator {
      */
     public static final double POWER_DIVISOR = 100_000.0;
 
-    /** Bonus in percent per hero whose role matches the fortification's {@link RoleBuff}. */
-    public static final double ROLE_MATCH_PERCENT = 1.5;
-
-    /** Bonus (or malus) in percent for a positively (negatively) marked hero/titan-fortification relation - once per team. */
-    public static final double RELATION_PERCENT = 1.25;
-
-    /**
-     * Bonus in percent per titan whose element matches the fortification's {@link ElementBuff}.
-     * Deliberately separate from {@link #ROLE_MATCH_PERCENT} (even though the value is the same),
-     * so heroes and titans can be tuned independently.
-     */
-    public static final double ELEMENT_MATCH_PERCENT = 1.5;
-
-    /** Bonus in percent for a pet marked for the fortification. */
-    public static final double PET_MARKED_PERCENT = 1.25;
-
-    /** Bonus in percent for a war flag marked for the fortification. */
-    public static final double WAR_FLAG_MARKED_PERCENT = 1.25;
-
     /** Bonus in percent for merely fielding a war flag (not marked for the fortification). */
     public static final double WAR_FLAG_PRESENT_PERCENT = 0.6;
 
-    /** Bonus in percent if at least one active team combo matches the team - once per team, fortification-independent. */
-    public static final double COMBO_PERCENT = 1.25;
-
-    /** Bonus in percent per totem of a titan team - fortification-independent, see {@link TitanTeam#totems()}. */
-    public static final double TOTEM_PERCENT = 1.25;
+    /** The bonus percentages registered from the settings - see {@link #setBonuses}. */
+    private static volatile CowScoreBonuses bonuses = CowScoreBonuses.DEFAULTS;
 
     /** The hero combos registered at startup - see {@link #setHeroCombos}. */
     private static volatile TeamCombos heroCombos = TeamCombos.NONE;
@@ -124,6 +106,19 @@ public final class TeamScoreCalculator {
     /** The hero combos currently registered via {@link #setHeroCombos}. */
     public static TeamCombos heroCombos() {
         return heroCombos;
+    }
+
+    /**
+     * Registers the bonus percentages every calculation uses - at startup from the settings
+     * ({@code WorkspaceBootstrap}) and again whenever they are saved there. null means the defaults.
+     */
+    public static void setBonuses(CowScoreBonuses newBonuses) {
+        bonuses = newBonuses == null ? CowScoreBonuses.DEFAULTS : newBonuses;
+    }
+
+    /** The bonus percentages currently registered via {@link #setBonuses}. */
+    public static CowScoreBonuses bonuses() {
+        return bonuses;
     }
 
     /**
@@ -167,26 +162,27 @@ public final class TeamScoreCalculator {
 
     /** Like {@link #heroBonus(HeroTeam, Fortification)}, with explicitly given {@code combos}. */
     public static HeroBonus heroBonus(HeroTeam team, Fortification fortification, TeamCombos combos) {
+        CowScoreBonuses b = bonuses;
         Buff buff = fortification.buff();
         String fortificationId = fortification.id();
 
         long roleMatches = team.heroes().stream().filter(h -> h.matchesBuff(buff)).count();
-        double role = roleMatches * ROLE_MATCH_PERCENT;
+        double role = roleMatches * b.rolePercent();
 
         // A mark on a buff-matching hero is ignored - the buff already counts.
         boolean anyPositive = team.heroes().stream().filter(h -> !h.matchesBuff(buff))
                 .anyMatch(h -> h.fortMark(fortificationId) == FortMark.POSITIVE);
         boolean anyNegative = team.heroes().stream().filter(h -> !h.matchesBuff(buff))
                 .anyMatch(h -> h.fortMark(fortificationId) == FortMark.NEGATIVE);
-        double relation = (anyPositive ? RELATION_PERCENT : 0) - (anyNegative ? RELATION_PERCENT : 0);
+        double relation = (anyPositive ? b.relationPercent() : 0) - (anyNegative ? b.relationPercent() : 0);
 
-        double pet = team.pet() != null && team.pet().isMarkedFor(fortificationId) ? PET_MARKED_PERCENT : 0;
+        double pet = team.pet() != null && team.pet().isMarkedFor(fortificationId) ? b.petPercent() : 0;
 
         double warFlag = 0;
         if (team.warFlag() != null) {
-            warFlag = team.warFlag().isMarkedFor(fortificationId) ? WAR_FLAG_MARKED_PERCENT : WAR_FLAG_PRESENT_PERCENT;
+            warFlag = team.warFlag().isMarkedFor(fortificationId) ? b.warFlagPercent() : WAR_FLAG_PRESENT_PERCENT;
         }
-        double combo = matchingCombos(team, combos).isEmpty() ? 0 : COMBO_PERCENT;
+        double combo = matchingCombos(team, combos).isEmpty() ? 0 : b.comboPercent();
         return new HeroBonus(role, relation, pet, warFlag, combo);
     }
 
@@ -216,7 +212,7 @@ public final class TeamScoreCalculator {
      * fortifications without a buff and as a general ranking (see {@code
      * HeroTeam#sortScore()}): totalPower / 100 000 x (1 + {@link
      * #WAR_FLAG_PRESENT_PERCENT} if the team fields a war flag + {@link
-     * #COMBO_PERCENT} if a team combo matches). Everything else in the bonus
+     * CowScoreBonuses#comboPercent()} if a team combo matches). Everything else in the bonus
      * depends on a specific fortification.
      */
     public static double sortScore(HeroTeam team) {
@@ -227,7 +223,7 @@ public final class TeamScoreCalculator {
     public static double sortScore(HeroTeam team, TeamCombos combos) {
         double percent = team.warFlag() != null ? WAR_FLAG_PRESENT_PERCENT : 0;
         if (!matchingCombos(team, combos).isEmpty()) {
-            percent += COMBO_PERCENT;
+            percent += bonuses.comboPercent();
         }
         return team.totalPower() / POWER_DIVISOR * (1 + percent / 100.0);
     }
@@ -252,20 +248,21 @@ public final class TeamScoreCalculator {
 
     /** The bonus components of {@code team} at {@code fortification} - see the class Javadoc. */
     public static TitanBonus titanBonus(TitanTeam team, Fortification fortification) {
+        CowScoreBonuses b = bonuses;
         Buff buff = fortification.buff();
         String fortificationId = fortification.id();
 
         long elementMatches = team.titans().stream().filter(t -> t.matchesBuff(buff)).count();
-        double element = elementMatches * ELEMENT_MATCH_PERCENT;
+        double element = elementMatches * b.elementPercent();
 
         // A mark on a buff-matching titan is ignored - the buff already counts.
         boolean anyPositive = team.titans().stream().filter(t -> !t.matchesBuff(buff))
                 .anyMatch(t -> t.fortMark(fortificationId) == FortMark.POSITIVE);
         boolean anyNegative = team.titans().stream().filter(t -> !t.matchesBuff(buff))
                 .anyMatch(t -> t.fortMark(fortificationId) == FortMark.NEGATIVE);
-        double relation = (anyPositive ? RELATION_PERCENT : 0) - (anyNegative ? RELATION_PERCENT : 0);
+        double relation = (anyPositive ? b.relationPercent() : 0) - (anyNegative ? b.relationPercent() : 0);
 
-        double totems = team.totems().size() * TOTEM_PERCENT;
+        double totems = team.totems().size() * b.totemPercent();
         return new TitanBonus(element, relation, totems);
     }
 
@@ -287,11 +284,11 @@ public final class TeamScoreCalculator {
      * The fortification-independent score of {@code team} - the TITAN-side
      * counterpart of {@link #sortScore(HeroTeam)} (see {@code
      * TitanTeam#sortScore()}): totalPower / 100 000 x (1 + number of totems
-     * x {@link #TOTEM_PERCENT}). Everything else in the bonus depends on a
+     * x {@link CowScoreBonuses#totemPercent()}). Everything else in the bonus depends on a
      * specific fortification.
      */
     public static double sortScore(TitanTeam team) {
-        double percent = team.totems().size() * TOTEM_PERCENT;
+        double percent = team.totems().size() * bonuses.totemPercent();
         return team.totalPower() / POWER_DIVISOR * (1 + percent / 100.0);
     }
 

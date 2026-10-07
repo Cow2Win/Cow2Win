@@ -1,5 +1,7 @@
 package org.c2w.gui;
 
+import org.c2w.domain.CowScoreBonuses;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
@@ -27,8 +29,9 @@ import java.util.List;
  * default hero and titan lineup algorithms (see {@link org.c2w.gui.ActionBar#onRunAlgorithm}),
  * the backup directory (see org.c2w.infra.BackupService) and the workspace
  * directory (see {@link Config#getWorkspaceDir()}) and the stale check of the data status
- * (see {@link Config#isStaleCheckEnabled()}); named generically since
- * more application-wide settings are expected to move in here later.
+ * (see {@link Config#isStaleCheckEnabled()}) and the CowScore bonus percentages (see
+ * {@link CowScoreBonusesPanel} - they take effect right away, without a restart); named
+ * generically since more application-wide settings are expected to move in here later.
  *
  * <p>Two buttons behind the directories act on the workspace itself (see
  * {@link WorkspaceMaintenance}), both on the next start - Cow2Win ends for it:
@@ -119,6 +122,8 @@ public class SettingsDialog extends JDialog {
     /** Width of the dialog after {@code pack()}, before it is widened by {@link #SIZE_FACTOR}. */
     private final int packedWidth;
     /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
+    /** The adjustable CowScore bonus percentages, see {@link CowScoreBonusesPanel}. */
+    private final CowScoreBonusesPanel cowScoreBonusesPanel = new CowScoreBonusesPanel(Config.getCowScoreBonuses());
     private final JCheckBox staleCheckBox = new JCheckBox(LanguageService.displayName("settings.staleCheck"));
     private final JSpinner staleAfterDaysSpinner = new JSpinner(new SpinnerNumberModel(Config.DEFAULT_STALE_AFTER_DAYS,
             Config.MIN_STALE_AFTER_DAYS, Config.MAX_STALE_AFTER_DAYS, 1));
@@ -139,8 +144,26 @@ public class SettingsDialog extends JDialog {
         // fits every language and font. The extra width goes to the second column (weightx).
         packedWidth = getWidth();
         setSize((int) Math.round(packedWidth * SIZE_FACTOR), getHeight());
+        sizeToScreen(owner);
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    }
+
+    /** At most as high as the usable screen - then the form scrolls vertically. */
+    private void sizeToScreen(Window owner) {
+        GraphicsConfiguration screen = owner != null ? owner.getGraphicsConfiguration() : getGraphicsConfiguration();
+        Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(screen);
+        int usableHeight = screen.getBounds().height - screenInsets.top - screenInsets.bottom;
+        if (getHeight() > usableHeight) {
+            // Room for the vertical scroll bar, so no horizontal one is needed.
+            int scrollBar = new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
+            setSize(getWidth() + scrollBar, usableHeight);
+        }
+    }
+
+    /** The CowScore bonuses area - package-visible for tests. */
+    CowScoreBonusesPanel cowScoreBonusesPanel() {
+        return cowScoreBonusesPanel;
     }
 
     private JPanel buildToolbarPanel() {
@@ -197,9 +220,18 @@ public class SettingsDialog extends JDialog {
         stalePanel.add(Box.createHorizontalStrut(6));
         stalePanel.add(staleAfterDaysSpinner);
         formPanel.add(stalePanel, gbc);
+
+        gbc.gridy = 6;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(16, 4, 4, 4);
+        formPanel.add(cowScoreBonusesPanel, gbc);
         gbc.gridwidth = 1;
 
-        add(formPanel, BorderLayout.CENTER);
+        // Scrolls only if the screen is too low for the whole form (see sizeToScreen).
+        JScrollPane formScrollPane = new JScrollPane(formPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        formScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        add(formScrollPane, BorderLayout.CENTER);
 
         browseBackupDirButton.addActionListener(e -> onBrowseBackupDir());
         browseWorkspaceDirButton.addActionListener(e -> onBrowseWorkspaceDir());
@@ -467,6 +499,13 @@ public class SettingsDialog extends JDialog {
         if (staleCheckTouched) {
             Config.setStaleCheckUserSet(true);
         }
+        CowScoreBonuses oldBonuses = TeamScoreCalculator.bonuses();
+        if (Config.setCowScoreBonuses(cowScoreBonusesPanel.bonuses())) {
+            CowScoreBonuses newBonuses = Config.getCowScoreBonuses();
+            Logger.log("CowScore bonuses changed: " + oldBonuses + " -> " + newBonuses);
+        }
+        // Take effect right away - no restart needed.
+        TeamScoreCalculator.setBonuses(Config.getCowScoreBonuses());
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built

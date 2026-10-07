@@ -199,6 +199,22 @@ class DataStatusServiceTest {
         }
 
         @Test
+        @DisplayName("CowScore bonuses changed in the settings after the lineup was saved: \"recalculate\"")
+        void bonusesChangedAfterLineup() {
+            Lineup assigned = lineup(new Lineup.Entry("bastion", "anna", Lineup.TeamType.HERO, 0));
+            List<Instant> cowScoreTimes = new java.util.ArrayList<>(java.util.Arrays.asList(earlier, null, earlier));
+            cowScoreTimes.add(later); // Config.getCowScoreBonusesChangedAt(), see DataStatusController
+            DataStatus changed = DataStatusService.evaluate(concept(assigned, LINEUP_FILE, false,
+                    new FileTimes(earlier, earlier, cowScoreTimes)));
+            assertTrue(changed.concept().texts().contains(TextPart.of("status.concept.recalculate")));
+
+            cowScoreTimes.set(3, null); // never changed
+            DataStatus unchanged = DataStatusService.evaluate(concept(assigned, LINEUP_FILE, false,
+                    new FileTimes(earlier, earlier, cowScoreTimes)));
+            assertFalse(unchanged.concept().texts().contains(TextPart.of("status.concept.recalculate")));
+        }
+
+        @Test
         @DisplayName("Guild file or CowScore file newer than the lineup: ATTENTION \"recalculate\"; dirty: ATTENTION \"unsaved\"")
         void recalculateAndDirty() {
             Lineup assigned = lineup(new Lineup.Entry("bastion", "anna", Lineup.TeamType.HERO, 0));

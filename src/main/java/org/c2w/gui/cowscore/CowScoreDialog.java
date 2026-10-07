@@ -1,6 +1,7 @@
 package org.c2w.gui.cowscore;
 
 import org.c2w.data.repository.Catalog;
+import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.HintStyle;
@@ -33,7 +34,8 @@ import java.util.Map;
  * enough for the longest entry, see {@link CowScoreLayout#listWidth}), and the dialog is high
  * enough to show every hero fortification without scrolling (see {@link #sizeToContent}). At the top
  * of every tab, an information area says what the controls of that tab do for the CowScore
- * (see {@link #infoText(CowScoreTab)}).
+ * (see {@link #infoText(CowScoreTab)}), with the percentages of the settings - refreshed when
+ * they are saved (see {@link #refreshInfoTexts()}).
  *
  * <p>The shared toolbar saves every tab with unsaved changes and restores the defaults of
  * the active tab only. A tab with unsaved changes shows a {@code *} in front of its title,
@@ -161,20 +163,21 @@ public final class CowScoreDialog extends JDialog {
     }
 
     /**
-     * What the controls of {@code tab} do for the CowScore, with the percentages of
-     * {@link TeamScoreCalculator} (language file key {@code <tab text key>.info}).
+     * What the controls of {@code tab} do for the CowScore, with the percentages currently
+     * registered in {@link TeamScoreCalculator#bonuses()} (language file key {@code <tab text key>.info}).
      */
     static String infoText(CowScoreTab tab) {
         String key = tab.textKey() + ".info";
+        CowScoreBonuses b = TeamScoreCalculator.bonuses();
         return switch (tab) {
-            case HEROES -> LanguageService.displayName(key, percent(TeamScoreCalculator.RELATION_PERCENT),
-                    percent(TeamScoreCalculator.ROLE_MATCH_PERCENT));
-            case TITANS -> LanguageService.displayName(key, percent(TeamScoreCalculator.RELATION_PERCENT),
-                    percent(TeamScoreCalculator.ELEMENT_MATCH_PERCENT));
-            case PETS -> LanguageService.displayName(key, percent(TeamScoreCalculator.PET_MARKED_PERCENT));
-            case WAR_FLAGS -> LanguageService.displayName(key, percent(TeamScoreCalculator.WAR_FLAG_MARKED_PERCENT),
+            case HEROES -> LanguageService.displayName(key, percent(b.relationPercent()),
+                    percent(b.rolePercent()));
+            case TITANS -> LanguageService.displayName(key, percent(b.relationPercent()),
+                    percent(b.elementPercent()));
+            case PETS -> LanguageService.displayName(key, percent(b.petPercent()));
+            case WAR_FLAGS -> LanguageService.displayName(key, percent(b.warFlagPercent()),
                     percent(TeamScoreCalculator.WAR_FLAG_PRESENT_PERCENT));
-            case HERO_COMBOS -> LanguageService.displayName(key, percent(TeamScoreCalculator.COMBO_PERCENT));
+            case HERO_COMBOS -> LanguageService.displayName(key, percent(b.comboPercent()));
         };
     }
 
@@ -183,6 +186,19 @@ public final class CowScoreDialog extends JDialog {
         NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
         format.setMaximumFractionDigits(2);
         return format.format(value);
+    }
+
+    /**
+     * Shows the information texts again with the currently registered percentages - after the
+     * CowScore bonuses were changed in the settings.
+     */
+    public void refreshInfoTexts() {
+        infoAreas.forEach((tab, info) -> info.setText(infoText(tab)));
+    }
+
+    /** The open dialog, if any - e.g. to refresh it after the settings changed. */
+    public static CowScoreDialog openInstance() {
+        return instance;
     }
 
     /** The information area of {@code tab} - package-visible for tests. */

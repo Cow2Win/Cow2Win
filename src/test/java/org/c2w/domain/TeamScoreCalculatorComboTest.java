@@ -2,6 +2,7 @@ package org.c2w.domain;
 
 import org.c2w.data.model.*;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * one active {@link TeamCombo} matches, independent of the fortification.
  */
 class TeamScoreCalculatorComboTest {
+
+    /** The expected values below use the default percentages - set explicitly, the test order must not matter. */
+    @BeforeEach
+    void defaultBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
+
+    @AfterEach
+    void resetBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
 
     private static final double EPS = 1e-9;
 

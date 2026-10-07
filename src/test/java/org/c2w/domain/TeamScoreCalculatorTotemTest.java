@@ -1,6 +1,8 @@
 package org.c2w.domain;
 
 import org.c2w.data.model.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,12 +15,23 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * The totem bonus of a titan team: {@link TeamScoreCalculator#TOTEM_PERCENT}
+ * The totem bonus of a titan team: {@link CowScoreBonuses#totemPercent()}
  * per totem, relative to the power term, fortification-independent - in
  * {@link TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} and
  * {@link TitanTeam#sortScore()} - as the third component of the titan bonus.
  */
 class TeamScoreCalculatorTotemTest {
+
+    /** The expected values below use the default percentages - set explicitly, the test order must not matter. */
+    @BeforeEach
+    void defaultBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
+
+    @AfterEach
+    void resetBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
 
     private static final double EPS = 1e-9;
 

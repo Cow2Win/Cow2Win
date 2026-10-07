@@ -1,6 +1,7 @@
 package org.c2w.infra;
 
 import org.c2w.data.model.FortificationType;
+import org.c2w.domain.CowScoreBonuses;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,8 +9,16 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Properties;
 
+/**
+ * The application-wide settings in {@code config.properties} (outside the workspace): language,
+ * workspace and backup folders, default algorithms, the data status's stale check, the adjustable
+ * CowScore bonus percentages (see {@link #getCowScoreBonuses()}), scheduled workspace operations and
+ * the recently used guild/lineup. Every setter logs an actual change; {@link #save()} writes the file.
+ */
 public final class Config {
 
     /**
@@ -74,6 +83,16 @@ public final class Config {
     private static final String KEY_PENDING_RESTORE_ZIP = "pendingRestoreZip";
     /** Folder the workspace is moved to on the next start (see {@link WorkspaceMaintenance}). */
     private static final String KEY_PENDING_WORKSPACE_MOVE = "pendingWorkspaceMove";
+    /** The adjustable CowScore bonus percentages (see {@link CowScoreBonuses}) - one key per value. */
+    private static final String KEY_COW_SCORE_ROLE = "cowScore.roleMatchPercent";
+    private static final String KEY_COW_SCORE_ELEMENT = "cowScore.elementMatchPercent";
+    private static final String KEY_COW_SCORE_RELATION = "cowScore.relationPercent";
+    private static final String KEY_COW_SCORE_PET = "cowScore.petMarkedPercent";
+    private static final String KEY_COW_SCORE_WAR_FLAG = "cowScore.warFlagMarkedPercent";
+    private static final String KEY_COW_SCORE_COMBO = "cowScore.comboPercent";
+    private static final String KEY_COW_SCORE_TOTEM = "cowScore.totemPercent";
+    /** When the CowScore bonuses were last actually changed (ISO instant) - lineups saved before need recalculating. */
+    private static final String KEY_COW_SCORE_BONUSES_CHANGED_AT = "cowScore.bonusesChangedAt";
     /** Default and valid range of {@link #KEY_STALE_AFTER_DAYS}. */
     public static final int DEFAULT_STALE_AFTER_DAYS = 30;
     public static final int MIN_STALE_AFTER_DAYS = 1;
@@ -282,6 +301,75 @@ public final class Config {
      */
     public static Path getWorkspaceDir() {
         return Paths.get(getWorkspacePath());
+    }
+
+    // --- CowScore bonuses ---
+
+    /**
+     * The CowScore bonus percentages: a missing or invalid value is its default, every value is
+     * limited to its range, and a buff smaller than a small bonus of its side is raised to it
+     * (logged, the file is not written) - see {@link CowScoreBonuses#normalized()}.
+     */
+    public static CowScoreBonuses getCowScoreBonuses() {
+        CowScoreBonuses d = CowScoreBonuses.DEFAULTS;
+        CowScoreBonuses clamped = new CowScoreBonuses(
+                percent(KEY_COW_SCORE_ROLE, d.rolePercent()), percent(KEY_COW_SCORE_ELEMENT, d.elementPercent()),
+                percent(KEY_COW_SCORE_RELATION, d.relationPercent()), percent(KEY_COW_SCORE_PET, d.petPercent()),
+                percent(KEY_COW_SCORE_WAR_FLAG, d.warFlagPercent()), percent(KEY_COW_SCORE_COMBO, d.comboPercent()),
+                percent(KEY_COW_SCORE_TOTEM, d.totemPercent())).clamped();
+        CowScoreBonuses normalized = clamped.normalized();
+        if (!normalized.equals(clamped)) {
+            Logger.log("Config: CowScore buff raised to the biggest bonus of its side (role "
+                    + clamped.rolePercent() + " -> " + normalized.rolePercent() + ", element "
+                    + clamped.elementPercent() + " -> " + normalized.elementPercent() + ") - in memory only");
+        }
+        return normalized;
+    }
+
+    /**
+     * Stores {@code bonuses} (normalized, see {@link CowScoreBonuses#normalized()}); if at least
+     * one value actually changes, also the time of the change (see {@link #getCowScoreBonusesChangedAt()}).
+     * Does not save; the caller does.
+     *
+     * @return true if a value changed
+     */
+    public static boolean setCowScoreBonuses(CowScoreBonuses bonuses) {
+        CowScoreBonuses normalized = bonuses.normalized();
+        boolean changed = !normalized.equals(getCowScoreBonuses());
+        setProperty(KEY_COW_SCORE_ROLE, Double.toString(normalized.rolePercent()));
+        setProperty(KEY_COW_SCORE_ELEMENT, Double.toString(normalized.elementPercent()));
+        setProperty(KEY_COW_SCORE_RELATION, Double.toString(normalized.relationPercent()));
+        setProperty(KEY_COW_SCORE_PET, Double.toString(normalized.petPercent()));
+        setProperty(KEY_COW_SCORE_WAR_FLAG, Double.toString(normalized.warFlagPercent()));
+        setProperty(KEY_COW_SCORE_COMBO, Double.toString(normalized.comboPercent()));
+        setProperty(KEY_COW_SCORE_TOTEM, Double.toString(normalized.totemPercent()));
+        if (changed) {
+            setProperty(KEY_COW_SCORE_BONUSES_CHANGED_AT, Instant.now().toString());
+        }
+        return changed;
+    }
+
+    /** When the CowScore bonuses were last actually changed, null if never (or unreadable). */
+    public static Instant getCowScoreBonusesChangedAt() {
+        String value = properties.getProperty(KEY_COW_SCORE_BONUSES_CHANGED_AT, "").trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /** The double stored under {@code key}, {@code fallback} if it is missing or not a number. */
+    private static double percent(String key, double fallback) {
+        try {
+            double value = Double.parseDouble(properties.getProperty(key, "").trim());
+            return Double.isFinite(value) ? value : fallback;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     // --- staleCheckEnabled / staleAfterDays / staleCheckUserSet ---

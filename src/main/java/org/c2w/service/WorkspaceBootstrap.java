@@ -134,6 +134,8 @@ public final class WorkspaceBootstrap {
             Logger.writeEntries(heldEntries);
         }
         startupNotices = maintenance.map(WorkspaceBootstrap::noticeFor).map(List::of).orElse(List.of());
+        // The CowScore bonus percentages of the settings - before anything is scored.
+        TeamScoreCalculator.setBonuses(Config.getCowScoreBonuses());
         progress.accept("Creating backups ...");
         BackupService.checkAndCreateBackups();
         progress.accept("Loading catalogs ...");

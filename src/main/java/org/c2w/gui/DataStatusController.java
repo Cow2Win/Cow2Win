@@ -189,6 +189,8 @@ public final class DataStatusController {
             cowScoreFiles.add(lastModified(catalog.pets().cowScoreFile()));
             cowScoreFiles.add(lastModified(catalog.warFlags().cowScoreFile()));
         }
+        // Changed CowScore bonuses in the settings count like a changed CowScore file.
+        cowScoreFiles.add(Config.getCowScoreBonusesChangedAt());
         FileTimes times = new FileTimes(lastModified(snapshot.guildFilePath()),
                 lastModified(snapshot.lineupFilePath()), cowScoreFiles);
         return new FileData(plan, original, times);

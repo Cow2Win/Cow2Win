@@ -2,6 +2,8 @@ package org.c2w.domain;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * per team) + totems (1.25 % per totem) - see {@link TeamScoreCalculator}.
  */
 class TeamScoreCalculatorTitanTest {
+
+    /** The expected values below use the default percentages - set explicitly, the test order must not matter. */
+    @BeforeEach
+    void defaultBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
+
+    @AfterEach
+    void resetBonuses() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+    }
 
     private static final double EPS = 1e-9;
 
@@ -119,7 +132,7 @@ class TeamScoreCalculatorTitanTest {
         TitanTeam team = new TitanTeam("m1", 0, titans, 1_000_000);
 
         TeamScoreCalculator.TitanBonus bonus = TeamScoreCalculator.titanBonus(team, FIRE_FORT);
-        assertEquals(matches * TeamScoreCalculator.ELEMENT_MATCH_PERCENT, bonus.elementPercent(), EPS);
+        assertEquals(matches * CowScoreBonuses.DEFAULTS.elementPercent(), bonus.elementPercent(), EPS);
         assertEquals(10.0 * (1 + matches * 1.5 / 100), TeamScoreCalculator.scoreFor(team, FIRE_FORT).total(), EPS);
     }
 
@@ -188,7 +201,7 @@ class TeamScoreCalculatorTitanTest {
                 TeamScoreCalculator.TitanBonus bonus = TeamScoreCalculator.titanBonus(
                         team(1_000_000, marked("f1", TitanElement.FIRE, "fire-fort", mark)), FIRE_FORT);
                 assertEquals(0.0, bonus.relationPercent(), EPS, mark.name());
-                assertEquals(TeamScoreCalculator.ELEMENT_MATCH_PERCENT, bonus.totalPercent(), EPS, mark.name());
+                assertEquals(CowScoreBonuses.DEFAULTS.elementPercent(), bonus.totalPercent(), EPS, mark.name());
             }
         }
 

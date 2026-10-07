@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * The order is irrelevant - the set is kept in {@link TitanElement} order,
  * which is also the order totems are stored and displayed in. null means no
  * totems. Each totem adds a fortification-independent bonus to the team's
- * CowScore ({@link TeamScoreCalculator#TOTEM_PERCENT}), see {@link
+ * CowScore ({@link TeamScoreCalculator#bonuses()}, adjustable in the settings), see {@link
  * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} and {@link
  * #sortScore()}.
  */

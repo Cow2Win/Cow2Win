@@ -67,7 +67,8 @@ public final class DataStatusService {
      * Last-modified times of the files that decide whether the lineup needs recalculating;
      * null where a file does not exist.
      *
-     * @param cowScoreFiles the workspace's CowScore files (heroes, titans, pets, war flags)
+     * @param cowScoreFiles the workspace's CowScore files (heroes, titans, pets, war flags) and the
+     *                      time the CowScore bonuses were changed in the settings
      */
     public record FileTimes(Instant guildFile, Instant lineupFile, List<Instant> cowScoreFiles) {
         public static final FileTimes NONE = new FileTimes(null, null, List.of());

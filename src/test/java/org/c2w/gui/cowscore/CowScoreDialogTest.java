@@ -180,6 +180,19 @@ class CowScoreDialogTest {
         }
     }
 
+    @Test
+    @DisplayName("The information texts name the percentages registered from the settings")
+    void infoTextFollowsBonuses() {
+        try {
+            org.c2w.domain.TeamScoreCalculator.setBonuses(new org.c2w.domain.CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 2.0, 1.25));
+            String combos = CowScoreDialog.infoText(CowScoreTab.HERO_COMBOS);
+            assertTrue(combos.contains("+2 %"), combos);
+        } finally {
+            org.c2w.domain.TeamScoreCalculator.setBonuses(org.c2w.domain.CowScoreBonuses.DEFAULTS);
+        }
+        assertFalse(CowScoreDialog.infoText(CowScoreTab.HERO_COMBOS).contains("+2 %"), "back to the defaults");
+    }
+
     private List<String> columnTitles(CowScoreTab tab) {
         JPanel header = CowScoreTestSupport.findAll((Container) dialog.panel(tab).component(), JPanel.class).stream()
                 .filter(p -> "columnHeader".equals(p.getName())).findFirst().orElseThrow();

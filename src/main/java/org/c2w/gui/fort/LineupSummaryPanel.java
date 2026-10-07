@@ -64,7 +64,7 @@ public abstract class LineupSummaryPanel extends JPanel {
         // since it never changes with the lineup. A summed CowScore total is
         // not self-explanatory the way a power value is.
         powerLbl.setToolTipText(LanguageService.displayName(powerTooltipKey));
-        cowScoreLbl.setToolTipText(LanguageService.displayName(cowScoreTooltipKey));
+        cowScoreLbl.setToolTipText(cowScoreTooltip(cowScoreTooltipKey));
 
         add(powerLbl);
         add(cowScoreLbl);
@@ -84,6 +84,11 @@ public abstract class LineupSummaryPanel extends JPanel {
 
     /** Summed CowScore of this panel's team type - see BuffCalculationService#sumHeroCowScore / #sumTitanCowScore. */
     protected abstract double sumCowScore(Lineup lineup, Guild guild);
+
+    /** The tooltip of the CowScore label - a subclass fills in percentages if its text has placeholders. */
+    protected String cowScoreTooltip(String key) {
+        return LanguageService.displayName(key);
+    }
 
     /** Sums every entry's current team totalPower (see {@link BuffCalculationService#totalPowerOf}) over every entry of the given team type. */
     private static int totalPower(Lineup lineup, Guild guild, Lineup.TeamType teamType) {
