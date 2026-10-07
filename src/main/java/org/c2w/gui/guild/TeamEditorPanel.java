@@ -265,8 +265,8 @@ public final class TeamEditorPanel<T> extends JPanel {
         // default empty model) only ever exercises the renderer's
         // null/"- none -" (text-only, no icon) branch, which is shorter
         // than a populated combo once icon-bearing entries (see the icon
-        // constructor parameter, e.g. 32px hero/titan icons in
-        // MemberEditorPanel) push the real preferred height up - leaving
+        // constructor parameter, e.g. 32px hero/titan icons in the
+        // team assignment) push the real preferred height up - leaving
         // the power field frozen at that too-small, pre-model height.
         Dimension comboSize = combos.get(0).getPreferredSize();
         Dimension powerFieldSize = powerField.getPreferredSize();

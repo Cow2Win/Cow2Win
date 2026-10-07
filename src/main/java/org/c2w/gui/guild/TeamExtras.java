@@ -24,8 +24,7 @@ import java.util.function.Supplier;
  * always reflect the current state of every other team of that member - an
  * id in there is hidden from the dropdown (the team's own current selection
  * always stays selectable). Since which teams count as "other teams of the
- * same member" depends on the dialog (a fixed member in
- * {@link MemberEditorPanel}, a per-row member combo in
+ * same member" depends on the dialog (a per-row member combo in
  * {@code FortificationEntryDialog}/{@link GuildTeamEntryDialog}), every
  * dialog supplies its own - see {@link #forOtherDrafts}. This only guides the
  * user; {@link #confirmNoConflict} is the save-time safety net.
@@ -97,16 +96,5 @@ public record TeamExtras(List<Pet> pets, List<WarFlag> warFlags,
                 LanguageService.displayName(KEY_CONFLICT, memberName, LanguageService.displayName(conflict.get().itemId())),
                 LanguageService.displayName("common.saveNotPossibleTitle"), JOptionPane.WARNING_MESSAGE);
         return false;
-    }
-
-    /** Every draft in {@code drafts} except {@code self} (by identity) - the common "other teams" of {@link MemberEditorPanel}. */
-    static <T> List<TeamDraft<T>> allExcept(List<TeamDraft<T>> drafts, TeamDraft<T> self) {
-        List<TeamDraft<T>> result = new ArrayList<>();
-        for (TeamDraft<T> draft : drafts) {
-            if (draft != self) {
-                result.add(draft);
-            }
-        }
-        return result;
     }
 }

@@ -56,7 +56,10 @@ public class GuildService {
      */
     public enum SaveOrigin {
         CONTEXT_BAR(null),
+        /** The former guild editor dialog - kept for old guild log entries only. */
         GUILD_EDITOR("guildLog.origin.guildEditor"),
+        /** Adding or deleting a member in the member overview of the input stage. */
+        MEMBER_OVERVIEW("guildLog.origin.memberOverview"),
         TEAM_ENTRY("guildLog.origin.teamEntry"),
         FORTIFICATION_ENTRY("guildLog.origin.fortificationEntry"),
         HERO_OVERVIEW("guildLog.origin.heroOverview"),

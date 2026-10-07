@@ -32,7 +32,7 @@ class MainMenuBarTest {
      */
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
-            "menu.guild: NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD",
+            "menu.guild: NEW_GUILD, REMOVE_GUILD",
             "menu.input: OPEN_GUILD_TEAM_ENTRY, ---, "
                     + "JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
@@ -103,9 +103,10 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("The guild editor is in the guild menu, the team assignment is input, the CowScore settings stay master data")
+    @DisplayName("Creating and removing a guild are in the guild menu, the team assignment is input, the CowScore settings stay master data")
     void stageAssignment() {
-        assertEquals(Stage.GUILD, ActionId.OPEN_GUILD_EDITOR.stage());
+        assertEquals(Stage.GUILD, ActionId.NEW_GUILD.stage());
+        assertEquals(Stage.GUILD, ActionId.REMOVE_GUILD.stage());
         assertEquals(Stage.INPUT, ActionId.OPEN_GUILD_TEAM_ENTRY.stage());
         assertEquals(Stage.MASTER_DATA, ActionId.COWSCORE.stage());
     }

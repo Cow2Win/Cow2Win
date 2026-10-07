@@ -45,6 +45,8 @@ class InputStageViewTest {
     private String previousWorkspace;
     private AppContext context;
     private InputStageView view;
+    /** Members whose team assignment the view opened. */
+    private final java.util.List<String> openedTeamEntries = new java.util.ArrayList<>();
 
     @BeforeEach
     void openWorkspace() throws Exception {
@@ -61,7 +63,7 @@ class InputStageViewTest {
         for (ActionId id : ActionId.values()) {
             actions.register(new AppAction(id, () -> { }));
         }
-        view = new InputStageView(context, actions);
+        view = new InputStageView(context, actions, openedTeamEntries::add);
     }
 
     @AfterEach
@@ -186,5 +188,40 @@ class InputStageViewTest {
 
         view.selectMember("bert");
         assertTrue(view.memberSectionTexts().stream().noneMatch(text -> text.contains(JournalTexts.team(TeamKind.HERO, 1) + ":")));
+    }
+
+    @Test
+    @DisplayName("\"+\" and \"-\" next to the count: \"-\" only with a selected member")
+    void memberButtons() {
+        assertTrue(view.addMemberButton().isEnabled());
+        view.selectMember(null);
+        assertFalse(view.removeMemberButton().isEnabled());
+
+        view.selectMember("anna");
+        assertTrue(view.removeMemberButton().isEnabled());
+    }
+
+    @Test
+    @DisplayName("\"+\" is disabled at the maximum number of members, with the reason as tooltip")
+    void addDisabledWhenFull() {
+        List<org.c2w.data.model.GuildMember> members = new java.util.ArrayList<>();
+        for (int i = 1; i <= Guild.MAX_MEMBERS; i++) {
+            members.add(new org.c2w.data.model.GuildMember("m" + i, "M" + i, List.of(), List.of()));
+        }
+        context.setGuild(context.guild().withMembers(members));
+        context.setGuildDirty(true); // fires dirtyStateChanged - the view refreshes
+
+        assertFalse(view.addMemberButton().isEnabled());
+        assertEquals(LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS),
+                view.addMemberButton().getToolTipText());
+    }
+
+    @Test
+    @DisplayName("Enter on a member opens the team assignment for this member only")
+    void enterOpensTeamEntryForMember() {
+        view.selectMember("bert");
+        view.table().getActionMap().get("c2w.openTeamEntry").actionPerformed(null);
+
+        assertEquals(List.of("bert"), openedTeamEntries);
     }
 }

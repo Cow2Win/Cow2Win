@@ -72,11 +72,14 @@ import java.util.List;
  * seeded with one line per pre-existing entry of that type, so they are
  * always a complete picture of that type's assignments. Entries of the OTHER
  * team type are carried over unchanged - see {@link #performSave}.
+ *
+ * <p><b>For one member</b> (double click in the member overview of the input stage): the table
+ * shows only that member's teams - also the ones without a fortification - and the member, the
+ * fortification filter and the search are locked; a new team belongs to the member, and "new team"
+ * is disabled once it has all its team slots. Every other line is still loaded (just hidden), so
+ * saving rebuilds the lineup entries of the other members unchanged.
  */
 abstract class GuildTeamEntryDialog<T> extends JDialog {
-
-    /** Mirrors {@code GuildEditorDialog#MAX_MEMBERS} - enforced the same way when {@link MemberComboEditor} creates a new member inline. */
-    private static final int MAX_MEMBERS = 30;
 
     /** Language file keys (see {@code resources/language/<name>/<name>.properties}). */
     private static final String KEY_NO_SELECTION = "common.none";
@@ -194,8 +197,23 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private boolean dirty;
     private Fortification lastSelectedFortification;
 
+    /** The member this dialog is limited to, null for the guild-wide dialog - see the class Javadoc. */
+    private final MemberDraft fixedMember;
+    /** "New team" - disabled while the fixed member has all its team slots. */
+    private final FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD, TOOLBAR_ICON_SIZE, Color.WHITE));
+
+    /** The guild-wide dialog. */
     protected GuildTeamEntryDialog(Frame owner, AppContext appContext, String titleKey,
                                    TeamTypeSpec<T> spec, int maxTeams) {
+        this(owner, appContext, titleKey, spec, maxTeams, null);
+    }
+
+    /**
+     * @param fixedMemberId the member the dialog is limited to (see the class Javadoc), null for
+     *                      the guild-wide dialog
+     */
+    protected GuildTeamEntryDialog(Frame owner, AppContext appContext, String titleKey,
+                                   TeamTypeSpec<T> spec, int maxTeams, String fixedMemberId) {
         super(owner, LanguageService.displayName(titleKey), false);
         if (appContext == null) {
             throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
@@ -210,6 +228,13 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         this.draft = GuildDraftConverter.fromGuild(appContext.guild());
         for (MemberDraft member : draft.members) {
             ensureTeamCount(spec.teamsOf().apply(member), maxTeams);
+        }
+        this.fixedMember = fixedMemberId == null ? null : findMemberDraft(fixedMemberId);
+        if (fixedMemberId != null && fixedMember == null) {
+            throw new IllegalArgumentException("No member '" + fixedMemberId + "' in the open guild");
+        }
+        if (fixedMember != null) {
+            setTitle(LanguageService.displayName(titleKey) + " – " + memberDisplayName(fixedMember));
         }
         this.originalLineupPath = LineupFiles.originalPathFor(appContext.guildFilePath().getParent());
         this.originalLineup = loadOrSeedOriginalLineup();
@@ -240,7 +265,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         refreshFortFilter();
         updateStatus();
 
-        if (!rows.isEmpty()) {
+        if (table.getRowCount() > 0) {
             table.setRowSelectionInterval(0, 0);
         } else {
             showRow(null);
@@ -298,6 +323,34 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             row.fortification = fortification;
             rows.add(row);
         }
+        if (fixedMember != null) {
+            addUnassignedTeamsOf(fixedMember);
+        }
+    }
+
+    /**
+     * One line per team of {@code member} that is in no lineup entry yet (no fortification) -
+     * so the dialog for one member shows all of its teams, not only the assigned ones.
+     */
+    private void addUnassignedTeamsOf(MemberDraft member) {
+        List<TeamDraft<T>> teams = spec.teamsOf().apply(member);
+        for (int index = 0; index < teams.size(); index++) {
+            int teamIndex = index;
+            boolean bound = rows.stream().anyMatch(r -> r.boundMember == member && r.boundTeamIndex == teamIndex);
+            TeamDraft<T> team = teams.get(index);
+            if (bound || (team.totalPower == 0 && team.members.isEmpty())) {
+                continue;
+            }
+            Row<T> row = new Row<>(member, index);
+            row.draft.copyFrom(team);
+            row.member = member;
+            rows.add(row);
+        }
+    }
+
+    /** The lines this dialog works on: every line, or only those of {@link #fixedMember}. */
+    private List<Row<T>> visibleRows() {
+        return fixedMember == null ? rows : rows.stream().filter(r -> r.member == fixedMember).toList();
     }
 
     private MemberDraft findMemberDraft(String memberId) {
@@ -493,6 +546,10 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     }
 
     private boolean matchesFilter(Row<T> row) {
+        if (fixedMember != null) {
+            // Fixed: only this member's lines - every other line stays loaded (saved unchanged) but hidden.
+            return row.member == fixedMember;
+        }
         if (row == currentRow) {
             return true; // never hide the line being edited
         }
@@ -835,7 +892,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             binding = false;
         }
         fortCombo.setEnabled(row != null);
-        memberCombo.setEnabled(row != null);
+        // Fixed to one member: the member cannot be changed (nor a new one created).
+        memberCombo.setEnabled(row != null && fixedMember == null);
 
         teamEditorHolder.removeAll();
         teamEditor = null;
@@ -929,7 +987,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
      * {@link ComboBoxEditor} of the member combo: shows a member's display name
      * and resolves typed text on commit - to an existing member (by display
      * name or id), to a freshly created one (added to {@link #draft}, capped at
-     * {@link #MAX_MEMBERS}), or to {@code null} for blank text.
+     * {@link Guild#MAX_MEMBERS}), or to {@code null} for blank text.
      */
     private final class MemberComboEditor implements ComboBoxEditor {
         private final JTextField textField = new JTextField();
@@ -950,6 +1008,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
         @Override
         public Object getItem() {
+            if (fixedMember != null) {
+                return fixedMember; // never another or a new member
+            }
             String typed = textField.getText().trim();
             if (typed.isEmpty()) {
                 return null;
@@ -958,9 +1019,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             if (existing != null) {
                 return existing;
             }
-            if (draft.members.size() >= MAX_MEMBERS) {
+            if (draft.members.size() >= Guild.MAX_MEMBERS) {
                 JOptionPane.showMessageDialog(GuildTeamEntryDialog.this,
-                        LanguageService.displayName("common.maxMembers", MAX_MEMBERS), LanguageService.displayName("common.notPossibleTitle"),
+                        LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS), LanguageService.displayName("common.notPossibleTitle"),
                         JOptionPane.WARNING_MESSAGE);
                 return memberCombo.getSelectedItem();
             }
@@ -995,7 +1056,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         saveButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_SAVE_TEAMS), SHORTCUT_SAVE));
         saveButton.addActionListener(e -> performSave());
 
-        FlatButton addButton = new FlatButton(IconLoader.iconFor(ICON_ADD, TOOLBAR_ICON_SIZE, Color.WHITE));
         addButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_ADD_ROW), SHORTCUT_ADD));
         addButton.addActionListener(e -> addRow());
 
@@ -1050,6 +1110,11 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         left.add(fortFilter);
         left.add(new JLabel(LanguageService.displayName(KEY_SEARCH)));
         left.add(searchField);
+        if (fixedMember != null) {
+            // Fixed to one member: "all fortifications", no search - neither may widen the view.
+            fortFilter.setEnabled(false);
+            searchField.setEnabled(false);
+        }
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 4));
         right.add(buildShortcutsButton());
@@ -1126,10 +1191,12 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     }
 
     private void updateStatus() {
-        long withoutFort = rows.stream().filter(r -> r.fortification == null).count();
-        long withoutMember = rows.stream().filter(GuildTeamEntryDialog::lacksMember).count();
-        long withoutPower = rows.stream().filter(GuildTeamEntryDialog::lacksPower).count();
-        statusLabel.setText(LanguageService.displayName(KEY_STATUS, rows.size(), withoutFort, withoutMember, withoutPower)
+        List<Row<T>> counted = visibleRows();
+        long withoutFort = counted.stream().filter(r -> r.fortification == null).count();
+        long withoutMember = counted.stream().filter(GuildTeamEntryDialog::lacksMember).count();
+        long withoutPower = counted.stream().filter(GuildTeamEntryDialog::lacksPower).count();
+        addButton.setEnabled(canAddRow());
+        statusLabel.setText(LanguageService.displayName(KEY_STATUS, counted.size(), withoutFort, withoutMember, withoutPower)
                 + (dirty ? " · " + LanguageService.displayName(KEY_UNSAVED) : ""));
         fortFilter.repaint();
     }
@@ -1154,7 +1221,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         tableActions.put("c2w.deleteRow", action(this::deleteCurrentRow));
         tableActions.put("c2w.editRow", action(() -> {
             if (currentRow != null) {
-                memberCombo.requestFocusInWindow();
+                (fixedMember == null ? memberCombo : fortCombo).requestFocusInWindow();
             }
         }));
         // F1-F5 straight from the table: load template into the selected team.
@@ -1192,8 +1259,12 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     /** Appends a new, empty team - no save first (see class Javadoc). */
     private void addRow() {
+        if (!canAddRow()) {
+            return;
+        }
         commitPendingMemberEdit();
         Row<T> row = new Row<>(null, -1);
+        row.member = fixedMember; // fixed: the new team belongs to that member
         Object filtered = fortFilter.getSelectedItem();
         if (filtered instanceof Fortification f) {
             row.fortification = f;
@@ -1207,7 +1278,12 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         dirty = true;
         selectRow(row);
         updateStatus();
-        memberCombo.requestFocusInWindow();
+        (fixedMember == null ? memberCombo : fortCombo).requestFocusInWindow();
+    }
+
+    /** False only while the fixed member already has a line for each of its team slots. */
+    private boolean canAddRow() {
+        return fixedMember == null || visibleRows().size() < maxTeams;
     }
 
     /**
@@ -1405,6 +1481,38 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                     LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
         }
         return false;
+    }
+
+    // ------------------------------------------------------------- for tests
+
+    JTable table() {
+        return table;
+    }
+
+    JComboBox<Object> fortFilter() {
+        return fortFilter;
+    }
+
+    JTextField searchField() {
+        return searchField;
+    }
+
+    JComboBox<MemberDraft> memberCombo() {
+        return memberCombo;
+    }
+
+    JButton addButton() {
+        return addButton;
+    }
+
+    /** "New team" - as the toolbar button. */
+    void addRowForTest() {
+        addRow();
+    }
+
+    /** "Save" - as the toolbar button; true if saved. */
+    boolean saveForTest() {
+        return performSave();
     }
 
     // ----------------------------------------------------------------- types

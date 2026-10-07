@@ -58,7 +58,7 @@ public final class MainMenuBar extends JMenuBar {
      */
     static final List<MenuSpec> MENUS = List.of(
             menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
-            menu(Stage.GUILD.menuTextKey(), NEW_GUILD, OPEN_GUILD_EDITOR, REMOVE_GUILD),
+            menu(Stage.GUILD.menuTextKey(), NEW_GUILD, REMOVE_GUILD),
             menu(Stage.INPUT.menuTextKey(),
                     OPEN_GUILD_TEAM_ENTRY,
                     SEPARATOR, JOURNAL_IMPORT, JOURNAL_SYNC,

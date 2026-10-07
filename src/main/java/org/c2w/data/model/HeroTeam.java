@@ -18,8 +18,8 @@ import java.util.List;
  * relying on callers to separately track list position themselves.
  *
  * lastModified: date of the last change to this team VIA THE GUI - set when
- * the team is created or subsequently edited (see TeamEditorPanel/
- * MemberEditorPanel), purely informational, not a model invariant. null for
+ * the team is created or subsequently edited (see TeamEditorPanel), purely
+ * informational, not a model invariant. null for
  * teams that have (still) never been created/edited via the GUI (e.g.
  * programmatically created teams like in the Main demo, or legacy data from
  * a guild file without this field).

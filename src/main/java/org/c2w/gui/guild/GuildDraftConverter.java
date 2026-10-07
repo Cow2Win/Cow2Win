@@ -17,7 +17,7 @@ public final class GuildDraftConverter {
     private GuildDraftConverter() {
     }
 
-    /** Builds an editable draft from an immutable guild (see {@link GuildEditorDialog}). */
+    /** Builds an editable draft from an immutable guild (see {@link GuildTeamEntryDialog}). */
     public static GuildDraft fromGuild(Guild guild) {
         GuildDraft draft = new GuildDraft();
         draft.id = guild.id();

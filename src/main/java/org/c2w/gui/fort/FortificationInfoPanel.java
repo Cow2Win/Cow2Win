@@ -28,7 +28,7 @@ public class FortificationInfoPanel extends JPanel {
     private static final String KEY_NEGATIVE_TITANS_HEADER = "fortificationDetail.negativeTitansHeader";
     private static final String KEY_GOOD_TITANS_HEADER = "fortificationDetail.goodTitansHeader";
 
-    /** Avatar size for the groups built by {@link #buildMarkedPanel} - smaller than the 32px used for editable pickers elsewhere (e.g. {@code MemberEditorPanel}), since these are purely informational thumbnails. */
+    /** Avatar size for the groups built by {@link #buildMarkedPanel} - smaller than the 32px used for editable pickers elsewhere (e.g. the team assignment), since these are purely informational thumbnails. */
     private static final int ICON_SIZE = 28;
 
     /** Column count for the avatar grids built by {@link #buildGroupPanel} - keeps their width predictable regardless of how many entries fall into a group. */

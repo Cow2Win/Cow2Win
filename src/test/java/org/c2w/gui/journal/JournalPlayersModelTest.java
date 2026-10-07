@@ -40,7 +40,7 @@ class JournalPlayersModelTest extends JournalGuiTestSupport {
         Guild guildBefore = context.guild();
         String fileBefore = Files.readString(context.guildFilePath());
         JournalRepository repo = context.journal().repository(false).orElseThrow();
-        // one player assigned to a member id the guild does not have (e.g. deleted in the guild editor)
+        // one player assigned to a member id the guild does not have (e.g. deleted from the guild)
         JournalPlayer orphan = repo.listOwnPlayerStats().stream()
                 .filter(s -> s.status() == AssignmentStatus.OPEN && s.defenses() > 0).findFirst().orElseThrow().player();
         repo.setAssignment(orphan.id(), "deleted-member", AssignmentStatus.ASSIGNED);

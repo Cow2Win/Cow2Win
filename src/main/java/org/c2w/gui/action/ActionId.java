@@ -14,10 +14,12 @@ public enum ActionId {
     /** Master data: the CowScore marks apply to every guild (menu "File" for now, see {@link Stage#MASTER_DATA}). */
     COWSCORE("menu.cowScoreDialog", Stage.MASTER_DATA, Opens.WINDOW),
 
-    /** The guild as a whole: creating, editing and removing it - menu "Guild", see {@link Stage#GUILD}. */
+    /**
+     * The guild as a whole: creating and removing it - menu "Guild", see {@link Stage#GUILD}. Its
+     * members are added and deleted in the member overview of the input stage.
+     */
     NEW_GUILD("toolbar.newGuild", Stage.GUILD, Opens.WINDOW),
     REMOVE_GUILD("toolbar.removeGuild", Stage.GUILD),
-    OPEN_GUILD_EDITOR("teamsOverview.openGuildEditor", Stage.GUILD, Opens.WINDOW),
     /** The same guild - but in the context bar only, not in the menu (see {@code MainMenuBar.TOOLBAR_ONLY}). */
     SAVE_GUILD("teamsOverview.saveGuild", Stage.GUILD),
     /**

@@ -9,25 +9,28 @@ import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanTeam;
 import org.c2w.gui.StageStatus;
-import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
+import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 import org.c2w.service.DataStatus;
+import org.c2w.service.GuildMemberService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.c2w.gui.stage.InfoSections.*;
@@ -43,7 +47,9 @@ import static org.c2w.gui.stage.InfoSections.*;
 /**
  * The stage view "input": everything that goes into a guild in one place. The work area is
  * the member overview - one row per member with the teams of the selected fortification type;
- * a click selects a member, a double click opens the team assignment. The info panel shows the
+ * a click selects a member, a double click (or Enter) opens the team assignment for this member
+ * only; "+" / "-" next to the count, the context menu and Del add and delete members (saved right
+ * away, see {@link GuildMemberService}). The info panel shows the
  * selected member's teams and the state of the guild's Weltenschlacht journal; the action list
  * is the input menu.
  */
@@ -77,8 +83,22 @@ public class InputStageView extends StageView {
     private static final int STATUS_COLUMN_WIDTH = 30;
     private static final int LIGHT = 10;
 
+    private static final String KEY_ADD_MEMBER = "memberOverview.addMember";
+    private static final String KEY_REMOVE_MEMBER = "memberOverview.removeMember";
+    private static final String ICON_ADD_MEMBER = "/images/app/member-new.png";
+    private static final String ICON_REMOVE_MEMBER = "/images/app/member-remove.png";
+    private static final int MEMBER_ICON_SIZE = 20;
+
     private final AppContext appContext;
-    private final MainActions actions;
+    /** Opens the team assignment for one member (id) - see {@code ActionBar#openTeamEntryFor}. */
+    private final Consumer<String> openTeamEntryForMember;
+    private final GuildMemberService memberService;
+    private final FlatButton addMemberButton = new FlatButton(
+            IconLoader.iconFor(ICON_ADD_MEMBER, MEMBER_ICON_SIZE, IconLoader.GREEN));
+    private final FlatButton removeMemberButton = new FlatButton(
+            IconLoader.iconFor(ICON_REMOVE_MEMBER, MEMBER_ICON_SIZE, IconLoader.RED));
+    private final JMenuItem addMemberItem = new JMenuItem(LanguageService.displayName(KEY_ADD_MEMBER));
+    private final JMenuItem removeMemberItem = new JMenuItem(LanguageService.displayName(KEY_REMOVE_MEMBER));
 
     private final MemberTableModel tableModel = new MemberTableModel();
     private final JTable table = new JTable(tableModel);
@@ -98,14 +118,21 @@ public class InputStageView extends StageView {
     /** True while {@link #refreshMembers()} rebuilds the table - selection events are then ignored. */
     private boolean refreshing;
 
-    public InputStageView(AppContext appContext, MainActions actions) {
+    /**
+     * @param openTeamEntryForMember opens the team assignment of the selected fortification type
+     *                               for one member (its id) - on a double click, Enter and after
+     *                               adding a member
+     */
+    public InputStageView(AppContext appContext, MainActions actions, Consumer<String> openTeamEntryForMember) {
         super(actions);
         if (appContext == null) {
             throw new IllegalArgumentException("InputStageView needs the AppContext");
         }
         this.appContext = appContext;
-        this.actions = actions;
+        this.openTeamEntryForMember = Objects.requireNonNull(openTeamEntryForMember);
+        this.memberService = new GuildMemberService(appContext);
         setUpTable();
+        setUpMemberActions();
         build();
 
         refreshMembers();
@@ -148,8 +175,13 @@ public class InputStageView extends StageView {
     protected JComponent createWorkArea() {
         JPanel area = translucentPanel(new BorderLayout());
         countLabel.setForeground(MUTED_COLOR);
-        countLabel.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
-        area.add(countLabel, BorderLayout.NORTH);
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 12));
+        header.add(countLabel);
+        header.add(addMemberButton);
+        header.add(removeMemberButton);
+        area.add(header, BorderLayout.NORTH);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setOpaque(false);
@@ -206,12 +238,159 @@ public class InputStageView extends StageView {
         });
     }
 
-    /** A double click on a member: the team assignment of the selected fortification type - the same as the menu entry. */
+    /** A double click (or Enter) on a member: the team assignment of the selected fortification type for this member only. */
     private void openTeamEntry() {
-        Action teamEntry = actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY);
-        if (teamEntry.isEnabled()) {
-            teamEntry.actionPerformed(new ActionEvent(table, ActionEvent.ACTION_PERFORMED, null));
+        if (selectedMemberId != null) {
+            openTeamEntryForMember.accept(selectedMemberId);
         }
+    }
+
+    // --- add / delete members ---
+
+    /** "+" / "-" next to the count, the table's context menu, Del and Enter in the table. */
+    private void setUpMemberActions() {
+        addMemberButton.setToolTipText(LanguageService.displayName(KEY_ADD_MEMBER));
+        addMemberButton.addActionListener(e -> onAddMember());
+        removeMemberButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_MEMBER));
+        removeMemberButton.addActionListener(e -> onRemoveMember());
+        addMemberItem.addActionListener(e -> onAddMember());
+        removeMemberItem.addActionListener(e -> onRemoveMember());
+
+        JPopupMenu popup = new JPopupMenu();
+        popup.add(addMemberItem);
+        popup.add(removeMemberItem);
+        table.setComponentPopupMenu(popup);
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                selectRowForPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                selectRowForPopup(e);
+            }
+        });
+
+        InputMap keys = table.getInputMap(JComponent.WHEN_FOCUSED);
+        keys.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "c2w.removeMember");
+        keys.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "c2w.openTeamEntry");
+        table.getActionMap().put("c2w.removeMember", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                onRemoveMember();
+            }
+        });
+        table.getActionMap().put("c2w.openTeamEntry", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                openTeamEntry();
+            }
+        });
+    }
+
+    /** A right click selects the member under the mouse first - on empty space, nothing is selected. */
+    private void selectRowForPopup(MouseEvent e) {
+        if (!e.isPopupTrigger()) {
+            return;
+        }
+        int viewRow = table.rowAtPoint(e.getPoint());
+        if (viewRow < 0) {
+            table.clearSelection();
+        } else {
+            table.setRowSelectionInterval(viewRow, viewRow);
+        }
+    }
+
+    /** "Add member" only below {@link Guild#MAX_MEMBERS}, "delete member" only with a selected member. */
+    private void updateMemberActions() {
+        boolean canAdd = memberService.canAddMember();
+        String addTooltip = canAdd ? LanguageService.displayName(KEY_ADD_MEMBER)
+                : LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS);
+        addMemberButton.setEnabled(canAdd);
+        addMemberButton.setToolTipText(addTooltip);
+        addMemberItem.setEnabled(canAdd);
+        addMemberItem.setToolTipText(canAdd ? null : addTooltip);
+        boolean canRemove = selectedMemberId != null;
+        removeMemberButton.setEnabled(canRemove);
+        removeMemberItem.setEnabled(canRemove);
+    }
+
+    /**
+     * Asks for the name (its id is the name), adds the member and saves the guild right away,
+     * selects it and opens its team assignment.
+     */
+    private void onAddMember() {
+        if (!memberService.canAddMember()) {
+            return;
+        }
+        String name = JOptionPane.showInputDialog(dialogParent(), LanguageService.displayName("memberOverview.namePrompt"),
+                LanguageService.displayName(KEY_ADD_MEMBER), JOptionPane.QUESTION_MESSAGE);
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        if (memberService.isTaken(name)) {
+            JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("memberOverview.memberExists"),
+                    LanguageService.displayName("common.notPossibleTitle"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        GuildMember member;
+        try {
+            member = memberService.addMember(name);
+        } catch (IOException e) {
+            Logger.logException("Could not add the member " + name.trim(), e);
+            showSaveError(e);
+            return;
+        }
+        selectedMemberId = member.id();
+        refreshMembers();
+        openTeamEntryForMember.accept(member.id());
+    }
+
+    /**
+     * After a confirmation naming what goes with it: deletes the selected member, saves the
+     * guild and cleans up lineups and journal right away (see {@link GuildMemberService#removeMember}).
+     */
+    private void onRemoveMember() {
+        String memberId = selectedMemberId;
+        if (memberId == null) {
+            return;
+        }
+        GuildMemberService.RemovalImpact impact = memberService.impactOf(memberId);
+        String message = LanguageService.displayName("memberOverview.removeConfirm", impact.displayName(),
+                impact.heroTeams(), impact.titanTeams(), impact.entries(), impact.lineups());
+        Object[] options = {UIManager.getString("OptionPane.yesButtonText"), UIManager.getString("OptionPane.noButtonText")};
+        int choice = JOptionPane.showOptionDialog(dialogParent(), message, LanguageService.displayName(KEY_REMOVE_MEMBER),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+        if (choice != 0) {
+            return;
+        }
+        GuildMemberService.RemovalResult result;
+        try {
+            result = memberService.removeMember(memberId);
+        } catch (IOException e) {
+            Logger.logException("Could not remove the member " + memberId, e);
+            showSaveError(e);
+            return;
+        }
+        selectedMemberId = null;
+        refreshMembers();
+        if (!result.failures().isEmpty()) {
+            JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("memberOverview.removeErrors")
+                            + "\n" + String.join("\n", result.failures()),
+                    LanguageService.displayName("common.saveErrorTitle"), JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void showSaveError(IOException e) {
+        JOptionPane.showMessageDialog(dialogParent(), LanguageService.displayName("common.saveError") + "\n" + e.getMessage(),
+                LanguageService.displayName("common.saveErrorTitle"), JOptionPane.ERROR_MESSAGE);
+    }
+
+    /** The main window (centered dialogs), or this view while it is not in a window. */
+    private Component dialogParent() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        return window != null ? window : this;
     }
 
     /** Rebuilds the table for the open guild and the selected fortification type, keeping the selected member. */
@@ -313,6 +492,7 @@ public class InputStageView extends StageView {
             teamBlocks.forEach(block -> addLine(memberSection, block));
         }
         relayout(memberSection);
+        updateMemberActions();
     }
 
     /**
@@ -467,6 +647,14 @@ public class InputStageView extends StageView {
 
     JTable table() {
         return table;
+    }
+
+    JButton addMemberButton() {
+        return addMemberButton;
+    }
+
+    JButton removeMemberButton() {
+        return removeMemberButton;
     }
 
     JCheckBox onlyStaleToggle() {

@@ -111,7 +111,7 @@ class Cow2FrameActionsTest {
     void toolbarActionsHaveMenuIcons() throws Exception {
         SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
 
-        for (ActionId id : List.of(ActionId.OPEN_GUILD_EDITOR, ActionId.OPEN_GUILD_TEAM_ENTRY,
+        for (ActionId id : List.of(ActionId.OPEN_GUILD_TEAM_ENTRY,
                 ActionId.RUN_ALGORITHM, ActionId.COMPARE_LINEUPS, ActionId.SHOW_TEAMS,
                 ActionId.OPEN_CHANGE_PLAN, ActionId.GENERATE_REPORT)) {
             assertNotNull(frame.actions().get(id).getValue(Action.SMALL_ICON), id + " has no menu icon");

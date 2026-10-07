@@ -10,7 +10,6 @@ import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.cowscore.CowScoreDialog;
 import org.c2w.gui.cowscore.CowScoreTab;
 import org.c2w.gui.fort.FortificationMapPanel;
-import org.c2w.gui.guild.GuildEditorDialog;
 import org.c2w.gui.journal.JournalActions;
 import org.c2w.gui.stage.ConceptStageView;
 import org.c2w.gui.stage.InputStageView;
@@ -70,7 +69,6 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_APPLY_TO_LIVE = "/images/app/save.png";
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
-    private static final String ICON_OPEN_GUILD_EDITOR = "/images/app/guild.png";
 
     private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
     private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
@@ -168,7 +166,7 @@ public class Cow2Frame extends JFrame {
         // All three stages have a view.
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
-        InputStageView inputView = new InputStageView(appContext, actions);
+        InputStageView inputView = new InputStageView(appContext, actions, actionBar::openTeamEntryFor);
         addStageView(inputView);
         addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
         this.outputView = new OutputStageView(appContext, actions);
@@ -276,8 +274,6 @@ public class Cow2Frame extends JFrame {
 
         actions.register(new AppAction(ActionId.NEW_GUILD, this::onNewGuild)
                 .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
-        actions.register(new AppAction(ActionId.OPEN_GUILD_EDITOR, this::onOpenGuildEditor)
-                .withSmallIcon(IconLoader.iconForButton(ICON_OPEN_GUILD_EDITOR)));
         actions.register(new AppAction(ActionId.REMOVE_GUILD, this::onRemoveGuild)
                 .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
 
@@ -606,11 +602,6 @@ public class Cow2Frame extends JFrame {
         if (logDialog != null) {
             logDialog.setTitle(logDialogTitle());
         }
-    }
-
-    private void onOpenGuildEditor() {
-        GuildEditorDialog dialog = new GuildEditorDialog(this, appContext);
-        dialog.setVisible(true);
     }
 
 

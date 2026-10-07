@@ -345,6 +345,21 @@ public class ActionBar extends JPanel {
     }
 
     /**
+     * Opens the team assignment of the selected fortification type for the one member
+     * {@code memberId} - its teams only, member, filter and search locked (see
+     * {@code GuildTeamEntryDialog}). From the member overview of the input stage.
+     */
+    public void openTeamEntryFor(String memberId) {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        // No conditional expression: both dialogs' common base class is not public.
+        if (appContext.fortificationType() == FortificationType.HERO) {
+            new GuildHeroEntryDialog(owner, appContext, memberId).setVisible(true);
+        } else {
+            new GuildTitanEntryDialog(owner, appContext, memberId).setVisible(true);
+        }
+    }
+
+    /**
      * Parent of this bar's message and confirmation dialogs: the main window, so they
      * appear centered on it - with this bar itself as parent they would sit on the
      * strip at the top. Falls back to this bar while it is not in a window yet.

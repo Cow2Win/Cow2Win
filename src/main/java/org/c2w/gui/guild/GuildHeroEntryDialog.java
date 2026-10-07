@@ -24,6 +24,11 @@ public final class GuildHeroEntryDialog extends GuildTeamEntryDialog<Hero> {
         super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_HERO_TEAMS);
     }
 
+    /** The team assignment for the one member {@code memberId} - see {@link GuildTeamEntryDialog}. */
+    public GuildHeroEntryDialog(Frame owner, AppContext appContext, String memberId) {
+        super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_HERO_TEAMS, memberId);
+    }
+
     private static TeamTypeSpec<Hero> buildSpec(Catalog catalog) {
         return new TeamTypeSpec<>(catalog.heroes().findAll(), GuildHeroEntryDialog::heroLabel,
                 h -> IconLoader.iconFor(h.imagePath(), ICON_SIZE), Comparator.comparing(GuildHeroEntryDialog::heroLabel),

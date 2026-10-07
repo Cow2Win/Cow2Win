@@ -24,6 +24,11 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
         super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_TITAN_TEAMS);
     }
 
+    /** The team assignment for the one member {@code memberId} - see {@link GuildTeamEntryDialog}. */
+    public GuildTitanEntryDialog(Frame owner, AppContext appContext, String memberId) {
+        super(owner, appContext, KEY_TITLE, buildSpec(appContext.catalog()), MAX_TITAN_TEAMS, memberId);
+    }
+
     private static TeamTypeSpec<Titan> buildSpec(Catalog catalog) {
         return new TeamTypeSpec<>(catalog.titans().findAll(), GuildTitanEntryDialog::titanLabel,
                 t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildTitanEntryDialog::titanLabel),
