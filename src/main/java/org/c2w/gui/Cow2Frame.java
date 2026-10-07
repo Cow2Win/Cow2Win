@@ -250,7 +250,7 @@ public class Cow2Frame extends JFrame {
                                List<WorkspaceBootstrap.StartupNotice> notices) {
         setVisible(true);
         SwingUtilities.invokeLater(() -> notices.forEach(notice -> JOptionPane.showMessageDialog(this, notice.text(),
-                LanguageService.displayTitle("workspaceMaintenance.title"),
+                LanguageService.displayName("workspaceMaintenance.title"),
                 notice.warning() ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE)));
         checkForUpdatesAtStartup(startupCheck);
     }

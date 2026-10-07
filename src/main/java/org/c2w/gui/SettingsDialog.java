@@ -133,7 +133,7 @@ public class SettingsDialog extends JDialog {
     private boolean confirmed = false;
 
     public SettingsDialog(Frame owner, AppExit appExit) {
-        super(owner, LanguageService.displayTitle("menu.settings"), true);
+        super(owner, LanguageService.displayName("menu.settings"), true);
         this.appExit = appExit;
         setLayout(new BorderLayout());
         add(buildToolbarPanel(), BorderLayout.NORTH);
@@ -532,7 +532,7 @@ public class SettingsDialog extends JDialog {
             restartNotices.add(LanguageService.displayName("settingsDialog.restartHint"));
             JOptionPane.showMessageDialog(owner,
                     String.join(" ", restartNotices),
-                    LanguageService.displayTitle("menu.settings"), JOptionPane.INFORMATION_MESSAGE);
+                    LanguageService.displayName("menu.settings"), JOptionPane.INFORMATION_MESSAGE);
         }
     }
 

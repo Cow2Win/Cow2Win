@@ -74,7 +74,7 @@ public final class FortificationEntryDialog extends JDialog {
     private Runnable saveAction = () -> { };
 
     public FortificationEntryDialog(Frame owner, Fortification fortification, AppContext appContext) {
-        super(owner, LanguageService.displayTitle(fortification.id()), false);
+        super(owner, LanguageService.displayName(fortification.id()), false);
         if (fortification == null) {
             throw new IllegalArgumentException("FortificationEntryDialog needs a fortification");
         }

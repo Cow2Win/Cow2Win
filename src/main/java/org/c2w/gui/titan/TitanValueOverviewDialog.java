@@ -46,7 +46,7 @@ import java.util.function.Supplier;
  */
 public class TitanValueOverviewDialog extends JDialog {
 
-    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayName(String)}. */
     private static final String KEY_TITLE = "teamsOverview.titanTeamsTitle";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for "no fortification assigned". */
@@ -115,7 +115,7 @@ public class TitanValueOverviewDialog extends JDialog {
     private final JTable titanTable = new JTable(titanModel);
 
     public TitanValueOverviewDialog(Frame owner, AppContext appContext) {
-        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        super(owner, LanguageService.displayName(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("TitanValueOverviewDialog needs a guildContext");
         }

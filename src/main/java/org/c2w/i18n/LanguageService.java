@@ -1,6 +1,5 @@
 package org.c2w.i18n;
 
-import org.c2w.C2WApp;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 
@@ -130,11 +129,6 @@ public class LanguageService {
         }
     }
 
-
-    public static String displayTitle(String id){
-        ensureLoaded();
-        return C2WApp.BASE_TITLE + " - " + displayNames.getProperty(id, id);
-    }
 
     /** Forces the language file to be reloaded on the next call to {@link #displayName}. */
     public static void resetCache() {

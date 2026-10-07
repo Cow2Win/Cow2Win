@@ -30,7 +30,7 @@ public class ReportViewerDialog extends JDialog {
     private final Path guildDir;
 
     public ReportViewerDialog(Frame owner, String reportHtml, String suggestedFileName, Path guildDir) {
-        super(owner, LanguageService.displayTitle("report.title"), false);
+        super(owner, LanguageService.displayName("report.title"), false);
         if (reportHtml == null) {
             throw new IllegalArgumentException("ReportViewerDialog needs reportHtml");
         }

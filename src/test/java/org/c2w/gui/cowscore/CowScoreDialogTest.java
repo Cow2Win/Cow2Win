@@ -193,6 +193,15 @@ class CowScoreDialogTest {
         assertFalse(CowScoreDialog.infoText(CowScoreTab.HERO_COMBOS).contains("+2 %"), "back to the defaults");
     }
 
+    @Test
+    @DisplayName("The dialog title is the plain text - without \"Cow2Win\"")
+    void titleWithoutAppName() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog, CowScoreTab.HEROES));
+
+        assertEquals(LanguageService.displayName("cowScore.title"), dialog.getTitle());
+        assertFalse(dialog.getTitle().contains("Cow2Win"));
+    }
+
     private List<String> columnTitles(CowScoreTab tab) {
         JPanel header = CowScoreTestSupport.findAll((Container) dialog.panel(tab).component(), JPanel.class).stream()
                 .filter(p -> "columnHeader".equals(p.getName())).findFirst().orElseThrow();

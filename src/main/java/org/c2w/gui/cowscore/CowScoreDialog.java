@@ -97,7 +97,7 @@ public final class CowScoreDialog extends JDialog {
     }
 
     private CowScoreDialog(Frame owner, Catalog catalog) {
-        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        super(owner, LanguageService.displayName(KEY_TITLE), false);
         panels.put(CowScoreTab.HEROES, new HeroCowScorePanel(catalog.heroes()));
         panels.put(CowScoreTab.TITANS, new TitanCowScorePanel(catalog.titans()));
         panels.put(CowScoreTab.PETS, new PetCowScorePanel(catalog.pets()));

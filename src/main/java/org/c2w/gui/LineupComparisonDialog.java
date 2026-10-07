@@ -46,7 +46,7 @@ import java.util.Locale;
  */
 public class LineupComparisonDialog extends JDialog {
 
-    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayName(String)}. */
     private static final String KEY_TITLE = "lineupComparison.title";
 
     private static final String KEY_MODE_SAVED_LINEUPS = "lineupComparison.modeSavedLineups";
@@ -110,7 +110,7 @@ public class LineupComparisonDialog extends JDialog {
     private LineupComparison currentResult;
 
     public LineupComparisonDialog(Frame owner, AppContext appContext) {
-        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        super(owner, LanguageService.displayName(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("LineupComparisonDialog needs an appContext");
         }

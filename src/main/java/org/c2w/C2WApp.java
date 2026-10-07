@@ -22,6 +22,10 @@ import mdlaf.themes.MaterialOceanicTheme;
 
 public class C2WApp {
 
+    /**
+     * The application name - only for the main window's title ({@code Cow2Frame}, "Cow2Win 1.0.6")
+     * and the splash screen. Dialogs and messages never show it in their titles.
+     */
     public static final String BASE_TITLE = "Cow2Win";
 
     public static void main(String[] args) {

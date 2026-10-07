@@ -22,7 +22,7 @@ import java.util.List;
 
 public final class GuildEditorDialog extends JDialog {
 
-    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayName(String)}. */
     private static final String KEY_TITLE = "guildEditor.title";
 
     private static final int MAX_MEMBERS = 30;
@@ -53,7 +53,7 @@ public final class GuildEditorDialog extends JDialog {
     private final JLabel lastSavedLabel = new JLabel();
 
     public GuildEditorDialog(Frame owner, AppContext context) {
-        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        super(owner, LanguageService.displayName(KEY_TITLE), false);
         if (context == null) {
             throw new IllegalArgumentException("GuildEditorDialog needs a AppContext");
         }

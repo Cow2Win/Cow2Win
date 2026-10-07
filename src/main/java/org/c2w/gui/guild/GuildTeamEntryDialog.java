@@ -196,7 +196,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     protected GuildTeamEntryDialog(Frame owner, AppContext appContext, String titleKey,
                                    TeamTypeSpec<T> spec, int maxTeams) {
-        super(owner, LanguageService.displayTitle(titleKey), false);
+        super(owner, LanguageService.displayName(titleKey), false);
         if (appContext == null) {
             throw new IllegalArgumentException("GuildTeamEntryDialog needs a appContext");
         }

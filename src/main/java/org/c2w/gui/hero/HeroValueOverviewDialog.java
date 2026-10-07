@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  */
 public class HeroValueOverviewDialog extends JDialog {
 
-    /** Language file key for this dialog's title, shown via {@link LanguageService#displayTitle(String)}. */
+    /** Language file key for this dialog's title, shown via {@link LanguageService#displayName(String)}. */
     private static final String KEY_TITLE = "teamsOverview.heroTeamsTitle";
 
     /** Language file key (see {@code resources/language/<name>/<name>.properties}) for "no fortification assigned". */
@@ -119,7 +119,7 @@ public class HeroValueOverviewDialog extends JDialog {
     private final JTable heroTable = new JTable(heroModel);
 
     public HeroValueOverviewDialog(Frame owner, AppContext appContext) {
-        super(owner, LanguageService.displayTitle(KEY_TITLE), false);
+        super(owner, LanguageService.displayName(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("HeroValueOverviewDialog needs a guildContext");
         }
