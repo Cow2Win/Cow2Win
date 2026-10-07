@@ -780,7 +780,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         });
 
         memberCombo.setPreferredSize(new Dimension(COMBO_WIDTH, COMBO_HEIGHT));
-        memberCombo.setEditable(true);
+        // Fixed to one member: not editable - a disabled editable combo box shows only an empty text
+        // field, a plain one shows the member's name through the renderer.
+        memberCombo.setEditable(fixedMember == null);
         memberCombo.setEditor(new MemberComboEditor());
         memberCombo.setRenderer(new DefaultListCellRenderer() {
             @Override

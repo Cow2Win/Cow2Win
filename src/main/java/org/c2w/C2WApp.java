@@ -93,6 +93,9 @@ public class C2WApp {
             // Label and check box text painted as wide as it is measured - otherwise the end of long texts is cut off.
             UIManager.put("LabelUI", MeasuredLabelUI.class.getName());
             UIManager.put("CheckBoxUI", MeasuredCheckBoxUI.class.getName());
+            // The Material tables are not opaque - below the last row the viewport shows through,
+            // whose background the theme leaves at Swing's light default.
+            UIManager.put("Viewport.background", UIManager.getColor("Table.background"));
         } catch (UnsupportedLookAndFeelException e) {
             Logger.logException("Could not install the MaterialOceanicTheme look and feel", e);
         }

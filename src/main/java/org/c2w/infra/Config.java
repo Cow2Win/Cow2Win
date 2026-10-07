@@ -60,6 +60,9 @@ public final class Config {
      */
     private static final Path CONFIG_FILE_PATH = resolveConfigFilePath();
 
+    /** System property naming another config file - set by the tests, see {@link #configFile()}. */
+    public static final String CONFIG_FILE_PROPERTY = "cow2win.configFile";
+
     private static final String KEY_LAST_GUILD_PATH = "lastGuildPath";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_LAST_LINEUP_PATH = "lastLineUpPath";
@@ -119,31 +122,44 @@ public final class Config {
         return base.resolve("config.properties");
     }
 
+    /**
+     * The file {@link #load()} and {@link #save()} use: {@link #CONFIG_FILE_PATH}, unless the
+     * system property {@value #CONFIG_FILE_PROPERTY} names another one. The tests set it (see
+     * {@code TestConfigFileExtension}), so code under test that saves the config never touches the
+     * user's real config file. Resolved on every call, so it applies no matter when it is set.
+     */
+    static Path configFile() {
+        String override = System.getProperty(CONFIG_FILE_PROPERTY);
+        return override == null || override.isBlank() ? CONFIG_FILE_PATH : Paths.get(override);
+    }
+
     public static boolean exists() {
-        return Files.isRegularFile(CONFIG_FILE_PATH);
+        return Files.isRegularFile(configFile());
     }
 
     public static void load() {
         properties.clear();
-        if (Files.isRegularFile(CONFIG_FILE_PATH)) {
-            try (InputStream in = Files.newInputStream(CONFIG_FILE_PATH)) {
+        Path file = configFile();
+        if (Files.isRegularFile(file)) {
+            try (InputStream in = Files.newInputStream(file)) {
                 properties.load(in);
             } catch (IOException e) {
-                Logger.logException("Could not read " + CONFIG_FILE_PATH, e);
+                Logger.logException("Could not read " + file, e);
             }
         }
     }
 
     public static void save() {
+        Path file = configFile();
         try {
-            if (CONFIG_FILE_PATH.getParent() != null) {
-                Files.createDirectories(CONFIG_FILE_PATH.getParent());
+            if (file.getParent() != null) {
+                Files.createDirectories(file.getParent());
             }
-            try (OutputStream out = Files.newOutputStream(CONFIG_FILE_PATH)) {
+            try (OutputStream out = Files.newOutputStream(file)) {
                 properties.store(out, "Cow2Win - recently used settings (auto-generated)");
             }
         } catch (IOException e) {
-            Logger.logException("Could not write " + CONFIG_FILE_PATH, e);
+            Logger.logException("Could not write " + file, e);
         }
     }
 
