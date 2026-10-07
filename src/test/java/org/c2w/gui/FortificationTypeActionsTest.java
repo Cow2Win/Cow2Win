@@ -5,7 +5,6 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
-import org.c2w.gui.cowscore.CowScoreTab;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
@@ -75,13 +74,6 @@ class FortificationTypeActionsTest {
 
         assertNotSame(heroEntryIcon, actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.LARGE_ICON_KEY));
         assertNotSame(heroTeamsIcon, actions.get(ActionId.SHOW_TEAMS).getValue(Action.SMALL_ICON));
-    }
-
-    @Test
-    @DisplayName("CowScore opens on the tab of the selected fortification type")
-    void cowScoreTabPerFortificationType() {
-        assertEquals(CowScoreTab.HEROES, CowScoreTab.forFortificationType(FortificationType.HERO));
-        assertEquals(CowScoreTab.TITANS, CowScoreTab.forFortificationType(FortificationType.TITAN));
     }
 
     private void assertTexts(String teamEntryKey, String showTeamsKey) {

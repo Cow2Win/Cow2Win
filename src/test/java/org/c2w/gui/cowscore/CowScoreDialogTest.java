@@ -148,6 +148,38 @@ class CowScoreDialogTest {
         assertEquals(positiveOnly, columnTitles(CowScoreTab.WAR_FLAGS));
     }
 
+    @Test
+    @DisplayName("The information area shows what the controls of the active tab do, with the real percentages")
+    void infoFollowsTab() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog, CowScoreTab.HEROES));
+        assertEquals(CowScoreDialog.infoText(CowScoreTab.HEROES), dialog.infoText());
+
+        SwingUtilities.invokeAndWait(() -> dialog.selectTab(CowScoreTab.WAR_FLAGS));
+        assertEquals(CowScoreDialog.infoText(CowScoreTab.WAR_FLAGS), dialog.infoText());
+        for (CowScoreTab tab : CowScoreTab.values()) {
+            String text = CowScoreDialog.infoText(tab);
+            assertFalse(text.isBlank() || text.contains("{") || text.equals(tab.textKey() + ".info"), tab + ": " + text);
+            assertTrue(text.contains("%"), tab + ": " + text);
+        }
+    }
+
+    @Test
+    @DisplayName("The information area is equally high in every tab: three lines plus padding")
+    void infoAreaHeight() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            dialog = CowScoreDialog.open(null, catalog, CowScoreTab.HEROES);
+            dialog.validate();
+        });
+
+        JTextArea heroes = dialog.infoArea(CowScoreTab.HEROES);
+        Insets insets = heroes.getInsets();
+        assertEquals(new Insets(8, 14, 8, 14), insets);
+        int expected = 3 * heroes.getFontMetrics(heroes.getFont()).getHeight() + insets.top + insets.bottom;
+        for (CowScoreTab tab : CowScoreTab.values()) {
+            assertEquals(expected, dialog.infoArea(tab).getPreferredSize().height, tab.name());
+        }
+    }
+
     private List<String> columnTitles(CowScoreTab tab) {
         JPanel header = CowScoreTestSupport.findAll((Container) dialog.panel(tab).component(), JPanel.class).stream()
                 .filter(p -> "columnHeader".equals(p.getName())).findFirst().orElseThrow();

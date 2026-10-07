@@ -264,7 +264,7 @@ public class Cow2Frame extends JFrame {
         // Independent of the open guild/lineup - the catalogs are shared by every guild.
         actions.register(new AppAction(ActionId.COWSCORE,
                 () -> CowScoreDialog.open(this, appContext.catalog(),
-                        CowScoreTab.forFortificationType(appContext.fortificationType()),
+                        CowScoreTab.HEROES,
                         // Saved CowScores make the lineup "to recalculate" - show that right away.
                         () -> dataStatusController.requestUpdate())));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));

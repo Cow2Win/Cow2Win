@@ -1,11 +1,14 @@
 package org.c2w.gui.cowscore;
 
 import org.c2w.data.repository.Catalog;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.HintStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
 import org.c2w.gui.hero.HeroComboPanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
+import org.c2w.gui.journal.JournalTexts;
 import org.c2w.gui.pet.PetCowScorePanel;
 import org.c2w.gui.titan.TitanCowScorePanel;
 import org.c2w.i18n.LanguageService;
@@ -16,6 +19,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -27,7 +31,9 @@ import java.util.Map;
  *
  * <p>Every tab has the same layout: the list on the left is equally wide in all tabs (wide
  * enough for the longest entry, see {@link CowScoreLayout#listWidth}), and the dialog is high
- * enough to show every hero fortification without scrolling (see {@link #sizeToContent}).
+ * enough to show every hero fortification without scrolling (see {@link #sizeToContent}). At the top
+ * of every tab, an information area says what the controls of that tab do for the CowScore
+ * (see {@link #infoText(CowScoreTab)}).
  *
  * <p>The shared toolbar saves every tab with unsaved changes and restores the defaults of
  * the active tab only. A tab with unsaved changes shows a {@code *} in front of its title,
@@ -57,6 +63,8 @@ public final class CowScoreDialog extends JDialog {
 
     private final Map<CowScoreTab, CowScorePanel> panels = new EnumMap<>(CowScoreTab.class);
     private final JTabbedPane tabs = new JTabbedPane();
+    /** Per tab, what its controls do - shown at the top of the tab, see {@link #infoText(CowScoreTab)}. */
+    private final Map<CowScoreTab, InfoArea> infoAreas = new EnumMap<>(CowScoreTab.class);
     private final FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
     /** Runs after a save that wrote at least one tab, may be null - see {@link #open(Frame, Catalog, CowScoreTab, Runnable)}. */
     private Runnable onSaved;
@@ -97,7 +105,17 @@ public final class CowScoreDialog extends JDialog {
         int listWidth = CowScoreLayout.listWidth(panels.values().stream().flatMap(p -> p.listLabels().stream()).toList());
         panels.values().forEach(panel -> panel.setListWidth(listWidth));
         panels.forEach((tab, panel) -> {
-            tabs.addTab(LanguageService.displayName(tab.textKey()), panel.component());
+            InfoArea info = new InfoArea();
+            info.setText(infoText(tab));
+            infoAreas.put(tab, info);
+            // Space between the hint frame and the tab - the frame itself is painted by InfoArea.
+            JPanel infoHolder = new JPanel(new BorderLayout());
+            infoHolder.setBorder(BorderFactory.createEmptyBorder(10, 12, 8, 12));
+            infoHolder.add(info, BorderLayout.CENTER);
+            JPanel content = new JPanel(new BorderLayout());
+            content.add(infoHolder, BorderLayout.NORTH);
+            content.add(panel.component(), BorderLayout.CENTER);
+            tabs.addTab(LanguageService.displayName(tab.textKey()), content);
             panel.addChangeListener(e -> updateUnsavedState());
         });
 
@@ -140,6 +158,78 @@ public final class CowScoreDialog extends JDialog {
             instance = null;
         }
         super.dispose();
+    }
+
+    /**
+     * What the controls of {@code tab} do for the CowScore, with the percentages of
+     * {@link TeamScoreCalculator} (language file key {@code <tab text key>.info}).
+     */
+    static String infoText(CowScoreTab tab) {
+        String key = tab.textKey() + ".info";
+        return switch (tab) {
+            case HEROES -> LanguageService.displayName(key, percent(TeamScoreCalculator.RELATION_PERCENT),
+                    percent(TeamScoreCalculator.ROLE_MATCH_PERCENT));
+            case TITANS -> LanguageService.displayName(key, percent(TeamScoreCalculator.RELATION_PERCENT),
+                    percent(TeamScoreCalculator.ELEMENT_MATCH_PERCENT));
+            case PETS -> LanguageService.displayName(key, percent(TeamScoreCalculator.PET_MARKED_PERCENT));
+            case WAR_FLAGS -> LanguageService.displayName(key, percent(TeamScoreCalculator.WAR_FLAG_MARKED_PERCENT),
+                    percent(TeamScoreCalculator.WAR_FLAG_PRESENT_PERCENT));
+            case HERO_COMBOS -> LanguageService.displayName(key, percent(TeamScoreCalculator.COMBO_PERCENT));
+        };
+    }
+
+    /** "1,25" / "1.25" in the configured language. */
+    private static String percent(double value) {
+        NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
+        format.setMaximumFractionDigits(2);
+        return format.format(value);
+    }
+
+    /** The information area of {@code tab} - package-visible for tests. */
+    JTextArea infoArea(CowScoreTab tab) {
+        return infoAreas.get(tab);
+    }
+
+    /** The text of the information area of the active tab - package-visible for tests. */
+    String infoText() {
+        return infoAreas.get(selectedTab()).getText();
+    }
+
+    /**
+     * The information area at the top of a tab: wrapped, read-only white text in a teal-tinted
+     * frame with rounded corners, like the "Live" label of the context bar (see {@link HintStyle}).
+     * Its preferred width is tiny, so the text never decides the dialog's width, and it is always
+     * three lines high (plus padding), so switching tabs does not move the content.
+     */
+    private static final class InfoArea extends JTextArea {
+        private static final int ROWS = 3;
+        /** Corner arc of the frame - 14 px radius. */
+        private static final int ARC = 28;
+
+        InfoArea() {
+            setLineWrap(true);
+            setWrapStyleWord(true);
+            setEditable(false);
+            setFocusable(false);
+            setOpaque(false);
+            setForeground(Color.WHITE);
+            // The look and feel sets text areas in bold - the information reads like a label.
+            setFont(UIManager.getFont("Label.font"));
+            // Padding between the frame and the text.
+            setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            HintStyle.paintHintBackground(g, this, HintStyle.TEAL, ARC);
+            super.paintComponent(g);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Insets insets = getInsets();
+            return new Dimension(1, ROWS * getRowHeight() + insets.top + insets.bottom);
+        }
     }
 
     /** Switches to {@code tab}. */

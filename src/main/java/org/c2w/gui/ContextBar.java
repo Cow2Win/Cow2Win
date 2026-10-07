@@ -6,6 +6,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
+import org.c2w.gui.common.HintStyle;
 import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
@@ -60,8 +61,8 @@ public class ContextBar extends JPanel {
     /** Orange of the "unsaved changes" hint - package-visible, also the "attention" light of {@link StageStatus}. */
     static final Color UNSAVED_COLOR = new Color(0xF0, 0xA0, 0x30);
 
-    /** Teal of the "Original" lineup status. */
-    private static final Color ORIGINAL_COLOR = new Color(0x4D, 0xC0, 0xA8);
+    /** Teal of the "Original" lineup status - shared with other hints, see {@link HintStyle#TEAL}. */
+    private static final Color ORIGINAL_COLOR = HintStyle.TEAL;
 
     /** Background of the selected fortification type segment, and the line around the switch. */
     private static final Color SWITCH_SELECTED_BACKGROUND = new Color(0x5A, 0x6A, 0x72);
@@ -425,7 +426,10 @@ public class ContextBar extends JPanel {
         return window != null ? window : this;
     }
 
-    /** A small label on a rounded, translucent background in its own color - for the hints in this bar. */
+    /**
+     * A small label on a rounded, translucent background with a border in its own color, with fully
+     * rounded ends - for the hints in this bar. Painted by {@link HintStyle#paintHintBackground}.
+     */
     private static final class PillLabel extends JLabel {
 
         private final Color color;
@@ -439,17 +443,7 @@ public class ContextBar extends JPanel {
 
         @Override
         protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            try {
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                int arc = getHeight();
-                g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 45));
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
-                g2.setColor(color);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
-            } finally {
-                g2.dispose();
-            }
+            HintStyle.paintHintBackground(g, this, color, getHeight());
             super.paintComponent(g);
         }
     }
