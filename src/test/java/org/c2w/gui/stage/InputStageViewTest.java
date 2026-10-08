@@ -10,6 +10,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
@@ -120,6 +121,31 @@ class InputStageViewTest {
         assertTrue(texts.stream().anyMatch(text -> text.contains(GuiUtils.NUMBER_FORMAT.format(500_000))), texts.toString());
         assertTrue(texts.stream().noneMatch(text -> text.startsWith(LanguageService.displayName("stageInfo.member.team", 2))),
                 "only one titan team: " + texts);
+    }
+
+    @Test
+    @DisplayName("The table texts take the color of the selected fortification type, the member count keeps its color")
+    void tableTextColorFollowsFortificationType() {
+        java.awt.Color countColor = view.countLabel().getForeground();
+        assertEquals(FortificationTypeStyle.color(FortificationType.HERO), memberCellColor(false));
+        assertEquals(FortificationTypeStyle.color(FortificationType.HERO), memberCellColor(true), "selected row");
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(FortificationTypeStyle.color(FortificationType.TITAN), memberCellColor(false));
+        assertEquals(FortificationTypeStyle.color(FortificationType.TITAN), memberCellColor(true), "selected row");
+        assertEquals(countColor, view.countLabel().getForeground());
+
+        context.setFortificationType(FortificationType.HERO);
+        assertEquals(FortificationTypeStyle.color(FortificationType.HERO), memberCellColor(false));
+    }
+
+    /** Foreground of the rendered member cell in the first row. */
+    private java.awt.Color memberCellColor(boolean selected) {
+        javax.swing.JTable table = view.table();
+        Object value = table.getValueAt(0, MemberTableModel.COLUMN_MEMBER);
+        return table.getCellRenderer(0, MemberTableModel.COLUMN_MEMBER)
+                .getTableCellRendererComponent(table, value, selected, false, 0, MemberTableModel.COLUMN_MEMBER)
+                .getForeground();
     }
 
     private static DataStatus statusWithFindings() {

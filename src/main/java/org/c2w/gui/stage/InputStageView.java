@@ -12,6 +12,7 @@ import org.c2w.gui.StageStatus;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.journal.JournalTexts;
@@ -40,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.c2w.gui.stage.InfoSections.*;
@@ -147,6 +149,8 @@ public class InputStageView extends StageView {
             @Override
             public void fortificationTypeChanged() {
                 refreshMembers();
+                // The cell texts take the color of the selected type, see textColor().
+                table.repaint();
             }
 
             @Override
@@ -200,21 +204,22 @@ public class InputStageView extends StageView {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
 
-        DefaultTableCellRenderer textRenderer = new TransparentRenderer(SwingConstants.LEFT);
-        DefaultTableCellRenderer numberRenderer = new TransparentRenderer(SwingConstants.RIGHT) {
+        Supplier<Color> textColor = this::textColor;
+        DefaultTableCellRenderer textRenderer = new TransparentRenderer(SwingConstants.LEFT, textColor);
+        DefaultTableCellRenderer numberRenderer = new TransparentRenderer(SwingConstants.RIGHT, textColor) {
             @Override
             protected void setValue(Object value) {
                 setText(value instanceof Integer number ? GuiUtils.NUMBER_FORMAT.format(number) : "");
             }
         };
-        table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setCellRenderer(new StatusRenderer());
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setCellRenderer(new StatusRenderer(textColor));
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setMinWidth(STATUS_COLUMN_WIDTH);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_STATUS).setMaxWidth(STATUS_COLUMN_WIDTH);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_MEMBER).setCellRenderer(textRenderer);
-        table.getColumnModel().getColumn(MemberTableModel.COLUMN_TEAMS).setCellRenderer(new TransparentRenderer(SwingConstants.CENTER));
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_TEAMS).setCellRenderer(new TransparentRenderer(SwingConstants.CENTER, textColor));
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_TOTAL_POWER).setCellRenderer(numberRenderer);
         table.getColumnModel().getColumn(MemberTableModel.COLUMN_STRONGEST_TEAM).setCellRenderer(numberRenderer);
-        table.getColumnModel().getColumn(MemberTableModel.COLUMN_LAST_MODIFIED).setCellRenderer(new TransparentRenderer(SwingConstants.RIGHT));
+        table.getColumnModel().getColumn(MemberTableModel.COLUMN_LAST_MODIFIED).setCellRenderer(new TransparentRenderer(SwingConstants.RIGHT, textColor));
 
         sorter.setSortKeys(List.of(new RowSorter.SortKey(MemberTableModel.COLUMN_TOTAL_POWER, SortOrder.DESCENDING)));
         sorter.setSortsOnUpdates(true);
@@ -391,6 +396,11 @@ public class InputStageView extends StageView {
     private Component dialogParent() {
         Window window = SwingUtilities.getWindowAncestor(this);
         return window != null ? window : this;
+    }
+
+    /** Text color of the member table: the color of the selected fortification type. */
+    private Color textColor() {
+        return FortificationTypeStyle.color(appContext.fortificationType());
     }
 
     /** Rebuilds the table for the open guild and the selected fortification type, keeping the selected member. */
@@ -665,6 +675,10 @@ public class InputStageView extends StageView {
         return countLabel.getText();
     }
 
+    JLabel countLabel() {
+        return countLabel;
+    }
+
     List<String> memberSectionTexts() {
         List<String> texts = new ArrayList<>();
         collectTexts(memberSection, texts);
@@ -677,14 +691,20 @@ public class InputStageView extends StageView {
         return texts;
     }
 
-    /** A cell renderer that lets the table's translucent background show through, except on the selected row. */
+    /**
+     * A cell renderer that lets the table's translucent background show through, except on the
+     * selected row; the text color comes from a supplier (selected rows included).
+     */
     private static class TransparentRenderer extends DefaultTableCellRenderer {
+
+        private final Supplier<Color> textColor;
 
         /** Whether the cell being rendered is selected - then {@link #paintComponent} fills it. */
         private boolean selected;
 
-        TransparentRenderer(int alignment) {
+        TransparentRenderer(int alignment, Supplier<Color> textColor) {
             setHorizontalAlignment(alignment);
+            this.textColor = textColor;
         }
 
         @Override
@@ -694,7 +714,7 @@ public class InputStageView extends StageView {
             // Never opaque: a translucent fill on an opaque component leaves paint artifacts.
             selected = isSelected;
             setOpaque(false);
-            setForeground(table.getForeground());
+            setForeground(textColor.get());
             setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
             return this;
         }
@@ -714,8 +734,8 @@ public class InputStageView extends StageView {
 
         private Color light;
 
-        StatusRenderer() {
-            super(SwingConstants.CENTER);
+        StatusRenderer(Supplier<Color> textColor) {
+            super(SwingConstants.CENTER, textColor);
         }
 
         @Override

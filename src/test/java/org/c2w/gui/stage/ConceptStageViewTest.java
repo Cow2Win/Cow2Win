@@ -9,6 +9,7 @@ import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.cowscore.CowScoreTestSupport;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.fort.FortificationValueMode;
 import org.c2w.gui.fort.HeroLineupSummaryPanel;
 import org.c2w.gui.fort.TitanLineupSummaryPanel;
 import org.c2w.i18n.LanguageService;
@@ -27,7 +28,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** {@link ConceptStageView}: info panel and "changes" toggle - headless, never shown. */
+/** {@link ConceptStageView}: info panel and "fortification values" combo box - headless, never shown. */
 class ConceptStageViewTest {
 
     @TempDir
@@ -78,13 +79,17 @@ class ConceptStageViewTest {
     }
 
     @Test
-    @DisplayName("The \"changes\" toggle switches the map's change view on and off")
-    void changesToggle() {
-        assertFalse(map.isShowChanges());
-        view.changesToggle().doClick();
-        assertTrue(map.isShowChanges());
-        view.changesToggle().doClick();
-        assertFalse(map.isShowChanges());
+    @DisplayName("The \"fortification values\" combo box starts with power and sets the map's value mode")
+    void valueModeBox() {
+        assertEquals(FortificationValueMode.POWER, view.valueModeBox().getSelectedItem());
+        assertEquals(FortificationValueMode.POWER, map.valueMode());
+
+        view.valueModeBox().setSelectedItem(FortificationValueMode.CHANGES);
+        assertEquals(FortificationValueMode.CHANGES, map.valueMode());
+        view.valueModeBox().setSelectedItem(FortificationValueMode.LIVE_COMPARISON);
+        assertEquals(FortificationValueMode.LIVE_COMPARISON, map.valueMode());
+        view.valueModeBox().setSelectedItem(FortificationValueMode.POWER);
+        assertEquals(FortificationValueMode.POWER, map.valueMode());
     }
 
     @Test
@@ -99,12 +104,12 @@ class ConceptStageViewTest {
     }
 
     @Test
-    @DisplayName("The action list is the concept menu plus the \"changes\" toggle at the end")
+    @DisplayName("The action list is the concept menu plus the \"fortification values\" combo box at the end")
     void actionList() {
         StageActionList list = view.actionList();
         assertEquals(org.c2w.gui.MainMenuBar.menuFor(org.c2w.gui.action.Stage.CONCEPT).allActionIds(),
                 list.rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
         java.awt.Component[] components = list.getComponents();
-        assertSame(view.changesToggle(), components[components.length - 1]);
+        assertSame(view.valueModeBox().getParent(), components[components.length - 1]);
     }
 }

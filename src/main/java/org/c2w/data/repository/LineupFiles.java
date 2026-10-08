@@ -1,9 +1,14 @@
 package org.c2w.data.repository;
 
+import org.c2w.data.model.Lineup;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Small helper around the reserved "Original" lineup file that every guild
@@ -61,6 +66,26 @@ public final class LineupFiles {
             throw new IllegalArgumentException("guildDir must not be null");
         }
         return guildDir.resolve(ORIGINAL_FILE_NAME);
+    }
+
+    /**
+     * The Original lineup of the guild in {@code guildDir}, read fresh from its file - empty if
+     * {@code guildDir} is null, the file does not exist or cannot be read (the latter is logged).
+     */
+    public static Optional<Lineup> loadOriginal(Path guildDir) {
+        if (guildDir == null) {
+            return Optional.empty();
+        }
+        Path originalFile = originalPathFor(guildDir);
+        if (!Files.isRegularFile(originalFile)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(LineupRepository.load(originalFile));
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not load the Original lineup: " + originalFile, e);
+            return Optional.empty();
+        }
     }
 
     /**

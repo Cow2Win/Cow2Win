@@ -1,7 +1,6 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
-import org.c2w.data.model.FortificationType;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
@@ -54,20 +53,23 @@ public class FortificationPanel extends JPanel {
     private static final Color OUTLINE = new Color(255, 255, 255, 40);
     private static final Color SELECTED_SURFACE = new Color(
             IconLoader.BLUE.getRed(), IconLoader.BLUE.getGreen(), IconLoader.BLUE.getBlue(), 60);
-    /** Gold of a partly filled fortification - the same gold as the titan color. */
-    private static final Color PARTIAL_COLOR = FortificationTypeStyle.color(FortificationType.TITAN);
+    /** Orange of a partly filled fortification - deliberately different from the titan gold of the name. */
+    static final Color PARTIAL_COLOR = new Color(217, 130, 43);
 
     private final Fortification fortification;
     private final int filledSlots;
     private final int totalPower;
-    /** Change of {@link #totalPower} since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded) - only shown when {@link #showChanges} is true. */
+    /**
+     * Change of {@link #totalPower} against the live lineup in {@link FortificationValueMode#LIVE_COMPARISON},
+     * otherwise since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded).
+     */
     private final int totalPowerDiff;
-    /** True while the change view is on (see FortificationMapPanel#setShowChanges) - then power and buff show their change instead of their current value. */
-    private final boolean showChanges;
+    /** What the tile shows (see FortificationMapPanel#setValueMode): power and buff, or their change. */
+    private final FortificationValueMode valueMode;
     private final int buffPercent;
-    /** Change of {@link #buffPercent} since the lineup was loaded or last saved - only shown when {@link #showChanges} is true. */
+    /** Change of {@link #buffPercent}, against the same base as {@link #totalPowerDiff}. */
     private final int buffPercentDiff;
-    /** Change of the number of buff-matching heroes/titans since the lineup was loaded or last saved - shown in the power tooltip (see {@link #powerTooltip()}). */
+    /** Change of the number of buff-matching heroes/titans, against the same base - shown in the power tooltip (see {@link #powerTooltip()}). */
     private final int buffMemberCountDiff;
     private boolean selected;
 
@@ -79,13 +81,13 @@ public class FortificationPanel extends JPanel {
      * @param onClick receives {@code fortification} whenever the tile is clicked
      */
     public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
-                              boolean showChanges, int buffPercent, int buffPercentDiff,
+                              FortificationValueMode valueMode, int buffPercent, int buffPercentDiff,
                               int buffMemberCountDiff, boolean selected, Consumer<Fortification> onClick) {
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
         this.totalPowerDiff = totalPowerDiff;
-        this.showChanges = showChanges;
+        this.valueMode = valueMode;
         this.buffPercent = buffPercent;
         this.buffPercentDiff = buffPercentDiff;
         this.buffMemberCountDiff = buffMemberCountDiff;
@@ -124,6 +126,10 @@ public class FortificationPanel extends JPanel {
 
     Fortification fortification() {
         return fortification;
+    }
+
+    int totalPowerDiff() {
+        return totalPowerDiff;
     }
 
     boolean isSelected() {
@@ -177,7 +183,7 @@ public class FortificationPanel extends JPanel {
         return filled >= capacity ? FillLevel.FULL : FillLevel.PARTIAL;
     }
 
-    private static Color fillLevelColor(FillLevel level) {
+    static Color fillLevelColor(FillLevel level) {
         return switch (level) {
             case EMPTY -> IconLoader.RED;
             case PARTIAL -> PARTIAL_COLOR;
@@ -185,13 +191,16 @@ public class FortificationPanel extends JPanel {
         };
     }
 
-    /** The fortification name, bold; cut off with an ellipsis if too long, the full name is in the tooltip. */
-    private JLabel getNameLabel() {
+    /**
+     * The fortification name, bold, in the color of its fortification type; cut off with an
+     * ellipsis if too long, the full name is in the tooltip.
+     */
+    JLabel getNameLabel() {
         if (nameLbl == null) {
             String name = LanguageService.displayName(fortification.id());
             nameLbl = new JLabel(name, JLabel.LEFT);
             nameLbl.setFont(nameLbl.getFont().deriveFont(Font.BOLD));
-            nameLbl.setForeground(foreground());
+            nameLbl.setForeground(FortificationTypeStyle.color(fortification.type()));
             nameLbl.setToolTipText(name);
             // Small minimum width, so a long name is cut off instead of widening the column.
             nameLbl.setMinimumSize(new Dimension(0, nameLbl.getPreferredSize().height));
@@ -201,16 +210,16 @@ public class FortificationPanel extends JPanel {
     }
 
     /**
-     * "filled/capacity · power", e.g. "5/5 · 1,05 Mio" - or, while the "Changes" checkbox is
-     * selected (see {@link #showChanges}), "filled/capacity · {@link #totalPowerDiff}", colored
+     * "filled/capacity · power", e.g. "5/5 · 1,05 Mio" - or, while {@link #valueMode} shows a
+     * change, "filled/capacity · {@link #totalPowerDiff}", colored
      * green for a gain and red for a loss (see {@link #diffColor}).
      */
     private JLabel getPowerLabel() {
         if (powerLbl == null) {
             String places = filledSlots + "/" + fortification.capacity() + " · ";
-            String power = showChanges ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
+            String power = valueMode.showsChange() ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
             powerLbl = new JLabel(places + power, JLabel.LEFT);
-            powerLbl.setForeground(showChanges ? diffColor(totalPowerDiff, mutedForeground()) : mutedForeground());
+            powerLbl.setForeground(valueMode.showsChange() ? diffColor(totalPowerDiff, mutedForeground()) : mutedForeground());
             powerLbl.setToolTipText(powerTooltip());
             powerLbl.setMinimumSize(new Dimension(0, powerLbl.getPreferredSize().height));
         }
@@ -218,17 +227,17 @@ public class FortificationPanel extends JPanel {
     }
 
     /**
-     * The buff percentage, e.g. "+8 %" - or, while the "Changes" checkbox is selected (see
-     * {@link #showChanges}), {@link #buffPercentDiff}, colored green for a gain and red for a
-     * loss (see {@link #diffColor}). Empty for a fortification without a buff.
+     * The buff percentage, e.g. "+8 %" - or, while {@link #valueMode} shows a change,
+     * {@link #buffPercentDiff}, colored green for a gain and red for a loss (see
+     * {@link #diffColor}). Empty for a fortification without a buff.
      */
     private JLabel getBuffPercentLabel() {
         if (buffPercentLbl == null) {
             buffPercentLbl = new JLabel("", JLabel.RIGHT);
             if (fortification.buff() != null) {
-                int value = showChanges ? buffPercentDiff : buffPercent;
+                int value = valueMode.showsChange() ? buffPercentDiff : buffPercent;
                 buffPercentLbl.setText(formatPercent(value));
-                buffPercentLbl.setForeground(showChanges ? diffColor(buffPercentDiff, foreground()) : foreground());
+                buffPercentLbl.setForeground(valueMode.showsChange() ? diffColor(buffPercentDiff, foreground()) : foreground());
                 buffPercentLbl.setToolTipText(BuffTexts.describe(fortification.buff()));
             }
         }
@@ -263,33 +272,42 @@ public class FortificationPanel extends JPanel {
     }
 
     /**
-     * Tooltip of the power label - always the value the label does NOT show:
-     * the change since the lineup was loaded or last saved while the label
-     * shows the total power, the total power while it shows the change.
+     * Tooltip of the power label: the change since the lineup was loaded or last saved while the
+     * label shows the total power, the total power while it shows that change, and the change
+     * against live - naming that base - in the live comparison.
      */
     private String powerTooltip() {
-        return powerTooltip(showChanges, totalPower, totalPowerDiff, fortification.buff() != null, buffMemberCountDiff);
+        return powerTooltip(valueMode, totalPower, totalPowerDiff, fortification.buff() != null, buffMemberCountDiff);
     }
 
     /**
-     * GUI-free core of {@link #powerTooltip()}, e.g. "Since last save: +12.345
-     * power, +1 buff members", "Unchanged since last save" or "Total power:
-     * 1.234.567". The buff part only appears for a fortification with a buff.
+     * GUI-free core of {@link #powerTooltip()}, e.g. "Since last save: +12.345 power, +1 buff
+     * members", "Unchanged since last save", "Total power: 1.234.567" or "Compared to live:
+     * +12.345 power". The buff part only appears for a fortification with a buff.
      */
-    static String powerTooltip(boolean showChanges, int totalPower, int totalPowerDiff,
+    static String powerTooltip(FortificationValueMode valueMode, int totalPower, int totalPowerDiff,
                                boolean hasBuff, int buffMemberCountDiff) {
-        if (showChanges) {
-            return LanguageService.displayName("fortification.totalPowerTooltip",
+        return switch (valueMode) {
+            case CHANGES -> LanguageService.displayName("fortification.totalPowerTooltip",
                     GuiUtils.NUMBER_FORMAT.format(totalPower));
-        }
+            case POWER -> diffTooltip("fortification.unchangedTooltip", "fortification.diffTooltip",
+                    "fortification.diffTooltipNoBuff", totalPowerDiff, hasBuff, buffMemberCountDiff);
+            case LIVE_COMPARISON -> diffTooltip("fortification.liveUnchangedTooltip", "fortification.liveDiffTooltip",
+                    "fortification.liveDiffTooltipNoBuff", totalPowerDiff, hasBuff, buffMemberCountDiff);
+        };
+    }
+
+    /** The change text with the given keys: unchanged, with buff members, or power only. */
+    private static String diffTooltip(String unchangedKey, String diffKey, String diffNoBuffKey,
+                                      int totalPowerDiff, boolean hasBuff, int buffMemberCountDiff) {
         if (totalPowerDiff == 0 && (!hasBuff || buffMemberCountDiff == 0)) {
-            return LanguageService.displayName("fortification.unchangedTooltip");
+            return LanguageService.displayName(unchangedKey);
         }
         if (hasBuff) {
-            return LanguageService.displayName("fortification.diffTooltip",
+            return LanguageService.displayName(diffKey,
                     formatPowerDiff(totalPowerDiff), formatPowerDiff(buffMemberCountDiff));
         }
-        return LanguageService.displayName("fortification.diffTooltipNoBuff", formatPowerDiff(totalPowerDiff));
+        return LanguageService.displayName(diffNoBuffKey, formatPowerDiff(totalPowerDiff));
     }
 
     /** "+1.234"/"-1.234"/"0" - {@link GuiUtils#NUMBER_FORMAT} already prefixes a negative diff with "-", so only the "+" for a positive diff needs adding here. */

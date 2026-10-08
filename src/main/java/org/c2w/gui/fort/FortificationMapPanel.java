@@ -5,6 +5,8 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.LineupFiles;
+import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.LineupBaseline;
 import org.c2w.gui.common.GridPanel;
@@ -12,6 +14,8 @@ import org.c2w.service.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +41,11 @@ public class FortificationMapPanel extends GridPanel {
 
     private final AppContext appContext;
 
-    /** True while the change view is on (see {@link #setShowChanges}) - then every {@link FortificationPanel} shows its power change against the lineup as loaded or last saved instead of its current total power (see AppContext#fortificationDiffFromLoaded). */
-    private boolean showChanges = false;
+    /**
+     * What every {@link FortificationPanel} shows (see {@link #setValueMode}): the current power,
+     * the change since loading/saving or the change against the live lineup.
+     */
+    private FortificationValueMode valueMode = FortificationValueMode.POWER;
 
     /** Id of the selected fortification, null if none is selected. */
     private String selectedId;
@@ -69,8 +76,25 @@ public class FortificationMapPanel extends GridPanel {
             }
 
             @Override
+            public void dirtyStateChanged() {
+                // Saving the live lineup may change the live comparison - like the comparison
+                // section of the concept stage view, which refreshes here as well.
+                if (valueMode == FortificationValueMode.LIVE_COMPARISON) {
+                    init();
+                }
+            }
+
+            @Override
             public void fortificationTypeChanged() {
                 setSelectedId(null);
+                init();
+            }
+        });
+        // "Apply to live" in the output stage writes the live file without an AppContext event -
+        // the live comparison is read fresh whenever the map is shown again.
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()
+                    && valueMode == FortificationValueMode.LIVE_COMPARISON) {
                 init();
             }
         });
@@ -100,6 +124,8 @@ public class FortificationMapPanel extends GridPanel {
             totalPowerMap.put(fortId, totalPowerMap.getOrDefault(fortId, 0) + BuffCalculationService.totalPowerOf(entry, guild));
         }
 
+        // Read fresh on every rebuild, so the map is right after the live lineup was maintained.
+        Lineup live = valueMode == FortificationValueMode.LIVE_COMPARISON ? liveLineup() : null;
         boolean selectionVisible = false;
         for (Fortification fort : fortificationCatalog) {
             if (fort.type() != selectedType) {
@@ -109,13 +135,16 @@ public class FortificationMapPanel extends GridPanel {
                     fort.id(), lineup, guild, fort);
             int filledSlots = filledSlotsMap.getOrDefault(fort.id(), 0);
             int totalPower = totalPowerMap.getOrDefault(fort.id(), 0);
-            // Change since the lineup was loaded or last saved - a fortification that was empty
-            // back then counts as a baseline of 0 (see AppContext#fortificationDiffFromLoaded).
-            LineupBaseline.Diff diff = appContext.fortificationDiffFromLoaded(fort.id());
+            // Change against the live lineup, or since the lineup was loaded or last saved - a
+            // fortification that was empty back then counts as a baseline of 0 (see
+            // AppContext#fortificationDiffFromLoaded).
+            LineupBaseline.Diff diff = live != null
+                    ? LineupBaseline.forFortification(fort, live, guild).diffFrom(LineupBaseline.forFortification(fort, lineup, guild))
+                    : appContext.fortificationDiffFromLoaded(fort.id());
             boolean selected = fort.id().equals(selectedId);
             selectionVisible |= selected;
             setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower,
-                    diff.totalPowerDiff(), showChanges, buffPercent, buffPercentDiff(fort, diff),
+                    diff.totalPowerDiff(), valueMode, buffPercent, buffPercentDiff(fort, diff),
                     diff.buffMemberCountDiff(), selected, this::toggleSelection));
         }
         if (!selectionVisible) {
@@ -123,6 +152,20 @@ public class FortificationMapPanel extends GridPanel {
         }
         // The lineup summary of the selected type is not part of the map: it is shown in the
         // info panel of the concept stage view (see org.c2w.gui.stage.ConceptStageView).
+    }
+
+    /**
+     * The lineup the live comparison compares with: the open lineup itself if it is the live
+     * lineup (every change is then 0), otherwise the guild's live file - an empty lineup if there
+     * is none or it cannot be read (the whole power then shows as a gain).
+     */
+    private Lineup liveLineup() {
+        if (LineupFiles.isOriginal(appContext.lineupFilePath())) {
+            return appContext.lineup();
+        }
+        Path guildFile = appContext.guildFilePath();
+        return LineupFiles.loadOriginal(guildFile == null ? null : guildFile.getParent())
+                .orElseGet(LineupRepository::createEmptyLineup);
     }
 
     /**
@@ -177,13 +220,19 @@ public class FortificationMapPanel extends GridPanel {
         }
     }
 
-    public boolean isShowChanges() {
-        return showChanges;
+    public FortificationValueMode valueMode() {
+        return valueMode;
     }
 
-    /** Switches every {@link FortificationPanel} between total power and power change - driven by the "changes" toggle in the action list of the concept stage view. */
-    public void setShowChanges(boolean showChanges) {
-        this.showChanges = showChanges;
+    /**
+     * Switches what every {@link FortificationPanel} shows and rebuilds the map - driven by the
+     * "fortification values" combo box in the action list of the concept stage view.
+     */
+    public void setValueMode(FortificationValueMode valueMode) {
+        if (valueMode == null) {
+            throw new IllegalArgumentException("valueMode must not be null");
+        }
+        this.valueMode = valueMode;
         init();
     }
 

@@ -6,6 +6,7 @@ import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.fort.FortificationValueMode;
 import org.c2w.gui.fort.HeroLineupSummaryPanel;
 import org.c2w.gui.fort.TitanLineupSummaryPanel;
 import org.c2w.i18n.LanguageService;
@@ -21,7 +22,7 @@ import static org.c2w.gui.stage.InfoSections.*;
 
 /**
  * The stage view "strategic concept": the fortification map as work area, the concept actions
- * plus the "changes" toggle on the left, and on the right the overview of the selected
+ * plus the "fortification values" combo box on the left, and on the right the overview of the selected
  * fortification type, the comparison with the "Original" lineup and the details of the
  * fortification selected on the map.
  */
@@ -36,7 +37,7 @@ public class ConceptStageView extends StageView {
     private static final String KEY_CHANGES = "stageInfo.comparison.changes";
     private static final String KEY_FORTIFICATION = "stageInfo.fortification";
     private static final String KEY_FORTIFICATION_NONE = "stageInfo.fortification.none";
-    private static final String KEY_SHOW_CHANGES = "fortificationMap.showChanges";
+    private static final String KEY_VALUE_MODE = "fortificationMap.valueMode";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
 
@@ -46,7 +47,7 @@ public class ConceptStageView extends StageView {
     private final JPanel overviewSection = sectionBody();
     private final JPanel comparisonSection = sectionBody();
     private final JPanel fortificationSection = sectionBody();
-    private JCheckBox changesToggle;
+    private JComboBox<FortificationValueMode> valueModeBox;
 
     /** The fortification selected on the map, shown in {@link #fortificationSection}. */
     private Optional<Fortification> selectedFortification = Optional.empty();
@@ -111,13 +112,28 @@ public class ConceptStageView extends StageView {
         return panel;
     }
 
-    /** The "changes" toggle below the actions: switches the map between total power and the change since loading/saving. */
+    /**
+     * The "fortification values" combo box below the actions: switches the map between power,
+     * the change since loading/saving and the change against live. Always starts with power.
+     */
     @Override
     protected void addActionListExtras(StageActionList actionList) {
-        changesToggle = new JCheckBox(LanguageService.displayName(KEY_SHOW_CHANGES), map.isShowChanges());
-        changesToggle.setOpaque(false);
-        changesToggle.addActionListener(e -> map.setShowChanges(changesToggle.isSelected()));
-        actionList.addExtra(changesToggle);
+        valueModeBox = new JComboBox<>(FortificationValueMode.values());
+        valueModeBox.setSelectedItem(FortificationValueMode.POWER);
+        map.setValueMode(FortificationValueMode.POWER);
+        valueModeBox.setOpaque(false);
+        valueModeBox.addActionListener(e -> map.setValueMode((FortificationValueMode) valueModeBox.getSelectedItem()));
+
+        JPanel panel = new JPanel(new BorderLayout(0, 4)) {
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+            }
+        };
+        panel.setOpaque(false);
+        panel.add(mutedLabel(LanguageService.displayName(KEY_VALUE_MODE)), BorderLayout.NORTH);
+        panel.add(valueModeBox, BorderLayout.CENTER);
+        actionList.addExtra(panel);
     }
 
     private void refreshAll() {
@@ -198,9 +214,9 @@ public class ConceptStageView extends StageView {
         return texts;
     }
 
-    /** The "changes" toggle in the action list - for tests. */
-    JCheckBox changesToggle() {
-        return changesToggle;
+    /** The "fortification values" combo box in the action list - for tests. */
+    JComboBox<FortificationValueMode> valueModeBox() {
+        return valueModeBox;
     }
 
 }

@@ -127,7 +127,7 @@ class FortificationMapPanelTypeTest {
         assertEquals(Optional.empty(), map.selectedFortification());
 
         map.toggleSelection(first);
-        map.setShowChanges(true);
+        map.setValueMode(FortificationValueMode.CHANGES);
         assertEquals(Optional.of(first), map.selectedFortification(), "kept when the map is rebuilt");
         assertTrue(fortificationPanels(map).stream()
                 .filter(p -> p.fortification().equals(first)).findFirst().orElseThrow().isSelected());

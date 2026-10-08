@@ -5,14 +5,11 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.LineupFiles;
-import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.LineupComparisonService;
-import org.c2w.infra.Logger;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * GUI-free values of the info panel of {@link ConceptStageView}: the comparison of the open
@@ -69,20 +66,11 @@ public final class ConceptInfoModel {
         if (lineupFilePath != null && LineupFiles.isOriginal(lineupFilePath)) {
             return Comparison.of(ComparisonState.IS_ORIGINAL);
         }
-        if (guildFilePath == null || guildFilePath.getParent() == null) {
+        Optional<Lineup> loaded = LineupFiles.loadOriginal(guildFilePath == null ? null : guildFilePath.getParent());
+        if (loaded.isEmpty()) {
             return Comparison.of(ComparisonState.NO_ORIGINAL);
         }
-        Path originalFile = LineupFiles.originalPathFor(guildFilePath.getParent());
-        if (!Files.isRegularFile(originalFile)) {
-            return Comparison.of(ComparisonState.NO_ORIGINAL);
-        }
-        Lineup original;
-        try {
-            original = LineupRepository.load(originalFile);
-        } catch (IOException | RuntimeException e) {
-            Logger.logException("Could not load the Original lineup for the comparison: " + originalFile, e);
-            return Comparison.of(ComparisonState.NO_ORIGINAL);
-        }
+        Lineup original = loaded.get();
         LineupComparisonService.Summary summary = LineupComparisonService.compare(original, current, guild).summary();
         boolean heroes = fortificationType == FortificationType.HERO;
         return new Comparison(ComparisonState.COMPARED,
