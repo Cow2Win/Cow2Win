@@ -180,6 +180,7 @@
   },
   {
     "id": "eva",
+    "image": "Eva.png",
     "roles": [
       "MARKSMAN",
       "SUPPORT"
@@ -522,6 +523,7 @@
   },
   {
     "id": "somna",
+    "image": "Somna.png",
     "roles": [
       "CONTROL"
     ]

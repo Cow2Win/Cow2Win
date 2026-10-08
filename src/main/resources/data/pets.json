@@ -36,6 +36,10 @@
     "image": "Oliver.png"
   },
   {
+    "id": "robin",
+    "image": "Robin.png"
+  },
+  {
     "id": "vex",
     "image": "Vex.png"
   }
