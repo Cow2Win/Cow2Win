@@ -62,12 +62,6 @@ public class ActionBar extends JPanel {
     private static final String KEY_SAVE_LINEUP = "toolbar.saveLineup";
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
 
-    /** Language file keys and icons of {@link ActionId#OPEN_GUILD_TEAM_ENTRY} per fortification type. */
-    private static final String KEY_OPEN_GUILD_HERO_ENTRY = "toolbar.openGuildHeroEntry";
-    private static final String KEY_OPEN_GUILD_TITAN_ENTRY = "toolbar.openGuildTitanEntry";
-    private static final String ICON_OPEN_GUILD_HERO_ENTRY = "/images/app/square-plus.png";
-    private static final String ICON_OPEN_GUILD_TITAN_ENTRY = "/images/app/hexagon-plus.png";
-
     /** Language file keys and icons of {@link ActionId#SHOW_TEAMS} per fortification type. */
     private static final String KEY_HERO_TEAMS = "toolbar.heroTeams";
     private static final String KEY_TITAN_TEAMS = "toolbar.titanTeams";
@@ -95,9 +89,6 @@ public class ActionBar extends JPanel {
 
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
     private final AppAction runAlgorithmAction;
-
-    /** Team assignment of the selected fortification type, see {@link #updateFortificationTypeActions()}. */
-    private final AppAction guildTeamEntryAction;
 
     /** Team overview of the selected fortification type, see {@link #updateFortificationTypeActions()}. */
     private final AppAction showTeamsAction;
@@ -129,7 +120,8 @@ public class ActionBar extends JPanel {
         // The save actions are shown as buttons in the context bar only; every other action here
         // is in a menu (see MainMenuBar) and gets its menu icon (same size as a button icon).
         saveGuildAction = actions.register(new AppAction(SAVE_GUILD, this::onSaveGuild));
-        guildTeamEntryAction = actions.register(new AppAction(OPEN_GUILD_TEAM_ENTRY, this::onOpenGuildTeamEntry));
+        // "Maintain live lineup" has no icon - same text for both fortification types.
+        actions.register(new AppAction(OPEN_GUILD_TEAM_ENTRY, this::onOpenGuildTeamEntry));
         saveLineupAction = actions.register(new AppAction(SAVE_LINEUP, this::onSaveLineup));
         actions.register(new AppAction(GENERATE_REPORT, this::onGenerateReport)
                 .withIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
@@ -170,14 +162,12 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Gives {@link #guildTeamEntryAction} and {@link #showTeamsAction} the text, tooltip and
-     * icon of the selected fortification type, so menu entry and button always say what
-     * they open (the titan team overview icon keeps its titan color).
+     * Gives {@link #showTeamsAction} the text, tooltip and icon of the selected fortification
+     * type, so menu entry and button always say what they open (the titan team overview icon
+     * keeps its titan color).
      */
     private void updateFortificationTypeActions() {
         boolean heroes = appContext.fortificationType() == FortificationType.HERO;
-        guildTeamEntryAction.setText(heroes ? KEY_OPEN_GUILD_HERO_ENTRY : KEY_OPEN_GUILD_TITAN_ENTRY);
-        guildTeamEntryAction.withIcon(IconLoader.iconForButton(heroes ? ICON_OPEN_GUILD_HERO_ENTRY : ICON_OPEN_GUILD_TITAN_ENTRY));
         showTeamsAction.setText(heroes ? KEY_HERO_TEAMS : KEY_TITAN_TEAMS);
         showTeamsAction.withIcon(heroes ? IconLoader.iconForButton(ICON_HERO_TEAMS)
                 : IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE, FortificationTypeStyle.color(FortificationType.TITAN)));

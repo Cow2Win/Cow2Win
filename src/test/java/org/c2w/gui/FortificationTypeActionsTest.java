@@ -22,8 +22,8 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * The actions that follow the selected fortification type (team assignment, team overview)
- * and the CowScore tab per type - headless, nothing is shown.
+ * The actions and the fortification type: the team overview follows the selected type,
+ * "maintain live lineup" stays the same - headless, nothing is shown.
  */
 class FortificationTypeActionsTest {
 
@@ -53,32 +53,48 @@ class FortificationTypeActionsTest {
     }
 
     @Test
-    @DisplayName("Team assignment and team overview show the text and tooltip of the selected fortification type")
+    @DisplayName("\"Maintain live lineup\" keeps its text for both types, the team overview shows the text and tooltip of the selected type")
     void textsFollowFortificationType() {
-        assertTexts("toolbar.openGuildHeroEntry", "toolbar.heroTeams");
+        assertTexts("toolbar.heroTeams");
 
         context.setFortificationType(FortificationType.TITAN);
-        assertTexts("toolbar.openGuildTitanEntry", "toolbar.titanTeams");
+        assertTexts("toolbar.titanTeams");
 
         context.setFortificationType(FortificationType.HERO);
-        assertTexts("toolbar.openGuildHeroEntry", "toolbar.heroTeams");
+        assertTexts("toolbar.heroTeams");
     }
 
     @Test
-    @DisplayName("The icon of both actions changes with the fortification type")
+    @DisplayName("The icon of the team overview changes with the fortification type")
     void iconsFollowFortificationType() {
-        Object heroEntryIcon = actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.LARGE_ICON_KEY);
         Object heroTeamsIcon = actions.get(ActionId.SHOW_TEAMS).getValue(Action.SMALL_ICON);
 
         context.setFortificationType(FortificationType.TITAN);
 
-        assertNotSame(heroEntryIcon, actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.LARGE_ICON_KEY));
         assertNotSame(heroTeamsIcon, actions.get(ActionId.SHOW_TEAMS).getValue(Action.SMALL_ICON));
     }
 
-    private void assertTexts(String teamEntryKey, String showTeamsKey) {
-        assertText(ActionId.OPEN_GUILD_TEAM_ENTRY, teamEntryKey);
+    @Test
+    @DisplayName("\"Maintain live lineup\" has no icon, neither for heroes nor for titans")
+    void teamEntryHasNoIcon() {
+        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
+
+        context.setFortificationType(FortificationType.HERO);
+        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
+    }
+
+    private void assertTexts(String showTeamsKey) {
+        assertText(ActionId.OPEN_GUILD_TEAM_ENTRY, "toolbar.openGuildTeamEntry");
         assertText(ActionId.SHOW_TEAMS, showTeamsKey);
+    }
+
+    private void assertNoIcon(ActionId id) {
+        AppAction action = actions.get(id);
+        assertNull(action.getValue(Action.SMALL_ICON), id + " small icon");
+        assertNull(action.getValue(Action.LARGE_ICON_KEY), id + " large icon");
     }
 
     private void assertText(ActionId id, String textKey) {

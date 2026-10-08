@@ -23,10 +23,10 @@ public enum ActionId {
     /** The same guild - but in the context bar only, not in the menu (see {@code MainMenuBar.TOOLBAR_ONLY}). */
     SAVE_GUILD("teamsOverview.saveGuild", Stage.GUILD),
     /**
-     * Team assignment of the selected fortification type - its text, tooltip and icon follow
-     * the type ({@link #textKey()} is the hero variant), see {@code ActionBar}.
+     * "Maintain live lineup": one text and no icon for both fortification types - only the
+     * dialog it opens depends on the selected type, see {@code ActionBar}.
      */
-    OPEN_GUILD_TEAM_ENTRY("toolbar.openGuildHeroEntry", Stage.INPUT, Opens.WINDOW),
+    OPEN_GUILD_TEAM_ENTRY("toolbar.openGuildTeamEntry", Stage.INPUT, Opens.WINDOW),
     JOURNAL_IMPORT("menu.journal.import", Stage.INPUT, Opens.WINDOW),
     JOURNAL_SYNC("menu.journal.sync", Stage.INPUT, Opens.WINDOW),
     JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.INPUT, Opens.WINDOW),
@@ -39,7 +39,10 @@ public enum ActionId {
     SAVE_LINEUP("toolbar.saveLineup", Stage.CONCEPT),
     RUN_ALGORITHM("teamsOverview.runAlgorithm", Stage.CONCEPT),
     COMPARE_LINEUPS("toolbar.compareLineups", Stage.CONCEPT, Opens.WINDOW),
-    /** Team overview of the selected fortification type - follows the type like {@link #OPEN_GUILD_TEAM_ENTRY}. */
+    /**
+     * Team overview of the selected fortification type - its text, tooltip and icon follow
+     * the type ({@link #textKey()} is the hero variant), see {@code ActionBar}.
+     */
     SHOW_TEAMS("toolbar.heroTeams", Stage.CONCEPT, Opens.WINDOW),
     JOURNAL_BATTLES("menu.journal.battles", Stage.CONCEPT, Opens.WINDOW),
     JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.CONCEPT, Opens.WINDOW),
