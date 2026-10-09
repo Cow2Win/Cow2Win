@@ -47,7 +47,7 @@ class JournalTeamBuilderServiceTest {
         Config.setWorkspacePath(workspace.toString());
         context = new AppContext(new Catalog(workspace));
         guildService = new GuildService(context, RecentFiles.NONE);
-        guildService.createGuild("Leer");
+        guildService.createGuild("Leer", false);
         guildService.switchToGuild("Leer");
         service = new JournalTeamBuilderService(context, guildService);
     }
@@ -423,7 +423,7 @@ class JournalTeamBuilderServiceTest {
     void guildChanged() throws Exception {
         importAllCreatingMembers();
         TeamBuildPlan plan = service.prepare();
-        guildService.createGuild("Andere");
+        guildService.createGuild("Andere", false);
         guildService.switchToGuild("Andere");
 
         TeamBuildResult result = service.apply(plan, TeamBuildSelection.preselected(plan));

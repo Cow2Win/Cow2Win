@@ -20,7 +20,7 @@ class GuildServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("createGuild writes guild.json plus a default lineup without opening it")
     void createGuildWritesFiles() {
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
 
         Path guildDir = workspace.resolve("Beta");
         assertTrue(Files.isRegularFile(guildDir.resolve(GuildService.GUILD_FILE_NAME)));
@@ -31,9 +31,29 @@ class GuildServiceTest extends ServiceTestSupport {
     }
 
     @Test
+    @DisplayName("createGuild stores the guild master flag in guild.json, logs it, and the opened guild reports it")
+    void createGuildStoresGuildMaster() throws Exception {
+        guildService.createGuild("Master", true);
+        guildService.createGuild("Member", false);
+
+        assertTrue(GuildRepository.load(workspace.resolve("Master").resolve(GuildService.GUILD_FILE_NAME),
+                context.catalog()).guildMaster());
+        assertFalse(GuildRepository.load(workspace.resolve("Member").resolve(GuildService.GUILD_FILE_NAME),
+                context.catalog()).guildMaster());
+        assertEquals(LanguageService.displayName("guildLog.guildCreated", "Master", 1),
+                GuildLog.read(workspace.resolve("Master")).get(0).substring(21));
+
+        assertFalse(context.isGuildMaster());
+        guildService.switchToGuild("Master");
+        assertTrue(context.isGuildMaster());
+        guildService.saveGuild();
+        assertTrue(GuildRepository.load(context.guildFilePath(), context.catalog()).guildMaster(), "kept on saving");
+    }
+
+    @Test
     @DisplayName("switchToGuild opens guild and first lineup, clears both dirty flags and remembers both files")
     void switchToGuildOpensCleanState() throws Exception {
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         guildService.markGuildEdited();
         lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, FortificationRepository.findAll().get(0));
 
@@ -53,7 +73,7 @@ class GuildServiceTest extends ServiceTestSupport {
     @DisplayName("switchToGuild creates a default lineup for a guild folder that has none")
     void switchToGuildCreatesMissingLineup() throws Exception {
         Path guildDir = workspace.resolve("Gamma");
-        GuildService.createInitialGuildFile("Gamma", guildDir);
+        GuildService.createInitialGuildFile("Gamma", guildDir, false);
 
         guildService.switchToGuild("Gamma");
 
@@ -63,7 +83,7 @@ class GuildServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("an unreadable lineup is reported as LineupLoadException and leaves the open guild untouched")
     void switchToGuildReportsBrokenLineup() throws Exception {
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         Files.writeString(workspace.resolve("Beta").resolve(LineupService.DEFAULT_LINEUP_FILE_NAME), "{ not json");
         Path previousGuildFile = context.guildFilePath();
 
@@ -74,8 +94,8 @@ class GuildServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("deleteGuild removes the folder and guildAfterRemoval picks the neighbour")
     void deleteGuildPicksNeighbour() throws Exception {
-        guildService.createGuild("Beta");
-        guildService.createGuild("Gamma");
+        guildService.createGuild("Beta", false);
+        guildService.createGuild("Gamma", false);
         int index = guildService.listGuildFolderNames().indexOf("Beta");
 
         guildService.deleteGuild("Beta");
@@ -107,10 +127,10 @@ class GuildServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("creating and opening a guild write 'created' and 'opened' into that guild's log")
     void createAndSwitchAreLogged() throws Exception {
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         guildService.switchToGuild("Beta");
 
-        assertEquals(List.of(LanguageService.displayName("guildLog.guildCreated", "Beta"),
+        assertEquals(List.of(LanguageService.displayName("guildLog.guildCreated", "Beta", 0),
                 LanguageService.displayName("guildLog.guildOpened")), guildLogTexts("Beta"));
     }
 

@@ -41,7 +41,7 @@ class ActionBarTest {
         Config.setWorkspacePath(workspace.toString());
         context = new AppContext(new Catalog(workspace));
         GuildService guildService = new GuildService(context, RecentFiles.NONE);
-        guildService.createGuild("Alpha");
+        guildService.createGuild("Alpha", false);
         guildService.switchToGuild("Alpha");
     }
 

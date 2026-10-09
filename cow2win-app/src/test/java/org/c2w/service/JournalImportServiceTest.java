@@ -95,6 +95,24 @@ class JournalImportServiceTest extends ServiceTestSupport {
     }
 
     @Test
+    @DisplayName("Import on a guild master guild: link and new members keep the flag, also after saving")
+    void guildMasterKept() throws Exception {
+        Guild sample = sampleMembers();
+        setGuild(new Guild(sample.id(), sample.name(), sample.members(), null, true));
+        ImportPlan plan = service().prepare(files("de", SEP_24, LogDirection.ATTACK, LogDirection.DEFENSE));
+
+        ImportResult result = service().execute(plan, ImportAnswers.defaults()
+                .withPlayer(question(plan, "Faern").id(), PlayerAnswer.of(PlayerAnswer.Kind.CREATE)));
+
+        assertTrue(result.isSuccess(), result.errors().toString());
+        assertTrue(result.guildLinked());
+        assertEquals(List.of("Faern"), result.createdMembers());
+        assertTrue(context.guild().guildMaster());
+        guildService.saveGuild();
+        assertTrue(GuildRepository.load(context.guildFilePath(), context.catalog()).guildMaster());
+    }
+
+    @Test
     @DisplayName("prepare writes nothing")
     void prepareWritesNothing() throws Exception {
         Guild before = context.guild();
@@ -259,7 +277,7 @@ class JournalImportServiceTest extends ServiceTestSupport {
                 service().execute(plan, ImportAnswers.defaults()).errors().get(0).kind());
         assertFalse(JournalDatabase.exists(alphaDir()));
 
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         Path betaFile = guildService.guildDir("Beta").resolve(GuildService.GUILD_FILE_NAME);
         GuildRepository.save(GuildRepository.load(betaFile, context.catalog()).withGameGuildId(OWN_GAME_ID), betaFile);
         setGuild(context.guild().withGameGuildId(null));
@@ -522,7 +540,7 @@ class JournalImportServiceTest extends ServiceTestSupport {
     @DisplayName("The plan belongs to the guild it was made for")
     void guildChangedBetweenPrepareAndExecute() throws Exception {
         ImportPlan plan = service().prepare(files("de", SEP_24, LogDirection.ATTACK));
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         guildService.switchToGuild("Beta");
 
         assertEquals(ImportResult.ImportError.Kind.GUILD_CHANGED,

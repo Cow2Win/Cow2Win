@@ -51,7 +51,7 @@ abstract class ServiceTestSupport {
         guildService = new GuildService(context, recentFiles);
         lineupService = new LineupService(context, recentFiles);
 
-        guildService.createGuild("Alpha");
+        guildService.createGuild("Alpha", false);
         guildService.switchToGuild("Alpha");
         recentFiles.guilds.clear();
         recentFiles.lineups.clear();

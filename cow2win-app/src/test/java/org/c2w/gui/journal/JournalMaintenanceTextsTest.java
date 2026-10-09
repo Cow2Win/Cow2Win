@@ -89,7 +89,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
                 JournalActions.removeGuildJournalNote(context, guildService, "Alpha"));
 
         // another guild with a journal that is not open: mentioned without a count
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         Files.createFile(guildService.guildDir("Beta").resolve(JournalDatabase.FILE_NAME));
         assertEquals(JournalTexts.text("journal.removeGuild.note"),
                 JournalActions.removeGuildJournalNote(context, guildService, "Beta"));

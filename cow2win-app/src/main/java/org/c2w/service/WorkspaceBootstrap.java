@@ -153,7 +153,7 @@ public final class WorkspaceBootstrap {
         if (guildLoaded) {
             Path guildDir = context.guildFilePath().getParent();
             if (firstStart) {
-                GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME);
+                GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME, 0);
             }
             GuildLog.event(guildDir, "guildLog.guildOpened");
         }
@@ -167,7 +167,7 @@ public final class WorkspaceBootstrap {
      */
     private static void runInitialSetup() {
         Path guildDir = Config.getWorkspaceDir().resolve(DEFAULT_GUILD_NAME);
-        Path guildFilePath = GuildService.createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir);
+        Path guildFilePath = GuildService.createInitialGuildFile(DEFAULT_GUILD_NAME, guildDir, false);
         Path lineupFilePath = LineupService.createInitialLineupFile(DEFAULT_GUILD_NAME, guildDir);
 
         Config.setLanguage("english");

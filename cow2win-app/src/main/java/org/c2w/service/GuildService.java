@@ -147,14 +147,16 @@ public class GuildService {
 
     /**
      * Creates a new guild folder named {@code name} with an empty guild and
-     * an empty default lineup. Does NOT open it - see {@link #switchToGuild}.
+     * an empty default lineup. {@code guildMaster} is stored in the guild
+     * ({@link Guild#guildMaster()}) and logged - it cannot be changed later.
+     * Does NOT open it - see {@link #switchToGuild}.
      */
-    public void createGuild(String name) {
+    public void createGuild(String name, boolean guildMaster) {
         Path guildDir = guildDir(name);
-        Path guildFilePath = createInitialGuildFile(name, guildDir);
+        Path guildFilePath = createInitialGuildFile(name, guildDir, guildMaster);
         LineupService.createInitialLineupFile(name, guildDir);
-        Logger.log("Created guild: " + guildFilePath);
-        GuildLog.event(guildDir, "guildLog.guildCreated", name);
+        Logger.log("Created guild: " + guildFilePath + " (guild master: " + guildMaster + ")");
+        GuildLog.event(guildDir, "guildLog.guildCreated", name, guildMaster ? 1 : 0);
     }
 
     /**
@@ -307,10 +309,12 @@ public class GuildService {
      * Writes a new, empty guild named {@code guildName} to
      * {@code guildDir}/{@value #GUILD_FILE_NAME} and returns that path. A
      * failure is logged, not thrown - loading the path afterwards reports it.
+     *
+     * @param guildMaster whether the user is the guild master of the new guild (see {@link Guild#guildMaster()})
      */
-    public static Path createInitialGuildFile(String guildName, Path guildDir) {
+    public static Path createInitialGuildFile(String guildName, Path guildDir, boolean guildMaster) {
         Path guildFile = guildDir.resolve(GUILD_FILE_NAME);
-        Guild guild = new Guild(slugify(guildName), guildName, List.of());
+        Guild guild = new Guild(slugify(guildName), guildName, List.of(), null, guildMaster);
         try {
             GuildRepository.save(guild, guildFile);
         } catch (IOException e) {

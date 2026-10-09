@@ -297,41 +297,21 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Creates a new guild folder and switches to it (see {@link
-     * GuildService#createGuild}). {@link #contextBar} owns the
-     * "unsaved changes" prompt and the error handling of a guild switch, so
-     * this reuses its {@link ContextBar#confirmDiscardUnsavedChanges()}/
+     * Asks for the name and the guild master flag of a new guild (see {@link
+     * NewGuildDialog}, which also checks the name), creates its folder and
+     * switches to it (see {@link GuildService#createGuild}). {@link #contextBar}
+     * owns the "unsaved changes" prompt and the error handling of a guild
+     * switch, so this reuses its {@link ContextBar#confirmDiscardUnsavedChanges()}/
      * {@link ContextBar#switchToGuild} instead of duplicating them.
      */
     private void onNewGuild() {
-        String input = JOptionPane.showInputDialog(this, LanguageService.displayName("mainFrame.newGuild.prompt"),
-                LanguageService.displayName("mainFrame.newGuild.title"),
-                JOptionPane.PLAIN_MESSAGE);
-        if (input == null) {
-            return;
-        }
-        String name = input.trim();
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("common.enterName"),
-                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (ActionBar.containsIllegalFilenameChar(name)) {
-            JOptionPane.showMessageDialog(this,
-                    LanguageService.displayName("common.illegalFilenameChars", ActionBar.ILLEGAL_FILENAME_CHARS),
-                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (guildService.guildExists(name)) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.newGuild.alreadyExists", name),
-                    LanguageService.displayName("mainFrame.newGuild.title"), JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (!contextBar.confirmDiscardUnsavedChanges()) {
+        Optional<NewGuildForm.Input> input = NewGuildDialog.show(this, guildService::guildExists);
+        if (input.isEmpty() || !contextBar.confirmDiscardUnsavedChanges()) {
             return;
         }
 
-        guildService.createGuild(name);
+        String name = input.get().name();
+        guildService.createGuild(name, input.get().guildMaster());
         contextBar.switchToGuild(name);
     }
 

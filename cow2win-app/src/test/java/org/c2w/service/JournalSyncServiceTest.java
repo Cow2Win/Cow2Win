@@ -53,7 +53,7 @@ class JournalSyncServiceTest {
         Config.setWorkspacePath(workspace.toString());
         context = new AppContext(new Catalog(workspace));
         guildService = new GuildService(context, RecentFiles.NONE);
-        guildService.createGuild("Leer");
+        guildService.createGuild("Leer", false);
         guildService.switchToGuild("Leer");
         service = new JournalSyncService(context, guildService);
     }
@@ -582,7 +582,7 @@ class JournalSyncServiceTest {
         assertEquals(SyncResult.Error.Kind.UNKNOWN_TEAM, unknown.errors().get(0).kind());
         assertSame(before, context.guild());
 
-        guildService.createGuild("Andere");
+        guildService.createGuild("Andere", false);
         guildService.switchToGuild("Andere");
         SyncResult changed = service.apply(plan, SyncSelection.preselected(plan));
         assertEquals(SyncResult.Error.Kind.GUILD_CHANGED, changed.errors().get(0).kind());

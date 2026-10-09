@@ -114,7 +114,8 @@ public class GuildRepository {
      * Reads the guild itself. Guild files saved by older versions may still
      * contain the removed "season"/"seasonStart" fields - they are simply
      * ignored and disappear from the file on its next save.
-     * The optional "gameGuildId" (Weltenschlacht journal) is null when missing.
+     * The optional "gameGuildId" (Weltenschlacht journal) is null when missing,
+     * the optional "guildMaster" false when missing.
      */
     private static Guild guildFromJson(JsonObject obj, Catalog catalog) {
         String id = JsonSupport.getString(obj, "id", "");
@@ -128,7 +129,10 @@ public class GuildRepository {
         Long gameGuildId = obj.has("gameGuildId") && !obj.get("gameGuildId").isJsonNull()
                 ? obj.get("gameGuildId").getAsLong() : null;
 
-        return new Guild(id, name, members, gameGuildId);
+        JsonElement guildMaster = obj.get("guildMaster");
+        boolean isGuildMaster = guildMaster != null && !guildMaster.isJsonNull() && guildMaster.getAsBoolean();
+
+        return new Guild(id, name, members, gameGuildId, isGuildMaster);
     }
 
     private static JsonObject guildToTree(Guild guild) {
@@ -137,6 +141,10 @@ public class GuildRepository {
         obj.addProperty("name", guild.name());
         if (guild.gameGuildId() != null) {
             obj.addProperty("gameGuildId", guild.gameGuildId());
+        }
+        // Only written if set - a missing field means "no guild master guild".
+        if (guild.guildMaster()) {
+            obj.addProperty("guildMaster", true);
         }
 
         JsonArray members = new JsonArray();

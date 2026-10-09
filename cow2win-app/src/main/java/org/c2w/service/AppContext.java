@@ -105,6 +105,14 @@ public class AppContext {
         return guild;
     }
 
+    /**
+     * True if the user is the guild master of the open guild ({@link Guild#guildMaster()}) -
+     * for menu items that will only be available to a guild master.
+     */
+    public boolean isGuildMaster() {
+        return guild != null && guild.guildMaster();
+    }
+
     /** Replaces the currently open guild (e.g. after the user edited and saved it). */
     public void setGuild(Guild guild) {
         if (guild == null) {

@@ -45,7 +45,7 @@ class JournalServiceTest extends ServiceTestSupport {
         context.setGuild(new Guild(context.guild().id(), "Alpha edited", List.of()));
         assertTrue(journal.isOpen(), "in-memory edit of the same guild keeps the journal open");
 
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         guildService.switchToGuild("Beta");
 
         assertFalse(journal.isOpen());
@@ -57,7 +57,7 @@ class JournalServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("deleteGuild closes the open journal first, so the folder can be deleted")
     void deleteGuildClosesFirst() throws Exception {
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
         guildService.switchToGuild("Beta");
         JournalRepository repository = context.journal().repository(true).orElseThrow();
         Path file = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.ATTACK);
@@ -75,7 +75,7 @@ class JournalServiceTest extends ServiceTestSupport {
     @DisplayName("Deleting another guild leaves the open journal alone")
     void deletingAnotherGuildKeepsTheJournal() throws Exception {
         context.journal().repository(true).orElseThrow();
-        guildService.createGuild("Beta");
+        guildService.createGuild("Beta", false);
 
         guildService.deleteGuild("Beta");
 

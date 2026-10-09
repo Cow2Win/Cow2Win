@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Editing a guild in the dialog (guild -> draft -> guild) must not lose its game guild id. */
+/** Editing a guild in the dialog (guild -> draft -> guild) must not lose its game guild id and guild master flag. */
 class GuildDraftConverterGameGuildIdTest {
 
     @Test
@@ -31,5 +31,20 @@ class GuildDraftConverterGameGuildIdTest {
         Guild back = GuildDraftConverter.toGuild(GuildDraftConverter.fromGuild(new Guild("g1", "Guild", List.of())));
 
         assertNull(back.gameGuildId());
+        assertFalse(back.guildMaster());
+    }
+
+    @Test
+    @DisplayName("guildMaster survives fromGuild -> toGuild")
+    void guildMasterRoundTrip() {
+        Guild guild = new Guild("g1", "Guild", List.of(new GuildMember("m1", "Member", List.of(), List.of())), 7L, true);
+
+        GuildDraft draft = GuildDraftConverter.fromGuild(guild);
+        assertTrue(draft.guildMaster);
+        draft.name = "Renamed";
+        Guild back = GuildDraftConverter.toGuild(draft);
+
+        assertTrue(back.guildMaster());
+        assertEquals(7L, back.gameGuildId());
     }
 }
