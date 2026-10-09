@@ -161,6 +161,44 @@ class SaveTest {
     }
 
     @Test
+    void superTitanIsOnlyWrittenWhenTrue() throws IOException {
+        DataTable titans = data.table(TableKind.TITANS);
+        assertTrue(titans.findById("araji").getBoolean(Fields.SUPER_TITAN));
+        assertFalse(titans.findById("ignis").getBoolean(Fields.SUPER_TITAN));
+
+        data.setValue(TableKind.TITANS, titans.findById("araji"), Fields.SUPER_TITAN, false);
+        data.setValue(TableKind.TITANS, titans.findById("ignis"), Fields.SUPER_TITAN, true);
+        data.save(new SaveOptions(Set.of(), false, TODAY));
+
+        JsonArray written = JsonParser.parseString(read("data/titans.json")).getAsJsonArray();
+        for (var element : written) {
+            JsonObject titan = element.getAsJsonObject();
+            String id = titan.get("id").getAsString();
+            if (id.equals("ignis")) {
+                assertTrue(titan.get("superTitan").getAsBoolean());
+            } else if (id.equals("araji")) {
+                assertFalse(titan.has("superTitan"), "false is not written");
+            }
+        }
+        assertTrue(read("data/titans.json").contains("""
+                    "id": "ignis",
+                    "element": "FIRE",
+                    "roles": [
+                      "SUPPORT"
+                    ],
+                    "superTitan": true,
+                    "image": "Ignis.png"
+                """), "field order id, element, roles, superTitan, image");
+    }
+
+    @Test
+    void togglingABooleanBackIsNoChange() {
+        Row ignis = data.table(TableKind.TITANS).findById("ignis");
+        data.setValue(TableKind.TITANS, ignis, Fields.SUPER_TITAN, false);
+        assertFalse(data.isDirty(), "false equals no value");
+    }
+
+    @Test
     void aNameChangeTouchesOnlyThatLine() throws IOException {
         String before = read("language/deutsch/deutsch.properties");
         Row pet = data.table(TableKind.PETS).findById("axel");

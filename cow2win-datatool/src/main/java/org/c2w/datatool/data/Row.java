@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * One entry of a table: field values by {@link Fields field name} - {@code String},
- * {@code Integer}, {@code List<String>} or null. The fortification marks of a CowScore entry
+ * {@code Integer}, {@code List<String>}, {@code Boolean.TRUE} or null. The fortification marks of a CowScore entry
  * keep their file order in a map of their own ({@code mark:<fortification id>} fields), JSON
  * fields the tool does not know are kept as they are.
  */
@@ -35,9 +35,9 @@ public final class Row {
         return values.get(field);
     }
 
-    /** Sets a field; blank strings and empty marks count as "no value". */
+    /** Sets a field; blank strings, {@code false} and empty marks count as "no value". */
     public void set(String field, Object value) {
-        if (value instanceof String s && s.isBlank()) {
+        if ((value instanceof String s && s.isBlank()) || Boolean.FALSE.equals(value)) {
             value = null;
         }
         if (field.startsWith(Fields.MARK_PREFIX)) {
@@ -59,6 +59,11 @@ public final class Row {
 
     public Integer getInteger(String field) {
         return get(field) instanceof Integer i ? i : null;
+    }
+
+    /** True only for a set {@code true} - no value means false. */
+    public boolean getBoolean(String field) {
+        return Boolean.TRUE.equals(get(field));
     }
 
     @SuppressWarnings("unchecked")

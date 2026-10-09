@@ -37,7 +37,9 @@ you.
 
 - [ ] Add an entry to `cow2win-app/src/main/resources/data/titans.json`: `id`, `element`
       (see `TitanElement.java` - includes the rare `DISTORTION` element for
-      event titans), `image`.
+      event titans), `roles` (at least one `TitanRole`, as shown in the game),
+      `"superTitan": true` only for a super titan, `image` - in this field
+      order (the data tool writes it this way).
 - [ ] Avatar under `cow2win-app/src/main/resources/images/titans/` (same
       placeholder-fallback note as heroes).
 - [ ] Display name in all three language files.

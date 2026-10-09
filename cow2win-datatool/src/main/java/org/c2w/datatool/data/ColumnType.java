@@ -19,5 +19,7 @@ public enum ColumnType {
     /** Read-only display name of the entry referenced by the row's id. */
     DISPLAY_NAME,
     /** Fortification mark (empty, POSITIVE, NEGATIVE) of one fortification. */
-    MARK
+    MARK,
+    /** Yes/no - check box, false by default; written to the file only if true. */
+    BOOLEAN
 }

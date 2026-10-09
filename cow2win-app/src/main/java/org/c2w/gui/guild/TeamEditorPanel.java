@@ -85,6 +85,8 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     private final List<T> sortedCatalog;
     private final Function<T, String> label;
+    /** Tooltip of an entry shown as an icon - the {@link #label} unless set via {@link #setItemTooltip}. */
+    private Function<T, String> itemTooltip;
     private final Function<T, Icon> icon;
     private final Function<T, String> roleDescriber;
     private final String emptyLabel;
@@ -168,6 +170,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         setOpaque(false);
         this.label = label;
+        this.itemTooltip = label;
         this.icon = icon;
         this.roleDescriber = roleDescriber;
         this.emptyLabel = emptyLabel;
@@ -210,7 +213,7 @@ public final class TeamEditorPanel<T> extends JPanel {
                         if (itemIcon != null) {
                             setText(null);
                             setIcon(itemIcon);
-                            setToolTipText(label.apply(typed));
+                            setToolTipText(itemTooltip.apply(typed));
                         } else {
                             setText(label.apply(typed));
                             setIcon(null);
@@ -784,6 +787,16 @@ public final class TeamEditorPanel<T> extends JPanel {
     }
 
     /**
+     * Sets the tooltip of an entry shown as an icon (in the slot dropdowns and
+     * on a slot's selected entry) - e.g. a titan's name, element and roles.
+     * Defaults to the label; null restores that default.
+     */
+    public void setItemTooltip(Function<T, String> itemTooltip) {
+        this.itemTooltip = itemTooltip == null ? label : itemTooltip;
+        updateComboTooltips();
+    }
+
+    /**
      * Enables the team templates for this row: F1-F5 fills the 5 slots with
      * template 1-5 of {@code templates} (see {@link #loadTemplate}),
      * Shift+F1-F5 saves the row's current members as that template (see
@@ -1128,7 +1141,7 @@ public final class TeamEditorPanel<T> extends JPanel {
         for (JComboBox<T> combo : combos) {
             @SuppressWarnings("unchecked")
             T selected = (T) combo.getSelectedItem();
-            String name = icon == null || selected == null ? null : label.apply(selected);
+            String name = icon == null || selected == null ? null : itemTooltip.apply(selected);
             if (hint == null || name == null) {
                 combo.setToolTipText(name == null ? hint : name);
             } else {

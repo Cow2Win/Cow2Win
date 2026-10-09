@@ -843,6 +843,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         TeamEditorPanel<T> panel = new TeamEditorPanel<>(spec.catalog(), spec.label(), spec.icon(), null, row.draft,
                 LanguageService.displayName(KEY_NO_SELECTION), spec.catalogOrder(), this::currentRowChanged, extras,
                 withTotems ? TitanTeamExtras.ALL : null);
+        panel.setItemTooltip(spec.tooltip());
         panel.enableTemplates(spec.templates(), spec.idOf());
         skipArrowButtonsInTabOrder(panel);
         return panel;

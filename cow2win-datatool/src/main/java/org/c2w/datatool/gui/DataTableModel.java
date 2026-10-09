@@ -17,7 +17,7 @@ final class DataTableModel extends AbstractTableModel {
 
     /** Edited in the cell itself; id lists and avatars are edited in a dialog instead. */
     private static final Set<ColumnType> CELL_EDITED = Set.of(ColumnType.TEXT, ColumnType.INTEGER, ColumnType.ENUM,
-            ColumnType.NAME, ColumnType.ID_REF, ColumnType.MARK);
+            ColumnType.NAME, ColumnType.ID_REF, ColumnType.MARK, ColumnType.BOOLEAN);
 
     private final DataSet data;
     private final TableKind kind;
@@ -75,7 +75,16 @@ final class DataTableModel extends AbstractTableModel {
             String id = row.getString(Fields.ID);
             return id == null ? null : data.displayName(column.ref(), id);
         }
+        if (column.type() == ColumnType.BOOLEAN) {
+            return row.getBoolean(column.field());
+        }
         return row.get(column.field());
+    }
+
+    /** Check boxes for {@link ColumnType#BOOLEAN} columns (JTable's default renderer and editor). */
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        return columns.get(columnIndex).type() == ColumnType.BOOLEAN ? Boolean.class : Object.class;
     }
 
     @Override

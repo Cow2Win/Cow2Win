@@ -6,6 +6,7 @@ import org.c2w.data.model.FortMark;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Role;
 import org.c2w.data.model.TitanElement;
+import org.c2w.data.model.TitanRole;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,8 @@ public final class Schema {
             case TITANS -> {
                 catalogStart(columns, true);
                 columns.add(of("Element", Fields.ELEMENT, ENUM).options(names(TitanElement.values())).asRequired());
+                columns.add(of("Roles", Fields.ROLES, ID_LIST).options(names(TitanRole.values())).count(1, Integer.MAX_VALUE));
+                columns.add(of("Super titan", Fields.SUPER_TITAN, BOOLEAN));
             }
             case PETS, WAR_FLAGS -> catalogStart(columns, true);
             case FORTIFICATIONS -> {

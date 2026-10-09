@@ -52,7 +52,7 @@ public final class TitanCowScorePanel extends AbstractCowScorePanel<Titan> {
 
     @Override
     protected Titan withFortMarks(Titan titan, FortMarks fortMarks) {
-        return new Titan(titan.id(), titan.element(), titan.imagePath(), fortMarks);
+        return titan.withFortMarks(fortMarks);
     }
 
     @Override

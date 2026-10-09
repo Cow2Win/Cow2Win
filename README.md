@@ -318,7 +318,7 @@ roughly from top to bottom:
 | `data.model` | Immutable records (`Hero`, `Titan`, `Pet`, `WarFlag`, `Fortification`, `Guild`, `Lineup`, ...). |
 | `data.repository` | Loading/saving. `Catalog` bundles the hero/titan/pet/war flag repositories of one workspace (created once at startup, reachable via `AppContext#catalog()`); `FortificationRepository` (pure classpath data) is still static. `GuildRepository`/`LineupRepository` read and write guild and lineup files, `LineupFiles` holds the rules for the reserved "Original" lineup. |
 | `data.journal` (+ `parse`, `db`) | Weltenschlacht journal: immutable records of a parsed battle log (`BattleLog`, `Fight`, `FightUnit`, ...), the CSV parser in `parse` (`BattleLogParser`, `BattleLogFileName`, `BattleLogVocabulary`, `NameResolver`, `BattleLogCheck`) and the per-guild H2 database in `db` (`JournalDatabase`, `SchemaMigrator`, `JournalRepository`). The GUI is in `gui.journal` (menu `JournalActions`, import assistant, battle list and detail, players/seasons/name mapping windows; "build teams from logs" (`JournalTeamBuilderDialog`) and "update teams (sync)" (`JournalSyncDialog`); the logic in Swing-free models such as `ImportWizardModel`, `BattleDetailModel`, `BattleListFilter`, `JournalPlayersModel`, `TeamBuilderModel`, `SyncModel`). |
-| `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts` and `GameNameNormalizer` (how in-game names are compared). |
+| `i18n` | `LanguageService` (UI texts, see "Canonical data files"), `BuffTexts`, `TotemTexts`, `TitanTexts` and `GameNameNormalizer` (how in-game names are compared). |
 | `infra` | Technical infrastructure: `Config`, `Logger`, `JsonSupport`, `BackupService`, `UpdateChecker`, `AppVersion`, `CatalogVersion`. |
 
 `Config`, `Logger` and `LanguageService` are still static singletons; the
@@ -406,6 +406,12 @@ folder (`new Catalog(tempDir)`).
   app's catalog ("objective" master data only). When the game itself
   changes (new heroes/titans, balance changes, new fortifications), edit
   these files, not the research doc.
+- `titans.json`: `id`, `element`, `roles` (1-n `TitanRole`s: TANK, MARKSMAN,
+  MAGE, SUPPORT, SUMMONER - an enum of its own, not the heroes' `Role`),
+  `superTitan` (only written when true - a property, not a role), `image`.
+  Roles and super titans are read and shown in the titan tooltip of the team
+  assignment (`TitanTexts.describe`), not yet used in CowScore, algorithm or
+  report.
 - Display names live in the language files (keyed by id) and are the
   **in-game names** as they appear in an exported battle log, per language -
   the only basis for mapping log names back to catalog ids (see
@@ -509,7 +515,7 @@ folder (`new Catalog(tempDir)`).
 - The repositories validate their data on load and report problems via
   `Logger` (visible in the app's log panel) instead of failing silently:
   invalid entries and unknown roles/elements in `heroes.json`/`titans.json`
-  are skipped, and `FortificationRepository` checks for prerequisites
+  are skipped (a titan without valid roles is still loaded, with a warning), and `FortificationRepository` checks for prerequisites
   referencing an unknown fortification id and for prerequisite cycles.
 
 ## Tests

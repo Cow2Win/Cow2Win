@@ -139,7 +139,9 @@ public final class DataToolPanel extends JPanel {
             for (int i = 0; i < columns.size(); i++) {
                 ColumnSpec spec = columns.get(i);
                 TableColumn column = table.getColumnModel().getColumn(i);
-                column.setCellRenderer(renderer);
+                if (spec.type() != ColumnType.BOOLEAN) {
+                    column.setCellRenderer(renderer);
+                }
                 column.setPreferredWidth(width(spec));
                 if (spec.type() == ColumnType.ENUM || spec.type() == ColumnType.MARK
                         || spec.type() == ColumnType.ID_REF) {
@@ -172,7 +174,7 @@ public final class DataToolPanel extends JPanel {
         return switch (spec.type()) {
             case IMAGE -> 170;
             case ID_LIST -> 260;
-            case MARK, INTEGER -> 90;
+            case MARK, INTEGER, BOOLEAN -> 90;
             case ENUM -> 150;
             default -> 160;
         };

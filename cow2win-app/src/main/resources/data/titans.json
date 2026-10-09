@@ -2,136 +2,227 @@
   {
     "id": "ignis",
     "element": "FIRE",
+    "roles": [
+      "SUPPORT"
+    ],
     "image": "Ignis.png"
   },
   {
     "id": "vulcan",
     "element": "FIRE",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Vulcan.png"
   },
   {
     "id": "aherona-and-pyro",
     "element": "FIRE",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Asherona.png"
   },
   {
     "id": "araji",
     "element": "FIRE",
+    "roles": [
+      "MARKSMAN",
+      "SUPPORT"
+    ],
+    "superTitan": true,
     "image": "Araji.png"
   },
   {
     "id": "moloch",
     "element": "FIRE",
+    "roles": [
+      "TANK"
+    ],
     "image": "Moloch.png"
   },
   {
     "id": "nova",
     "element": "WATER",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Nova.png"
   },
   {
     "id": "sigurd",
     "element": "WATER",
+    "roles": [
+      "TANK"
+    ],
     "image": "Sigurd.png"
   },
   {
     "id": "mairi",
     "element": "WATER",
+    "roles": [
+      "SUPPORT"
+    ],
     "image": "Mairi.png"
   },
   {
     "id": "hyperion",
     "element": "WATER",
+    "roles": [
+      "MAGE",
+      "SUPPORT"
+    ],
+    "superTitan": true,
     "image": "Hyperion.png"
   },
   {
     "id": "Tidus-and-gelo",
     "element": "WATER",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Tidus.png"
   },
   {
     "id": "alecto",
     "element": "DISTORTION",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Alecto.png"
   },
   {
     "id": "valdur-and-echo",
     "element": "DISTORTION",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Valdur.png"
   },
   {
     "id": "tenebris",
     "element": "DARK",
+    "roles": [
+      "MARKSMAN",
+      "SUPPORT"
+    ],
+    "superTitan": true,
     "image": "Tenebris.png"
   },
   {
     "id": "mort",
     "element": "DARK",
+    "roles": [
+      "SUPPORT"
+    ],
     "image": "Mort.png"
   },
   {
     "id": "keros",
     "element": "DARK",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Keros.png"
   },
   {
     "id": "brustar",
     "element": "DARK",
+    "roles": [
+      "TANK"
+    ],
     "image": "Brustar.png"
   },
   {
     "id": "umbra-and-caliga",
     "element": "DARK",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Umbra.png"
   },
   {
     "id": "eden",
     "element": "EARTH",
+    "roles": [
+      "MARKSMAN",
+      "SUPPORT"
+    ],
+    "superTitan": true,
     "image": "Eden.png"
   },
   {
     "id": "angus",
     "element": "EARTH",
+    "roles": [
+      "TANK"
+    ],
     "image": "Angus.png"
   },
   {
     "id": "silva",
     "element": "EARTH",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Silva.png"
   },
   {
     "id": "avalon",
     "element": "EARTH",
+    "roles": [
+      "SUPPORT"
+    ],
     "image": "Avalon.png"
   },
   {
     "id": "verdoc-and-phyto",
     "element": "EARTH",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Verdoc.png"
   },
   {
     "id": "solaris",
     "element": "LIGHT",
+    "roles": [
+      "MARKSMAN",
+      "SUPPORT"
+    ],
+    "superTitan": true,
     "image": "Solaris.png"
   },
   {
     "id": "amon",
     "element": "LIGHT",
+    "roles": [
+      "MARKSMAN"
+    ],
     "image": "Amon.png"
   },
   {
     "id": "iyari",
     "element": "LIGHT",
+    "roles": [
+      "SUPPORT"
+    ],
     "image": "Iyari.png"
   },
   {
     "id": "lumira-and-apollo",
     "element": "LIGHT",
+    "roles": [
+      "SUMMONER"
+    ],
     "image": "Lumira.png"
   },
   {
     "id": "rigel",
     "element": "LIGHT",
+    "roles": [
+      "TANK"
+    ],
     "image": "Rigel.png"
   }
 ]

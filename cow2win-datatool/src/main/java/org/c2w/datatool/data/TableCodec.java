@@ -20,7 +20,8 @@ import java.util.Set;
  */
 final class TableCodec {
 
-    private enum Kind { STRING, INT, LIST, INLINE_LIST, BUFF, MARKS }
+    /** {@code BOOLEAN} is only written when true (false and missing mean the same). */
+    private enum Kind { STRING, INT, BOOLEAN, LIST, INLINE_LIST, BUFF, MARKS }
 
     private record JsonField(String key, Kind kind, boolean optional) {
     }
@@ -40,7 +41,8 @@ final class TableCodec {
     static TableCodec of(TableKind kind) {
         return new TableCodec(switch (kind) {
             case HEROES -> List.of(str(Fields.ID), opt(Fields.IMAGE, Kind.STRING), field(Fields.ROLES, Kind.LIST));
-            case TITANS -> List.of(str(Fields.ID), str(Fields.ELEMENT), opt(Fields.IMAGE, Kind.STRING));
+            case TITANS -> List.of(str(Fields.ID), str(Fields.ELEMENT), field(Fields.ROLES, Kind.LIST),
+                    opt(Fields.SUPER_TITAN, Kind.BOOLEAN), opt(Fields.IMAGE, Kind.STRING));
             case PETS, WAR_FLAGS -> List.of(str(Fields.ID), opt(Fields.IMAGE, Kind.STRING));
             case FORTIFICATIONS -> List.of(str(Fields.ID), str(Fields.TYPE), field(Fields.CAPACITY, Kind.INT),
                     field(Fields.CAPTURE_BONUS, Kind.INT), field(Fields.ROW, Kind.INT), field(Fields.COLUMN, Kind.INT),
@@ -88,6 +90,7 @@ final class TableCodec {
             switch (field.kind()) {
                 case STRING -> row.set(field.key(), value.getAsString());
                 case INT -> row.set(field.key(), value.getAsInt());
+                case BOOLEAN -> row.set(field.key(), value.getAsBoolean());
                 case LIST, INLINE_LIST -> row.set(field.key(), stringList(value.getAsJsonArray()));
                 case BUFF -> readBuff(row, value.getAsJsonObject());
                 case MARKS -> {
@@ -150,6 +153,11 @@ final class TableCodec {
                     Integer value = row.getInteger(key);
                     if (value != null || !field.optional()) {
                         object.add(key, value == null ? null : new JsonPrimitive(value));
+                    }
+                }
+                case BOOLEAN -> {
+                    if (row.getBoolean(key)) {
+                        object.addProperty(key, true);
                     }
                 }
                 case LIST, INLINE_LIST -> {

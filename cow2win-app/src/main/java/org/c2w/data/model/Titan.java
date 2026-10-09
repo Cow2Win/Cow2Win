@@ -1,5 +1,7 @@
 package org.c2w.data.model;
 
+import java.util.List;
+
 /**
  * Catalog entry of a titan: master data, identical for all guild members.
  *
@@ -15,10 +17,15 @@ package org.c2w.data.model;
  * "image"), it automatically falls back to the placeholder at
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *
+ * roles: this titan's {@link TitanRole}s (1-n in the shipped data), in file order,
+ * never null - empty if titans.json lists none. superTitan: whether this
+ * titan is a super titan - deliberately a property of its own, not a
+ * {@link TitanRole}. Both are "objective" master data from {@code titans.json}.
+ *
  * fortMarks: this titan's manually curated {@link FortMarks} (positive /
  * negative relation to individual TITAN fortifications), kept in {@code
  * titanCowScore.json}, deliberately SEPARATE from this record's
- * "objective" fields (id/element/imagePath) in {@code titans.json} (see
+ * "objective" fields (id/element/roles/superTitan/imagePath) in {@code titans.json} (see
  * {@code TitanRepository}'s class Javadoc): a master-data refresh can
  * overwrite {@code titans.json} wholesale without risking the manually
  * maintained marks - the same split as {@link Hero#fortMarks()}.
@@ -26,6 +33,8 @@ package org.c2w.data.model;
 public record Titan(
         String id,
         TitanElement element,
+        List<TitanRole> roles,
+        boolean superTitan,
         String imagePath,
         FortMarks fortMarks
 ) {
@@ -39,13 +48,29 @@ public record Titan(
         if (element == null) {
             throw new IllegalArgumentException("Titan '" + id + "' needs an element");
         }
+        roles = roles == null ? List.of() : List.copyOf(roles);
         imagePath = (imagePath == null || imagePath.isBlank()) ? PLACEHOLDER_IMAGE_PATH : imagePath;
         fortMarks = fortMarks == null ? FortMarks.NONE : fortMarks;
     }
 
-    /** Convenience constructor for titans without an avatar and without fortification marks (e.g. in tests). */
+    /** Convenience constructor for titans without roles, avatar and fortification marks and not a super titan (e.g. in tests). */
     public Titan(String id, TitanElement element) {
-        this(id, element, null, null);
+        this(id, element, List.of(), false, null, null);
+    }
+
+    /** Convenience constructor for titans without an avatar and without fortification marks (e.g. in tests). */
+    public Titan(String id, TitanElement element, List<TitanRole> roles, boolean superTitan) {
+        this(id, element, roles, superTitan, null, null);
+    }
+
+    /** A copy of this titan with {@code fortMarks} instead of its current marks - everything else (roles, super titan, ...) is kept. */
+    public Titan withFortMarks(FortMarks fortMarks) {
+        return new Titan(id, element, roles, superTitan, imagePath, fortMarks);
+    }
+
+    /** True if {@code role} is one of this titan's roles. */
+    public boolean hasRole(TitanRole role) {
+        return roles.contains(role);
     }
 
     /** True if this titan's element matches the given {@link Buff} - the automatic BUFF mark (only {@link ElementBuff}s can match). */

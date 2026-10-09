@@ -135,7 +135,7 @@ public final class DataSet {
                 row.set(Fields.ID, suggestId(kind, (String) value));
             }
         }
-        if (!Objects.equals(row.get(field), value instanceof String s && s.isEmpty() ? null : value)) {
+        if (!Objects.equals(row.get(field), (value instanceof String s && s.isEmpty()) || Boolean.FALSE.equals(value) ? null : value)) {
             row.set(field, value);
             table(kind).markDirty();
         }

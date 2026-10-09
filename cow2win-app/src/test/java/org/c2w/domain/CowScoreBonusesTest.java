@@ -73,7 +73,7 @@ class CowScoreBonusesTest {
         Fortification fireFort = new Fortification("fire-fort", FortificationType.TITAN, 5, 0, 0, 0,
                 new ElementBuff(TitanElement.FIRE, BuffEffect.HEALTH_INCREASE, 10), List.of(), 0);
         TitanTeam titans = new TitanTeam("m1", 0, List.of(new Titan("f1", TitanElement.FIRE), new Titan("f2", TitanElement.FIRE),
-                new Titan("w1", TitanElement.WATER, null, new FortMarks(Map.of("fire-fort", FortMark.NEGATIVE)))),
+                new Titan("w1", TitanElement.WATER).withFortMarks(new FortMarks(Map.of("fire-fort", FortMark.NEGATIVE)))),
                 1_000_000, null, Set.of(TitanElement.FIRE));
         TeamScoreCalculator.TitanBonus titanBonus = TeamScoreCalculator.titanBonus(titans, fireFort);
         assertEquals(6.0, titanBonus.elementPercent(), EPS);

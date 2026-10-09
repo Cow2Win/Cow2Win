@@ -1,11 +1,13 @@
 package org.c2w.data.repository;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
+import org.c2w.data.model.TitanRole;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -18,9 +20,9 @@ import java.util.stream.Collectors;
  * Loads/saves the titan catalog from two separate files - the same split
  * {@link HeroRepository} uses:
  * <ul>
- *     <li>{@code titans.json} - the "objective" master data (id/element/image)
+ *     <li>{@code titans.json} - the "objective" master data (id/element/roles/superTitan/image)
  *     that is identical for every guild and only changes when Hero Wars
- *     itself changes (new titans, a changed element/avatar). Never written
+ *     itself changes (new titans, a changed element/role/avatar). Never written
  *     by this class.</li>
  *     <li>{@code titanCowScore.json} - Thorsten's manually curated {@link
  *     FortMarks} per titan (positive and negative marks, see that type's
@@ -163,7 +165,7 @@ public class TitanRepository {
                     ENTITY_LABEL, (titanId, fortificationId) -> buffMatches(masterData.get(titanId), fortificationId));
             Map<String, Titan> result = new LinkedHashMap<>();
             for (Titan titan : masterData.values()) {
-                result.put(titan.id(), new Titan(titan.id(), titan.element(), titan.imagePath(), fortMarks.get(titan.id())));
+                result.put(titan.id(), titan.withFortMarks(fortMarks.get(titan.id())));
             }
             return result;
         } catch (IOException e) {
@@ -177,10 +179,12 @@ public class TitanRepository {
                 .map(fortification -> titan.matchesBuff(fortification.buff())).orElse(false);
     }
 
-    private static Map<String, Titan> parseTitansJson(String json) {
+    /** The titans of a {@code titans.json} text by id, in file order - package-private for tests. */
+    static Map<String, Titan> parseTitansJson(String json) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
-        // Expects: [{ "id": "...", "element": "...", "image": "..." }, ...] - purely the
+        // Expects: [{ "id": "...", "element": "...", "roles": [...], "superTitan": true, "image": "..." }, ...]
+        // ("superTitan" only if true) - purely the
         // "objective" master data; fortification marks live in titanCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
@@ -219,6 +223,33 @@ public class TitanRepository {
                     + "instead (via the titan CowScore dialog)");
         }
 
-        return new Titan(id, element, image != null ? IMAGE_PATH_PREFIX + image : null, null);
+        List<TitanRole> roles = parseRoles(obj, id);
+        JsonElement superTitan = obj.get("superTitan");
+        boolean isSuperTitan = superTitan != null && !superTitan.isJsonNull() && superTitan.getAsBoolean();
+
+        return new Titan(id, element, roles, isSuperTitan, image != null ? IMAGE_PATH_PREFIX + image : null, null);
+    }
+
+    /**
+     * The titan's "roles" in file order: an unknown role is logged and skipped, missing or
+     * empty roles are logged as a warning - the titan is loaded anyway (with no roles).
+     */
+    private static List<TitanRole> parseRoles(JsonObject obj, String id) {
+        List<TitanRole> roles = new ArrayList<>();
+        JsonElement rolesElement = obj.get("roles");
+        if (rolesElement != null && rolesElement.isJsonArray()) {
+            for (JsonElement roleElement : rolesElement.getAsJsonArray()) {
+                String roleStr = roleElement.isJsonNull() ? null : roleElement.getAsString();
+                try {
+                    roles.add(TitanRole.valueOf(roleStr));
+                } catch (IllegalArgumentException | NullPointerException e) {
+                    Logger.log("titans.json: titan '" + id + "' has unknown role '" + roleStr + "', skipping that role");
+                }
+            }
+        }
+        if (roles.isEmpty()) {
+            Logger.log("titans.json: WARNING - titan '" + id + "' has no (valid) roles, loading it without roles");
+        }
+        return roles;
     }
 }

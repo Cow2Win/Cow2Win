@@ -131,6 +131,19 @@ class ValidationTest {
         assertError(TableKind.HEROES, Fields.ROLES, "0 entries");
     }
 
+    @Test
+    void titanRoles() {
+        Row titan = data.table(TableKind.TITANS).findById("hyperion");
+        data.setValue(TableKind.TITANS, titan, Fields.ROLES, List.of("MAGE", "MAGE"));
+        assertError(TableKind.TITANS, Fields.ROLES, "MAGE is listed twice");
+
+        data.setValue(TableKind.TITANS, titan, Fields.ROLES, List.of("HEALER"));
+        assertError(TableKind.TITANS, Fields.ROLES, "unknown id HEALER");
+
+        data.setValue(TableKind.TITANS, titan, Fields.ROLES, List.of());
+        assertError(TableKind.TITANS, Fields.ROLES, "0 entries");
+    }
+
     private Row newPet(String name) {
         Row pet = data.addRow(TableKind.PETS);
         for (Language language : Language.values()) {

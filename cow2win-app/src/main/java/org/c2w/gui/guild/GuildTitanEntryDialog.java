@@ -5,6 +5,7 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
+import org.c2w.i18n.TitanTexts;
 import org.c2w.service.AppContext;
 
 import java.awt.*;
@@ -34,7 +35,7 @@ public final class GuildTitanEntryDialog extends GuildTeamEntryDialog<Titan> {
                 t -> IconLoader.iconFor(t.imagePath(), ICON_SIZE), Comparator.comparing(GuildTitanEntryDialog::titanLabel),
                 m -> m.titanTeams, FortificationType.TITAN, Lineup.TeamType.TITAN,
                 GuildTitanEntryDialog::titanMatchesBuff, GuildTitanEntryDialog::titanScoreBreakdown,
-                catalog.titanTemplates(), Titan::id);
+                catalog.titanTemplates(), Titan::id, TitanTexts::describe);
     }
 
     private static String titanLabel(Titan titan) {

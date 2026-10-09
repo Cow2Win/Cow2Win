@@ -47,7 +47,7 @@ class TeamScoreCalculatorTitanTest {
     }
 
     private static Titan marked(String id, TitanElement element, String fortificationId, FortMark mark) {
-        return new Titan(id, element, null, new FortMarks(Map.of(fortificationId, mark)));
+        return new Titan(id, element).withFortMarks(new FortMarks(Map.of(fortificationId, mark)));
     }
 
     private static TitanTeam team(int power, Set<TitanElement> totems, Titan... titans) {

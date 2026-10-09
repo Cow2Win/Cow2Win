@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMark;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Titan;
+import org.c2w.data.model.TitanRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -60,8 +61,8 @@ class TitanRepositoryTest {
         FortMarks novaMarks = new FortMarks(Map.of("bridge", FortMark.NEGATIVE));
 
         List<Titan> catalog = repository.findAll().stream()
-                .map(t -> t.id().equals(ignis.id()) ? new Titan(t.id(), t.element(), t.imagePath(), ignisMarks)
-                        : t.id().equals(nova.id()) ? new Titan(t.id(), t.element(), t.imagePath(), novaMarks)
+                .map(t -> t.id().equals(ignis.id()) ? t.withFortMarks(ignisMarks)
+                        : t.id().equals(nova.id()) ? t.withFortMarks(novaMarks)
                         : t)
                 .toList();
         repository.saveCowScores(catalog);
@@ -78,6 +79,58 @@ class TitanRepositoryTest {
             JsonObject entry = element.getAsJsonObject();
             assertFalse(entry.has("generalScore") || entry.has("buffFitScores"), "no former-format fields are written");
         }
+    }
+
+    @Test
+    @DisplayName("titans.json: roles (in file order) and superTitan are read")
+    void readsRolesAndSuperTitan() {
+        Map<String, Titan> titans = TitanRepository.parseTitansJson("""
+                [
+                  {"id": "a", "element": "FIRE", "roles": ["MARKSMAN", "SUPPORT"], "superTitan": true},
+                  {"id": "b", "element": "WATER", "roles": ["TANK"], "superTitan": false}
+                ]
+                """);
+
+        assertEquals(List.of(TitanRole.MARKSMAN, TitanRole.SUPPORT), titans.get("a").roles());
+        assertTrue(titans.get("a").superTitan());
+        assertTrue(titans.get("a").hasRole(TitanRole.SUPPORT));
+        assertFalse(titans.get("a").hasRole(TitanRole.TANK));
+        assertEquals(List.of(TitanRole.TANK), titans.get("b").roles());
+        assertFalse(titans.get("b").superTitan());
+    }
+
+    @Test
+    @DisplayName("titans.json: an unknown role is skipped, missing roles -> empty list, missing superTitan -> false")
+    void lenientRoles() {
+        Map<String, Titan> titans = TitanRepository.parseTitansJson("""
+                [
+                  {"id": "a", "element": "FIRE", "roles": ["HEALER", "MAGE"]},
+                  {"id": "b", "element": "WATER"},
+                  {"id": "c", "element": "EARTH", "roles": []}
+                ]
+                """);
+
+        assertEquals(3, titans.size(), "titans without (valid) roles are loaded anyway");
+        assertEquals(List.of(TitanRole.MAGE), titans.get("a").roles());
+        assertEquals(List.of(), titans.get("b").roles());
+        assertEquals(List.of(), titans.get("c").roles());
+        assertFalse(titans.get("a").superTitan());
+        assertFalse(titans.get("b").superTitan());
+    }
+
+    @Test
+    @DisplayName("saveCowScores + reload keeps every titan's roles and superTitan")
+    void savingMarksKeepsRolesAndSuperTitan(@TempDir Path workspace) throws IOException {
+        TitanRepository repository = new TitanRepository(workspace);
+        List<Titan> catalog = repository.findAll().stream()
+                .map(t -> t.withFortMarks(new FortMarks(Map.of("bridge", FortMark.POSITIVE))))
+                .toList();
+        repository.saveCowScores(catalog);
+
+        Titan araji = new TitanRepository(workspace).findById("araji").orElseThrow();
+        assertEquals(List.of(TitanRole.MARKSMAN, TitanRole.SUPPORT), araji.roles());
+        assertTrue(araji.superTitan());
+        assertEquals(FortMark.POSITIVE, araji.fortMark("bridge"));
     }
 
     @Test

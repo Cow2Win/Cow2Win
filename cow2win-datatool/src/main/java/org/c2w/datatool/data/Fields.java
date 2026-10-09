@@ -7,6 +7,7 @@ public final class Fields {
     public static final String IMAGE = "image";
     public static final String ROLES = "roles";
     public static final String ELEMENT = "element";
+    public static final String SUPER_TITAN = "superTitan";
     public static final String TYPE = "type";
     public static final String CAPACITY = "capacity";
     public static final String CAPTURE_BONUS = "captureBonus";
