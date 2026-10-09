@@ -66,14 +66,19 @@ import java.util.List;
  *     <li><b>team combos</b>: +{@link CowScoreBonuses#comboPercent()} (the same value as for
  *     hero teams) once if at least one active {@link TeamCombo} matches the team (all of its
  *     titans are in the team; a double titan is one member) - no matter how many match, and
- *     independent of the fortification (see {@link #matchingCombos(TitanTeam)}).</li>
+ *     independent of the fortification (see {@link #matchingCombos(TitanTeam)});</li>
+ *     <li><b>super titans</b>: {@link #SUPER_TITAN_PERCENT} (fixed 0.6 %) per super titan in the
+ *     team ({@link Titan#superTitan()}, at most 5) - independent of the fortification and of
+ *     marks (also for a super titan marked {@link FortMark#NEGATIVE}), and in addition to its
+ *     element buff. Not a buff match.</li>
  * </ul>
  * The titan combos come from {@code titanCombos.json} (see {@code TeamComboRepository}) and
  * are registered via {@link #setTitanCombos}, exactly like the hero combos; every titan-team
  * method also has an overload taking the combos explicitly.
  *
  * <h2>Adjustable percentages</h2>
- * Every percentage except {@link #WAR_FLAG_PRESENT_PERCENT} can be adjusted in the settings
+ * Every percentage except {@link #WAR_FLAG_PRESENT_PERCENT} and {@link #SUPER_TITAN_PERCENT}
+ * (both fixed, below {@link CowScoreBonuses#MIN_BONUS}) can be adjusted in the settings
  * (see {@link CowScoreBonuses} for the ranges and the rule that a buff is the biggest bonus of
  * its side). They are registered via {@link #setBonuses} at startup and whenever the settings are
  * saved; until then (and in tests that do not set them) the defaults apply.
@@ -89,6 +94,9 @@ public final class TeamScoreCalculator {
 
     /** Bonus in percent for merely fielding a war flag (not marked for the fortification). */
     public static final double WAR_FLAG_PRESENT_PERCENT = 0.6;
+
+    /** Bonus in percent per super titan in a titan team - fixed, at every fortification. */
+    public static final double SUPER_TITAN_PERCENT = 0.6;
 
     /** The bonus percentages registered from the settings - see {@link #setBonuses}. */
     private static volatile CowScoreBonuses bonuses = CowScoreBonuses.DEFAULTS;
@@ -255,17 +263,32 @@ public final class TeamScoreCalculator {
      * each in percent - see the class Javadoc ("Titan teams") for how each is
      * determined.
      */
-    public record TitanBonus(double elementPercent, double relationPercent, double totemPercent, double comboPercent) {
+    public record TitanBonus(double elementPercent, double relationPercent, double totemPercent, double comboPercent,
+                             double superTitanPercent) {
 
         /** The bonus B in percent - the sum of all components. */
         public double totalPercent() {
-            return elementPercent + relationPercent + totemPercent + comboPercent;
+            return elementPercent + relationPercent + totemPercent + comboPercent + superTitanPercent;
         }
 
-        /** The components in a fixed order (element, relation, totems, combo) - see {@link Breakdown#memberScores()}. */
+        /**
+         * The components in a fixed order (element, relation, totems, combo, super titans) - see
+         * {@link Breakdown#memberScores()}.
+         */
         List<Double> asList() {
-            return List.of(elementPercent, relationPercent, totemPercent, comboPercent);
+            return List.of(elementPercent, relationPercent, totemPercent, comboPercent, superTitanPercent);
         }
+    }
+
+    /**
+     * The super titan bonus of {@code team} in percent: {@link #SUPER_TITAN_PERCENT} per super
+     * titan in the team - independent of the fortification and of any marks.
+     */
+    public static double superTitanPercent(TitanTeam team) {
+        if (team.titans() == null) {
+            return 0;
+        }
+        return team.titans().stream().filter(Titan::superTitan).count() * SUPER_TITAN_PERCENT;
     }
 
     /**
@@ -307,15 +330,15 @@ public final class TeamScoreCalculator {
 
         double totems = team.totems().size() * b.totemPercent();
         double combo = matchingCombos(team, combos).isEmpty() ? 0 : b.comboPercent();
-        return new TitanBonus(element, relation, totems, combo);
+        return new TitanBonus(element, relation, totems, combo, superTitanPercent(team));
     }
 
     /**
      * The TITAN-side counterpart of {@link #scoreFor(HeroTeam, Fortification)},
      * with the registered titan combos: totalPower / 100 000 x (1 + B) - see
-     * the class Javadoc. {@link Breakdown#memberScores()} holds the four bonus
-     * components (element, relation, totems, combo) converted into score
-     * points (powerTerm x percent / 100), so that total = powerTerm +
+     * the class Javadoc. {@link Breakdown#memberScores()} holds the five bonus
+     * components (element, relation, totems, combo, super titans) converted into
+     * score points (powerTerm x percent / 100), so that total = powerTerm +
      * sum(memberScores) holds.
      */
     public static Breakdown scoreFor(TitanTeam team, Fortification fortification) {
@@ -335,8 +358,9 @@ public final class TeamScoreCalculator {
      * titan combos - the TITAN-side counterpart of {@link #sortScore(HeroTeam)}
      * (see {@code TitanTeam#sortScore()}): totalPower / 100 000 x (1 + number
      * of totems x {@link CowScoreBonuses#totemPercent()} + {@link
-     * CowScoreBonuses#comboPercent()} if a titan combo matches). Everything
-     * else in the bonus depends on a specific fortification.
+     * CowScoreBonuses#comboPercent()} if a titan combo matches + number of
+     * super titans x {@link #SUPER_TITAN_PERCENT}). Everything else in the
+     * bonus depends on a specific fortification.
      */
     public static double sortScore(TitanTeam team) {
         return sortScore(team, titanCombos);
@@ -344,7 +368,7 @@ public final class TeamScoreCalculator {
 
     /** Like {@link #sortScore(TitanTeam)}, with explicitly given {@code combos}. */
     public static double sortScore(TitanTeam team, TeamCombos combos) {
-        double percent = team.totems().size() * bonuses.totemPercent();
+        double percent = team.totems().size() * bonuses.totemPercent() + superTitanPercent(team);
         if (!matchingCombos(team, combos).isEmpty()) {
             percent += bonuses.comboPercent();
         }
@@ -361,8 +385,8 @@ public final class TeamScoreCalculator {
      * powerTerm + sum(memberScores), where memberScores are the bonus
      * components in score points - for a hero team the five components
      * (role, relation, pet, war flag, combo), see {@link
-     * #scoreFor(HeroTeam, Fortification)}; for a titan team the four
-     * components (element, relation, totems, combo), see {@link
+     * #scoreFor(HeroTeam, Fortification)}; for a titan team the five
+     * components (element, relation, totems, combo, super titans), see {@link
      * #scoreFor(TitanTeam, Fortification)}.
      */
     public record Breakdown(List<Double> memberScores, double powerTerm, double total) {

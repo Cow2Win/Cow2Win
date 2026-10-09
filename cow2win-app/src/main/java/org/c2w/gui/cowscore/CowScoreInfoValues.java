@@ -55,6 +55,7 @@ public final class CowScoreInfoValues {
         values.put("comboPercent", percent(locale, b.comboPercent()));
         values.put("totemPercent", percent(locale, b.totemPercent()));
         values.put("warFlagPresentPercent", percent(locale, TeamScoreCalculator.WAR_FLAG_PRESENT_PERCENT));
+        values.put("superTitanPercent", percent(locale, TeamScoreCalculator.SUPER_TITAN_PERCENT));
 
         Fortification foundry = new Fortification(EXAMPLE_FORTIFICATION, FortificationType.HERO, 5, 0, 0, 0,
                 new RoleBuff(Role.TANK, BuffEffect.ARMOR_INCREASE, 3), List.of(), 1);

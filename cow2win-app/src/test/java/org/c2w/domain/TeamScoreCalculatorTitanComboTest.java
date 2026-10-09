@@ -131,12 +131,12 @@ class TeamScoreCalculatorTitanComboTest {
     }
 
     @Test
-    @DisplayName("memberScores holds four bonus components, the combo one last; total = powerTerm + sum")
-    void breakdownHasFourComponents() {
+    @DisplayName("memberScores holds five bonus components, the combo one fourth; total = powerTerm + sum")
+    void breakdownHasFiveComponents() {
         TeamScoreCalculator.Breakdown breakdown = TeamScoreCalculator.scoreFor(
                 team(1_000_000, "sigurd", "nova"), FIRE_FORT, COMBOS);
 
-        assertEquals(4, breakdown.memberScores().size());
+        assertEquals(5, breakdown.memberScores().size());
         assertEquals(10.0 * 1.25 / 100, breakdown.memberScores().get(3), EPS);
         assertEquals(breakdown.total(),
                 breakdown.powerTerm() + breakdown.memberScores().stream().mapToDouble(Double::doubleValue).sum(), EPS);

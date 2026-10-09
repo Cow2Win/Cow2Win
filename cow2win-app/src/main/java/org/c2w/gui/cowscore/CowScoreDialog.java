@@ -214,7 +214,7 @@ public final class CowScoreDialog extends JDialog {
             case HEROES -> LanguageService.displayName(key, percent(b.relationPercent()),
                     percent(b.rolePercent()));
             case TITANS -> LanguageService.displayName(key, percent(b.relationPercent()),
-                    percent(b.elementPercent()));
+                    percent(b.elementPercent()), percent(TeamScoreCalculator.SUPER_TITAN_PERCENT));
             case PETS -> LanguageService.displayName(key, percent(b.petPercent()));
             case WAR_FLAGS -> LanguageService.displayName(key, percent(b.warFlagPercent()),
                     percent(TeamScoreCalculator.WAR_FLAG_PRESENT_PERCENT));
