@@ -139,7 +139,7 @@ class TeamScoreCalculatorTitanTest {
     @Test
     @DisplayName("a double titan (one catalog entry for two titans) counts as one element match")
     void doubleTitanCountsOnce() {
-        TitanTeam team = team(1_000_000, titan("aherona-and-pyro", TitanElement.FIRE));
+        TitanTeam team = team(1_000_000, titan("asherona-and-pyro", TitanElement.FIRE));
         assertEquals(1.5, TeamScoreCalculator.titanBonus(team, FIRE_FORT).elementPercent(), EPS);
     }
 

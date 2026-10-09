@@ -102,7 +102,7 @@
             "avalon",
             "verdoc-and-phyto",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH"
@@ -189,7 +189,7 @@
         {
           "titanIds": [
             "mort",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "keros",
             "mairi",
             "eden"
@@ -251,7 +251,7 @@
         {
           "titanIds": [
             "angus",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "verdoc-and-phyto",
             "eden",
             "hyperion"
@@ -267,7 +267,7 @@
           "titanIds": [
             "sigurd",
             "brustar",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "tenebris"
           ],
@@ -316,7 +316,7 @@
             "sigurd",
             "nova",
             "tenebris",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "hyperion"
           ],
           "totems": [
@@ -378,7 +378,7 @@
           "titanIds": [
             "sigurd",
             "moloch",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "solaris",
             "eden"
           ],
@@ -515,7 +515,7 @@
             "verdoc-and-phyto",
             "solaris",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH",
@@ -578,7 +578,7 @@
             "avalon",
             "araji",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH"
@@ -638,7 +638,7 @@
             "sigurd",
             "nova",
             "mairi",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "tenebris"
           ],
           "totems": [
@@ -650,7 +650,7 @@
         {
           "titanIds": [
             "rigel",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "solaris",
             "araji",
             "ignis"
@@ -703,7 +703,7 @@
             "angus",
             "avalon",
             "solaris",
-            "silva",
+            "sylva",
             "lumira-and-apollo"
           ],
           "totems": [
@@ -777,7 +777,7 @@
           "titanIds": [
             "moloch",
             "vulcan",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "ignis"
           ],
@@ -901,7 +901,7 @@
         {
           "titanIds": [
             "moloch",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "hyperion",
             "ignis"
@@ -974,7 +974,7 @@
           "titanIds": [
             "moloch",
             "angus",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "verdoc-and-phyto",
             "ignis"
           ],
@@ -1034,7 +1034,7 @@
         {
           "titanIds": [
             "angus",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "verdoc-and-phyto",
             "eden",
             "hyperion"
@@ -1050,7 +1050,7 @@
           "titanIds": [
             "brustar",
             "moloch",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "tenebris"
           ],
@@ -1112,10 +1112,10 @@
         {
           "titanIds": [
             "angus",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "mairi",
             "araji",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "WATER"
@@ -1175,7 +1175,7 @@
             "sigurd",
             "nova",
             "mairi",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "hyperion"
           ],
           "totems": [
@@ -1188,7 +1188,7 @@
           "titanIds": [
             "brustar",
             "moloch",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "tenebris"
           ],
@@ -1265,7 +1265,7 @@
           "titanIds": [
             "moloch",
             "vulcan",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "ignis"
           ],
@@ -1379,7 +1379,7 @@
             "avalon",
             "verdoc-and-phyto",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH"
@@ -1488,7 +1488,7 @@
             "solaris",
             "eden",
             "tenebris",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH"
@@ -1550,7 +1550,7 @@
             "angus",
             "solaris",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH",
@@ -1597,7 +1597,7 @@
             "avalon",
             "hyperion",
             "eden",
-            "silva"
+            "sylva"
           ],
           "totems": [
             "EARTH"

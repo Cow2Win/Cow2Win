@@ -1,0 +1,61 @@
+<html>
+<body>
+<h2>What is the CowScore?</h2>
+<p>The CowScore rates how well a team fits <b>one particular fortification</b>.<br>
+So the same team can have a different CowScore at every fortification.<br>
+Cow2Win uses it to distribute the teams over the fortifications<br>
+and to leave the weakest teams out.</p>
+
+<h2>How is it made up?</h2>
+<p class="formula">CowScore = team power ÷ ${powerDivisor} × (1 + bonus)</p>
+<p>The team power is the most important part. The bonus mainly decides between teams of similar power.</p>
+
+<h2>Bonus for hero teams</h2>
+<ul>
+<li><b>Role buff:</b> +${rolePercent} % for every hero whose role matches the fortification's buff.</li>
+<li><b>Relation:</b> +${relationPercent} % once if at least one hero is marked "Positive" for this
+fortification, -${relationPercent} % if one is marked "Negative". Both together cancel each other out.</li>
+<li><b>Pet:</b> +${petPercent} % if the pet is marked for this fortification. Without a mark it only counts
+through its power.</li>
+<li><b>War flag:</b> +${warFlagPercent} % if it is marked for this fortification, otherwise
++${warFlagPresentPercent} % just for having one.</li>
+<li><b>Combo:</b> +${comboPercent} % once if an active hero combo is complete in the team.</li>
+</ul>
+
+<h2>Bonus for titan teams</h2>
+<ul>
+<li><b>Element buff:</b> +${elementPercent} % for every titan whose element matches the fortification's buff.</li>
+<li><b>Relation:</b> as for heroes, ±${relationPercent} % once per team.</li>
+<li><b>Totems:</b> +${totemPercent} % per totem (at most two).</li>
+</ul>
+<p>Whoever already counts through the buff does not count again through their mark.<br>
+You set the percentages under <i>Settings → CowScore bonuses</i>.</p>
+
+<h2>Example</h2>
+<p>A hero team with ${examplePower} power defends the Foundry (buff: Tank).</p>
+<table class="examples" width="100%" cellspacing="0" cellpadding="0">
+<tr>
+<td valign="top" width="50%">
+<p><b>With war flag and "Positive" mark</b></p>
+<ul>
+<li>2 tanks in the team: 2 × ${rolePercent} % = ${exampleRole} %</li>
+<li>another hero is marked "Positive" for the Foundry: +${relationPercent} %</li>
+<li>a war flag is in the team, but not marked: +${warFlagPresentPercent} %</li>
+</ul>
+<p>Bonus: ${exampleBonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${exampleFactor} ≈ ${exampleScore}</p>
+</td>
+<td valign="top" width="50%">
+<p><b>Same power, without war flag and without "Positive" mark</b></p>
+<ul>
+<li>2 tanks in the team: 2 × ${rolePercent} % = ${example2Role} %</li>
+<li>no hero marked: +0 %</li>
+<li>no war flag: +0 %</li>
+</ul>
+<p>Bonus: ${example2Bonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${example2Factor} ≈ ${example2Score}</p>
+</td>
+</tr>
+</table>
+</body>
+</html>

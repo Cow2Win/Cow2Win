@@ -1,8 +1,9 @@
 package org.c2w.gui.cowscore;
 
 /**
- * The tabs of {@link CowScoreDialog}, in display order - the tab index is the
- * {@link #ordinal()}. {@link #HERO_COMBOS} comes last, so the other indices stay.
+ * The editable tabs of {@link CowScoreDialog}, in display order. They follow the dialog's
+ * "Info" tab (which is no {@code CowScoreTab}), so the tab index is <b>not</b> the
+ * {@link #ordinal()} - the dialog converts between the two in one place.
  */
 public enum CowScoreTab {
 

@@ -1,0 +1,63 @@
+<html>
+<body>
+<h2>Qu'est-ce que le CowScore ?</h2>
+<p>Le CowScore évalue à quel point une équipe convient à <b>une forteresse précise</b>.<br>
+La même équipe peut donc avoir un CowScore différent à chaque forteresse.<br>
+Cow2Win l'utilise pour répartir les équipes sur les forteresses<br>
+et laisser de côté les équipes les plus faibles.</p>
+
+<h2>Comment est-il composé ?</h2>
+<p class="formula">CowScore = puissance de l'équipe ÷ ${powerDivisor} × (1 + bonus)</p>
+<p>La puissance de l'équipe est la part la plus importante. Le bonus départage surtout des équipes de puissance
+similaire.</p>
+
+<h2>Bonus des équipes de héros</h2>
+<ul>
+<li><b>Buff de rôle :</b> +${rolePercent} % pour chaque héros dont le rôle correspond au buff de la forteresse.</li>
+<li><b>Relation :</b> +${relationPercent} % une fois si au moins un héros est marqué « Positif » pour cette
+forteresse, -${relationPercent} % si l'un d'eux est marqué « Négatif ». Les deux ensemble s'annulent.</li>
+<li><b>Familier :</b> +${petPercent} % si le familier est marqué pour cette forteresse. Sans marquage, il ne
+compte que par sa puissance.</li>
+<li><b>Drapeau de guerre :</b> +${warFlagPercent} % s'il est marqué pour cette forteresse, sinon
++${warFlagPresentPercent} % déjà pour en avoir un.</li>
+<li><b>Combo :</b> +${comboPercent} % une fois si un combo de héros actif est complet dans l'équipe.</li>
+</ul>
+
+<h2>Bonus des équipes de titans</h2>
+<ul>
+<li><b>Buff d'élément :</b> +${elementPercent} % pour chaque titan dont l'élément correspond au buff de la
+forteresse.</li>
+<li><b>Relation :</b> comme pour les héros, ±${relationPercent} % une fois par équipe.</li>
+<li><b>Totems :</b> +${totemPercent} % par totem (deux au maximum).</li>
+</ul>
+<p>Celui qui compte déjà par le buff ne compte pas en plus par son marquage.<br>
+Tu règles les pourcentages sous <i>Paramètres → Bonus CowScore</i>.</p>
+
+<h2>Exemple</h2>
+<p>Une équipe de héros de ${examplePower} de puissance défend la Fonderie (buff : Tank).</p>
+<table class="examples" width="100%" cellspacing="0" cellpadding="0">
+<tr>
+<td valign="top" width="50%">
+<p><b>Avec drapeau de guerre et marquage « Positif »</b></p>
+<ul>
+<li>2 tanks dans l'équipe : 2 × ${rolePercent} % = ${exampleRole} %</li>
+<li>un autre héros est marqué « Positif » pour la Fonderie : +${relationPercent} %</li>
+<li>un drapeau de guerre est présent, mais pas marqué : +${warFlagPresentPercent} %</li>
+</ul>
+<p>Bonus : ${exampleBonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${exampleFactor} ≈ ${exampleScore}</p>
+</td>
+<td valign="top" width="50%">
+<p><b>Même puissance, sans drapeau de guerre ni marquage « Positif »</b></p>
+<ul>
+<li>2 tanks dans l'équipe : 2 × ${rolePercent} % = ${example2Role} %</li>
+<li>aucun héros marqué : +0 %</li>
+<li>pas de drapeau de guerre : +0 %</li>
+</ul>
+<p>Bonus : ${example2Bonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${example2Factor} ≈ ${example2Score}</p>
+</td>
+</tr>
+</table>
+</body>
+</html>

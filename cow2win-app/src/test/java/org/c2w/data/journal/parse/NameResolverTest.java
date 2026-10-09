@@ -29,13 +29,13 @@ class NameResolverTest {
         assertEquals("mushy-and-shroom", resolver.id(NameKind.HERO, "Champi und Gnon"));
         assertEquals("mushy-and-shroom", resolver.id(NameKind.HERO, "Mushy and Shroom"));
         assertEquals("mushy-and-shroom", resolver.id(NameKind.HERO, "Champi et Gnon"));
-        assertEquals("aherona-and-pyro", resolver.id(NameKind.TITAN, "Asherona und Pyro"));
+        assertEquals("asherona-and-pyro", resolver.id(NameKind.TITAN, "Asherona und Pyro"));
         assertEquals("biscuit", resolver.id(NameKind.PET, "Biskuit"));
     }
 
     @Test
     void normalizesNames() {
-        assertEquals("silva", resolver.id(NameKind.TITAN, "SYLVA"));
+        assertEquals("sylva", resolver.id(NameKind.TITAN, "SYLVA"));
         assertNull(resolver.id(NameKind.HERO, "Lara"), "only the in-game names from the language files");
         assertEquals("lara", resolver.id(NameKind.HERO, " lara croft "));
     }

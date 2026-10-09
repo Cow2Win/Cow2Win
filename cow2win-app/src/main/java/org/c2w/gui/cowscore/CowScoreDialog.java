@@ -16,13 +16,15 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.text.NumberFormat;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Non-modal dialog for maintaining the CowScore marks of heroes, titans, pets and war
@@ -37,8 +39,13 @@ import java.util.Map;
  * (see {@link #infoText(CowScoreTab)}), with the percentages of the settings - refreshed when
  * they are saved (see {@link #refreshInfoTexts()}).
  *
+ * <p>In front of those tabs, the "Info" tab explains what the CowScore is and how it is made up, with
+ * an example (HTML from {@code language/<language>/cowScoreInfo.html}, see {@link CowScoreInfoHtml}).
+ * It edits nothing, so it has no unsaved state, and the dialog opens on it unless a {@link CowScoreTab}
+ * is asked for (see {@link #open(Frame, Catalog)}). Tab indices therefore go through {@link #tabIndex}.
+ *
  * <p>The shared toolbar saves every tab with unsaved changes and restores the defaults of
- * the active tab only. A tab with unsaved changes shows a {@code *} in front of its title,
+ * the active tab only (disabled on "Info"). A tab with unsaved changes shows a {@code *} in front of its title,
  * and the save button turns red like the main window's save buttons. Closing with unsaved
  * changes asks whether to save, discard or cancel.
  */
@@ -51,6 +58,10 @@ public final class CowScoreDialog extends JDialog {
     private static final String KEY_RESTORE_DEFAULTS = "heroBuffFitScores.restoreDefaults";
     private static final String KEY_UNSAVED_SUFFIX = "toolbar.unsavedSuffix";
     private static final String KEY_UNSAVED_QUESTION = "cowScore.unsavedQuestion";
+    private static final String KEY_INFO_TAB = "cowScore.tab.info";
+
+    /** The "Info" tab comes first; the {@link CowScoreTab}s follow, see {@link #tabIndex}. */
+    private static final int INFO_TAB_INDEX = 0;
 
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
     private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
@@ -68,8 +79,28 @@ public final class CowScoreDialog extends JDialog {
     /** Per tab, what its controls do - shown at the top of the tab, see {@link #infoText(CowScoreTab)}. */
     private final Map<CowScoreTab, InfoArea> infoAreas = new EnumMap<>(CowScoreTab.class);
     private final FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    private final FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    /** The explanation in the "Info" tab - see {@link #refreshInfoHtml()}. */
+    private final JEditorPane infoPane = new JEditorPane();
+    /** The HTML currently shown in {@link #infoPane}, as built (before Swing's own parsing). */
+    private String infoHtml;
     /** Runs after a save that wrote at least one tab, may be null - see {@link #open(Frame, Catalog, CowScoreTab, Runnable)}. */
     private Runnable onSaved;
+
+    /** Shows the CowScore dialog on the "Info" tab - like {@link #open(Frame, Catalog, Runnable)} without callback. */
+    public static CowScoreDialog open(Frame owner, Catalog catalog) {
+        return open(owner, catalog, (Runnable) null);
+    }
+
+    /**
+     * Shows the CowScore dialog on the "Info" tab: brings the open one to front and switches to
+     * "Info", or creates it if none is open. {@code onSaved} as in {@link #open(Frame, Catalog, CowScoreTab, Runnable)}.
+     */
+    public static CowScoreDialog open(Frame owner, Catalog catalog, Runnable onSaved) {
+        CowScoreDialog dialog = show(owner, catalog, onSaved);
+        dialog.selectInfoTab();
+        return dialog;
+    }
 
     /**
      * Shows the CowScore dialog on {@code initialTab}: brings the open one to front and
@@ -86,11 +117,17 @@ public final class CowScoreDialog extends JDialog {
      * wrote at least one tab (e.g. to evaluate the data status again) - it replaces the one given before.
      */
     public static CowScoreDialog open(Frame owner, Catalog catalog, CowScoreTab initialTab, Runnable onSaved) {
+        CowScoreDialog dialog = show(owner, catalog, onSaved);
+        dialog.selectTab(initialTab);
+        return dialog;
+    }
+
+    /** Creates the single dialog if none is open, sets {@code onSaved} and brings it to front. */
+    private static CowScoreDialog show(Frame owner, Catalog catalog, Runnable onSaved) {
         if (instance == null) {
             instance = new CowScoreDialog(owner, catalog);
         }
         instance.onSaved = onSaved;
-        instance.selectTab(initialTab);
         instance.setVisible(true);
         instance.toFront();
         return instance;
@@ -106,6 +143,8 @@ public final class CowScoreDialog extends JDialog {
         // The list on the left is equally wide in every tab - wide enough for the longest entry of all tabs.
         int listWidth = CowScoreLayout.listWidth(panels.values().stream().flatMap(p -> p.listLabels().stream()).toList());
         panels.values().forEach(panel -> panel.setListWidth(listWidth));
+        tabs.addTab(LanguageService.displayName(KEY_INFO_TAB), buildInfoTab());
+        // In CowScoreTab order (EnumMap), so each tab lands at tabIndex(tab).
         panels.forEach((tab, panel) -> {
             InfoArea info = new InfoArea();
             info.setText(infoText(tab));
@@ -131,6 +170,8 @@ public final class CowScoreDialog extends JDialog {
         setLayout(new BorderLayout());
         add(buildToolbarPanel(), BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
+        tabs.addChangeListener(e -> restoreDefaultsButton.setEnabled(!isInfoTabSelected()));
+        restoreDefaultsButton.setEnabled(!isInfoTabSelected());
         updateUnsavedState();
         sizeToContent(owner, listWidth);
         setLocationRelativeTo(owner);
@@ -183,17 +224,73 @@ public final class CowScoreDialog extends JDialog {
 
     /** "1,25" / "1.25" in the configured language. */
     private static String percent(double value) {
-        NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
-        format.setMaximumFractionDigits(2);
-        return format.format(value);
+        return CowScoreInfoValues.percent(JournalTexts.locale(), value);
     }
 
     /**
-     * Shows the information texts again with the currently registered percentages - after the
-     * CowScore bonuses were changed in the settings.
+     * Shows the information texts and the "Info" tab again with the currently registered
+     * percentages - after the CowScore bonuses were changed in the settings.
      */
     public void refreshInfoTexts() {
         infoAreas.forEach((tab, info) -> info.setText(infoText(tab)));
+        refreshInfoHtml();
+    }
+
+    /**
+     * The "Info" tab: read-only HTML, white text in the interface font on the dialog's background,
+     * scrolling vertically only (the text wraps).
+     */
+    private JComponent buildInfoTab() {
+        infoPane.setContentType("text/html");
+        infoPane.setEditable(false);
+        infoPane.setFocusable(false);
+        infoPane.setOpaque(false);
+        // The interface font instead of JEditorPane's default serif font.
+        infoPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        infoPane.setFont(UIManager.getFont("Label.font"));
+        infoPane.setForeground(Color.WHITE);
+        refreshInfoHtml();
+        JScrollPane scroll = new JScrollPane(infoPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            /**
+             * Tiny, like the information areas: the HTML (unwrapped as wide as its longest paragraph)
+             * must not decide the dialog's size - the editable tabs do, the text wraps and scrolls.
+             */
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(1, 1);
+            }
+        };
+        // Same distance to the tab's edge as the information areas of the other tabs.
+        scroll.setBorder(BorderFactory.createEmptyBorder(10, 12, 8, 12));
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        return scroll;
+    }
+
+    /** Builds the "Info" HTML again (in a fresh document with the tab's style rules) and scrolls to the top. */
+    private void refreshInfoHtml() {
+        infoHtml = CowScoreInfoHtml.build();
+        HTMLDocument document = (HTMLDocument) infoPane.getEditorKit().createDefaultDocument();
+        int size = infoPane.getFont().getSize();
+        StyleSheet styles = document.getStyleSheet();
+        styles.addRule("body { color: #ffffff; margin: 0; }");
+        styles.addRule("h2 { color: #ffffff; font-size: " + (size + 3) + "pt; font-weight: bold;"
+                + " margin-top: 10px; margin-bottom: 2px; }");
+        styles.addRule("p { margin-top: 4px; margin-bottom: 4px; }");
+        styles.addRule("ul { margin-top: 2px; margin-bottom: 4px; margin-left: 18px; }");
+        styles.addRule(".formula { font-family: Monospaced; font-size: " + (size + 1) + "pt;"
+                + " margin-left: 14px; margin-top: 6px; margin-bottom: 6px; }");
+        // The two examples side by side - some space between the columns.
+        styles.addRule(".examples td { color: #ffffff; padding-right: 16px; }");
+        infoPane.setDocument(document);
+        infoPane.setText(infoHtml);
+        infoPane.setCaretPosition(0);
+    }
+
+    /** The HTML shown in the "Info" tab (filled, as built) - package-visible for tests. */
+    String infoHtml() {
+        return infoHtml;
     }
 
     /** The open dialog, if any - e.g. to refresh it after the settings changed. */
@@ -206,9 +303,9 @@ public final class CowScoreDialog extends JDialog {
         return infoAreas.get(tab);
     }
 
-    /** The text of the information area of the active tab - package-visible for tests. */
+    /** The text of the information area of the active tab, null on "Info" (it has none) - package-visible for tests. */
     String infoText() {
-        return infoAreas.get(selectedTab()).getText();
+        return selectedTab().map(tab -> infoAreas.get(tab).getText()).orElse(null);
     }
 
     /**
@@ -248,19 +345,50 @@ public final class CowScoreDialog extends JDialog {
         }
     }
 
-    /** Switches to {@code tab}. */
-    public void selectTab(CowScoreTab tab) {
-        tabs.setSelectedIndex(tab.ordinal());
+    /** Index of {@code tab} in the tabbed pane - behind the "Info" tab, so not its {@link CowScoreTab#ordinal()}. */
+    private static int tabIndex(CowScoreTab tab) {
+        return tab.ordinal() + INFO_TAB_INDEX + 1;
     }
 
-    /** The tab currently shown. */
-    public CowScoreTab selectedTab() {
-        return CowScoreTab.values()[tabs.getSelectedIndex()];
+    /** Switches to {@code tab}. */
+    public void selectTab(CowScoreTab tab) {
+        tabs.setSelectedIndex(tabIndex(tab));
+    }
+
+    /** Switches to the "Info" tab. */
+    public void selectInfoTab() {
+        tabs.setSelectedIndex(INFO_TAB_INDEX);
+    }
+
+    /** True while the "Info" tab is shown. */
+    public boolean isInfoTabSelected() {
+        return tabs.getSelectedIndex() == INFO_TAB_INDEX;
+    }
+
+    /** The tab currently shown - empty on the "Info" tab, which is no {@link CowScoreTab}. */
+    public Optional<CowScoreTab> selectedTab() {
+        int index = tabs.getSelectedIndex();
+        for (CowScoreTab tab : CowScoreTab.values()) {
+            if (tabIndex(tab) == index) {
+                return Optional.of(tab);
+            }
+        }
+        return Optional.empty();
     }
 
     /** The displayed title of {@code tab} - with a leading {@code *} while it has unsaved changes. */
     public String tabTitle(CowScoreTab tab) {
-        return tabs.getTitleAt(tab.ordinal());
+        return tabs.getTitleAt(tabIndex(tab));
+    }
+
+    /** The displayed title of the "Info" tab - package-visible for tests. */
+    String infoTabTitle() {
+        return tabs.getTitleAt(INFO_TAB_INDEX);
+    }
+
+    /** Whether "Restore defaults" can be used - not on "Info" - package-visible for tests. */
+    boolean isRestoreDefaultsEnabled() {
+        return restoreDefaultsButton.isEnabled();
     }
 
     /** The panel of {@code tab}. */
@@ -273,7 +401,6 @@ public final class CowScoreDialog extends JDialog {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         saveButton.addActionListener(e -> saveAll());
         buttons.add(saveButton);
-        FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         restoreDefaultsButton.setToolTipText(LanguageService.displayName(KEY_RESTORE_DEFAULTS));
         restoreDefaultsButton.addActionListener(e -> onRestoreDefaults());
         buttons.add(restoreDefaultsButton);
@@ -288,7 +415,7 @@ public final class CowScoreDialog extends JDialog {
             boolean unsaved = entry.getValue().hasUnsavedChanges();
             anyUnsaved |= unsaved;
             String title = LanguageService.displayName(entry.getKey().textKey());
-            tabs.setTitleAt(entry.getKey().ordinal(), unsaved ? "*" + title : title);
+            tabs.setTitleAt(tabIndex(entry.getKey()), unsaved ? "*" + title : title);
         }
         saveButton.setIcon(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, anyUnsaved ? IconLoader.RED : IconLoader.BLUE));
         String tooltip = LanguageService.displayName(KEY_SAVE_SCORES);
@@ -327,9 +454,13 @@ public final class CowScoreDialog extends JDialog {
         return allSaved;
     }
 
-    /** Restores the defaults of the active tab only, after its own confirmation question. */
+    /** Restores the defaults of the active tab only, after its own confirmation question - nothing on "Info". */
     private void onRestoreDefaults() {
-        CowScorePanel panel = panels.get(selectedTab());
+        Optional<CowScoreTab> tab = selectedTab();
+        if (tab.isEmpty()) {
+            return;
+        }
+        CowScorePanel panel = panels.get(tab.get());
         int answer = JOptionPane.showConfirmDialog(this,
                 LanguageService.displayName(panel.restoreDefaultsConfirmKey()),
                 LanguageService.displayName("common.confirmTitle"),

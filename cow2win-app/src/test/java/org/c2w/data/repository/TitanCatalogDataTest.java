@@ -45,4 +45,23 @@ class TitanCatalogDataTest {
         assertEquals(List.of(TitanRole.TANK), repository.findById("moloch").orElseThrow().roles());
         assertEquals(List.of(TitanRole.SUMMONER), repository.findById("valdur-and-echo").orElseThrow().roles());
     }
+
+    @Test
+    @DisplayName("corrected ids: asherona-and-pyro, tidus-and-gelo, umbra-and-caligo, sylva; the old ids are gone")
+    void correctedIds() {
+        Set<String> ids = new TitanRepository(workspace).findAll().stream().map(Titan::id).collect(Collectors.toSet());
+
+        assertTrue(ids.containsAll(Set.of("asherona-and-pyro", "tidus-and-gelo", "umbra-and-caligo", "sylva")), ids::toString);
+        for (String old : List.of("aherona-and-pyro", "Tidus-and-gelo", "umbra-and-caliga", "silva")) {
+            assertFalse(ids.contains(old), old);
+        }
+    }
+
+    @Test
+    @DisplayName("no titan id contains upper case letters")
+    void idsAreLowerCase() {
+        for (Titan titan : new TitanRepository(workspace).findAll()) {
+            assertEquals(titan.id().toLowerCase(), titan.id());
+        }
+    }
 }

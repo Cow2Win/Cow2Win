@@ -110,10 +110,12 @@ class ValidationTest {
 
     @Test
     void unusualIdsAndCharactersAreWarnings() {
-        Row titan = data.table(TableKind.TITANS).findById("Tidus-and-gelo");
+        Row pet = newPet("Nimbus");
+        data.setValue(TableKind.PETS, pet, Fields.ID, "Nimbus");
+        Row titan = data.table(TableKind.TITANS).findById("tidus-and-gelo");
         data.setValue(TableKind.TITANS, titan, Language.EN.field(), "Tidus’ Gelo");
         List<Problem> problems = data.validate();
-        assertTrue(problems.stream().anyMatch(p -> !p.isError() && p.message().contains("Tidus-and-gelo deviates")),
+        assertTrue(problems.stream().anyMatch(p -> !p.isError() && p.message().contains("Nimbus deviates")),
                 problems::toString);
         assertTrue(problems.stream().anyMatch(p -> !p.isError() && p.message().contains("rarely appears")),
                 problems::toString);

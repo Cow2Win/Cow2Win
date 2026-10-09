@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "id": "tenebris",
+    "fortMarks": {
+      "bastion-of-ice": "POSITIVE"
+    }
+  },
+  {
+    "id": "alecto",
+    "fortMarks": {
+      "bastion-of-ice": "POSITIVE"
+    }
+  },
+  {
+    "id": "umbra-and-caligo",
+    "fortMarks": {
+      "bastion-of-fire": "POSITIVE",
+      "altar-of-life": "POSITIVE"
+    }
+  },
+  {
+    "id": "lumira-and-apollo",
+    "fortMarks": {
+      "bastion-of-fire": "POSITIVE",
+      "altar-of-life": "POSITIVE"
+    }
+  },
+  {
+    "id": "valdur-and-echo",
+    "fortMarks": {
+      "bastion-of-ice": "POSITIVE",
+      "sun-temple": "NEGATIVE",
+      "gates-of-nature": "NEGATIVE"
+    }
+  },
+  {
+    "id": "iyari",
+    "fortMarks": {
+      "bastion-of-ice": "POSITIVE"
+    }
+  },
+  {
+    "id": "brustar",
+    "fortMarks": {
+      "bastion-of-ice": "POSITIVE"
+    }
+  }
+]

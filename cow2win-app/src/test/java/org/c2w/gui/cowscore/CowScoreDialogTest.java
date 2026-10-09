@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -56,15 +57,112 @@ class CowScoreDialogTest {
     }
 
     @Test
+    @DisplayName("\"Info\" is the first tab, followed by the five editable tabs in their old order")
+    void infoTabFirst() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
+
+        JTabbedPane tabs = CowScoreTestSupport.findAll(dialog.getContentPane(), JTabbedPane.class).get(0);
+        assertEquals(1 + CowScoreTab.values().length, tabs.getTabCount());
+        assertEquals(LanguageService.displayName("cowScore.tab.info"), tabs.getTitleAt(0));
+        assertEquals(LanguageService.displayName("cowScore.tab.info"), dialog.infoTabTitle());
+        for (CowScoreTab tab : CowScoreTab.values()) {
+            assertEquals(LanguageService.displayName(tab.textKey()), tabs.getTitleAt(tab.ordinal() + 1));
+        }
+    }
+
+    @Test
+    @DisplayName("The \"Info\" tab does not widen the dialog - the editable tabs decide its size")
+    void infoTabKeepsTheDialogSize() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
+
+        JTabbedPane tabs = CowScoreTestSupport.findAll(dialog.getContentPane(), JTabbedPane.class).get(0);
+        Dimension info = tabs.getComponentAt(0).getPreferredSize();
+        for (int i = 1; i < tabs.getTabCount(); i++) {
+            Dimension editable = tabs.getComponentAt(i).getPreferredSize();
+            assertTrue(info.width <= editable.width && info.height <= editable.height,
+                    "info " + info + " vs. tab " + i + " " + editable);
+        }
+    }
+
+    @Test
+    @DisplayName("open without a tab shows \"Info\" - also when the dialog is already open on another tab")
+    void openStartsOnInfo() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
+        assertTrue(dialog.isInfoTabSelected());
+
+        SwingUtilities.invokeAndWait(() -> dialog.selectTab(CowScoreTab.TITANS));
+        assertFalse(dialog.isInfoTabSelected());
+        CowScoreDialog[] again = new CowScoreDialog[1];
+        SwingUtilities.invokeAndWait(() -> again[0] = CowScoreDialog.open(null, catalog, () -> { }));
+        assertSame(dialog, again[0]);
+        assertTrue(dialog.isInfoTabSelected());
+
+        SwingUtilities.invokeAndWait(() -> CowScoreDialog.open(null, catalog, CowScoreTab.PETS));
+        assertEquals(Optional.of(CowScoreTab.PETS), dialog.selectedTab());
+    }
+
+    @Test
+    @DisplayName("selectTab/selectedTab agree for every tab; on \"Info\" selectedTab is empty and restore defaults is off")
+    void selectTabAndInfoState() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
+        for (CowScoreTab tab : CowScoreTab.values()) {
+            SwingUtilities.invokeAndWait(() -> dialog.selectTab(tab));
+            assertEquals(Optional.of(tab), dialog.selectedTab());
+            assertTrue(dialog.isRestoreDefaultsEnabled(), tab.name());
+        }
+
+        SwingUtilities.invokeAndWait(dialog::selectInfoTab);
+        assertEquals(Optional.empty(), dialog.selectedTab());
+        assertFalse(dialog.isRestoreDefaultsEnabled());
+        assertNull(dialog.infoText());
+
+        SwingUtilities.invokeAndWait(() -> dialog.selectTab(CowScoreTab.WAR_FLAGS));
+        assertTrue(dialog.isRestoreDefaultsEnabled());
+    }
+
+    @Test
+    @DisplayName("The \"Info\" tab shows the filled HTML and follows changed bonuses after refreshInfoTexts")
+    void infoHtmlFollowsBonuses() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
+        String html = dialog.infoHtml();
+        assertFalse(html.contains("${"), html);
+        assertTrue(html.contains(CowScoreInfoValues.values(org.c2w.gui.journal.JournalTexts.locale()).get("exampleScore")));
+
+        try {
+            org.c2w.domain.TeamScoreCalculator.setBonuses(new org.c2w.domain.CowScoreBonuses(2.0, 1.5, 1.0, 1.25, 1.25, 1.25, 1.25));
+            SwingUtilities.invokeAndWait(dialog::refreshInfoTexts);
+            String changed = dialog.infoHtml();
+            assertNotEquals(html, changed);
+            assertTrue(changed.contains("+2 %"), changed);
+            assertTrue(changed.contains(CowScoreInfoValues.values(org.c2w.gui.journal.JournalTexts.locale()).get("exampleScore")));
+        } finally {
+            org.c2w.domain.TeamScoreCalculator.setBonuses(org.c2w.domain.CowScoreBonuses.DEFAULTS);
+        }
+    }
+
+    @Test
+    @DisplayName("A change puts the * on its tab, never on \"Info\"")
+    void noStarOnInfo() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            dialog = CowScoreDialog.open(null, catalog, CowScoreTab.TITANS);
+            @SuppressWarnings("unchecked")
+            JComboBox<FortMark> combo = firstEnabledCombo(dialog.panel(CowScoreTab.TITANS));
+            combo.setSelectedItem(combo.getSelectedItem() == FortMark.NEGATIVE ? FortMark.POSITIVE : FortMark.NEGATIVE);
+        });
+        assertEquals("*" + LanguageService.displayName(CowScoreTab.TITANS.textKey()), dialog.tabTitle(CowScoreTab.TITANS));
+        assertEquals(LanguageService.displayName("cowScore.tab.info"), dialog.infoTabTitle());
+    }
+
+    @Test
     @DisplayName("open selects the requested tab; a second open returns the same dialog and switches the tab")
     void singleInstance() throws Exception {
         SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog, CowScoreTab.TITANS));
-        assertEquals(CowScoreTab.TITANS, dialog.selectedTab());
+        assertEquals(Optional.of(CowScoreTab.TITANS), dialog.selectedTab());
 
         CowScoreDialog[] second = new CowScoreDialog[1];
         SwingUtilities.invokeAndWait(() -> second[0] = CowScoreDialog.open(null, catalog, CowScoreTab.PETS));
         assertSame(dialog, second[0]);
-        assertEquals(CowScoreTab.PETS, dialog.selectedTab());
+        assertEquals(Optional.of(CowScoreTab.PETS), dialog.selectedTab());
     }
 
     @Test

@@ -16,7 +16,7 @@
     "image": "Vulcan.png"
   },
   {
-    "id": "aherona-and-pyro",
+    "id": "asherona-and-pyro",
     "element": "FIRE",
     "roles": [
       "SUMMONER"
@@ -76,7 +76,7 @@
     "image": "Hyperion.png"
   },
   {
-    "id": "Tidus-and-gelo",
+    "id": "tidus-and-gelo",
     "element": "WATER",
     "roles": [
       "SUMMONER"
@@ -134,7 +134,7 @@
     "image": "Brustar.png"
   },
   {
-    "id": "umbra-and-caliga",
+    "id": "umbra-and-caligo",
     "element": "DARK",
     "roles": [
       "SUMMONER"
@@ -160,7 +160,7 @@
     "image": "Angus.png"
   },
   {
-    "id": "silva",
+    "id": "sylva",
     "element": "EARTH",
     "roles": [
       "MARKSMAN"

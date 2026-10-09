@@ -180,7 +180,7 @@ class TeamTemplateRepositoryTest {
 
             assertTrue(Files.isRegularFile(titans.templateFile()));
             assertEquals(5, titans.templates().size());
-            assertEquals(List.of("eden", "angus", "silva", "avalon", "verdoc-and-phyto"), ids(titans, 1));
+            assertEquals(List.of("eden", "angus", "sylva", "avalon", "verdoc-and-phyto"), ids(titans, 1));
         }
 
         @Test

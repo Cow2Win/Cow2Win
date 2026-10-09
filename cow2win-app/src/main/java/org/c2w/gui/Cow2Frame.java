@@ -8,7 +8,6 @@ import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.cowscore.CowScoreDialog;
-import org.c2w.gui.cowscore.CowScoreTab;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.journal.JournalActions;
 import org.c2w.gui.stage.ConceptStageView;
@@ -262,8 +261,7 @@ public class Cow2Frame extends JFrame {
         // Independent of the open guild/lineup - the catalogs are shared by every guild.
         actions.register(new AppAction(ActionId.COWSCORE,
                 () -> CowScoreDialog.open(this, appContext.catalog(),
-                        CowScoreTab.HEROES,
-                        // Saved CowScores make the lineup "to recalculate" - show that right away.
+                        // Opens on "Info"; saved CowScores make the lineup "to recalculate" - show that right away.
                         () -> dataStatusController.requestUpdate())));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         // The change plan lives in the output view, created after the actions.

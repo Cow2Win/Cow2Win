@@ -1,0 +1,61 @@
+<html>
+<body>
+<h2>Was ist der CowScore?</h2>
+<p>Der CowScore bewertet, wie gut ein Team zu <b>einer bestimmten Festung</b> passt.<br>
+Dasselbe Team kann also an jeder Festung einen anderen CowScore haben.<br>
+Cow2Win nutzt ihn, um die Teams auf die Festungen zu verteilen<br>
+und die schwächsten Teams draußen zu lassen.</p>
+
+<h2>Wie setzt er sich zusammen?</h2>
+<p class="formula">CowScore = Teamstärke ÷ ${powerDivisor} × (1 + Bonus)</p>
+<p>Die Teamstärke ist der wichtigste Teil. Der Bonus entscheidet vor allem zwischen Teams mit ähnlicher Stärke.</p>
+
+<h2>Bonus bei Helden-Teams</h2>
+<ul>
+<li><b>Rollen-Buff:</b> +${rolePercent} % für jeden Helden, dessen Rolle zum Buff der Festung passt.</li>
+<li><b>Beziehung:</b> +${relationPercent} % einmal, wenn mindestens ein Held für diese Festung „Positiv“
+markiert ist, -${relationPercent} %, wenn einer „Negativ“ markiert ist. Beides zusammen hebt sich auf.</li>
+<li><b>Pet:</b> +${petPercent} %, wenn das Pet für diese Festung markiert ist. Ohne Markierung zählt es nur
+über seine Stärke.</li>
+<li><b>Kriegsflagge:</b> +${warFlagPercent} %, wenn sie für diese Festung markiert ist, sonst
++${warFlagPresentPercent} % schon dafür, dass eine dabei ist.</li>
+<li><b>Kombi:</b> +${comboPercent} % einmal, wenn eine aktive Helden-Kombi vollständig im Team ist.</li>
+</ul>
+
+<h2>Bonus bei Titanen-Teams</h2>
+<ul>
+<li><b>Element-Buff:</b> +${elementPercent} % für jeden Titanen, dessen Element zum Buff der Festung passt.</li>
+<li><b>Beziehung:</b> wie bei den Helden, ±${relationPercent} % einmal je Team.</li>
+<li><b>Totems:</b> +${totemPercent} % je Totem (höchstens zwei).</li>
+</ul>
+<p>Wer schon über den Buff zählt, zählt nicht zusätzlich über seine Markierung.<br>
+Die Prozentwerte stellst du unter <i>Einstellungen → CowScore-Boni</i> ein.</p>
+
+<h2>Beispiel</h2>
+<p>Ein Helden-Team mit ${examplePower} Stärke verteidigt die Gießerei (Buff: Panzer).</p>
+<table class="examples" width="100%" cellspacing="0" cellpadding="0">
+<tr>
+<td valign="top" width="50%">
+<p><b>Mit Kriegsflagge und „Positiv“-Markierung</b></p>
+<ul>
+<li>2 Panzer im Team: 2 × ${rolePercent} % = ${exampleRole} %</li>
+<li>ein anderer Held ist für die Gießerei „Positiv“ markiert: +${relationPercent} %</li>
+<li>eine Kriegsflagge ist dabei, aber nicht markiert: +${warFlagPresentPercent} %</li>
+</ul>
+<p>Bonus: ${exampleBonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${exampleFactor} ≈ ${exampleScore}</p>
+</td>
+<td valign="top" width="50%">
+<p><b>Gleiche Stärke, ohne Kriegsflagge und ohne „Positiv“-Markierung</b></p>
+<ul>
+<li>2 Panzer im Team: 2 × ${rolePercent} % = ${example2Role} %</li>
+<li>kein Held markiert: +0 %</li>
+<li>keine Kriegsflagge: +0 %</li>
+</ul>
+<p>Bonus: ${example2Bonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${example2Factor} ≈ ${example2Score}</p>
+</td>
+</tr>
+</table>
+</body>
+</html>

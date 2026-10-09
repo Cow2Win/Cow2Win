@@ -8,7 +8,8 @@
   {
     "id": "isaac",
     "fortMarks": {
-      "shooting-range": "NEGATIVE"
+      "shooting-range": "NEGATIVE",
+      "bastion": "NEGATIVE"
     }
   },
   {
@@ -20,7 +21,160 @@
   {
     "id": "alvanor",
     "fortMarks": {
+      "city-hall": "POSITIVE",
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "lilith",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "elmir",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "dorian",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "kayla",
+    "fortMarks": {
+      "foundry": "POSITIVE",
+      "alchemy-tower": "POSITIVE"
+    }
+  },
+  {
+    "id": "artemis",
+    "fortMarks": {
+      "foundry": "POSITIVE",
+      "bastion": "NEGATIVE",
+      "alchemy-tower": "NEGATIVE"
+    }
+  },
+  {
+    "id": "keira",
+    "fortMarks": {
+      "foundry": "POSITIVE"
+    }
+  },
+  {
+    "id": "aidan",
+    "fortMarks": {
+      "bastion": "POSITIVE",
+      "alchemy-tower": "POSITIVE"
+    }
+  },
+  {
+    "id": "electra",
+    "fortMarks": {
+      "bastion": "POSITIVE",
+      "alchemy-tower": "POSITIVE",
+      "shooting-range": "POSITIVE"
+    }
+  },
+  {
+    "id": "luther",
+    "fortMarks": {
+      "bastion": "POSITIVE"
+    }
+  },
+  {
+    "id": "chabba",
+    "fortMarks": {
+      "alchemy-tower": "POSITIVE",
       "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "mushy-and-shroom",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "mojo",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "lara",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "julius",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "satori",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "rufus",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "karkh",
+    "fortMarks": {
+      "city-hall": "POSITIVE",
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "ninja-turtles",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
+  },
+  {
+    "id": "orion",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "polaris",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "ishmael",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "jet",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "tristan",
+    "fortMarks": {
+      "engineerium": "POSITIVE"
+    }
+  },
+  {
+    "id": "astaroth",
+    "fortMarks": {
+      "shooting-range": "POSITIVE"
     }
   }
 ]

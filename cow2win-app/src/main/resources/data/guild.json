@@ -45,7 +45,7 @@
           "titanIds": [
             "brustar",
             "mort",
-            "umbra-and-caliga",
+            "umbra-and-caligo",
             "araji",
             "tenebris"
           ],
@@ -58,7 +58,7 @@
             "avalon",
             "eden",
             "hyperion",
-            "silva"
+            "sylva"
           ],
           "totalPower": 735323,
           "lastModified": "2026-09-04"
@@ -309,7 +309,7 @@
             "angus",
             "avalon",
             "eden",
-            "silva",
+            "sylva",
             "alecto"
           ],
           "totalPower": 520489,
@@ -360,7 +360,7 @@
           "titanIds": [
             "moloch",
             "vulcan",
-            "aherona-and-pyro",
+            "asherona-and-pyro",
             "araji",
             "ignis"
           ],
@@ -370,7 +370,7 @@
         {
           "titanIds": [
             "sigurd",
-            "Tidus-and-gelo",
+            "tidus-and-gelo",
             "keros",
             "hyperion",
             "tenebris"
@@ -551,7 +551,7 @@
             "angus",
             "vulcan",
             "araji",
-            "silva"
+            "sylva"
           ],
           "totalPower": 525120,
           "lastModified": "2026-09-04"
@@ -614,7 +614,7 @@
             "nova",
             "vulcan",
             "ignis",
-            "silva"
+            "sylva"
           ],
           "totalPower": 323803,
           "lastModified": "2026-09-04"

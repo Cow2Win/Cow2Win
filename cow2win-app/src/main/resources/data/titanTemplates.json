@@ -1,15 +1,15 @@
 [
   {
     "slot": 1,
-    "titanIds": ["eden", "angus", "silva", "avalon", "verdoc-and-phyto"]
+    "titanIds": ["eden", "angus", "sylva", "avalon", "verdoc-and-phyto"]
   },
   {
     "slot": 2,
-    "titanIds": ["ignis", "vulcan", "aherona-and-pyro", "araji", "moloch"]
+    "titanIds": ["ignis", "vulcan", "asherona-and-pyro", "araji", "moloch"]
   },
   {
     "slot": 3,
-    "titanIds": ["nova", "sigurd", "mairi", "hyperion", "Tidus-and-gelo"]
+    "titanIds": ["nova", "sigurd", "mairi", "hyperion", "tidus-and-gelo"]
   },
   {
     "slot": 4,
@@ -17,6 +17,6 @@
   },
   {
     "slot": 5,
-    "titanIds": ["tenebris", "mort", "keros", "brustar", "umbra-and-caliga"]
+    "titanIds": ["tenebris", "mort", "keros", "brustar", "umbra-and-caligo"]
   }
 ]

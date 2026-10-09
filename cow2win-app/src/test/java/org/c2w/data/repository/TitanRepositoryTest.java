@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,15 +41,39 @@ class TitanRepositoryTest {
         return repository.findAll().stream().mapToLong(t -> t.fortMarks().marks().size()).sum();
     }
 
+    /**
+     * The shipped default marks of {@code titan} as a loaded workspace holds them: without marks on fortifications
+     * whose buff matches the titan's element (those are not kept).
+     */
+    private static FortMarks keptDefaultMarks(TitanRepository repository, Titan titan) {
+        Map<String, FortMark> kept = new HashMap<>(repository.loadDefaultCowScores().get(titan.id()).marks());
+        kept.keySet().removeIf(fortificationId -> FortificationRepository.findById(fortificationId)
+                .map(fortification -> titan.matchesBuff(fortification.buff())).orElse(false));
+        return new FortMarks(kept);
+    }
+
+    /** Number of kept shipped default marks, without the titans in {@code excludedIds}. */
+    private static long defaultMarkCount(TitanRepository repository, String... excludedIds) {
+        List<String> excluded = List.of(excludedIds);
+        return repository.findAll().stream()
+                .filter(t -> !excluded.contains(t.id()))
+                .mapToLong(t -> keptDefaultMarks(repository, t).marks().size()).sum();
+    }
+
     @Test
-    @DisplayName("a new workspace starts with every titan unmarked (the shipped defaults are empty)")
-    void newWorkspaceHasNoMarks(@TempDir Path workspace) throws IOException {
+    @DisplayName("a new workspace starts with the shipped default marks (without marks on buff-matching fortifications)")
+    void newWorkspaceHasTheDefaultMarks(@TempDir Path workspace) throws IOException {
         TitanRepository repository = new TitanRepository(workspace);
 
         assertTrue(repository.count() > 0);
-        assertEquals(0, markCount(repository));
         assertTrue(Files.isRegularFile(workspace.resolve(FILE_NAME)), "the workspace copy is created");
-        assertTrue(repository.loadDefaultCowScores().values().stream().allMatch(FortMarks::isEmpty));
+        for (Titan titan : repository.findAll()) {
+            assertEquals(keptDefaultMarks(repository, titan), titan.fortMarks(), titan.id());
+        }
+        assertTrue(markCount(repository) > 0, "the shipped defaults have marks");
+        assertEquals(Map.of("bastion-of-fire", FortMark.POSITIVE, "altar-of-life", FortMark.POSITIVE),
+                repository.findById("umbra-and-caligo").orElseThrow().fortMarks().marks(),
+                "sample from the shipped titanCowScore.json");
     }
 
     @Test
@@ -70,7 +95,8 @@ class TitanRepositoryTest {
         TitanRepository reloaded = new TitanRepository(workspace);
         assertEquals(ignisMarks, reloaded.findById("ignis").orElseThrow().fortMarks());
         assertEquals(novaMarks, reloaded.findById("nova").orElseThrow().fortMarks());
-        assertEquals(3, markCount(reloaded));
+        assertEquals(3 + defaultMarkCount(reloaded, "ignis", "nova"), markCount(reloaded),
+                "the other titans keep their default marks");
 
         JsonArray written = JsonParser.parseString(Files.readString(workspace.resolve(FILE_NAME), StandardCharsets.UTF_8))
                 .getAsJsonArray();
@@ -153,7 +179,8 @@ class TitanRepositoryTest {
                 repository.findById("ignis").orElseThrow().fortMarks().marks());
         assertTrue(repository.findById("nova").orElseThrow().fortMarks().isEmpty());
         assertTrue(repository.findById("vulcan").orElseThrow().fortMarks().isEmpty());
-        assertEquals(2, markCount(repository));
+        assertEquals(2 + defaultMarkCount(repository, "ignis", "nova", "vulcan"), markCount(repository),
+                "titans missing from the former file get the default marks");
 
         List<Path> backups = backups(workspace);
         assertEquals(1, backups.size(), "exactly one backup of the former file");
