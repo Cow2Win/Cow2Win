@@ -2,6 +2,7 @@ target/
 documents/
 claude-outputs/
 /config.properties
+/cow2win-app/config.properties
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

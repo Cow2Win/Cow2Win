@@ -6,32 +6,39 @@ files don't update themselves, so after any patch that could touch Clash of
 Worlds, work through this list before trusting the app's output again. It's
 organized by the actual files/checks involved, not by patch-note wording.
 
+Most data steps below (catalog entries, names in all three languages,
+avatars, CowScore entries, combos, templates, `catalog-version.json`) can be
+done with the master data tool `org.c2w.datatool.DataToolApp` (README,
+"Master data tool") - it also checks ids, references and missing names. The
+checks against the game (names as in the battle log, roles, buffs) stay with
+you.
+
 ## 1. New heroes
 
-- [ ] Add an entry to `src/main/resources/data/heroes.json`: `id`, `roles`
+- [ ] Add an entry to `cow2win-app/src/main/resources/data/heroes.json`: `id`, `roles`
       (array - check for heroes with **two** roles, e.g. Cleaver =
       TANK + CONTROL; see `Role.java` for the valid values), `image`.
-- [ ] Export/add the avatar icon under `src/main/resources/images/heroes/`.
+- [ ] Export/add the avatar icon under `cow2win-app/src/main/resources/images/heroes/`.
       Missing icon → falls back to `placeholder.png` (see `Hero.java`), not
       an error, but worth noticing.
 - [ ] Add the display name to **all three** language files
-      (`src/main/resources/language/deutsch/deutsch.properties`,
+      (`cow2win-app/src/main/resources/language/deutsch/deutsch.properties`,
       `english/english.properties`, `francais/francais.properties`) -
       `displayName` is looked up from there at runtime (`LanguageService`),
       not stored on the `Hero` record itself.
 - [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
       assessment (most don't - `STANDARD`/no override is the expected
       default), set it via the "Hero Buff Fit Scores" dialog in-app, or by
-      hand in `src/main/resources/data/cowScore.json` - NOT in
+      hand in `cow2win-app/src/main/resources/data/cowScore.json` - NOT in
       `heroes.json` (see README.md, "Canonical data files": the two are
       deliberately separate files since 2026-09-14).
 
 ## 2. New titans
 
-- [ ] Add an entry to `src/main/resources/data/titans.json`: `id`, `element`
+- [ ] Add an entry to `cow2win-app/src/main/resources/data/titans.json`: `id`, `element`
       (see `TitanElement.java` - includes the rare `DISTORTION` element for
       event titans), `image`.
-- [ ] Avatar under `src/main/resources/images/titans/` (same
+- [ ] Avatar under `cow2win-app/src/main/resources/images/titans/` (same
       placeholder-fallback note as heroes).
 - [ ] Display name in all three language files.
 - [ ] If the titan brings a **new element** (new `TitanElement` constant):
@@ -41,15 +48,15 @@ organized by the actual files/checks involved, not by patch-note wording.
       element; `TotemTextsGameNameTest` fails without it).
 - [ ] If the new titan deserves deliberate fortification marks
       (`fortMarks`, positive/negative), set them via "File" > "CowScore - Titans" in-app, or by
-      hand in `src/main/resources/data/titanCowScore.json` -
+      hand in `cow2win-app/src/main/resources/data/titanCowScore.json` -
       NOT in `titans.json` (separate files since 2026-09-28, same as heroes).
 
 ## 3. New pets
 
-- [ ] Add an entry to `src/main/resources/data/pets.json`: `id` (lowercase,
+- [ ] Add an entry to `cow2win-app/src/main/resources/data/pets.json`: `id` (lowercase,
       used as the language key) and `image`. Pets have **no** roles and no
       element - there is nothing else to fill in.
-- [ ] Avatar under `src/main/resources/images/pets/` (same
+- [ ] Avatar under `cow2win-app/src/main/resources/images/pets/` (same
       placeholder-fallback note as heroes - see `Pet.java`).
 - [ ] Display name in all three language files (section `# Pets` /
       `# Familiers`). Check that the new `id` doesn't collide with an
@@ -57,24 +64,24 @@ organized by the actual files/checks involved, not by patch-note wording.
       flat key namespace in the language files.
 - [ ] If the new pet deserves a deliberate `generalScore`/`buffFitScores`
       assessment, set it via "File" > "CowScore - Pets" in-app, or by hand
-      in `src/main/resources/data/petCowScore.json` - NOT in `pets.json`
+      in `cow2win-app/src/main/resources/data/petCowScore.json` - NOT in `pets.json`
       (same master-data/score split as heroes and titans, see
       `PetRepository.java`).
 
 ## 4. New war flags
 
-- [ ] Add an entry to `src/main/resources/data/warFlags.json`: `id`
+- [ ] Add an entry to `cow2win-app/src/main/resources/data/warFlags.json`: `id`
       (lowercase with a `flag-` prefix, e.g. `flag-bastion` - used as the
       language key; the prefix avoids collisions like the `bastion`
       fortification) and `image`. War flags have **no** roles and no
       element - there is nothing else to fill in.
-- [ ] Icon under `src/main/resources/images/flags/` (same
+- [ ] Icon under `cow2win-app/src/main/resources/images/flags/` (same
       placeholder-fallback note as heroes - see `WarFlag.java`).
 - [ ] Display name in all three language files (section `# Kriegsflaggen` /
       `# War flags` / `# Drapeaux de guerre`).
 - [ ] If the new war flag deserves a deliberate `generalScore`/`buffFitScores`
       assessment, set it via "File" > "CowScore - War Flags" in-app, or by
-      hand in `src/main/resources/data/warFlagCowScore.json` - NOT in
+      hand in `cow2win-app/src/main/resources/data/warFlagCowScore.json` - NOT in
       `warFlags.json` (same master-data/score split as heroes, titans and
       pets, see `WarFlagRepository.java`).
 
@@ -116,7 +123,7 @@ only through them (there are no aliases).
       not from the patch notes or a wiki - spelling, apostrophe (`'`) and
       "und/and/et" exactly as in the log.
 - [ ] Got a new battle log? Copy it into the folder of its game language,
-      `src/test/resources/battlelog/de|en|fr/` (file name unchanged, it is
+      `cow2win-app/src/test/resources/battlelog/de|en|fr/` (file name unchanged, it is
       test data too; `partial/` holds an earlier export of a running battle),
       and run `mvn test`: `BattleLogGameNamesTest` lists every name in the
       sample logs that has no matching game name in its language.
@@ -148,6 +155,6 @@ only through them (there are no aliases).
       table) so it doesn't quietly go stale relative to the actual data
       files.
 - [ ] Update `dataVersion` (and `note`, if useful) in
-      `src/main/resources/data/catalog-version.json` to today's date - it's
+      `cow2win-app/src/main/resources/data/catalog-version.json` to today's date - it's
       logged at app startup so it's visible at a glance which patch state
       the catalog data was last checked against.

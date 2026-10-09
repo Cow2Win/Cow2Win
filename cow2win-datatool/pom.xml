@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Master data tool (main class org.c2w.datatool.DataToolApp): edits the shipped system
+         data in cow2win-app/src/main/resources. Built and tested with the reactor, started
+         from the IDE - deliberately NOT shipped: no shade, no jpackage, no assembly, and the
+         app module does not depend on it. -->
+    <parent>
+        <groupId>org.c2w</groupId>
+        <artifactId>cow2win-parent</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <artifactId>cow2win-datatool</artifactId>
+    <packaging>jar</packaging>
+    <name>Cow2Win data tool</name>
+    <description>Maintenance tool for the system data shipped with Cow2Win (not shipped itself)</description>
+
+    <properties>
+        <!-- Never uploaded or installed as an artifact of its own. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.install.skip>true</maven.install.skip>
+    </properties>
+
+    <dependencies>
+        <!-- Model enums (Role, TitanElement, ...), JsonSupport and - transitively - Gson and
+             material-ui-swing. -->
+        <dependency>
+            <groupId>org.c2w</groupId>
+            <artifactId>Cow2Win</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

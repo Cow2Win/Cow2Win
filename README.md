@@ -38,6 +38,42 @@ into in-game steps (the "Output" stage view, `ChangePlanPanel`) is built in as w
   distribution package) the shade/assembly/jpackage plugins, are pulled from
   Maven Central (see `pom.xml`).
 
+## Project layout
+
+A multi-module Maven build (since 2026-10-09), always built from the
+repository root:
+
+- `pom.xml` - parent (`org.c2w:cow2win-parent`): Java version, encoding and
+  the shared dependency/plugin versions (`dependencyManagement`).
+- `cow2win-app/` - the application (`org.c2w:Cow2Win`): sources, resources,
+  tests and everything for the distribution package (shade, jpackage,
+  assembly). The only module that is shipped.
+- `cow2win-datatool/` - the master data tool (see below). Built and tested
+  with the rest, never shipped (not in the jar, the app-image or the zip).
+- `README.md`, `PATCH-CHECKLIST.md`, `documents/` and `config.properties`
+  (when run from the IDE) stay in the repository root.
+
+## Master data tool
+
+`org.c2w.datatool.DataToolApp` (module `cow2win-datatool`, start it from the
+IDE) maintains the shipped system data in `cow2win-app/src/main/resources`:
+heroes, titans, pets, war flags, fortifications, the four CowScore files,
+hero combos, titan templates, the display names in all three language files
+and the avatars. It never touches a workspace - only a folder ending in
+`src/main/resources` with a `data/heroes.json` is accepted (program
+argument: the repository or the resources folder; otherwise it searches
+upwards from the working directory, then asks).
+
+- One tab per file, a generic table each (column description in
+  `org.c2w.datatool.data.Schema`). Id lists and avatars are edited with a
+  double-click; ids of existing entries are read-only (workspaces refer to
+  them), a new entry's id is suggested from its English name.
+- **Validate** (also run before **Save**) lists errors (block saving) and
+  warnings; double-click jumps to the cell.
+- **Save** writes only changed files, keeps the JSON layout and touches only
+  the name lines of the language files; it offers CowScore entries for new
+  entities and updating `catalog-version.json`. Afterwards run `mvn test`.
+
 ## Build & test
 
 ```
@@ -52,22 +88,24 @@ CI).
 
 Run the app from your IDE for day-to-day development - this project ships an
 IntelliJ `.idea` folder and is meant to be run that way (main class:
-`org.c2w.C2WApp`).
+`org.c2w.C2WApp`, module `Cow2Win`). Working directory: preferably the
+repository root (then `config.properties` lives there as before);
+`cow2win-app/` works too.
 
 ## Distribution package (Windows app-image)
 
 `mvn clean package` (and therefore also `mvn deploy`, which is now a "real"
 deploy in that sense) additionally builds a self-contained Windows package
-under `target/dist/Cow2Win/`, and zips it into
-`target/Cow2Win-<version>-windows-app.zip`:
+under `cow2win-app/target/dist/Cow2Win/`, and zips it into
+`cow2win-app/target/Cow2Win-<version>-windows-app.zip`:
 
 - `Cow2Win.exe` - launches the app, no separately installed Java needed.
 - `runtime/` - a bundled JRE, built by `jpackage`/`jlink` just for this app,
-  containing only the JDK modules listed under `addModules` in `pom.xml`
+  containing only the JDK modules listed under `addModules` in `cow2win-app/pom.xml`
   (`java.base`, `java.desktop`, `java.net.http` for the update check, and
   `java.sql`/`java.naming`/`java.management` for H2) plus their
   dependencies. `runtime/release` lists what actually ended up in there.
-- `resources/` - a plain, on-disk copy of `src/main/resources` (images, the
+- `resources/` - a plain, on-disk copy of `cow2win-app/src/main/resources` (images, the
   catalog JSONs, the language files) alongside the app, in addition to the
   same files being on the jar's classpath as usual. Exception:
   `app-version.properties` is left out there - it is only read from the
@@ -87,9 +125,9 @@ Pass `-Ddist.skip=true` to skip all of this (e.g. for a quick
 
 Implementation: `maven-shade-plugin` (executable jar) ->
 `org.panteleyev:jpackage-maven-plugin` (app-image, wraps the JDK's
-`jpackage`) -> `maven-assembly-plugin` (zips `target/dist/Cow2Win/`, see
-`src/assembly/windows-app.xml`) - all three bound to the `package` phase in
-`pom.xml`.
+`jpackage`) -> `maven-assembly-plugin` (zips `cow2win-app/target/dist/Cow2Win/`, see
+`cow2win-app/src/assembly/windows-app.xml`) - all three bound to the `package` phase in
+`cow2win-app/pom.xml`.
 
 **Adding a dependency or JDK API:** the IDE runs on the full JDK, the
 installed app only on the trimmed `runtime/` - a missing module only shows
@@ -97,13 +135,13 @@ up there (`NoClassDefFoundError`, e.g. `java/sql/DriverManager`). After
 `mvn package`, check the shaded jar and compare with `addModules`:
 
 ```
-jdeps --multi-release 24 --print-module-deps --ignore-missing-deps target/jpackage-input/Cow2Win.jar
+jdeps --multi-release 24 --print-module-deps --ignore-missing-deps cow2win-app/target/jpackage-input/Cow2Win.jar
 ```
 
 Modules that jdeps lists but `addModules` deliberately leaves out (H2
 features not used: `java.compiler`, `java.scripting`, `java.instrument`,
 `jdk.net`) are explained in the comment there. Afterwards check
-`target/dist/Cow2Win/runtime/release` (`MODULES=...`).
+`cow2win-app/target/dist/Cow2Win/runtime/release` (`MODULES=...`).
 
 If `mvn clean` fails with "Failed to delete ...\Cow2Win.exe", the exe from
 the previous jpackage run is read-only - `attrib -R target\dist\* /S /D`
@@ -136,7 +174,7 @@ fixes it.
   stored log keeps its original CSV (gzip) with SHA-256 and the parser
   version, so logs can be read again after a parser improvement. The schema
   is versioned (table `schema_version`, scripts
-  `src/main/resources/journal/schema/V<n>__<name>.sql`, registered in
+  `cow2win-app/src/main/resources/journal/schema/V<n>__<name>.sql`, registered in
   `SchemaMigrator.SCRIPTS`) and migrated when the database is opened; a
   database from a newer Cow2Win is refused, not touched. The connection
   belongs to the open guild (`org.c2w.service.JournalService`): opened on
@@ -145,7 +183,7 @@ fixes it.
   the same journal.
 - **First start** (`org.c2w.service.WorkspaceBootstrap`) - creates a "Demo" guild pre-filled from
   `data/guild.json`/`data/default.lineup` (read from the packaged
-  `resources/` folder, or from `src/main/resources` in the IDE).
+  `resources/` folder, or from `cow2win-app/src/main/resources` in the IDE).
 
 ## Weltenschlacht Journal (user guide)
 
@@ -292,8 +330,8 @@ folder (`new Catalog(tempDir)`).
 - `org.c2w.infra.AppVersion` reads this build's own version at runtime from
   `app-version.properties`, a classpath resource whose `${app.version}`
   placeholder is filled in at build time by Maven resource filtering (see
-  `pom.xml`'s `<resources>` section) - kept as its own tiny sidecar file
-  (filtered) rather than turning on filtering for all of `src/main/resources`
+  `cow2win-app/pom.xml`'s `<resources>` section) - kept as its own tiny sidecar file
+  (filtered) rather than turning on filtering for all of `cow2win-app/src/main/resources`
   (unfiltered for everything else, e.g. the JSON catalogs/language files, so
   none of them can ever have a `${...}`-looking substring "resolved" away).
 - `org.c2w.infra.UpdateChecker` compares that version against
@@ -363,7 +401,7 @@ folder (`new Catalog(tempDir)`).
 
 ## Canonical data files
 
-- `src/main/resources/data/heroes.json`, `titans.json`, `pets.json`,
+- `cow2win-app/src/main/resources/data/heroes.json`, `titans.json`, `pets.json`,
   `warFlags.json`, `fortifications.json` are the canonical source for the
   app's catalog ("objective" master data only). When the game itself
   changes (new heroes/titans, balance changes, new fortifications), edit
@@ -372,12 +410,12 @@ folder (`new Catalog(tempDir)`).
   **in-game names** as they appear in an exported battle log, per language -
   the only basis for mapping log names back to catalog ids (see
   `PATCH-CHECKLIST.md`, "Game names").
-- `src/test/resources/battlelog/de|en|fr/` hold the same 6 battles (attack
+- `cow2win-app/src/test/resources/battlelog/de|en|fr/` hold the same 6 battles (attack
   and defense log each, unchanged file names) in all three game languages,
   `battlelog/partial/` an earlier export of the running battle of 01.10.2026 -
   test data for the Weltenschlacht journal; `.gitattributes` keeps them
   byte-identical (CRLF) on every machine.
-- `src/test/resources/guild/deutscher-bund.json` is a copy of the real guild
+- `cow2win-app/src/test/resources/guild/deutscher-bund.json` is a copy of the real guild
   "Deutscher Bund" (state 04.10.2026) - the truth for the team compositions
   the journal's team builder proposes (`JournalTeamBuilderServiceTest`) and
   the guild the sync is checked against (`JournalSyncServiceTest`).
@@ -386,7 +424,7 @@ folder (`new Catalog(tempDir)`).
   `petCowScore.json`, `warFlagCowScore.json`. The split means a wholesale
   refresh of the master data (e.g. new heroes pulled from GitHub) can't
   clobber the hand-tuned scores, and vice versa.
-- Each score file exists twice: the copy in `src/main/resources/data` holds
+- Each score file exists twice: the copy in `cow2win-app/src/main/resources/data` holds
   the **shipped defaults** (read-only at runtime); the app reads and saves
   the **workspace copy** (see "Workspace, configuration & backups"), created
   from the defaults on the first start and completed with defaults for
@@ -425,7 +463,7 @@ folder (`new Catalog(tempDir)`).
   `titanTemplates.json` does not exist yet - afterwards the file belongs to
   the user. Deleting a template: by hand in the file. Invalid entries are
   logged and ignored; ids no longer in the catalog are skipped when applying.
-- `src/main/resources/data/catalog-version.json` records the `dataVersion`
+- `cow2win-app/src/main/resources/data/catalog-version.json` records the `dataVersion`
   (a date) that the three catalog files above were last checked against,
   read via `CatalogVersion` and logged once at app startup so it's visible
   at a glance in the log panel. It's a separate sidecar file rather than a
@@ -434,10 +472,10 @@ folder (`new Catalog(tempDir)`).
   `CatalogVersion`'s class javadoc for why that ruled out a field on the
   files directly. Update `dataVersion` (and `note` if useful) whenever you
   work through `PATCH-CHECKLIST.md`.
-- `src/main/resources/images/heroes/`, `images/titans/`, `images/pets/`,
+- `cow2win-app/src/main/resources/images/heroes/`, `images/titans/`, `images/pets/`,
   `images/flags/` hold the avatar icons (a missing icon falls back to
   `placeholder.png`, not an error).
-- `src/main/resources/language/<name>/<name>.properties` (e.g.
+- `cow2win-app/src/main/resources/language/<name>/<name>.properties` (e.g.
   `language/deutsch/deutsch.properties`) hold display names and UI strings,
   looked up at runtime via `LanguageService` - they are not stored on the
   `Hero`/`Titan` records themselves. One subdirectory per language (added
@@ -476,7 +514,7 @@ folder (`new Catalog(tempDir)`).
 
 ## Tests
 
-`src/test/java` currently covers:
+`cow2win-app/src/test/java` currently covers:
 
 - `BestPossibleLineupAlgorithmTest` - unlock-depth computation (the OR- vs.
   AND-semantics of `prerequisites`, unknown/cyclic prerequisites, and a
@@ -490,7 +528,7 @@ folder (`new Catalog(tempDir)`).
   described above.
 - `LanguageFilesConsistencyTest` - fails the build if the `deutsch`,
   `english` and `francais` language directories under
-  `src/main/resources/language/` don't define exactly the same set of keys
+  `cow2win-app/src/main/resources/language/` don't define exactly the same set of keys
   in their `<name>.properties` file (a key added to only one language after
   a patch is otherwise a silent gap - `LanguageService` just falls back to
   the raw id, see `PATCH-CHECKLIST.md`'s "all three language files" step).

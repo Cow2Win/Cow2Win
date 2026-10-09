@@ -16,5 +16,11 @@
     "fortMarks": {
       "shooting-range": "NEGATIVE"
     }
+  },
+  {
+    "id": "alvanor",
+    "fortMarks": {
+      "city-hall": "POSITIVE"
+    }
   }
 ]

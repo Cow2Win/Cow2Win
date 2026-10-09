@@ -34,6 +34,9 @@ public final class JsonSupport {
             .disableHtmlEscaping()
             .create();
 
+    /** Folder of the app module below the repository root (multi-module build, see the root pom.xml). */
+    private static final String APP_MODULE_DIR = "cow2win-app";
+
     private JsonSupport() {
     }
 
@@ -61,9 +64,11 @@ public final class JsonSupport {
      * <p>Always a path relative to the current working directory, never absolute or tied to
      * one specific layout, so the same code works both:
      * <ul>
-     *     <li>run from the IDE/source checkout - working directory is the project root, so
-     *         there is no top-level {@code resources/} folder and this falls back to the
-     *         source tree's {@code src/main/resources/...}; and</li>
+     *     <li>run from the IDE/source checkout - there is no top-level {@code resources/}
+     *         folder, so this falls back to the source tree: {@code
+     *         cow2win-app/src/main/resources/...} when the working directory is the
+     *         repository root, otherwise {@code src/main/resources/...} (working directory
+     *         is the app module folder, as in the tests); and</li>
      *     <li>run from the packaged Windows app-image (see {@code pom.xml}'s jpackage
      *         execution) - working directory is the app's own install folder, which has a
      *         plain, on-disk {@code resources/...} folder shipped right there via jpackage's
@@ -84,6 +89,11 @@ public final class JsonSupport {
         Path packaged = resolveUnder(Paths.get("resources"), relativeParts);
         if (Files.exists(packaged)) {
             return packaged;
+        }
+        // IDE run with the repository root as working directory (multi-module layout).
+        Path fromRepoRoot = resolveUnder(Paths.get(APP_MODULE_DIR, "src", "main", "resources"), relativeParts);
+        if (Files.exists(fromRepoRoot)) {
+            return fromRepoRoot;
         }
         return resolveUnder(Paths.get("src", "main", "resources"), relativeParts);
     }

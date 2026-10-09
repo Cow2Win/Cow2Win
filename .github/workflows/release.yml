@@ -58,7 +58,7 @@ jobs:
           VERSION="${TAG#v}"
           echo "Building app.version=$VERSION (from tag $TAG)"
           mvn -B -q org.codehaus.mojo:versions-maven-plugin:2.18.0:set-property \
-            -Dproperty=app.version -DnewVersion="$VERSION"
+            -Dproperty=app.version -DnewVersion="$VERSION" -f cow2win-app/pom.xml
 
       - name: Build Windows app-image (mvn package)
         run: mvn -B package
@@ -67,7 +67,7 @@ jobs:
         id: find_zip
         shell: bash
         run: |
-          ZIP_PATH=$(ls target/Cow2Win-*-windows-app.zip | head -n 1)
+          ZIP_PATH=$(ls cow2win-app/target/Cow2Win-*-windows-app.zip | head -n 1)
           echo "zip_path=$ZIP_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
