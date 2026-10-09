@@ -20,14 +20,16 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 
 /**
- * Reading, merging and writing of a team combo file - currently {@code
- * heroCombos.json} (see {@link HeroComboRepository}); built so that a later
- * {@code titanCombos.json} only needs a different members field and catalog.
+ * Reading, merging and writing of a team combo file - {@code heroCombos.json}
+ * and {@code titanCombos.json} (see {@link TeamComboRepository}); the two
+ * only differ in the members field ({@code heroIds} / {@code titanIds}) and
+ * the catalog the members must come from.
  *
  * <p>Like {@link FortMarkFiles}, each file exists twice: the <b>shipped
  * defaults</b> (a read-only classpath resource, see {@link #loadDefaults})
  * and the <b>workspace copy</b> the app actually reads (see {@link #loadWorkspace}) - maintained
- * in the "Hero combos" tab of the CowScore dialog, which writes it with {@link #save}, or by hand.
+ * in the "Hero combos" / "Titan combos" tabs of the CowScore dialog, which write it with
+ * {@link #save}, or by hand.
  *
  * <p>File format: a JSON array with one object per combo -
  * <pre>
@@ -42,7 +44,7 @@ import java.util.*;
  * </pre>
  * {@code id} is the unique key, the optional {@code name} a custom label
  * shown untranslated instead of the members' localized names (see {@code
- * org.c2w.i18n.ComboTexts}), the members field ({@code heroIds}) lists
+ * org.c2w.i18n.ComboTexts}), the members field ({@code heroIds} / {@code titanIds}) lists
  * {@value TeamCombo#MIN_MEMBERS} to {@value TeamCombo#MAX_MEMBERS} catalog
  * ids, {@code source} is {@code C2W} (shipped) or {@code USER} (added or
  * adapted by the user, see {@link ComboSource}) and the optional {@code
@@ -196,7 +198,7 @@ final class TeamComboFiles {
      * A missing or unknown {@code source} is read as {@link ComboSource#USER}
      * (which is also how the merge treats it); a missing name means "no custom label".
      *
-     * @param membersField   e.g. {@code "heroIds"}
+     * @param membersField   {@code "heroIds"} or {@code "titanIds"}
      * @param knownMemberIds the ids of the catalog the members must come from
      * @param fileName       only used in log messages
      */
@@ -230,7 +232,7 @@ final class TeamComboFiles {
      * ({@code name} and {@code deactivated} only if set). An existing file is first copied to
      * {@code <name>.before-update-<date>.bak}; if that fails, nothing is written.
      *
-     * @param membersField e.g. {@code "heroIds"}
+     * @param membersField {@code "heroIds"} or {@code "titanIds"}
      * @throws IOException if the backup or the write failed
      */
     static void save(Path workspaceFile, List<TeamCombo> combos, String membersField) throws IOException {

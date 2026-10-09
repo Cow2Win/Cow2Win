@@ -6,18 +6,19 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * A team combo: {@value #MIN_MEMBERS} to {@value #MAX_MEMBERS} heroes (or,
- * later, titans) that have synergy effects in the game which are not
+ * A team combo: {@value #MIN_MEMBERS} to {@value #MAX_MEMBERS} heroes or titans
+ * ({@code heroCombos.json} / {@code titanCombos.json}) that have synergy effects in the game which are not
  * visible in the team's power. A combo {@link #matches} a team if ALL of its
  * members are part of that team - see {@code TeamScoreCalculator} for the
  * bonus this gives.
  *
  * <p>Deliberately not hero-specific - {@link #memberIds()} are plain catalog
- * ids, so the same type can be reused for titan combos.
+ * ids, so the same type serves hero and titan combos (a double titan such as
+ * "Asherona and Pyro" is one catalog entry and thus one member).
  *
  * @param id          unique key, also used to match a shipped default with its workspace copy
  * @param name        optional custom label chosen by the user, shown as is (untranslated) - null if the
- *                    combo is displayed by its heroes' localized names, see {@code ComboTexts}
+ *                    combo is displayed by its members' localized names, see {@code ComboTexts}
  * @param memberIds   the ids of the combo's members, {@value #MIN_MEMBERS}..{@value #MAX_MEMBERS}, no duplicates
  * @param source      shipped ({@link ComboSource#C2W}) or user-maintained ({@link ComboSource#USER})
  * @param deactivated the date since when the combo is switched off, null if it is active -

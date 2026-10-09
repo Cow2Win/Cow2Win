@@ -1,12 +1,13 @@
 package org.c2w.data.repository;
 
 import org.c2w.data.model.Hero;
+import org.c2w.data.model.Titan;
 
 import java.nio.file.Path;
 
 /**
  * The catalogs whose CowScores live in the workspace - heroes, titans, pets
- * and war flags, plus the hero combos and the hero/titan team templates -
+ * and war flags, plus the hero/titan combos and the hero/titan team templates -
  * loaded together for one workspace folder. Created once at startup (see
  * {@code WorkspaceBootstrap#start}) and reachable through {@code
  * AppContext#catalog()}; tests simply create their own for a temp folder.
@@ -21,38 +22,40 @@ public final class Catalog {
     private final TitanRepository titans;
     private final PetRepository pets;
     private final WarFlagRepository warFlags;
-    private final HeroComboRepository heroCombos;
+    private final TeamComboRepository heroCombos;
+    private final TeamComboRepository titanCombos;
     private final TeamTemplateRepository heroTemplates;
     private final TeamTemplateRepository titanTemplates;
 
     /**
      * Loads all four catalogs, with their CowScores from (and, if missing, created in) {@code workspaceDir},
-     * and the hero combos (validated against the hero catalog) and the hero/titan team templates
+     * the hero and titan combos (validated against the hero/titan catalog) and the hero/titan team templates
      * (the titan templates' workspace file is created from the shipped defaults if missing).
      */
     public Catalog(Path workspaceDir) {
-        this(workspaceDir, new HeroRepository(workspaceDir));
+        this(workspaceDir, new HeroRepository(workspaceDir), new TitanRepository(workspaceDir));
     }
 
-    private Catalog(Path workspaceDir, HeroRepository heroes) {
-        this(heroes, new TitanRepository(workspaceDir), new PetRepository(workspaceDir),
-                new WarFlagRepository(workspaceDir),
-                new HeroComboRepository(workspaceDir, heroes.findAll().stream().map(Hero::id).toList()),
+    private Catalog(Path workspaceDir, HeroRepository heroes, TitanRepository titans) {
+        this(heroes, titans, new PetRepository(workspaceDir), new WarFlagRepository(workspaceDir),
+                TeamComboRepository.forHeroes(workspaceDir, heroes.findAll().stream().map(Hero::id).toList()),
+                TeamComboRepository.forTitans(workspaceDir, titans.findAll().stream().map(Titan::id).toList()),
                 TeamTemplateRepository.forHeroes(workspaceDir), TeamTemplateRepository.forTitans(workspaceDir));
     }
 
     public Catalog(HeroRepository heroes, TitanRepository titans, PetRepository pets, WarFlagRepository warFlags,
-                   HeroComboRepository heroCombos, TeamTemplateRepository heroTemplates,
-                   TeamTemplateRepository titanTemplates) {
+                   TeamComboRepository heroCombos, TeamComboRepository titanCombos,
+                   TeamTemplateRepository heroTemplates, TeamTemplateRepository titanTemplates) {
         if (heroes == null || titans == null || pets == null || warFlags == null || heroCombos == null
-                || heroTemplates == null || titanTemplates == null) {
-            throw new IllegalArgumentException("Catalog needs all seven repositories");
+                || titanCombos == null || heroTemplates == null || titanTemplates == null) {
+            throw new IllegalArgumentException("Catalog needs all eight repositories");
         }
         this.heroes = heroes;
         this.titans = titans;
         this.pets = pets;
         this.warFlags = warFlags;
         this.heroCombos = heroCombos;
+        this.titanCombos = titanCombos;
         this.heroTemplates = heroTemplates;
         this.titanTemplates = titanTemplates;
     }
@@ -73,8 +76,14 @@ public final class Catalog {
         return warFlags;
     }
 
-    public HeroComboRepository heroCombos() {
+    /** The hero combos ({@code heroCombos.json}). */
+    public TeamComboRepository heroCombos() {
         return heroCombos;
+    }
+
+    /** The titan combos ({@code titanCombos.json}). */
+    public TeamComboRepository titanCombos() {
+        return titanCombos;
     }
 
     /** The workspace-wide hero team templates (F1-F5 in a hero team row). */

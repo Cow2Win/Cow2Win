@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Covers {@link TeamComboFiles} and {@link HeroComboRepository} - loading
- * and validating {@code heroCombos.json} and merging the shipped defaults
+ * Covers {@link TeamComboFiles} and {@link TeamComboRepository} - loading
+ * and validating {@code heroCombos.json} / {@code titanCombos.json} and merging the shipped defaults
  * into the workspace copy.
  */
 class TeamComboFilesTest {
@@ -106,9 +106,9 @@ class TeamComboFilesTest {
         void shippedDefaultsAreValid(@TempDir Path workspace) throws IOException {
             List<String> heroIds = new HeroRepository(workspace).findAll().stream()
                     .map(org.c2w.data.model.Hero::id).toList();
-            HeroComboRepository repository = new HeroComboRepository(workspace, heroIds);
+            TeamComboRepository repository = TeamComboRepository.forHeroes(workspace, heroIds);
 
-            List<String> shipped = ids(TeamComboFiles.loadDefaults(HeroComboRepository.class, "/data/heroCombos.json"));
+            List<String> shipped = ids(TeamComboFiles.loadDefaults(TeamComboRepository.class, "/data/heroCombos.json"));
             assertFalse(shipped.isEmpty(), "combos are shipped");
             assertEquals(shipped, ids(repository.combos()), "no shipped combo is dropped by the validation");
             assertTrue(repository.combos().combos().stream()
@@ -254,13 +254,13 @@ class TeamComboFilesTest {
     }
 
     @Nested
-    @DisplayName("saving (HeroComboRepository.save)")
+    @DisplayName("saving (TeamComboRepository.save)")
     class Saving {
 
         @Test
         @DisplayName("writes the file format (name and deactivated only if set), backs up the old file, reloads the same combos")
         void saveRoundTrip(@TempDir Path workspace) throws IOException {
-            HeroComboRepository repository = new HeroComboRepository(workspace, HERO_IDS);
+            TeamComboRepository repository = TeamComboRepository.forHeroes(workspace, HERO_IDS);
             String before = Files.readString(repository.comboFile(), StandardCharsets.UTF_8);
             List<TeamCombo> combos = List.of(
                     new TeamCombo("sebastian-nebula", null, List.of("sebastian", "nebula"), ComboSource.C2W, null),
@@ -282,7 +282,7 @@ class TeamComboFilesTest {
             assertEquals(List.of("krista", "lars"), user.getAsJsonArray("heroIds").asList().stream()
                     .map(e -> e.getAsString()).toList());
 
-            HeroComboRepository reloaded = new HeroComboRepository(workspace, HERO_IDS);
+            TeamComboRepository reloaded = TeamComboRepository.forHeroes(workspace, HERO_IDS);
             assertTrue(reloaded.combos().combos().containsAll(combos), reloaded.combos().toString());
         }
 
@@ -290,11 +290,112 @@ class TeamComboFilesTest {
         @DisplayName("defaultCombos: the shipped combos, all C2W")
         void defaultCombos(@TempDir Path workspace) {
             List<String> heroIds = new HeroRepository(workspace).findAll().stream().map(org.c2w.data.model.Hero::id).toList();
-            HeroComboRepository repository = new HeroComboRepository(workspace, heroIds);
+            TeamComboRepository repository = TeamComboRepository.forHeroes(workspace, heroIds);
 
-            assertEquals(ids(TeamComboFiles.loadDefaults(HeroComboRepository.class, "/data/heroCombos.json")),
+            assertEquals(ids(TeamComboFiles.loadDefaults(TeamComboRepository.class, "/data/heroCombos.json")),
                     ids(repository.defaultCombos()));
             assertTrue(repository.defaultCombos().combos().stream().allMatch(c -> c.source() == ComboSource.C2W));
+        }
+    }
+
+    @Nested
+    @DisplayName("titan combos (titanCombos.json)")
+    class TitanCombos {
+
+        private static final Set<String> TITAN_IDS = Set.of("solaris", "araji", "eden", "hyperion", "tenebris",
+                "sigurd", "nova", "asherona-and-pyro", "moloch");
+
+        private static final String SHIPPED_ID = "solaris-araji-eden-hyperion-tenebris";
+
+        @Test
+        @DisplayName("the shipped titanCombos.json is valid against the real titan catalog and holds the super titans")
+        void shippedDefaultsAreValid(@TempDir Path workspace) throws IOException {
+            List<String> titanIds = new TitanRepository(workspace).findAll().stream()
+                    .map(org.c2w.data.model.Titan::id).toList();
+            TeamComboRepository repository = TeamComboRepository.forTitans(workspace, titanIds);
+
+            List<String> shipped = ids(TeamComboFiles.loadDefaults(TeamComboRepository.class, "/data/titanCombos.json"));
+            assertEquals(List.of(SHIPPED_ID), shipped);
+            assertEquals(shipped, ids(repository.combos()), "no shipped combo is dropped by the validation");
+            TeamCombo combo = repository.combos().combos().get(0);
+            assertEquals(List.of("solaris", "araji", "eden", "hyperion", "tenebris"), combo.memberIds());
+            assertEquals(ComboSource.C2W, combo.source());
+            assertTrue(combo.isActive());
+            assertFalse(combo.hasCustomName());
+            assertEquals(shipped, ids(repository.defaultCombos()));
+        }
+
+        @Test
+        @DisplayName("no workspace file: titanCombos.json is created next to heroCombos.json, without a backup")
+        void workspaceFileMissing(@TempDir Path workspace) throws IOException {
+            TeamComboRepository repository = TeamComboRepository.forTitans(workspace, TITAN_IDS);
+
+            assertEquals(workspace.resolve("titanCombos.json"), repository.comboFile());
+            assertEquals("titanCombos.json", repository.fileName());
+            assertEquals(List.of(repository.comboFile()), listFiles(workspace));
+            String written = Files.readString(repository.comboFile(), StandardCharsets.UTF_8);
+            assertTrue(written.contains("\"titanIds\""), written);
+            assertFalse(written.contains("heroIds"), written);
+        }
+
+        @Test
+        @DisplayName("merge: shipped C2W combo replaced, unknown C2W removed, missing one added, USER untouched")
+        void merge(@TempDir Path workspace) throws IOException {
+            Path file = workspace.resolve("titanCombos.json");
+            Files.writeString(file, """
+                    [
+                      {"id": "own", "titanIds": ["sigurd", "nova"], "source": "USER"},
+                      {"id": "no-longer-shipped", "titanIds": ["sigurd", "moloch"], "source": "C2W"}
+                    ]
+                    """, StandardCharsets.UTF_8);
+
+            TeamComboRepository repository = TeamComboRepository.forTitans(workspace, TITAN_IDS);
+
+            assertEquals(List.of("own", SHIPPED_ID), ids(repository.combos()));
+            assertEquals(ComboSource.USER, repository.combos().combos().get(0).source());
+            assertTrue(Files.exists(workspace.resolve("titanCombos.json.before-update-" + LocalDate.now() + ".bak")));
+
+            Files.writeString(file, """
+                    [{"id": "%s", "name": "Old", "titanIds": ["solaris", "araji"], "source": "C2W"}]
+                    """.formatted(SHIPPED_ID), StandardCharsets.UTF_8);
+            TeamCombo replaced = TeamComboRepository.forTitans(workspace, TITAN_IDS).combos().combos().get(0);
+            assertEquals(5, replaced.memberIds().size(), "replaced by the shipped version");
+            assertNull(replaced.name());
+        }
+
+        @Test
+        @DisplayName("invalid titan combos (unknown titan id, 1 titan, titan twice) are ignored, a double titan is one member")
+        void ignoresInvalidCombos() {
+            TeamCombos result = TeamComboFiles.toCombos(json("""
+                    [
+                      {"id": "unknown", "titanIds": ["sigurd", "nobody"]},
+                      {"id": "one", "titanIds": ["sigurd"]},
+                      {"id": "twice", "titanIds": ["sigurd", "sigurd"]},
+                      {"id": "hero-field", "heroIds": ["sigurd", "nova"]},
+                      {"id": "double", "titanIds": ["asherona-and-pyro", "moloch"]}
+                    ]
+                    """), TeamComboRepository.TITAN_MEMBERS_FIELD, TITAN_IDS, "titanCombos.json");
+
+            assertEquals(List.of("double"), ids(result));
+            assertEquals(List.of("asherona-and-pyro", "moloch"), result.combos().get(0).memberIds());
+        }
+
+        @Test
+        @DisplayName("save writes titanIds and reloads the same combos")
+        void saveRoundTrip(@TempDir Path workspace) throws IOException {
+            TeamComboRepository repository = TeamComboRepository.forTitans(workspace, TITAN_IDS);
+            List<TeamCombo> combos = List.of(
+                    new TeamCombo(SHIPPED_ID, null, List.of("solaris", "araji", "eden", "hyperion", "tenebris"),
+                            ComboSource.USER, LocalDate.of(2026, 10, 9)),
+                    new TeamCombo("sigurd-nova", "Mine", List.of("sigurd", "nova"), ComboSource.USER, null));
+
+            repository.save(combos);
+
+            JsonArray written = json(Files.readString(repository.comboFile(), StandardCharsets.UTF_8));
+            assertEquals(List.of("sigurd", "nova"), written.get(1).getAsJsonObject().getAsJsonArray("titanIds")
+                    .asList().stream().map(e -> e.getAsString()).toList());
+            assertEquals(combos, TeamComboRepository.forTitans(workspace, TITAN_IDS).combos().combos(),
+                    "USER combos survive the merge on the next start");
         }
     }
 

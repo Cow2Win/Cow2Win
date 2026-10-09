@@ -65,7 +65,7 @@ class ConfigCowScoreBonusesTest {
     @Test
     @DisplayName("Saving and loading gives the same values")
     void roundTrip() throws IOException {
-        CowScoreBonuses bonuses = new CowScoreBonuses(2.5, 1.75, 1.1, 1.3, 1.45, 2.0, 1.05);
+        CowScoreBonuses bonuses = new CowScoreBonuses(2.5, 2.25, 1.1, 1.3, 1.45, 2.0, 1.05);
         Config.setCowScoreBonuses(bonuses);
 
         StringWriter file = new StringWriter();

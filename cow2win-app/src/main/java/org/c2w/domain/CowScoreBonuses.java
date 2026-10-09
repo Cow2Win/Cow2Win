@@ -8,14 +8,14 @@ package org.c2w.domain;
  * <p>Every small bonus lies between {@link #MIN_BONUS} and {@link #MAX_BONUS}, the two buffs
  * between {@link #MIN_BUFF} and {@link #MAX_BUFF}. Basic rule of the formula: the buff is the
  * biggest bonus of its side - the role buff is at least as big as relation, pet, war flag and
- * combo; the element buff at least as big as relation and totem (see {@link #normalized()}).
+ * combo; the element buff at least as big as relation, totem and combo (see {@link #normalized()}).
  *
  * @param rolePercent     per hero whose role matches the fortification's buff
  * @param elementPercent  per titan whose element matches the fortification's buff
  * @param relationPercent +/- once per team for a positively/negatively marked hero/titan (both sides)
  * @param petPercent      a pet marked for the fortification
  * @param warFlagPercent  a war flag marked for the fortification
- * @param comboPercent    once per team if an active hero combo matches
+ * @param comboPercent    once per team if an active hero or titan combo matches (both sides)
  * @param totemPercent    per totem of a titan team
  */
 public record CowScoreBonuses(double rolePercent, double elementPercent, double relationPercent, double petPercent,
@@ -61,9 +61,9 @@ public record CowScoreBonuses(double rolePercent, double elementPercent, double 
         return Math.max(Math.max(relationPercent, petPercent), Math.max(warFlagPercent, comboPercent));
     }
 
-    /** The biggest small bonus of the titan side: relation, totem - the element buff's minimum. */
+    /** The biggest small bonus of the titan side: relation, totem, combo - the element buff's minimum. */
     public double titanBonusMaximum() {
-        return Math.max(relationPercent, totemPercent);
+        return Math.max(Math.max(relationPercent, totemPercent), comboPercent);
     }
 
     private static double buff(double value) {

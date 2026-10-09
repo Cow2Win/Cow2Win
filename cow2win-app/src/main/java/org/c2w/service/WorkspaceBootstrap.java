@@ -141,6 +141,7 @@ public final class WorkspaceBootstrap {
         progress.accept("Loading catalogs ...");
         Catalog catalog = new Catalog(Config.getWorkspaceDir());
         TeamScoreCalculator.setHeroCombos(catalog.heroCombos().combos());
+        TeamScoreCalculator.setTitanCombos(catalog.titanCombos().combos());
         AppContext context = new AppContext(catalog);
         progress.accept("Opening guild and lineup ...");
         boolean guildLoaded = loadGuildContext(context);

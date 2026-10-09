@@ -49,10 +49,10 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
     /** Language file key for the first column title. */
     private static final String KEY_COLUMN_FORTIFICATION = "fortMarks.column.fortification";
 
-    /** Avatar size for the selected entry's name label - shared with {@code HeroComboPanel}. */
+    /** Avatar size for the selected entry's name label - shared with {@link TeamComboPanel}. */
     public static final int AVATAR_SIZE = 40;
 
-    /** Font size of the selected entry's name label - shared with {@code HeroComboPanel}. */
+    /** Font size of the selected entry's name label - shared with {@link TeamComboPanel}. */
     public static final float NAME_FONT_SIZE = 18f;
 
     /** Width reserved for a row's fortification-name label, so every control in the list lines up. */

@@ -218,7 +218,7 @@ class TeamScoreCalculatorTitanTest {
     }
 
     @Test
-    @DisplayName("breakdown: three components (element, relation, totems) in score points, total = powerTerm + sum")
+    @DisplayName("breakdown: four components (element, relation, totems, combo) in score points, total = powerTerm + sum")
     void breakdown() {
         TitanTeam team = team(1_000_000, Set.of(TitanElement.FIRE),
                 titan("f1", TitanElement.FIRE), titan("f2", TitanElement.FIRE),
@@ -227,10 +227,11 @@ class TeamScoreCalculatorTitanTest {
 
         assertEquals(10.0, breakdown.powerTerm(), EPS);
         List<Double> memberScores = breakdown.memberScores();
-        assertEquals(3, memberScores.size());
+        assertEquals(4, memberScores.size());
         assertEquals(10.0 * 3.0 / 100, memberScores.get(0), EPS);   // element: 2 fire titans
         assertEquals(10.0 * -1.25 / 100, memberScores.get(1), EPS); // relation: negative
         assertEquals(10.0 * 1.25 / 100, memberScores.get(2), EPS);  // totems: 1
+        assertEquals(0.0, memberScores.get(3), EPS);                // combo: none registered
         assertEquals(breakdown.powerTerm() + memberScores.stream().mapToDouble(Double::doubleValue).sum(),
                 breakdown.total(), EPS);
         assertEquals(breakdown.total() - breakdown.powerTerm(), breakdown.scoreWithoutPower(), EPS);

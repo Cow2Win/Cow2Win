@@ -9,9 +9,10 @@ import java.util.stream.Collectors;
 /**
  * Builds the human-readable name of a {@link TeamCombo}. Combo names are
  * deliberately NOT kept in the language files - the user can add own combos
- * to {@code heroCombos.json} but cannot add keys to the language files
+ * to {@code heroCombos.json} / {@code titanCombos.json} but cannot add keys to the language files
  * inside the jar. Instead the name is put together from the members'
- * already localized names (e.g. "Sebastian + Nebula"), which works for
+ * already localized names (e.g. "Sebastian + Nebula" - hero and titan ids
+ * alike are language keys), which works for
  * shipped and user combos alike and always follows the configured
  * language. A custom {@link TeamCombo#name()} set by the user takes
  * precedence and is shown as is.

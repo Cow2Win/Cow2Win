@@ -193,7 +193,7 @@ public record TitanTeam(
      * same way to pick a team for a fortification without a buff and as the
      * general "how good is this team" measure independent of any specific
      * fortification: see {@link TeamScoreCalculator#sortScore(TitanTeam)}
-     * (power / 100 000 x (1 + totem bonus)).
+     * (power / 100 000 x (1 + totem bonus + combo bonus)).
      */
     public double sortScore() {
         return TeamScoreCalculator.sortScore(this);

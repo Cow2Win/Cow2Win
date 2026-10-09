@@ -31,7 +31,7 @@ class DataToolPanelSmokeTest {
 
         List<String> titles = IntStream.range(0, panel.tabs().getTabCount()).mapToObj(panel.tabs()::getTitleAt).toList();
         assertEquals(List.of("Heroes", "Titans", "Pets", "War flags", "Fortifications", "Hero CowScore",
-                "Titan CowScore", "Pet CowScore", "War flag CowScore", "Hero combos", "Titan templates"), titles);
+                "Titan CowScore", "Pet CowScore", "War flag CowScore", "Hero combos", "Titan combos", "Titan templates"), titles);
         for (TableKind kind : TableKind.values()) {
             int entries = JsonParser.parseString(Files.readString(root.resolve(kind.relativePath()),
                     StandardCharsets.UTF_8)).getAsJsonArray().size();

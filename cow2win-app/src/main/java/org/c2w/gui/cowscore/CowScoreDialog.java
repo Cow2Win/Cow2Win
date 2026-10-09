@@ -7,7 +7,6 @@ import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.HintStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
-import org.c2w.gui.hero.HeroComboPanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
 import org.c2w.gui.journal.JournalTexts;
 import org.c2w.gui.pet.PetCowScorePanel;
@@ -28,7 +27,7 @@ import java.util.Optional;
 
 /**
  * Non-modal dialog for maintaining the CowScore marks of heroes, titans, pets and war
- * flags and the hero combos - one {@link CowScorePanel} per {@link CowScoreTab}. Opened from
+ * flags and the hero and titan combos - one {@link CowScorePanel} per {@link CowScoreTab}. Opened from
  * the "File" menu, independent of the currently open guild/lineup, since the catalogs are
  * shared across every guild. Only one instance exists at a time, see {@link #open}.
  *
@@ -139,7 +138,8 @@ public final class CowScoreDialog extends JDialog {
         panels.put(CowScoreTab.TITANS, new TitanCowScorePanel(catalog.titans()));
         panels.put(CowScoreTab.PETS, new PetCowScorePanel(catalog.pets()));
         panels.put(CowScoreTab.WAR_FLAGS, new WarFlagCowScorePanel(catalog.warFlags()));
-        panels.put(CowScoreTab.HERO_COMBOS, new HeroComboPanel(catalog.heroCombos(), catalog.heroes()));
+        panels.put(CowScoreTab.HERO_COMBOS, TeamComboPanel.forHeroes(catalog.heroCombos(), catalog.heroes()));
+        panels.put(CowScoreTab.TITAN_COMBOS, TeamComboPanel.forTitans(catalog.titanCombos(), catalog.titans()));
         // The list on the left is equally wide in every tab - wide enough for the longest entry of all tabs.
         int listWidth = CowScoreLayout.listWidth(panels.values().stream().flatMap(p -> p.listLabels().stream()).toList());
         panels.values().forEach(panel -> panel.setListWidth(listWidth));
@@ -218,7 +218,7 @@ public final class CowScoreDialog extends JDialog {
             case PETS -> LanguageService.displayName(key, percent(b.petPercent()));
             case WAR_FLAGS -> LanguageService.displayName(key, percent(b.warFlagPercent()),
                     percent(TeamScoreCalculator.WAR_FLAG_PRESENT_PERCENT));
-            case HERO_COMBOS -> LanguageService.displayName(key, percent(b.comboPercent()));
+            case HERO_COMBOS, TITAN_COMBOS -> LanguageService.displayName(key, percent(b.comboPercent()));
         };
     }
 

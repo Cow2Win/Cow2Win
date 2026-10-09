@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * All known {@link TeamCombo}s of one kind (currently: hero combos, see
- * {@code HeroComboRepository}), active and deactivated ones.
+ * All known {@link TeamCombo}s of one kind (hero or titan combos, see
+ * {@code TeamComboRepository}), active and deactivated ones.
  */
 public record TeamCombos(List<TeamCombo> combos) {
 

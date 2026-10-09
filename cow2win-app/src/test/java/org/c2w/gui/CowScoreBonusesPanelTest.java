@@ -17,20 +17,34 @@ class CowScoreBonusesPanelTest {
     private final CowScoreBonusesPanel panel = new CowScoreBonusesPanel(CowScoreBonuses.DEFAULTS);
 
     @Test
-    @DisplayName("Combo raised to 1.8: the role buff follows to 1.8 (with hint), the element buff stays")
-    void comboRaisesRoleBuff() {
+    @DisplayName("Combo raised to 1.8: both buffs follow to 1.8 (with hint) - the combo applies to heroes and titans")
+    void comboRaisesBothBuffs() {
         panel.comboModel().setValue(1.8);
 
         assertEquals(1.8, panel.bonuses().rolePercent(), EPS);
-        assertEquals(1.5, panel.bonuses().elementPercent(), EPS);
+        assertEquals(1.8, panel.bonuses().elementPercent(), EPS);
         assertTrue(panel.roleRaisedHint().isVisible());
         assertEquals(1.8, ((Number) panel.roleModel().getMinimum()).doubleValue(), EPS,
                 "the buff cannot be set below the combo");
+        assertEquals(1.8, ((Number) panel.elementModel().getMinimum()).doubleValue(), EPS);
 
         panel.comboModel().setValue(1.3);
         assertEquals(1.8, panel.bonuses().rolePercent(), EPS, "lowering a small bonus leaves the buff");
         assertEquals(1.3, ((Number) panel.roleModel().getMinimum()).doubleValue(), EPS,
                 "the minimum follows the biggest small bonus");
+        assertEquals(1.3, ((Number) panel.elementModel().getMinimum()).doubleValue(), EPS);
+    }
+
+    @Test
+    @DisplayName("The team combo: one spinner per side, one model")
+    void comboSharedByBothSides() {
+        List<JSpinner> comboSpinners = spinnersOf(panel.comboModel());
+        assertEquals(2, comboSpinners.size(), "one spinner per side, one model");
+
+        panel.comboModel().setValue(1.6);
+
+        comboSpinners.forEach(spinner -> assertEquals(1.6, ((Number) spinner.getValue()).doubleValue(), EPS));
+        assertEquals(1.6, panel.bonuses().comboPercent(), EPS);
     }
 
     @Test

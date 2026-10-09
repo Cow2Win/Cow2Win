@@ -318,8 +318,8 @@ public final class FortificationEntryDialog extends JDialog {
      * {@link TeamScoreCalculator.Breakdown#memberScores()} = total, e.g.
      * "Wachturm: Team 1 : 10.00 + 0.30 + 0.13 + 0.00 + 0.06 = 10.49" for a
      * hero team (role, relation, pet, war flag, combo bonus in score points);
-     * for a titan team the three components element, relation and totems,
-     * e.g. "Mondtempel: Team 1 : 5.00 + 0.15 + 0.00 + 0.00 = 5.15". Skipped
+     * for a titan team the four components element, relation, totems and combo,
+     * e.g. "Mondtempel: Team 1 : 5.00 + 0.15 + 0.00 + 0.00 + 0.06 = 5.21". Skipped
      * for a row without power (still empty) - every bonus is relative to the
      * power, so it carries no information and would just spam the log once
      * per row every time the dialog opens.

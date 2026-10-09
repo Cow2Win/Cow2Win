@@ -325,18 +325,22 @@ final class Validator {
         return false;
     }
 
-    // --- hero combos ---
+    // --- hero and titan combos ---
 
     private void checkCombos() {
-        List<Row> rows = data.table(TableKind.HERO_COMBOS).rows();
+        checkCombos(TableKind.HERO_COMBOS);
+        checkCombos(TableKind.TITAN_COMBOS);
+    }
+
+    private void checkCombos(TableKind kind) {
+        List<Row> rows = data.table(kind).rows();
         for (int i = 0; i < rows.size(); i++) {
             String deactivated = rows.get(i).getString(Fields.DEACTIVATED);
             if (deactivated != null) {
                 try {
                     LocalDate.parse(deactivated);
                 } catch (DateTimeParseException e) {
-                    error(TableKind.HERO_COMBOS, i, Fields.DEACTIVATED, "Deactivated is no date (yyyy-MM-dd): "
-                            + deactivated);
+                    error(kind, i, Fields.DEACTIVATED, "Deactivated is no date (yyyy-MM-dd): " + deactivated);
                 }
             }
         }

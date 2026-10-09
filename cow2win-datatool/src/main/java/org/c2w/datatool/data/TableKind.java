@@ -21,6 +21,7 @@ public enum TableKind {
     PET_COWSCORE("Pet CowScore", "petCowScore.json", null, ""),
     WAR_FLAG_COWSCORE("War flag CowScore", "warFlagCowScore.json", null, ""),
     HERO_COMBOS("Hero combos", "heroCombos.json", null, ""),
+    TITAN_COMBOS("Titan combos", "titanCombos.json", null, ""),
     TITAN_TEMPLATES("Titan templates", "titanTemplates.json", null, "");
 
     /** The five catalog files whose change is recorded in {@code catalog-version.json}. */
@@ -59,6 +60,11 @@ public enum TableKind {
 
     public boolean isCatalog() {
         return CATALOGS.contains(this);
+    }
+
+    /** The hero or titan combos - same format, only the members field and catalog differ. */
+    public boolean isCombos() {
+        return this == HERO_COMBOS || this == TITAN_COMBOS;
     }
 
     public boolean isCowScore() {

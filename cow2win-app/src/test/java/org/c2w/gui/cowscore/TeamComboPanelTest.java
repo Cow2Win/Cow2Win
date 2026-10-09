@@ -1,15 +1,18 @@
-package org.c2w.gui.hero;
+package org.c2w.gui.cowscore;
 
 import org.c2w.data.model.ComboSource;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.TeamCombo;
 import org.c2w.data.model.TeamCombos;
-import org.c2w.data.repository.HeroComboRepository;
+import org.c2w.data.model.Titan;
 import org.c2w.data.repository.HeroRepository;
+import org.c2w.data.repository.TeamComboRepository;
+import org.c2w.data.repository.TitanRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,22 +24,22 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** {@link HeroComboPanel} with the real hero catalog and shipped combos in a temporary workspace - never shown. */
-class HeroComboPanelTest {
+/** {@link TeamComboPanel} with the real hero/titan catalogs and shipped combos in a temporary workspace - never shown. */
+class TeamComboPanelTest {
 
     @TempDir
     Path workspace;
 
-    private HeroComboRepository repository;
-    private HeroComboPanel panel;
+    private TeamComboRepository repository;
+    private TeamComboPanel panel;
     private TeamCombos registeredBefore;
 
     @BeforeEach
     void createPanel() {
         registeredBefore = TeamScoreCalculator.heroCombos();
         HeroRepository heroes = new HeroRepository(workspace);
-        repository = new HeroComboRepository(workspace, heroes.findAll().stream().map(Hero::id).toList());
-        panel = new HeroComboPanel(repository, heroes);
+        repository = TeamComboRepository.forHeroes(workspace, heroes.findAll().stream().map(Hero::id).toList());
+        panel = TeamComboPanel.forHeroes(repository, heroes);
     }
 
     @AfterEach
@@ -66,7 +69,7 @@ class HeroComboPanelTest {
         panel.newCombo();
         panel.memberCombos().get(0).setSelectedItem("sebastian");
         panel.memberCombos().get(1).setSelectedItem("nebula");
-        HeroComboPanel.Draft created = panel.selectedDraft();
+        TeamComboPanel.Draft created = panel.selectedDraft();
         assertNull(created.id);
 
         panel.save();
@@ -77,8 +80,8 @@ class HeroComboPanelTest {
         panel.memberCombos().get(2).setSelectedItem("lars");
         panel.save();
         assertEquals("sebastian-nebula-2", created.id, "the id does not follow the members");
-        assertEquals("sebastian-nebula", HeroComboPanel.newId(List.of("sebastian", "nebula"), Set.of()));
-        assertEquals("a-b-3", HeroComboPanel.newId(List.of("a", "b"), Set.of("a-b", "a-b-2")));
+        assertEquals("sebastian-nebula", TeamComboPanel.newId(List.of("sebastian", "nebula"), Set.of()));
+        assertEquals("a-b-3", TeamComboPanel.newId(List.of("a", "b"), Set.of("a-b", "a-b-2")));
     }
 
     @Test
@@ -132,7 +135,7 @@ class HeroComboPanelTest {
 
         panel.restoreDefaults();
 
-        HeroComboPanel.Draft shipped = panel.drafts().stream().filter(d -> "sebastian-nebula".equals(d.id)).findFirst().orElseThrow();
+        TeamComboPanel.Draft shipped = panel.drafts().stream().filter(d -> "sebastian-nebula".equals(d.id)).findFirst().orElseThrow();
         assertEquals("", shipped.name);
         assertEquals(ComboSource.C2W, shipped.source);
         assertTrue(panel.drafts().stream().anyMatch(d -> "krista-nebula".equals(d.id)), "own combo kept");
@@ -165,5 +168,91 @@ class HeroComboPanelTest {
 
         assertTrue(TeamScoreCalculator.heroCombos().combos().stream().map(TeamCombo::id).anyMatch("krista-nebula"::equals));
         assertEquals(repository.combos(), TeamScoreCalculator.heroCombos());
+    }
+
+    @Nested
+    @DisplayName("Titan combos tab")
+    class TitanTab {
+
+        private static final String SHIPPED_ID = "solaris-araji-eden-hyperion-tenebris";
+
+        private TeamComboRepository titanRepository;
+        private TeamComboPanel titanPanel;
+        private TeamCombos titansRegisteredBefore;
+
+        @BeforeEach
+        void createTitanPanel() {
+            titansRegisteredBefore = TeamScoreCalculator.titanCombos();
+            TitanRepository titans = new TitanRepository(workspace);
+            titanRepository = TeamComboRepository.forTitans(workspace, titans.findAll().stream().map(Titan::id).toList());
+            titanPanel = TeamComboPanel.forTitans(titanRepository, titans);
+        }
+
+        @AfterEach
+        void restoreTitanCombos() {
+            TeamScoreCalculator.setTitanCombos(titansRegisteredBefore);
+        }
+
+        @Test
+        @DisplayName("shows the shipped super titan combo with five titans; titans to choose from, no heroes")
+        void showsShippedCombo() {
+            titanPanel.select(SHIPPED_ID);
+
+            assertEquals(List.of("solaris", "araji", "eden", "hyperion", "tenebris"), titanPanel.selectedDraft().members());
+            assertFalse(titanPanel.deleteButton().isEnabled(), "shipped combos can only be deactivated");
+            assertEquals("titanCombos.restoreDefaultsConfirm", titanPanel.restoreDefaultsConfirmKey());
+            List<String> choices = new java.util.ArrayList<>();
+            var memberCombo = titanPanel.memberCombos().get(0);
+            for (int i = 0; i < memberCombo.getItemCount(); i++) {
+                choices.add(memberCombo.getItemAt(i));
+            }
+            assertTrue(choices.contains("asherona-and-pyro"), "a double titan is one choice");
+            assertFalse(choices.contains("sebastian"), "no heroes");
+            assertEquals(1, titanPanel.listLabels().size());
+        }
+
+        @Test
+        @DisplayName("titan texts: problems use the titanCombos keys")
+        void titanProblemKeys() {
+            titanPanel.newCombo();
+            titanPanel.memberCombos().get(0).setSelectedItem("sigurd");
+            assertEquals("titanCombos.problem.tooFew", titanPanel.problemKey(titanPanel.selectedDraft()));
+            titanPanel.memberCombos().get(1).setSelectedItem("sigurd");
+            assertEquals("titanCombos.problem.duplicateTitan", titanPanel.problemKey(titanPanel.selectedDraft()));
+        }
+
+        @Test
+        @DisplayName("saving writes titanCombos.json and registers the titan combos - the hero combos stay untouched")
+        void saveRegistersTitanCombos() throws IOException {
+            TeamCombos heroCombosBefore = TeamScoreCalculator.heroCombos();
+            titanPanel.newCombo();
+            titanPanel.memberCombos().get(0).setSelectedItem("sigurd");
+            titanPanel.memberCombos().get(1).setSelectedItem("nova");
+
+            titanPanel.save();
+
+            assertEquals("sigurd-nova", titanPanel.selectedDraft().id);
+            assertEquals(titanRepository.combos(), TeamScoreCalculator.titanCombos());
+            assertTrue(TeamScoreCalculator.titanCombos().combos().stream().map(TeamCombo::id)
+                    .anyMatch("sigurd-nova"::equals));
+            assertSame(heroCombosBefore, TeamScoreCalculator.heroCombos());
+            assertTrue(java.nio.file.Files.readString(workspace.resolve("titanCombos.json")).contains("\"titanIds\""));
+        }
+
+        @Test
+        @DisplayName("deactivating the shipped combo makes it the user's own; restore defaults brings it back")
+        void deactivateAndRestore() {
+            titanPanel.select(SHIPPED_ID);
+            titanPanel.activeCheckBox().doClick();
+            assertEquals(ComboSource.USER, titanPanel.selectedDraft().source);
+            assertNotNull(titanPanel.selectedDraft().deactivated);
+
+            titanPanel.restoreDefaults();
+
+            TeamComboPanel.Draft shipped = titanPanel.drafts().stream().filter(d -> SHIPPED_ID.equals(d.id))
+                    .findFirst().orElseThrow();
+            assertEquals(ComboSource.C2W, shipped.source);
+            assertNull(shipped.deactivated);
+        }
     }
 }

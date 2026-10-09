@@ -99,7 +99,7 @@ public final class DataSet {
     /** Appends a new row (new rows get an editable id). */
     public Row addRow(TableKind kind) {
         Row row = new Row(true);
-        if (kind == TableKind.HERO_COMBOS) {
+        if (kind.isCombos()) {
             row.set(Fields.SOURCE, ComboSource.C2W.name());
         }
         table(kind).rows().add(row);

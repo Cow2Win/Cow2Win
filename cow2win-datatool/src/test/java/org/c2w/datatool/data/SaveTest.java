@@ -139,6 +139,38 @@ class SaveTest {
     }
 
     @Test
+    void titanCombosAreCheckedAndSavedLikeHeroCombos() throws IOException {
+        DataTable combos = data.table(TableKind.TITAN_COMBOS);
+        Row shipped = combos.findById("solaris-araji-eden-hyperion-tenebris");
+        assertNotNull(shipped);
+        assertEquals(List.of("solaris", "araji", "eden", "hyperion", "tenebris"), shipped.getList(Fields.TITAN_IDS));
+
+        data.deleteRow(TableKind.TITANS, data.table(TableKind.TITANS).findById("eden"));
+        SaveResult refused = data.save(new SaveOptions(Set.of(), false, TODAY));
+        assertFalse(refused.saved());
+        assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.TITAN_COMBOS
+                && p.field().equals(Fields.TITAN_IDS) && p.message().contains("eden")), refused.errors()::toString);
+
+        data = DataSet.load(root);
+        Row combo = data.addRow(TableKind.TITAN_COMBOS);
+        assertEquals("C2W", combo.getString(Fields.SOURCE));
+        data.setValue(TableKind.TITAN_COMBOS, combo, Fields.ID, "ignis-araji");
+        data.setValue(TableKind.TITAN_COMBOS, combo, Fields.TITAN_IDS, List.of("ignis"));
+        assertFalse(data.save(new SaveOptions(Set.of(), true, TODAY)).saved(), "a combo needs 2 titans");
+
+        data.setValue(TableKind.TITAN_COMBOS, combo, Fields.TITAN_IDS, List.of("ignis", "araji"));
+        data.setValue(TableKind.TITAN_COMBOS, combo, Fields.DEACTIVATED, "2030-01-01");
+        SaveResult saved = data.save(new SaveOptions(Set.of(), true, TODAY));
+
+        assertTrue(saved.saved(), () -> "errors: " + saved.errors());
+        assertEquals(List.of("data/titanCombos.json"), saved.written());
+        String file = read("data/titanCombos.json");
+        assertTrue(file.contains("\"titanIds\": [\"ignis\", \"araji\"]"), file);
+        assertEquals("2030-01-01", DataSet.load(root).table(TableKind.TITAN_COMBOS).findById("ignis-araji")
+                .getString(Fields.DEACTIVATED));
+    }
+
+    @Test
     void theDataVersionIsOnlySetWhenACatalogFileChanges() throws IOException {
         String version = read("data/catalog-version.json");
         Row combo = data.table(TableKind.HERO_COMBOS).findById("krista-lars");

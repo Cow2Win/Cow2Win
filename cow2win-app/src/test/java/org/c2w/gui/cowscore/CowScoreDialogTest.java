@@ -44,12 +44,12 @@ class CowScoreDialogTest {
     }
 
     @Test
-    @DisplayName("Five tabs in the order heroes, titans, pets, war flags, hero combos")
+    @DisplayName("Six tabs in the order heroes, titans, pets, war flags, hero combos, titan combos")
     void tabOrder() throws Exception {
         SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog, CowScoreTab.HEROES));
 
         List<CowScoreTab> tabs = List.of(CowScoreTab.HEROES, CowScoreTab.TITANS, CowScoreTab.PETS, CowScoreTab.WAR_FLAGS,
-                CowScoreTab.HERO_COMBOS);
+                CowScoreTab.HERO_COMBOS, CowScoreTab.TITAN_COMBOS);
         assertEquals(tabs, List.of(CowScoreTab.values()));
         for (CowScoreTab tab : tabs) {
             assertEquals(LanguageService.displayName(tab.textKey()), dialog.tabTitle(tab));
@@ -57,7 +57,7 @@ class CowScoreDialogTest {
     }
 
     @Test
-    @DisplayName("\"Info\" is the first tab, followed by the five editable tabs in their old order")
+    @DisplayName("\"Info\" is the first tab, followed by the six editable tabs in their order")
     void infoTabFirst() throws Exception {
         SwingUtilities.invokeAndWait(() -> dialog = CowScoreDialog.open(null, catalog));
 
@@ -285,10 +285,13 @@ class CowScoreDialogTest {
             org.c2w.domain.TeamScoreCalculator.setBonuses(new org.c2w.domain.CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 2.0, 1.25));
             String combos = CowScoreDialog.infoText(CowScoreTab.HERO_COMBOS);
             assertTrue(combos.contains("+2 %"), combos);
+            String titanCombos = CowScoreDialog.infoText(CowScoreTab.TITAN_COMBOS);
+            assertTrue(titanCombos.contains("+2 %"), titanCombos);
         } finally {
             org.c2w.domain.TeamScoreCalculator.setBonuses(org.c2w.domain.CowScoreBonuses.DEFAULTS);
         }
         assertFalse(CowScoreDialog.infoText(CowScoreTab.HERO_COMBOS).contains("+2 %"), "back to the defaults");
+        assertFalse(CowScoreDialog.infoText(CowScoreTab.TITAN_COMBOS).contains("+2 %"), "back to the defaults");
     }
 
     @Test

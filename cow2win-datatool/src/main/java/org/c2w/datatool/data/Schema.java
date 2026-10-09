@@ -72,9 +72,13 @@ public final class Schema {
                     }
                 }
             }
-            case HERO_COMBOS -> {
+            case HERO_COMBOS, TITAN_COMBOS -> {
                 columns.add(of("ID", Fields.ID, TEXT).asRequired().editableIf(NEW_ROWS_ONLY));
-                columns.add(of("Heroes", Fields.HERO_IDS, ID_LIST).ref(TableKind.HEROES).count(2, 5).asOrderable());
+                if (kind == TableKind.HERO_COMBOS) {
+                    columns.add(of("Heroes", Fields.HERO_IDS, ID_LIST).ref(TableKind.HEROES).count(2, 5).asOrderable());
+                } else {
+                    columns.add(of("Titans", Fields.TITAN_IDS, ID_LIST).ref(TableKind.TITANS).count(2, 5).asOrderable());
+                }
                 columns.add(of("Name", Fields.NAME, TEXT));
                 columns.add(of("Source", Fields.SOURCE, ENUM).options(names(ComboSource.values())).asRequired());
                 columns.add(of("Deactivated", Fields.DEACTIVATED, TEXT));

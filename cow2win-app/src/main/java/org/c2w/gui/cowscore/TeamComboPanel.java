@@ -1,16 +1,16 @@
-package org.c2w.gui.hero;
+package org.c2w.gui.cowscore;
 
 import org.c2w.data.model.ComboSource;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.TeamCombo;
-import org.c2w.data.repository.HeroComboRepository;
+import org.c2w.data.model.TeamCombos;
+import org.c2w.data.model.Titan;
 import org.c2w.data.repository.HeroRepository;
+import org.c2w.data.repository.TeamComboRepository;
+import org.c2w.data.repository.TitanRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.cowscore.AbstractCowScorePanel;
-import org.c2w.gui.cowscore.CowScoreLayout;
-import org.c2w.gui.cowscore.CowScorePanel;
 import org.c2w.i18n.ComboTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
@@ -30,17 +30,25 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * "Hero combos" tab of the CowScore dialog: maintains the hero {@link TeamCombo}s of
- * {@code heroCombos.json} (see {@link HeroComboRepository}) in a working copy until
- * {@link #save()}. Same layout as the other tabs - the list of combos on the left (deactivated
- * ones gray, invalid ones red) with "new" and "delete" buttons below it, on the right the
- * selected combo: header with the members' avatars and its name, optional name, up to
- * {@value TeamCombo#MAX_MEMBERS} heroes, "active" and where it comes from.
+ * "Hero combos" / "Titan combos" tab of the CowScore dialog: maintains the {@link TeamCombo}s of
+ * {@code heroCombos.json} / {@code titanCombos.json} (see {@link TeamComboRepository}) in a working
+ * copy until {@link #save()}. Use {@link #forHeroes}/{@link #forTitans}; both kinds work exactly
+ * alike and only differ in the member catalog, the texts (keys {@code heroCombos.*} /
+ * {@code titanCombos.*}) and where the saved combos are registered.
+ *
+ * <p>Same layout as the other tabs - the list of combos on the left (deactivated ones gray,
+ * invalid ones red) with "new" and "delete" buttons below it, on the right the selected combo:
+ * header with the members' avatars and its name, optional name, up to
+ * {@value TeamCombo#MAX_MEMBERS} members, "active" and where it comes from.
  *
  * <p>Changing a shipped combo makes it the user's own ({@link ComboSource#USER}) - otherwise
  * the merge on the next start would undo the change. Shipped combos cannot be deleted (they
@@ -48,12 +56,12 @@ import java.util.stream.Collectors;
  * save: the members' ids joined with "-", with "-2", "-3", ... if that is taken. After saving,
  * the combos are handed to {@link TeamScoreCalculator} right away.
  */
-public final class HeroComboPanel extends JPanel implements CowScorePanel {
+public final class TeamComboPanel extends JPanel implements CowScorePanel {
 
     private static final String ICON_NEW = "/images/app/add.png";
     private static final String ICON_DELETE = "/images/app/delete.png";
     private static final int BUTTON_ICON_SIZE = 16;
-    private static final int HERO_ICON_SIZE = 20;
+    private static final int MEMBER_ICON_SIZE = 20;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     /** Text color of an invalid combo in the list - readable on the dark background. */
     private static final Color INVALID_COLOR = new Color(229, 115, 115);
@@ -79,7 +87,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
             return draft;
         }
 
-        /** The chosen heroes, in field order. */
+        /** The chosen members, in field order. */
         List<String> members() {
             return Arrays.stream(memberIds).filter(Objects::nonNull).toList();
         }
@@ -89,8 +97,17 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         }
     }
 
-    private final HeroComboRepository repository;
-    private final HeroRepository heroes;
+    private final TeamComboRepository repository;
+    /** All ids of the member catalog, sorted by localized name - the choices of a member combo box. */
+    private final List<String> memberIds;
+    /** Avatar path of a member id, empty if unknown. */
+    private final Function<String, Optional<String>> imagePathOf;
+    /** Prefix of every language file key of this tab, e.g. {@code "heroCombos"}. */
+    private final String textPrefix;
+    /** Member word of the member-specific keys, e.g. {@code "Hero"} for {@code heroCombos.noHero}. */
+    private final String memberWord;
+    /** Where the saved combos are registered, e.g. {@link TeamScoreCalculator#setHeroCombos}. */
+    private final Consumer<TeamCombos> register;
     /** Ids of the shipped combos - these cannot be deleted. */
     private final Set<String> shippedIds;
 
@@ -118,10 +135,17 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
     /** True while the fields are filled from a draft - their listeners must not count that as an edit. */
     private boolean filling;
 
-    public HeroComboPanel(HeroComboRepository repository, HeroRepository heroes) {
+    private TeamComboPanel(TeamComboRepository repository, List<String> memberIds,
+                           Function<String, Optional<String>> imagePathOf, String textPrefix, String memberWord,
+                           Consumer<TeamCombos> register) {
         super(new BorderLayout());
         this.repository = Objects.requireNonNull(repository);
-        this.heroes = Objects.requireNonNull(heroes);
+        this.memberIds = memberIds.stream()
+                .sorted(Comparator.comparing(LanguageService::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
+        this.imagePathOf = Objects.requireNonNull(imagePathOf);
+        this.textPrefix = textPrefix;
+        this.memberWord = memberWord;
+        this.register = Objects.requireNonNull(register);
         this.shippedIds = repository.defaultCombos().combos().stream().map(TeamCombo::id).collect(Collectors.toSet());
 
         list.setCellRenderer(new ComboRenderer());
@@ -130,7 +154,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
                 showSelected();
             }
         });
-        newButton.setToolTipText(LanguageService.displayName("heroCombos.new"));
+        newButton.setToolTipText(LanguageService.displayName(text("new")));
         newButton.addActionListener(e -> newCombo());
         deleteButton.addActionListener(e -> onDelete());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
@@ -149,6 +173,20 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         load(repository.combos().combos().stream().map(Draft::of).toList());
     }
 
+    /** The "Hero combos" tab: {@code heroCombos.json}, members from {@code heroes}. */
+    public static TeamComboPanel forHeroes(TeamComboRepository repository, HeroRepository heroes) {
+        return new TeamComboPanel(repository, heroes.findAll().stream().map(Hero::id).toList(),
+                id -> heroes.findById(id).map(Hero::imagePath), "heroCombos", "Hero",
+                TeamScoreCalculator::setHeroCombos);
+    }
+
+    /** The "Titan combos" tab: {@code titanCombos.json}, members from {@code titans}. */
+    public static TeamComboPanel forTitans(TeamComboRepository repository, TitanRepository titans) {
+        return new TeamComboPanel(repository, titans.findAll().stream().map(Titan::id).toList(),
+                id -> titans.findById(id).map(Titan::imagePath), "titanCombos", "Titan",
+                TeamScoreCalculator::setTitanCombos);
+    }
+
     // --- CowScorePanel ---
 
     @Override
@@ -157,7 +195,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
     }
 
     /**
-     * Checks every combo, gives new ones their id, writes {@code heroCombos.json} and hands the
+     * Checks every combo, gives new ones their id, writes the combo file and hands the
      * combos to {@link TeamScoreCalculator}.
      *
      * @throws IOException if a combo is invalid (nothing is written) or writing failed
@@ -167,7 +205,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         List<Draft> drafts = drafts();
         List<String> invalid = drafts.stream().filter(d -> problemKey(d) != null).map(this::displayName).toList();
         if (!invalid.isEmpty()) {
-            throw new IOException(LanguageService.displayName("heroCombos.invalid", String.join(", ", invalid)));
+            throw new IOException(LanguageService.displayName(text("invalid"), String.join(", ", invalid)));
         }
         Set<String> takenIds = new HashSet<>(shippedIds);
         drafts.stream().map(d -> d.id).filter(Objects::nonNull).forEach(takenIds::add);
@@ -183,8 +221,8 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         for (int i = 0; i < drafts.size(); i++) {
             drafts.get(i).id = ids.get(i);
         }
-        TeamScoreCalculator.setHeroCombos(repository.combos());
-        Logger.log("Saved: " + HeroComboRepository.FILE_NAME);
+        register.accept(repository.combos());
+        Logger.log("Saved: " + repository.fileName());
         setUnsaved(false);
         showSelected();
     }
@@ -206,7 +244,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
             }
         }
         load(result);
-        Logger.log("CowScore " + HeroComboRepository.FILE_NAME + ": restored the shipped combos (not saved yet)");
+        Logger.log("CowScore " + repository.fileName() + ": restored the shipped combos (not saved yet)");
         setUnsaved(true);
     }
 
@@ -217,7 +255,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
 
     @Override
     public String restoreDefaultsConfirmKey() {
-        return "heroCombos.restoreDefaultsConfirm";
+        return text("restoreDefaultsConfirm");
     }
 
     @Override
@@ -313,16 +351,16 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
     String problemKey(Draft draft) {
         List<String> members = draft.members();
         if (members.size() < TeamCombo.MIN_MEMBERS) {
-            return "heroCombos.problem.tooFew";
+            return text("problem.tooFew");
         }
         if (new HashSet<>(members).size() != members.size()) {
-            return "heroCombos.problem.duplicateHero";
+            return text("problem.duplicate" + memberWord);
         }
         Set<String> memberSet = Set.copyOf(members);
         for (int i = 0; i < listModel.size(); i++) {
             Draft other = listModel.get(i);
             if (other != draft && Set.copyOf(other.members()).equals(memberSet)) {
-                return "heroCombos.problem.sameMembers";
+                return text("problem.sameMembers");
             }
         }
         return null;
@@ -346,7 +384,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
             return;
         }
         int answer = JOptionPane.showConfirmDialog(this,
-                LanguageService.displayName("heroCombos.deleteConfirm", displayName(draft)),
+                LanguageService.displayName(text("deleteConfirm"), displayName(draft)),
                 LanguageService.displayName("common.confirmTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (answer == JOptionPane.YES_OPTION) {
             deleteSelected();
@@ -364,6 +402,11 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         showSelected();
     }
 
+    /** The language file key {@code <prefix>.<suffix>} of this tab, e.g. {@code heroCombos.new}. */
+    private String text(String suffix) {
+        return textPrefix + "." + suffix;
+    }
+
     private static int indexOfId(List<Draft> drafts, String id) {
         for (int i = 0; i < drafts.size(); i++) {
             if (id.equals(drafts.get(i).id)) {
@@ -378,7 +421,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
             return draft.name.trim();
         }
         List<String> members = draft.members();
-        return members.isEmpty() ? LanguageService.displayName("heroCombos.unnamed") : ComboTexts.memberNames(members);
+        return members.isEmpty() ? LanguageService.displayName(text("unnamed")) : ComboTexts.memberNames(members);
     }
 
     private void setUnsaved(boolean unsaved) {
@@ -401,7 +444,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         detailContainer.removeAll();
         deleteButton.setEnabled(draft != null && canDelete(draft));
         deleteButton.setToolTipText(LanguageService.displayName(draft != null && !canDelete(draft)
-                ? "heroCombos.deleteShipped" : "heroCombos.delete"));
+                ? text("deleteShipped") : text("delete")));
         if (draft != null) {
             filling = true;
             try {
@@ -424,7 +467,7 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
     private void updateDerived(Draft draft) {
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         for (String memberId : draft.members()) {
-            heroes.findById(memberId).map(Hero::imagePath)
+            imagePathOf.apply(memberId)
                     .map(path -> IconLoader.iconFor(path, AbstractCowScorePanel.AVATAR_SIZE))
                     .ifPresent(icon -> header.add(new JLabel(icon)));
         }
@@ -435,8 +478,8 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         headerHolder.repaint();
 
         deactivatedLabel.setText(draft.deactivated == null ? ""
-                : LanguageService.displayName("heroCombos.deactivatedSince", DATE_FORMAT.format(draft.deactivated)));
-        sourceLabel.setText(LanguageService.displayName("heroCombos.source." + draft.source.name()));
+                : LanguageService.displayName(text("deactivatedSince"), DATE_FORMAT.format(draft.deactivated)));
+        sourceLabel.setText(LanguageService.displayName(text("source.") + draft.source.name()));
         shippedHintLabel.setVisible(draft.id != null && shippedIds.contains(draft.id));
         String problem = problemKey(draft);
         problemLabel.setText(problem == null ? "" : LanguageService.displayName(problem));
@@ -470,20 +513,18 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
                 nameChanged();
             }
         });
-        addFormRow(panel, gbc, 1, "heroCombos.name", nameField);
+        addFormRow(panel, gbc, 1, text("name"), nameField);
 
-        JLabel heroColumn = new JLabel(LanguageService.displayName("heroCombos.column.hero"));
-        heroColumn.setForeground(Color.WHITE);
-        heroColumn.setFont(heroColumn.getFont().deriveFont(Font.BOLD));
-        heroColumn.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
-        addFormRow(panel, gbc, 2, "heroCombos.members", heroColumn);
-        List<String> heroIds = heroes.findAll().stream().map(Hero::id)
-                .sorted(Comparator.comparing(LanguageService::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
+        JLabel memberColumn = new JLabel(LanguageService.displayName(text("column." + memberWord.toLowerCase(Locale.ROOT))));
+        memberColumn.setForeground(Color.WHITE);
+        memberColumn.setFont(memberColumn.getFont().deriveFont(Font.BOLD));
+        memberColumn.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
+        addFormRow(panel, gbc, 2, text("members"), memberColumn);
         for (int i = 0; i < TeamCombo.MAX_MEMBERS; i++) {
             JComboBox<String> combo = new JComboBox<>();
             combo.addItem(null);
-            heroIds.forEach(combo::addItem);
-            combo.setRenderer(new HeroRenderer());
+            memberIds.forEach(combo::addItem);
+            combo.setRenderer(new MemberRenderer());
             combo.setMaximumRowCount(15);
             int slot = i;
             combo.addActionListener(e -> {
@@ -509,9 +550,9 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         activePanel.add(Box.createHorizontalStrut(8));
         activePanel.add(deactivatedLabel);
         int row = 3 + TeamCombo.MAX_MEMBERS;
-        addFormRow(panel, gbc, row++, "heroCombos.active", activePanel);
-        addFormRow(panel, gbc, row++, "heroCombos.source", sourceLabel);
-        shippedHintLabel.setText(LanguageService.displayName("heroCombos.shippedHint"));
+        addFormRow(panel, gbc, row++, text("active"), activePanel);
+        addFormRow(panel, gbc, row++, text("source"), sourceLabel);
+        shippedHintLabel.setText(LanguageService.displayName(text("shippedHint")));
         addFormRow(panel, gbc, row++, null, shippedHintLabel);
         problemLabel.setForeground(INVALID_COLOR);
         addFormRow(panel, gbc, row++, null, problemLabel);
@@ -566,18 +607,18 @@ public final class HeroComboPanel extends JPanel implements CowScorePanel {
         }
     }
 
-    /** A hero in a member combo box: avatar and localized name, "- no hero -" for null. */
-    private final class HeroRenderer extends DefaultListCellRenderer {
+    /** A member in a member combo box: avatar and localized name, "- no hero -" (or titan) for null. */
+    private final class MemberRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof String heroId) {
-                setText(LanguageService.displayName(heroId));
-                setIcon(heroes.findById(heroId).map(Hero::imagePath)
-                        .map(path -> IconLoader.iconFor(path, HERO_ICON_SIZE)).orElse(null));
+            if (value instanceof String memberId) {
+                setText(LanguageService.displayName(memberId));
+                setIcon(imagePathOf.apply(memberId)
+                        .map(path -> IconLoader.iconFor(path, MEMBER_ICON_SIZE)).orElse(null));
             } else {
-                setText(LanguageService.displayName("heroCombos.noHero"));
+                setText(LanguageService.displayName(text("no" + memberWord)));
                 setIcon(null);
             }
             return this;

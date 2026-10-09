@@ -11,10 +11,10 @@ import java.text.NumberFormat;
 
 /**
  * The "CowScore bonuses" area of {@link SettingsDialog}: one spinner per adjustable percentage of
- * {@link CowScoreBonuses}, heroes on the left, titans on the right. The relation applies to both
- * sides - its two spinners share one model. Each buff is the biggest bonus of its side: raising a
- * small bonus above it raises the buff too (with a short hint), and the buff's minimum is the
- * biggest small bonus of its side. Lowering a small bonus leaves the buff where it is.
+ * {@link CowScoreBonuses}, heroes on the left, titans on the right. The relation and the team
+ * combo apply to both sides - each has two spinners sharing one model. Each buff is the biggest
+ * bonus of its side: raising a small bonus above it raises the buff too (with a short hint), and
+ * the buff's minimum is the biggest small bonus of its side. Lowering a small bonus leaves the buff where it is.
  */
 final class CowScoreBonusesPanel extends JPanel {
 
@@ -52,6 +52,7 @@ final class CowScoreBonusesPanel extends JPanel {
         addSpinnerRow(titans, 1, "settings.cowScore.element", elementModel, true, elementRaisedHint);
         addSpinnerRow(titans, 2, "settings.cowScore.relation", relationModel, false, null);
         addSpinnerRow(titans, 3, "settings.cowScore.totem", totemModel, false, null);
+        addSpinnerRow(titans, 4, "settings.cowScore.combo", comboModel, false, null);
         columns.add(heroes);
         columns.add(titans);
         add(columns, BorderLayout.CENTER);
@@ -137,7 +138,7 @@ final class CowScoreBonusesPanel extends JPanel {
     private void raiseBuffs() {
         double heroMaximum = Math.max(Math.max(value(relationModel), value(petModel)),
                 Math.max(value(warFlagModel), value(comboModel)));
-        double titanMaximum = Math.max(value(relationModel), value(totemModel));
+        double titanMaximum = Math.max(Math.max(value(relationModel), value(totemModel)), value(comboModel));
         raising = true;
         try {
             if (value(roleModel) < heroMaximum) {
@@ -158,7 +159,7 @@ final class CowScoreBonusesPanel extends JPanel {
     private void updateBuffMinimums() {
         double heroMaximum = Math.max(Math.max(value(relationModel), value(petModel)),
                 Math.max(value(warFlagModel), value(comboModel)));
-        double titanMaximum = Math.max(value(relationModel), value(totemModel));
+        double titanMaximum = Math.max(Math.max(value(relationModel), value(totemModel)), value(comboModel));
         roleModel.setMinimum(Math.max(CowScoreBonuses.MIN_BUFF, heroMaximum));
         elementModel.setMinimum(Math.max(CowScoreBonuses.MIN_BUFF, titanMaximum));
     }

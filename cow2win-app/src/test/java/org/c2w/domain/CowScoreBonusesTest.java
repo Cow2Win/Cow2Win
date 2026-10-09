@@ -44,7 +44,7 @@ class CowScoreBonusesTest {
     void raisesBuffPerSide() {
         CowScoreBonuses combo = new CowScoreBonuses(1.2, 1.5, 1.25, 1.25, 1.25, 1.8, 1.25).normalized();
         assertEquals(1.8, combo.rolePercent(), EPS);
-        assertEquals(1.5, combo.elementPercent(), EPS, "the titan side is not affected by the combo");
+        assertEquals(1.8, combo.elementPercent(), EPS, "the combo counts for both sides");
 
         CowScoreBonuses totem = new CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 1.25, 1.9).normalized();
         assertEquals(1.9, totem.elementPercent(), EPS);
@@ -53,6 +53,16 @@ class CowScoreBonusesTest {
         CowScoreBonuses relation = new CowScoreBonuses(1.5, 1.5, 2.0, 1.25, 1.25, 1.25, 1.25).normalized();
         assertEquals(2.0, relation.rolePercent(), EPS, "the relation counts for both sides");
         assertEquals(2.0, relation.elementPercent(), EPS);
+    }
+
+    @Test
+    @DisplayName("titanBonusMaximum covers relation, totem and the team combo")
+    void titanBonusMaximumIncludesCombo() {
+        assertEquals(1.25, CowScoreBonuses.DEFAULTS.titanBonusMaximum(), EPS);
+        assertEquals(1.7, new CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 1.7, 1.25).titanBonusMaximum(), EPS);
+        assertEquals(1.6, new CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 1.2, 1.6).titanBonusMaximum(), EPS);
+        assertEquals(2.0, new CowScoreBonuses(1.5, 1.5, 1.25, 1.25, 1.25, 2.0, 1.25).normalized().elementPercent(), EPS,
+                "a big combo raises the element buff");
     }
 
     @Test
@@ -75,10 +85,10 @@ class CowScoreBonusesTest {
         TitanTeam titans = new TitanTeam("m1", 0, List.of(new Titan("f1", TitanElement.FIRE), new Titan("f2", TitanElement.FIRE),
                 new Titan("w1", TitanElement.WATER).withFortMarks(new FortMarks(Map.of("fire-fort", FortMark.NEGATIVE)))),
                 1_000_000, null, Set.of(TitanElement.FIRE));
-        TeamScoreCalculator.TitanBonus titanBonus = TeamScoreCalculator.titanBonus(titans, fireFort);
+        TeamScoreCalculator.TitanBonus titanBonus = TeamScoreCalculator.titanBonus(titans, fireFort, TeamCombos.NONE);
         assertEquals(6.0, titanBonus.elementPercent(), EPS);
         assertEquals(-2.0, titanBonus.relationPercent(), EPS);
         assertEquals(1.5, titanBonus.totemPercent(), EPS);
-        assertEquals(10.0 * 1.055, TeamScoreCalculator.scoreFor(titans, fireFort).total(), EPS);
+        assertEquals(10.0 * 1.055, TeamScoreCalculator.scoreFor(titans, fireFort, TeamCombos.NONE).total(), EPS);
     }
 }

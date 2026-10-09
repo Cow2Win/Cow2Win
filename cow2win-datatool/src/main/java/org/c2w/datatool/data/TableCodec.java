@@ -52,6 +52,8 @@ final class TableCodec {
                     List.of(str(Fields.ID), opt(Fields.FORT_MARKS, Kind.MARKS));
             case HERO_COMBOS -> List.of(str(Fields.ID), opt(Fields.NAME, Kind.STRING),
                     field(Fields.HERO_IDS, Kind.INLINE_LIST), str(Fields.SOURCE), opt(Fields.DEACTIVATED, Kind.STRING));
+            case TITAN_COMBOS -> List.of(str(Fields.ID), opt(Fields.NAME, Kind.STRING),
+                    field(Fields.TITAN_IDS, Kind.INLINE_LIST), str(Fields.SOURCE), opt(Fields.DEACTIVATED, Kind.STRING));
             case TITAN_TEMPLATES -> List.of(field(Fields.SLOT, Kind.INT), field(Fields.TITAN_IDS, Kind.INLINE_LIST));
         });
     }

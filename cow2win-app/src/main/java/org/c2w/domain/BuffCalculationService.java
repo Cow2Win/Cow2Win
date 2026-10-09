@@ -231,7 +231,7 @@ public class BuffCalculationService {
      * The TITAN-side counterpart of {@link #sumHeroCowScore} - identical
      * reasoning, {@link TitanTeam}/{@link
      * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} instead of
-     * the hero side; per team the titan bonus (element, relation, totems) in score points (see
+     * the hero side; per team the titan bonus (element, relation, totems, combo) in score points (see
      * {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}).
      *
      * @param lineup The lineup with team assignments

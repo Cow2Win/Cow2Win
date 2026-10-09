@@ -11,8 +11,10 @@ public enum CowScoreTab {
     TITANS("cowScore.tab.titans"),
     PETS("cowScore.tab.pets"),
     WAR_FLAGS("cowScore.tab.warFlags"),
-    /** The hero combos ({@code heroCombos.json}) - see {@code HeroComboPanel}. */
-    HERO_COMBOS("cowScore.tab.heroCombos");
+    /** The hero combos ({@code heroCombos.json}) - see {@link TeamComboPanel#forHeroes}. */
+    HERO_COMBOS("cowScore.tab.heroCombos"),
+    /** The titan combos ({@code titanCombos.json}) - see {@link TeamComboPanel#forTitans}. */
+    TITAN_COMBOS("cowScore.tab.titanCombos");
 
     private final String textKey;
 
