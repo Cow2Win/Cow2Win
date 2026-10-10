@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -85,6 +86,9 @@ final class OverviewStepPanel extends JPanel {
                 return false;
             }
         };
+        JTable table = new JTable(model);
+        // The look and feel's font (Noto Sans Display) has no glyph for e.g. "✔" - check with the table's font.
+        Font font = table.getFont();
         for (PlannedBattle b : battles) {
             String result = b.status() == BattleStatus.RUNNING
                     ? JournalTexts.text("journal.overview.running")
@@ -96,10 +100,9 @@ final class OverviewStepPanel extends JPanel {
                     JournalTexts.rankingPoints(b.rankingPoints()),
                     action(b, LogDirection.ATTACK),
                     action(b, LogDirection.DEFENSE),
-                    verdictSymbol(b.check().verdict()) + " " + JournalTexts.of("verdict", b.check().verdict()),
+                    verdictText(b.check().verdict(), font == null ? c -> true : font::canDisplay),
                     b.warnings().stream().map(w -> JournalTexts.of("warning", w)).collect(Collectors.joining("; "))});
         }
-        JTable table = new JTable(model);
         table.setFillsViewportHeight(true);
         table.setRowSelectionAllowed(false);
         table.getColumnModel().getColumn(1).setPreferredWidth(180);
@@ -110,6 +113,16 @@ final class OverviewStepPanel extends JPanel {
     private static String action(PlannedBattle battle, LogDirection direction) {
         PlannedBattle.LogAction action = battle.actions().get(direction);
         return action == null ? "–" : JournalTexts.of("logAction", action);
+    }
+
+    /**
+     * The text of the "check" column: the verdict, with its symbol in front - but only if the
+     * font {@code canDisplay} it; otherwise the text alone instead of an empty box.
+     */
+    static String verdictText(BattleLogCheck.Verdict verdict, Predicate<Character> canDisplay) {
+        String text = JournalTexts.of("verdict", verdict);
+        String symbol = verdictSymbol(verdict);
+        return symbol.chars().allMatch(c -> canDisplay.test((char) c)) ? symbol + " " + text : text;
     }
 
     private static String verdictSymbol(BattleLogCheck.Verdict verdict) {

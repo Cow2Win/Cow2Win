@@ -8,6 +8,7 @@ import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalRepository;
 import org.c2w.data.journal.db.LogInfo;
 import org.c2w.data.repository.Catalog;
+import org.c2w.gui.common.Glyphs;
 import org.c2w.service.AppContext;
 
 import javax.swing.*;
@@ -446,7 +447,7 @@ public final class JournalBattleDetailDialog extends JDialog {
             ours.setUnits(fight.ourUnits());
             theirs.setUnits(fight.opponentUnits());
             hint.setText(fight.hasUnits()
-                    ? JournalTexts.visibleSpaces(fight.ourPlayer().rawName()) + "  ⚔  "
+                    ? JournalTexts.visibleSpaces(fight.ourPlayer().rawName()) + Glyphs.displayable("  ⚔  ")
                     + JournalTexts.visibleSpaces(fight.opponentName())
                     : JournalTexts.text("journal.detail.units.none"));
         }

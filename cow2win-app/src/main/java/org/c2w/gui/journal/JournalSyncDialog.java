@@ -1,5 +1,6 @@
 package org.c2w.gui.journal;
 
+import org.c2w.gui.common.Glyphs;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
 import org.c2w.infra.Logger;
@@ -180,7 +181,7 @@ public final class JournalSyncDialog extends JDialog {
                 SyncRow r = tableModel.row(row);
                 String text = teamText(r, (Integer) value);
                 if (r.targets().size() > 1) {
-                    text += " ▾";
+                    text += " " + Glyphs.displayable("▾");
                 }
                 return super.getTableCellRendererComponent(t, text, selected, focus, row, column);
             }
@@ -301,11 +302,11 @@ public final class JournalSyncDialog extends JDialog {
             body.add(actions, BorderLayout.SOUTH);
         }
         body.setVisible(false);
-        JToggleButton toggle = new JToggleButton("▸ " + title);
+        JToggleButton toggle = new JToggleButton(Glyphs.expander(false) + title);
         toggle.setHorizontalAlignment(SwingConstants.LEFT);
         toggle.addActionListener(e -> {
             body.setVisible(toggle.isSelected());
-            toggle.setText((toggle.isSelected() ? "▾ " : "▸ ") + title);
+            toggle.setText(Glyphs.expander(toggle.isSelected()) + title);
             center.revalidate();
         });
         panel.add(toggle, BorderLayout.NORTH);

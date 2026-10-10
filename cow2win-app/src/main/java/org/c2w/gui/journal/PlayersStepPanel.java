@@ -1,6 +1,7 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.model.Guild;
+import org.c2w.gui.common.Glyphs;
 import org.c2w.gui.journal.ImportWizardModel.MemberChoice;
 import org.c2w.service.journal.PlayerAnswer;
 import org.c2w.service.journal.PlayerAutoAssignment;
@@ -108,7 +109,7 @@ final class PlayersStepPanel extends JPanel {
         model.members().forEach(m -> memberNames.put(m.memberId(), m.memberName()));
         for (PlayerAutoAssignment a : assignments) {
             String member = memberNames.getOrDefault(a.memberId(), a.memberId());
-            String text = JournalTexts.visibleSpaces(a.rawName()) + " → " + member;
+            String text = JournalTexts.visibleSpaces(a.rawName()) + Glyphs.displayable(" → ") + member;
             items.addElement(a.normalized()
                     ? "<html><b>" + escape(text) + "</b> (" + escape(JournalTexts.text("journal.players.autoNormalized")) + ")</html>"
                     : text);
@@ -117,10 +118,10 @@ final class PlayersStepPanel extends JPanel {
         list.setVisibleRowCount(Math.min(6, items.size()));
         JScrollPane scroll = new JScrollPane(list);
         scroll.setVisible(false);
-        JToggleButton toggle = new JToggleButton("▸ " + JournalTexts.text("journal.players.auto", String.valueOf(assignments.size())));
+        JToggleButton toggle = new JToggleButton(Glyphs.expander(false) + JournalTexts.text("journal.players.auto", String.valueOf(assignments.size())));
         toggle.addActionListener(e -> {
             scroll.setVisible(toggle.isSelected());
-            toggle.setText((toggle.isSelected() ? "▾ " : "▸ ")
+            toggle.setText(Glyphs.expander(toggle.isSelected())
                     + JournalTexts.text("journal.players.auto", String.valueOf(assignments.size())));
             revalidate();
         });
@@ -259,7 +260,7 @@ final class PlayersStepPanel extends JPanel {
             boolean suggested = question.nameSuggestions().stream().anyMatch(s -> s.memberId().equals(m.memberId()))
                     || (shownMemberKind == PlayerAnswer.Kind.RENAME
                     && question.renameSuggestions().stream().anyMatch(s -> s.memberId().equals(m.memberId())));
-            return (suggested ? "★ " : "") + m.memberName();
+            return (suggested ? Glyphs.prefix("★") : "") + m.memberName();
         }
     }
 

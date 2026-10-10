@@ -7,6 +7,7 @@ import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.Season;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.TitanElement;
+import org.c2w.gui.common.Glyphs;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
@@ -47,29 +48,37 @@ public final class JournalTexts {
 
     /** The display text of an enum value of {@code group}. */
     public static String of(String group, Enum<?> value) {
-        return LanguageService.displayName(enumKey(group, value));
+        return display(enumKey(group, value));
     }
 
     /** A text with placeholders. */
     public static String text(String key, Object... args) {
-        return LanguageService.displayName(key, args);
+        return display(key, args);
+    }
+
+    /**
+     * A journal text from the language file, with characters the UI font cannot display (e.g.
+     * "→", "≤", "≈") replaced - see {@link Glyphs#displayable}.
+     */
+    private static String display(String key, Object... args) {
+        return Glyphs.displayable(LanguageService.displayName(key, args));
     }
 
     /** A plan error with its guild name and game guild id. */
     public static String planError(PlanError error) {
-        return LanguageService.displayName(enumKey("planError", error.kind()),
+        return display(enumKey("planError", error.kind()),
                 error.guildName() == null ? "" : error.guildName(),
                 error.gameGuildId() == null ? "" : String.valueOf(error.gameGuildId()));
     }
 
     /** Why the assistant cannot go on. */
     public static String block(ImportWizardModel.Block block) {
-        return LanguageService.displayName(enumKey("block", block), String.valueOf(Guild.MAX_MEMBERS));
+        return display(enumKey("block", block), String.valueOf(Guild.MAX_MEMBERS));
     }
 
     /** "Name (Server n)". */
     public static String opponent(GuildRef guild) {
-        return LanguageService.displayName("journal.opponent", guild.name(), String.valueOf(guild.server()));
+        return display("journal.opponent", guild.name(), String.valueOf(guild.server()));
     }
 
     /** A number with grouping, as everywhere in Cow2Win (e.g. 1.382.741). */
@@ -202,21 +211,24 @@ public final class JournalTexts {
 
     /** "hero team 2" / "titan team 1" (1-based). */
     public static String team(TeamKind kind, int index) {
-        return LanguageService.displayName(enumKey("team", kind), String.valueOf(index + 1));
+        return display(enumKey("team", kind), String.valueOf(index + 1));
     }
 
-    /** The certainty of a sync match with its symbol; {@code null} = the user picked another team. */
+    /**
+     * The certainty of a sync match with its symbol (left out if the UI font cannot display it);
+     * {@code null} = the user picked another team.
+     */
     public static String certainty(SyncRow.Certainty certainty) {
         if (certainty == null) {
-            return "✎ " + text("journal.sync.manual");
+            return Glyphs.prefix("✎") + text("journal.sync.manual");
         }
         String symbol = switch (certainty) {
-            case UNITS -> "🛡 ";
-            case SURE -> "✔ ";
-            case UNSURE -> "? ";
-            case AMBIGUOUS -> "⚠ ";
+            case UNITS -> "🛡";
+            case SURE -> "✔";
+            case UNSURE -> "?";
+            case AMBIGUOUS -> "⚠";
         };
-        return symbol + of("syncCertainty", certainty);
+        return Glyphs.prefix(symbol) + of("syncCertainty", certainty);
     }
 
     /** E.g. "1.376.972 → 1.400.474 (+23.502, +1,7 %)" or "1.000.000 (unchanged)". */
@@ -226,7 +238,7 @@ public final class JournalTexts {
         }
         long delta = (long) log - stored;
         double percent = log == 0 ? 100 : 100.0 * delta / log;
-        String sign = delta > 0 ? "+" : "−";
+        String sign = delta > 0 ? "+" : Glyphs.displayable("−");
         return text("journal.sync.powerChange", number(stored), number(log), sign + number(Math.abs(delta)),
                 sign + String.format(locale(), "%.1f", Math.abs(percent)));
     }
@@ -240,7 +252,7 @@ public final class JournalTexts {
         if (change.unitsChanged()) {
             List<String> units = new ArrayList<>();
             change.added().forEach(id -> units.add("+ " + LanguageService.displayName(id)));
-            change.removed().forEach(id -> units.add("− " + LanguageService.displayName(id)));
+            change.removed().forEach(id -> units.add(Glyphs.displayable("− ") + LanguageService.displayName(id)));
             parts.add(String.join(", ", units));
         }
         if (change.petChanged()) {
@@ -265,9 +277,9 @@ public final class JournalTexts {
     public static String evidence(PlayerQuestion.RenameEvidence evidence) {
         String team = team(evidence.teamKind(), evidence.teamIndex());
         return switch (evidence.kind()) {
-            case POWER -> LanguageService.displayName(enumKey("evidence", evidence.kind()),
+            case POWER -> display(enumKey("evidence", evidence.kind()),
                     number(evidence.logTeamPower()), team, number(evidence.memberTeamPower()));
-            case SAME_UNITS -> LanguageService.displayName(enumKey("evidence", evidence.kind()), team);
+            case SAME_UNITS -> display(enumKey("evidence", evidence.kind()), team);
         };
     }
 }

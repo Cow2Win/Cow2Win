@@ -5,6 +5,7 @@ import org.c2w.data.journal.TeamKind;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.TitanTeam;
+import org.c2w.gui.common.Glyphs;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
 import org.c2w.infra.Logger;
@@ -164,11 +165,11 @@ public final class JournalTeamBuilderDialog extends JDialog {
         String names = member.logNames().stream().map(JournalTexts::visibleSpaces).collect(Collectors.joining(", "));
         String title = JournalTexts.text("journal.teams.member", member.memberName(), names,
                 String.valueOf(member.proposals().size()), JournalTexts.date(member.sourceDate()));
-        JToggleButton toggle = new JToggleButton("▾ " + title, true);
+        JToggleButton toggle = new JToggleButton(Glyphs.expander(true) + title, true);
         toggle.setHorizontalAlignment(SwingConstants.LEFT);
         toggle.addActionListener(e -> {
             content.setVisible(toggle.isSelected());
-            toggle.setText((toggle.isSelected() ? "▾ " : "▸ ") + title);
+            toggle.setText(Glyphs.expander(toggle.isSelected()) + title);
             section.revalidate();
         });
         section.add(toggle, BorderLayout.NORTH);
@@ -309,13 +310,14 @@ public final class JournalTeamBuilderDialog extends JDialog {
         return icon;
     }
 
+    /** The source of a proposal with its symbol - left out if the UI font cannot display it. */
     static String sourceText(CompositionSource source) {
         String symbol = switch (source) {
-            case DEFENSE_UNITS -> "🛡 ";
-            case ATTACK_EXACT_POWER -> "⚔ ";
-            case POWER_ONLY -> "○ ";
+            case DEFENSE_UNITS -> "🛡";
+            case ATTACK_EXACT_POWER -> "⚔";
+            case POWER_ONLY -> "○";
         };
-        return symbol + JournalTexts.of("compositionSource", source);
+        return Glyphs.prefix(symbol) + JournalTexts.of("compositionSource", source);
     }
 
     private static Color sourceColor(CompositionSource source) {
@@ -355,11 +357,11 @@ public final class JournalTeamBuilderDialog extends JDialog {
         scroll.setVisible(false);
         String title = JournalTexts.text("journal.teams.skipped", String.valueOf(model.plan().skippedPlayers().size()),
                 String.valueOf(withoutData.size()));
-        JToggleButton toggle = new JToggleButton("▸ " + title);
+        JToggleButton toggle = new JToggleButton(Glyphs.expander(false) + title);
         toggle.setHorizontalAlignment(SwingConstants.LEFT);
         toggle.addActionListener(e -> {
             scroll.setVisible(toggle.isSelected());
-            toggle.setText((toggle.isSelected() ? "▾ " : "▸ ") + title);
+            toggle.setText(Glyphs.expander(toggle.isSelected()) + title);
             panel.revalidate();
             center.revalidate();
         });
