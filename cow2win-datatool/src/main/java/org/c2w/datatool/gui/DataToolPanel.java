@@ -11,6 +11,7 @@ import org.c2w.datatool.data.SaveOptions;
 import org.c2w.datatool.data.SaveResult;
 import org.c2w.datatool.data.Schema;
 import org.c2w.datatool.data.TableKind;
+import org.c2w.gui.FileChoosers;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
@@ -223,7 +224,7 @@ public final class DataToolPanel extends JPanel {
 
     private void chooseImage(DataTableModel model, int rowIndex) {
         TableKind kind = model.kind();
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChoosers.create(null);
         chooser.setFileFilter(new FileNameExtensionFilter("PNG images", "png"));
         if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
             return;

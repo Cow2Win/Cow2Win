@@ -44,7 +44,7 @@ class SettingsDialogTest {
     @Test
     @DisplayName("The dialog is about 1.5 times as wide as packed")
     void widerThanPacked() {
-        assertEquals(dialog.packedWidth() * SettingsDialog.SIZE_FACTOR, dialog.getWidth(), 1.0);
+        assertEquals(dialog.packedWidth() * SettingsDialog.DIALOG_WIDTH_FACTOR, dialog.getWidth(), 1.0);
     }
 
     @Test
@@ -60,8 +60,8 @@ class SettingsDialogTest {
     void largerDirectoryChooser() {
         Dimension standard = new JFileChooser().getPreferredSize();
         Dimension larger = SettingsDialog.createDirectoryChooser("title").getPreferredSize();
-        assertEquals(standard.width * SettingsDialog.SIZE_FACTOR, larger.width, 1.0);
-        assertEquals(standard.height * SettingsDialog.SIZE_FACTOR, larger.height, 1.0);
+        assertEquals(standard.width * FileChoosers.SIZE_FACTOR, larger.width, 1.0);
+        assertEquals(standard.height * FileChoosers.SIZE_FACTOR, larger.height, 1.0);
         assertEquals(JFileChooser.DIRECTORIES_ONLY, SettingsDialog.createDirectoryChooser("title").getFileSelectionMode());
     }
 

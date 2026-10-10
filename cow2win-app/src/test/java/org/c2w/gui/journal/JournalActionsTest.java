@@ -1,6 +1,7 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.repository.Catalog;
+import org.c2w.gui.SettingsDialogAccess;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -63,6 +66,19 @@ class JournalActionsTest {
 
         guildService.switchToGuild("Plain");
         assertTrue(journalIds.stream().noneMatch(id -> actions.get(id).isEnabled()));
+    }
+
+    @Test
+    @DisplayName("The import chooser: same size as the settings' directory chooser, several files, the CSV filter preselected")
+    void importChooser() {
+        JFileChooser chooser = JournalActions.createImportChooser(workspace.toFile());
+
+        assertEquals(SettingsDialogAccess.directoryChooserSize(), chooser.getPreferredSize());
+        assertTrue(chooser.isMultiSelectionEnabled());
+        FileNameExtensionFilter filter = assertInstanceOf(FileNameExtensionFilter.class, chooser.getFileFilter());
+        assertArrayEquals(new String[]{"csv"}, filter.getExtensions());
+        assertTrue(chooser.isAcceptAllFileFilterUsed());
+        assertEquals(workspace.toFile().getAbsoluteFile(), chooser.getCurrentDirectory().getAbsoluteFile());
     }
 
     @Test

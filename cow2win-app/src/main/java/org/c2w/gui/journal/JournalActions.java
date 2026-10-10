@@ -3,6 +3,7 @@ package org.c2w.gui.journal;
 import org.c2w.data.journal.db.JournalDatabase;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalRepository;
+import org.c2w.gui.FileChoosers;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
@@ -110,15 +111,9 @@ public final class JournalActions {
         nameMappings = null;
     }
 
-    /** Lets the user choose battle logs and imports them. */
+    /** Lets the user choose battle logs (see {@link #createImportChooser}) and imports them. */
     public void importWithChooser() {
-        JFileChooser chooser = new JFileChooser(startDirectory().toFile());
-        chooser.setDialogTitle(JournalTexts.text("journal.fileChooser.title"));
-        chooser.setMultiSelectionEnabled(true);
-        chooser.setAcceptAllFileFilterUsed(true);
-        FileNameExtensionFilter csv = new FileNameExtensionFilter(JournalTexts.text("journal.fileChooser.filter"), "csv");
-        chooser.addChoosableFileFilter(csv);
-        chooser.setFileFilter(csv);
+        JFileChooser chooser = createImportChooser(startDirectory().toFile());
         if (chooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
             return;
         }
@@ -132,6 +127,21 @@ public final class JournalActions {
             Config.save();
         }
         importFiles(files);
+    }
+
+    /**
+     * The chooser for battle logs to import (uniform size, see {@link FileChoosers}): opens in
+     * {@code startDirectory}, several files at once, the CSV filter preselected.
+     */
+    static JFileChooser createImportChooser(File startDirectory) {
+        JFileChooser chooser = FileChoosers.create(startDirectory);
+        chooser.setDialogTitle(JournalTexts.text("journal.fileChooser.title"));
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setAcceptAllFileFilterUsed(true);
+        FileNameExtensionFilter csv = new FileNameExtensionFilter(JournalTexts.text("journal.fileChooser.filter"), "csv");
+        chooser.addChoosableFileFilter(csv);
+        chooser.setFileFilter(csv);
+        return chooser;
     }
 
     /** Runs the import assistant for {@code files} (empty: let the user choose them first). */

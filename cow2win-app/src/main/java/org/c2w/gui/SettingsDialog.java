@@ -85,8 +85,8 @@ public class SettingsDialog extends JDialog {
     private static final String ICON_RESTORE_WORKSPACE = "/images/app/restore.png";
     private static final String ICON_MOVE_WORKSPACE = "/images/app/move.png";
 
-    /** The dialog and its directory choosers are this much larger than their packed/default size. */
-    static final double SIZE_FACTOR = 1.5;
+    /** The dialog is this much wider than its packed size (its file choosers: see {@link FileChoosers}). */
+    static final double DIALOG_WIDTH_FACTOR = 1.5;
 
     /** How the dialog ends the application for a scheduled restore or move - implemented by the main window. */
     public interface AppExit {
@@ -119,7 +119,7 @@ public class SettingsDialog extends JDialog {
     private final FlatButton moveWorkspaceButton = new FlatButton(
             IconLoader.iconFor(ICON_MOVE_WORKSPACE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
     private final AppExit appExit;
-    /** Width of the dialog after {@code pack()}, before it is widened by {@link #SIZE_FACTOR}. */
+    /** Width of the dialog after {@code pack()}, before it is widened by {@link #DIALOG_WIDTH_FACTOR}. */
     private final int packedWidth;
     /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
     /** The adjustable CowScore bonus percentages, see {@link CowScoreBonusesPanel}. */
@@ -143,7 +143,7 @@ public class SettingsDialog extends JDialog {
         // Wider than packed, so long paths stay readable - computed from the packed width, so it
         // fits every language and font. The extra width goes to the second column (weightx).
         packedWidth = getWidth();
-        setSize((int) Math.round(packedWidth * SIZE_FACTOR), getHeight());
+        setSize((int) Math.round(packedWidth * DIALOG_WIDTH_FACTOR), getHeight());
         sizeToScreen(owner);
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -357,14 +357,11 @@ public class SettingsDialog extends JDialog {
         return null;
     }
 
-    /** A directory-only chooser {@link #SIZE_FACTOR} times as wide and high as the default - for long paths. */
+    /** A directory-only chooser in the uniform size of {@link FileChoosers} - for long paths. */
     static JFileChooser createDirectoryChooser(String dialogTitle) {
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChoosers.create(null);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle(dialogTitle);
-        Dimension size = chooser.getPreferredSize();
-        chooser.setPreferredSize(new Dimension((int) Math.round(size.width * SIZE_FACTOR),
-                (int) Math.round(size.height * SIZE_FACTOR)));
         return chooser;
     }
 

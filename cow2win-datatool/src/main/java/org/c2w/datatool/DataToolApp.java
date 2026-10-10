@@ -4,6 +4,7 @@ import mdlaf.MaterialLookAndFeel;
 import mdlaf.themes.MaterialOceanicTheme;
 import org.c2w.datatool.data.DataSet;
 import org.c2w.datatool.gui.DataToolFrame;
+import org.c2w.gui.FileChoosers;
 import org.c2w.gui.common.MeasuredCheckBoxUI;
 import org.c2w.gui.common.MeasuredLabelUI;
 
@@ -66,7 +67,7 @@ public final class DataToolApp {
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Data tool", JOptionPane.WARNING_MESSAGE);
         }
-        JFileChooser chooser = new JFileChooser(Path.of("").toAbsolutePath().toFile());
+        JFileChooser chooser = FileChoosers.create(Path.of("").toAbsolutePath().toFile());
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Choose cow2win-app/src/main/resources");
         while (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {

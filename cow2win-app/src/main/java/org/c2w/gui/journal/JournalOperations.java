@@ -6,6 +6,7 @@ import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.LogInfo;
 import org.c2w.data.journal.db.Season;
+import org.c2w.gui.FileChoosers;
 import org.c2w.service.JournalMaintenanceService;
 
 import javax.swing.*;
@@ -111,7 +112,7 @@ final class JournalOperations {
         progressDialog.setVisible(true);
     }
 
-    /** Saves the original CSV of one log of the battle to a file the user chooses. */
+    /** Saves the original CSV of one log of the battle to a file the user chooses (chooser: {@link FileChoosers}). */
     void saveCsv(Component parent, BattleSummary battle, LogDirection direction) {
         JournalSwing.background(parent, () -> {
             var repo = service.repository().orElseThrow(() -> new JournalException("The open guild has no journal"));
@@ -123,7 +124,7 @@ final class JournalOperations {
             if (found == null) {
                 return;
             }
-            JFileChooser chooser = new JFileChooser(JournalActions.startDirectory().toFile());
+            JFileChooser chooser = FileChoosers.create(JournalActions.startDirectory().toFile());
             chooser.setDialogTitle(JournalTexts.text("journal.saveCsv.title"));
             chooser.setSelectedFile(new File(JournalActions.startDirectory().toFile(), (String) found[0]));
             if (chooser.showSaveDialog(parent) != JFileChooser.APPROVE_OPTION) {

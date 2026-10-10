@@ -74,14 +74,15 @@ public class ReportViewerDialog extends JDialog {
     }
 
     /**
-     * Opens a directory-only chooser and, once the user confirms, writes the
-     * report HTML into the chosen directory under {@link #suggestedFileName}
+     * Opens a directory-only chooser (uniform size, see {@link FileChoosers}) and,
+     * once the user confirms, writes the report HTML into the chosen directory
+     * under {@link #suggestedFileName}
      * (asking before overwriting an existing file). A cancelled chooser does
      * nothing; any write failure is shown in an error dialog rather than
      * thrown, since this is a UI action with no caller to handle it.
      */
     private void onSave() {
-        JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser = FileChoosers.create(null);
         chooser.setDialogTitle(LanguageService.displayName("report.chooseDirectory"));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
