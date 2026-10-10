@@ -2,7 +2,6 @@ package org.c2w.gui.stage;
 
 import org.c2w.gui.MainMenuBar;
 import org.c2w.gui.action.MainActions;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -156,7 +155,7 @@ public class StageActionList extends JPanel {
     static final class GroupHeading extends JLabel {
 
         GroupHeading(String title, int level) {
-            super(title.toUpperCase(JournalTexts.locale()));
+            super(title.toUpperCase(LanguageService.locale()));
             setForeground(HEADING_COLOR);
             setFont(getFont().deriveFont(Font.BOLD, getFont().getSize2D() - 2f));
             setBorder(BorderFactory.createEmptyBorder(8, INDENT + level * INDENT, 2, 8));

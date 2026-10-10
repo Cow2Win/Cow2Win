@@ -1,7 +1,6 @@
 package org.c2w.gui;
 
 import org.c2w.domain.CowScoreBonuses;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -231,7 +230,7 @@ final class CowScoreBonusesPanel extends JPanel {
         column.add(label, gbc);
 
         JSpinner spinner = new JSpinner(model);
-        spinner.setLocale(JournalTexts.locale());
+        spinner.setLocale(LanguageService.locale());
         spinner.setEditor(new JSpinner.NumberEditor(spinner, "0.00"));
         double min = buff ? CowScoreBonuses.MIN_BUFF : CowScoreBonuses.MIN_BONUS;
         double max = buff ? CowScoreBonuses.MAX_BUFF : CowScoreBonuses.MAX_BONUS;
@@ -252,7 +251,7 @@ final class CowScoreBonusesPanel extends JPanel {
     }
 
     private static String percent(double value) {
-        NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
+        NumberFormat format = NumberFormat.getNumberInstance(LanguageService.locale());
         format.setMaximumFractionDigits(2);
         return format.format(value);
     }

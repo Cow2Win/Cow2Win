@@ -8,7 +8,6 @@ import org.c2w.gui.common.HintStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.gui.pet.PetCowScorePanel;
 import org.c2w.gui.titan.TitanCowScorePanel;
 import org.c2w.i18n.LanguageService;
@@ -224,7 +223,7 @@ public final class CowScoreDialog extends JDialog {
 
     /** "1,25" / "1.25" in the configured language. */
     private static String percent(double value) {
-        return CowScoreInfoValues.percent(JournalTexts.locale(), value);
+        return CowScoreInfoValues.percent(LanguageService.locale(), value);
     }
 
     /**

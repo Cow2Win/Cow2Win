@@ -4,7 +4,6 @@ import org.c2w.data.model.Fortification;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
 
@@ -251,7 +250,7 @@ public class FortificationPanel extends JPanel {
 
     /** {@code power} in compact form for the configured language, see {@link #compactPower(int, Locale, String)}. */
     private static String compactPower(int power) {
-        return compactPower(power, JournalTexts.locale(), LanguageService.displayName(KEY_POWER_MILLIONS));
+        return compactPower(power, LanguageService.locale(), LanguageService.displayName(KEY_POWER_MILLIONS));
     }
 
     /**

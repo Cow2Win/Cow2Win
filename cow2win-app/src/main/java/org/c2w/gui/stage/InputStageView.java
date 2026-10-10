@@ -9,9 +9,10 @@ import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanTeam;
 import org.c2w.gui.StageStatus;
+import org.c2w.gui.action.ActionId;
+import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
@@ -50,10 +51,10 @@ import static org.c2w.gui.stage.InfoSections.*;
  * The stage view "input": everything that goes into a guild in one place. The work area is
  * the member overview - one row per member with the teams of the selected fortification type;
  * a click selects a member, a double click (or Enter) opens the team assignment for this member
- * only; "+" / "-" next to the count, the context menu and Del add and delete members (saved right
- * away, see {@link GuildMemberService}). The info panel shows the
- * selected member's teams and the state of the guild's Weltenschlacht journal; the action list
- * is the input menu.
+ * only; the actions "add member" / "delete member" (action list and input menu, also the table's
+ * context menu and Del) add and delete members (saved right away, see {@link GuildMemberService}).
+ * The info panel shows the selected member's teams and - for a guild master's guild only - the
+ * state of the guild's Weltenschlacht journal; the action list is the input menu.
  */
 public class InputStageView extends StageView {
 
@@ -95,12 +96,10 @@ public class InputStageView extends StageView {
     /** Opens the team assignment for one member (id) - see {@code ActionBar#openTeamEntryFor}. */
     private final Consumer<String> openTeamEntryForMember;
     private final GuildMemberService memberService;
-    private final FlatButton addMemberButton = new FlatButton(
-            IconLoader.iconFor(ICON_ADD_MEMBER, MEMBER_ICON_SIZE, IconLoader.GREEN));
-    private final FlatButton removeMemberButton = new FlatButton(
-            IconLoader.iconFor(ICON_REMOVE_MEMBER, MEMBER_ICON_SIZE, IconLoader.RED));
-    private final JMenuItem addMemberItem = new JMenuItem(LanguageService.displayName(KEY_ADD_MEMBER));
-    private final JMenuItem removeMemberItem = new JMenuItem(LanguageService.displayName(KEY_REMOVE_MEMBER));
+    /** "Add member" / "delete member" - registered by this view, see {@link #registerMemberActions}. */
+    private AppAction addMemberAction;
+    private AppAction removeMemberAction;
+    private final JPopupMenu memberPopup = new JPopupMenu();
 
     private final MemberTableModel tableModel = new MemberTableModel();
     private final JTable table = new JTable(tableModel);
@@ -110,6 +109,8 @@ public class InputStageView extends StageView {
     private final JLabel countLabel = new JLabel();
     private final JPanel memberSection = sectionBody();
     private final JPanel journalSection = sectionBody();
+    /** Heading of {@link #journalSection} - hidden with it unless a guild master's guild is open. */
+    private Component journalHeading;
 
     /** Id of the selected member, null if none - kept across rebuilds while the member exists. */
     private String selectedMemberId;
@@ -133,6 +134,7 @@ public class InputStageView extends StageView {
         this.appContext = appContext;
         this.openTeamEntryForMember = Objects.requireNonNull(openTeamEntryForMember);
         this.memberService = new GuildMemberService(appContext);
+        registerMemberActions(actions);
         setUpTable();
         setUpMemberActions();
         build();
@@ -183,8 +185,6 @@ public class InputStageView extends StageView {
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 12));
         header.add(countLabel);
-        header.add(addMemberButton);
-        header.add(removeMemberButton);
         area.add(header, BorderLayout.NORTH);
 
         JScrollPane scrollPane = new JScrollPane(table);
@@ -252,19 +252,22 @@ public class InputStageView extends StageView {
 
     // --- add / delete members ---
 
-    /** "+" / "-" next to the count, the table's context menu, Del and Enter in the table. */
-    private void setUpMemberActions() {
-        addMemberButton.setToolTipText(LanguageService.displayName(KEY_ADD_MEMBER));
-        addMemberButton.addActionListener(e -> onAddMember());
-        removeMemberButton.setToolTipText(LanguageService.displayName(KEY_REMOVE_MEMBER));
-        removeMemberButton.addActionListener(e -> onRemoveMember());
-        addMemberItem.addActionListener(e -> onAddMember());
-        removeMemberItem.addActionListener(e -> onRemoveMember());
+    /**
+     * Registers "add member" and "delete member" in {@code actions} (input menu and action list,
+     * see {@code MainMenuBar}) - before {@link #build()} and the menu bar need them.
+     */
+    private void registerMemberActions(MainActions actions) {
+        addMemberAction = actions.register(new AppAction(ActionId.ADD_MEMBER, this::onAddMember)
+                .withSmallIcon(IconLoader.iconFor(ICON_ADD_MEMBER, MEMBER_ICON_SIZE, IconLoader.GREEN)));
+        removeMemberAction = actions.register(new AppAction(ActionId.REMOVE_MEMBER, this::onRemoveMember)
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_MEMBER, MEMBER_ICON_SIZE, IconLoader.RED)));
+    }
 
-        JPopupMenu popup = new JPopupMenu();
-        popup.add(addMemberItem);
-        popup.add(removeMemberItem);
-        table.setComponentPopupMenu(popup);
+    /** The table's context menu, Del and Enter in the table - the same actions as in the action list. */
+    private void setUpMemberActions() {
+        memberPopup.add(new JMenuItem(addMemberAction));
+        memberPopup.add(new JMenuItem(removeMemberAction));
+        table.setComponentPopupMenu(memberPopup);
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -280,12 +283,7 @@ public class InputStageView extends StageView {
         InputMap keys = table.getInputMap(JComponent.WHEN_FOCUSED);
         keys.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "c2w.removeMember");
         keys.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "c2w.openTeamEntry");
-        table.getActionMap().put("c2w.removeMember", new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                onRemoveMember();
-            }
-        });
+        table.getActionMap().put("c2w.removeMember", removeMemberAction);
         table.getActionMap().put("c2w.openTeamEntry", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -307,18 +305,17 @@ public class InputStageView extends StageView {
         }
     }
 
-    /** "Add member" only below {@link Guild#MAX_MEMBERS}, "delete member" only with a selected member. */
+    /**
+     * "Add member" only with an open guild below {@link Guild#MAX_MEMBERS} (else the reason as
+     * tooltip), "delete member" only with a selected member.
+     */
     private void updateMemberActions() {
-        boolean canAdd = memberService.canAddMember();
-        String addTooltip = canAdd ? LanguageService.displayName(KEY_ADD_MEMBER)
-                : LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS);
-        addMemberButton.setEnabled(canAdd);
-        addMemberButton.setToolTipText(addTooltip);
-        addMemberItem.setEnabled(canAdd);
-        addMemberItem.setToolTipText(canAdd ? null : addTooltip);
-        boolean canRemove = selectedMemberId != null;
-        removeMemberButton.setEnabled(canRemove);
-        removeMemberItem.setEnabled(canRemove);
+        boolean canAdd = appContext.guild() != null && memberService.canAddMember();
+        addMemberAction.setEnabled(canAdd);
+        addMemberAction.putValue(Action.SHORT_DESCRIPTION, canAdd || appContext.guild() == null
+                ? LanguageService.displayName(KEY_ADD_MEMBER)
+                : LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS));
+        removeMemberAction.setEnabled(selectedMemberId != null);
     }
 
     /**
@@ -481,6 +478,7 @@ public class InputStageView extends StageView {
         JPanel panel = InfoSections.infoPanel();
         addSection(panel, KEY_MEMBER, memberSection);
         addSection(panel, KEY_JOURNAL, journalSection);
+        journalHeading = panel.getComponent(panel.getComponentCount() - 2);
         return panel;
     }
 
@@ -593,8 +591,19 @@ public class InputStageView extends StageView {
 
     // --- journal ---
 
-    /** Reads the journal in the background and shows it when done. */
+    /**
+     * For a guild master's guild: reads the journal in the background and shows it when done.
+     * Otherwise the journal section disappears (heading included) and the journal is not read.
+     */
     private void reloadJournal() {
+        boolean available = appContext.isJournalAvailable();
+        journalHeading.setVisible(available);
+        journalSection.setVisible(available);
+        if (!available) {
+            journalSection.removeAll();
+            relayout(journalSection);
+            return;
+        }
         new SwingWorker<JournalInfoModel.JournalInfo, Void>() {
             @Override
             protected JournalInfoModel.JournalInfo doInBackground() {
@@ -603,6 +612,10 @@ public class InputStageView extends StageView {
 
             @Override
             protected void done() {
+                if (!appContext.isJournalAvailable()) {
+                    // Switched to a guild without the journal meanwhile.
+                    return;
+                }
                 try {
                     showJournal(get());
                 } catch (InterruptedException e) {
@@ -659,12 +672,17 @@ public class InputStageView extends StageView {
         return table;
     }
 
-    JButton addMemberButton() {
-        return addMemberButton;
+    JPopupMenu memberPopup() {
+        return memberPopup;
     }
 
-    JButton removeMemberButton() {
-        return removeMemberButton;
+    /** The header above the table (count) - without buttons. */
+    JPanel tableHeader() {
+        return (JPanel) countLabel.getParent();
+    }
+
+    boolean isJournalSectionShown() {
+        return journalHeading.isVisible() && journalSection.isVisible();
     }
 
     JCheckBox onlyStaleToggle() {

@@ -1,15 +1,24 @@
 package org.c2w.gui;
 
+import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Config;
+import org.c2w.service.AppContext;
+import org.c2w.service.GuildService;
+import org.c2w.service.RecentFiles;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -33,24 +42,46 @@ class MainMenuBarTest {
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD",
-            "menu.input: OPEN_GUILD_TEAM_ENTRY, ---, "
-                    + "JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS",
+            "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
-                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS, ---, "
-                    + "JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS",
-            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE");
+                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
+            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE",
+            "menu.journal: JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS, ---, "
+                    + "JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS");
 
     /** Deliberately toolbar-only actions - the only ones not in any menu. */
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);
 
+    @TempDir
+    Path workspace;
+
+    private String previousWorkspace;
+    private AppContext context;
+    private GuildService guildService;
+
+    @BeforeEach
+    void openWorkspace() {
+        previousWorkspace = Config.getWorkspacePath();
+        Config.setWorkspacePath(workspace.toString());
+        context = new AppContext(new Catalog(workspace));
+        guildService = new GuildService(context, RecentFiles.NONE);
+    }
+
+    @AfterEach
+    void closeWorkspace() {
+        context.journal().closeCurrent();
+        Config.setWorkspacePath(previousWorkspace);
+    }
+
     @Test
-    @DisplayName("Menu titles, submenus, entries and separators match the expected menu bar - exactly five menus")
+    @DisplayName("Menu titles, submenus, entries and separators match the expected menu bar - six menus, the journal last")
     void structureMatchesExpectedMenuBar() {
         MainActions actions = allActions();
 
-        MainMenuBar menuBar = new MainMenuBar(actions);
+        MainMenuBar menuBar = new MainMenuBar(actions, context);
 
-        assertEquals(5, menuBar.getMenuCount());
+        assertEquals(6, menuBar.getMenuCount());
+        assertSame(menuBar.journalMenu(), menuBar.getMenu(5));
         assertEquals(EXPECTED.size(), menuBar.getMenuCount());
         for (int i = 0; i < EXPECTED.size(); i++) {
             String[] parts = EXPECTED.get(i).split(": ", 2);
@@ -75,7 +106,43 @@ class MainMenuBarTest {
                 }
             }
         }
-        assertEquals(EnumSet.of(Stage.GUILD, Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT), stageMenusFound);
+        assertEquals(EnumSet.of(Stage.GUILD, Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT, Stage.JOURNAL), stageMenusFound);
+    }
+
+    @Test
+    @DisplayName("The stage menus input and concept hold no journal action; the journal menu holds all of them")
+    void journalActionsOnlyInJournalMenu() {
+        for (Stage stage : List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT)) {
+            assertTrue(MainMenuBar.menuFor(stage).allActionIds().stream().noneMatch(id -> id.stage() == Stage.JOURNAL),
+                    stage.name());
+        }
+        Set<ActionId> journal = EnumSet.noneOf(ActionId.class);
+        for (ActionId id : ActionId.values()) {
+            if (id.stage() == Stage.JOURNAL) {
+                journal.add(id);
+            }
+        }
+        assertEquals(7, journal.size());
+        assertEquals(journal, EnumSet.copyOf(MainMenuBar.menuFor(Stage.JOURNAL).allActionIds()));
+        assertNull(Stage.JOURNAL.stageTextKey(), "the journal is no process stage (no tile, no action list)");
+    }
+
+    @Test
+    @DisplayName("The journal menu is shown only for a guild master's guild - hidden without a guild and without the flag, updated on every guild change")
+    void journalMenuFollowsGuildMaster() throws Exception {
+        MainMenuBar menuBar = new MainMenuBar(allActions(), context);
+        assertFalse(menuBar.journalMenu().isVisible(), "no guild open");
+
+        guildService.createGuild("Plain", false);
+        guildService.createGuild("Master", true);
+        guildService.switchToGuild("Plain");
+        assertFalse(menuBar.journalMenu().isVisible(), "guild without the flag");
+
+        guildService.switchToGuild("Master");
+        assertTrue(menuBar.journalMenu().isVisible());
+
+        guildService.switchToGuild("Plain");
+        assertFalse(menuBar.journalMenu().isVisible());
     }
 
     @Test

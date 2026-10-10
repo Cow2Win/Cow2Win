@@ -39,7 +39,7 @@ class GuildRepositoryGameGuildIdTest {
 
         assertEquals(193861L, loaded.gameGuildId());
         assertEquals(guild, loaded);
-        assertEquals(new GuildRepository.GuildFileSummary("Guild", 193861L), GuildRepository.readSummary(file));
+        assertEquals(new GuildRepository.GuildFileSummary("Guild", 193861L, false), GuildRepository.readSummary(file));
     }
 
     @Test

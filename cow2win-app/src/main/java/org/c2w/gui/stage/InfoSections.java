@@ -1,7 +1,6 @@
 package org.c2w.gui.stage;
 
 import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -47,7 +46,7 @@ final class InfoSections {
 
     /** Adds a section to {@code panel}: the heading (capitals, muted, bold) and its {@code body}. */
     static void addSection(JPanel panel, String headingKey, JPanel body) {
-        JLabel heading = new JLabel(LanguageService.displayName(headingKey).toUpperCase(JournalTexts.locale()));
+        JLabel heading = new JLabel(LanguageService.displayName(headingKey).toUpperCase(LanguageService.locale()));
         heading.setForeground(HEADING_COLOR);
         heading.setFont(heading.getFont().deriveFont(Font.BOLD, heading.getFont().getSize2D() - 1f));
         heading.setBorder(BorderFactory.createEmptyBorder(panel.getComponentCount() == 0 ? 0 : 14, 0, 6, 0));
@@ -173,12 +172,12 @@ final class InfoSections {
 
     /** {@code value} with grouping in the configured language. */
     static String number(long value) {
-        return NumberFormat.getIntegerInstance(JournalTexts.locale()).format(value);
+        return NumberFormat.getIntegerInstance(LanguageService.locale()).format(value);
     }
 
     /** {@code date} in the short format of the configured language, "" for null. */
     static String shortDate(LocalDate date) {
-        return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(JournalTexts.locale()).format(date);
+        return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(LanguageService.locale()).format(date);
     }
 
     private static String escape(String text) {

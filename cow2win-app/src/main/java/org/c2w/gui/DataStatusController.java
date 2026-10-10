@@ -7,7 +7,6 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
@@ -131,8 +130,8 @@ public final class DataStatusController {
     /** Starts an evaluation: reads the files in the background, then computes and shows the status. */
     private void evaluate() {
         int myGeneration = ++generation;
-        Snapshot snapshot = new Snapshot(context.guild(), context.guildFilePath(), context.lineup(),
-                context.lineupFilePath(), context.isLineupDirty(), context.fortificationType(),
+        Snapshot snapshot = new Snapshot(context.guild(), context.guildFilePath(), context.isJournalAvailable(),
+                context.lineup(), context.lineupFilePath(), context.isLineupDirty(), context.fortificationType(),
                 new StaleCheck(Config.isStaleCheckEnabled(), Config.getStaleAfterDays()));
         if (snapshot.guild() == null) {
             apply(myGeneration, snapshot, FileData.EMPTY);
@@ -162,13 +161,19 @@ public final class DataStatusController {
         }.execute();
     }
 
-    /** Off the Swing thread: the journal's sync plan, the Original lineup and the file times. */
+    /**
+     * Off the Swing thread: the journal's sync plan (for a guild master's guild only - otherwise
+     * the journal is not read and there is no "outdated per journal"), the Original lineup and
+     * the file times.
+     */
     private FileData readFiles(Snapshot snapshot, Catalog catalog) {
         SyncPlan plan = null;
-        try {
-            plan = new JournalSyncService(context, guildService).prepare();
-        } catch (Exception e) {
-            Logger.logException("Data status: could not read the journal", e);
+        if (snapshot.journalAvailable()) {
+            try {
+                plan = new JournalSyncService(context, guildService).prepare();
+            } catch (Exception e) {
+                Logger.logException("Data status: could not read the journal", e);
+            }
         }
         Lineup original = null;
         Path guildDir = snapshot.guildFilePath() == null ? null : snapshot.guildFilePath().getParent();
@@ -274,7 +279,7 @@ public final class DataStatusController {
         List<String> parts = new ArrayList<>();
         if (status.newestDefense() != null) {
             String date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                    .withLocale(JournalTexts.locale()).format(status.newestDefense());
+                    .withLocale(LanguageService.locale()).format(status.newestDefense());
             parts.add(LanguageService.displayName(KEY_NEWEST_DEFENSE, date));
         }
         if (status.staleJournal() > 0) {
@@ -314,8 +319,8 @@ public final class DataStatusController {
     }
 
     /** The state of the open guild and lineup when an evaluation starts (read on the Swing thread). */
-    private record Snapshot(Guild guild, Path guildFilePath, Lineup lineup, Path lineupFilePath,
-                            boolean lineupDirty, FortificationType fortificationType,
+    private record Snapshot(Guild guild, Path guildFilePath, boolean journalAvailable, Lineup lineup,
+                            Path lineupFilePath, boolean lineupDirty, FortificationType fortificationType,
                             StaleCheck staleCheck) {
     }
 

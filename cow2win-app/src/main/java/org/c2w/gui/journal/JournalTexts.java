@@ -90,13 +90,9 @@ public final class JournalTexts {
         return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale()).format(date);
     }
 
-    /** The locale of the configured language (for dates). */
+    /** The locale of the configured language (for dates) - see {@link LanguageService#locale()}. */
     public static Locale locale() {
-        return switch (LanguageService.configuredLanguage()) {
-            case "deutsch" -> Locale.GERMANY;
-            case "francais" -> Locale.FRANCE;
-            default -> Locale.UK;
-        };
+        return LanguageService.locale();
     }
 
     /**

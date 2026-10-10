@@ -5,7 +5,6 @@ import org.c2w.gui.ContextBar;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -173,7 +172,7 @@ public class OutputStageView extends StageView {
         Path guildFilePath = appContext.guildFilePath();
         Path originalFile = guildFilePath == null || guildFilePath.getParent() == null ? null
                 : LineupFiles.originalPathFor(guildFilePath.getParent());
-        addLine(originalSection, mutedLabel(ContextBar.originalStatusText(originalFile, JournalTexts.locale())));
+        addLine(originalSection, mutedLabel(ContextBar.originalStatusText(originalFile, LanguageService.locale())));
 
         for (JPanel section : List.of(planSection, playersSection, effectSection, originalSection)) {
             relayout(section);

@@ -297,6 +297,20 @@ public class GuildService {
     }
 
     /**
+     * True if the guild in {@code folderName} is a guild master's guild ({@link Guild#guildMaster()}),
+     * read cheaply from its file without opening it; false if it cannot be read.
+     */
+    public boolean isGuildMasterGuild(String folderName) {
+        Path guildFile = guildDir(folderName).resolve(GUILD_FILE_NAME);
+        try {
+            return GuildRepository.readSummary(guildFile).guildMaster();
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not read " + guildFile, e);
+            return false;
+        }
+    }
+
+    /**
      * Records that the guild was edited somewhere without being saved yet
      * (e.g. a pending power edit in a value overview dialog), so the user
      * gets asked before those changes are discarded.

@@ -16,7 +16,7 @@ public enum ActionId {
 
     /**
      * The guild as a whole: creating and removing it - menu "Guild", see {@link Stage#GUILD}. Its
-     * members are added and deleted in the member overview of the input stage.
+     * members are added and deleted in the input stage ({@link #ADD_MEMBER}, {@link #REMOVE_MEMBER}).
      */
     NEW_GUILD("toolbar.newGuild", Stage.GUILD, Opens.WINDOW),
     REMOVE_GUILD("toolbar.removeGuild", Stage.GUILD),
@@ -26,12 +26,11 @@ public enum ActionId {
      * "Maintain live lineup": one text and no icon for both fortification types - only the
      * dialog it opens depends on the selected type, see {@code ActionBar}.
      */
+    /** Asks for the name of a new member and adds it - see {@code InputStageView}. */
+    ADD_MEMBER("memberOverview.addMember", Stage.INPUT, Opens.WINDOW),
+    /** Deletes the member selected in the member overview (after a confirmation) - see {@code InputStageView}. */
+    REMOVE_MEMBER("memberOverview.removeMember", Stage.INPUT),
     OPEN_GUILD_TEAM_ENTRY("toolbar.openGuildTeamEntry", Stage.INPUT, Opens.WINDOW),
-    JOURNAL_IMPORT("menu.journal.import", Stage.INPUT, Opens.WINDOW),
-    JOURNAL_SYNC("menu.journal.sync", Stage.INPUT, Opens.WINDOW),
-    JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.INPUT, Opens.WINDOW),
-    JOURNAL_PLAYERS("journal.action.players", Stage.INPUT, Opens.WINDOW),
-    JOURNAL_SEASONS("journal.action.seasons", Stage.INPUT, Opens.WINDOW),
 
     NEW_LINEUP("toolbar.newLineup", Stage.CONCEPT, Opens.WINDOW),
     REMOVE_LINEUP("toolbar.removeLineup", Stage.CONCEPT),
@@ -44,13 +43,20 @@ public enum ActionId {
      * the type ({@link #textKey()} is the hero variant), see {@code ActionBar}.
      */
     SHOW_TEAMS("toolbar.heroTeams", Stage.CONCEPT, Opens.WINDOW),
-    JOURNAL_BATTLES("menu.journal.battles", Stage.CONCEPT, Opens.WINDOW),
-    JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.CONCEPT, Opens.WINDOW),
 
     OPEN_CHANGE_PLAN("toolbar.openChangePlan", Stage.OUTPUT, Opens.WINDOW),
     GENERATE_REPORT("toolbar.generateReport", Stage.OUTPUT, Opens.WINDOW),
     /** Takes the checked entries of the change plan into the live lineup - see {@code ChangePlanPanel#applyToLive}. */
-    APPLY_TO_LIVE("action.applyToLive", Stage.OUTPUT);
+    APPLY_TO_LIVE("action.applyToLive", Stage.OUTPUT),
+
+    /** The Weltenschlacht journal - for a guild master only, see {@link Stage#JOURNAL}. */
+    JOURNAL_IMPORT("menu.journal.import", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_SYNC("menu.journal.sync", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_BATTLES("menu.journal.battles", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_PLAYERS("journal.action.players", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_SEASONS("journal.action.seasons", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.JOURNAL, Opens.WINDOW);
 
     /**
      * Readability marker for the constructor: {@code Opens.WINDOW} = the action opens a window

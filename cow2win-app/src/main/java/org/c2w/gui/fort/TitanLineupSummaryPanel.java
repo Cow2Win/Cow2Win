@@ -6,7 +6,6 @@ import org.c2w.data.model.Lineup;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 
 import java.text.NumberFormat;
@@ -33,7 +32,7 @@ public class TitanLineupSummaryPanel extends LineupSummaryPanel {
     @Override
     protected String cowScoreTooltip(String key) {
         CowScoreBonuses b = TeamScoreCalculator.bonuses();
-        NumberFormat format = NumberFormat.getNumberInstance(JournalTexts.locale());
+        NumberFormat format = NumberFormat.getNumberInstance(LanguageService.locale());
         format.setMaximumFractionDigits(2);
         return LanguageService.displayName(key, format.format(b.elementPercent()), format.format(b.relationPercent()),
                 format.format(b.totemPercent()));

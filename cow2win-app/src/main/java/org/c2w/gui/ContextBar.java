@@ -7,7 +7,6 @@ import org.c2w.gui.action.MainActions;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.HintStyle;
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -285,7 +284,7 @@ public class ContextBar extends JPanel {
         Path guildFilePath = appContext.guildFilePath();
         Path originalFile = guildFilePath == null || guildFilePath.getParent() == null ? null
                 : LineupFiles.originalPathFor(guildFilePath.getParent());
-        originalLabel.setText(originalStatusText(originalFile, JournalTexts.locale()));
+        originalLabel.setText(originalStatusText(originalFile, LanguageService.locale()));
     }
 
     /**

@@ -33,25 +33,34 @@ class StageActionListTest {
     void rowsFollowTheMenu() {
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), allActions());
 
-        String lineupHeading = LanguageService.displayName("menu.lineup").toUpperCase(org.c2w.gui.journal.JournalTexts.locale());
+        String lineupHeading = LanguageService.displayName("menu.lineup").toUpperCase(LanguageService.locale());
         assertEquals(List.of(
                 "#" + lineupHeading, "NEW_LINEUP", "REMOVE_LINEUP", "CLEAR_LINEUP",
                 "---", "RUN_ALGORITHM", "COMPARE_LINEUPS",
-                "---", "SHOW_TEAMS",
-                "---", "JOURNAL_BATTLES", "JOURNAL_BUILD_TEAMS"), describe(list));
+                "---", "SHOW_TEAMS"), describe(list));
         assertEquals(MainMenuBar.menuFor(Stage.CONCEPT).allActionIds(),
                 list.rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
     }
 
     @Test
-    @DisplayName("For the input stage: no guild group, the list starts with the team assignment")
+    @DisplayName("For the input stage: no guild group and no journal - add / delete member, then the team assignment")
     void inputStageHasNoGuildGroup() {
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.INPUT), allActions());
 
         assertEquals(List.of(
-                "OPEN_GUILD_TEAM_ENTRY",
-                "---", "JOURNAL_IMPORT", "JOURNAL_SYNC",
-                "---", "JOURNAL_PLAYERS", "JOURNAL_SEASONS", "JOURNAL_NAME_MAPPINGS"), describe(list));
+                "ADD_MEMBER", "REMOVE_MEMBER",
+                "---", "OPEN_GUILD_TEAM_ENTRY"), describe(list));
+    }
+
+    @Test
+    @DisplayName("The journal is no stage with an action list - no stage view uses its menu")
+    void journalHasNoActionList() {
+        assertNull(Stage.JOURNAL.stageTextKey());
+        for (Stage stage : List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT)) {
+            StageActionList list = new StageActionList(MainMenuBar.menuFor(stage), allActions());
+            assertTrue(list.rows().stream().noneMatch(row -> ((AppAction) row.action()).id().stage() == Stage.JOURNAL),
+                    stage.name());
+        }
     }
 
     @Test

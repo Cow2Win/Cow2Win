@@ -56,12 +56,12 @@ public class GuildRepository {
      * Writes the given guild to the given path as pretty-printed JSON,
      * creating parent directories as needed.
      */
-    /** Name and game guild id of a guild file - see {@link #readSummary}. */
-    public record GuildFileSummary(String name, Long gameGuildId) {
+    /** Name, game guild id and guild master flag of a guild file - see {@link #readSummary}. */
+    public record GuildFileSummary(String name, Long gameGuildId, boolean guildMaster) {
     }
 
     /**
-     * Reads only the name and the optional {@code gameGuildId} of a guild file -
+     * Reads only the name, the optional {@code gameGuildId} and the guild master flag of a guild file -
      * cheap (no catalog, no members), e.g. to check which guild a battle log
      * belongs to without loading every guild.
      */
@@ -69,7 +69,8 @@ public class GuildRepository {
         JsonObject obj = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8)).getAsJsonObject();
         Long gameGuildId = obj.has("gameGuildId") && !obj.get("gameGuildId").isJsonNull()
                 ? obj.get("gameGuildId").getAsLong() : null;
-        return new GuildFileSummary(JsonSupport.getString(obj, "name", ""), gameGuildId);
+        boolean guildMaster = obj.has("guildMaster") && !obj.get("guildMaster").isJsonNull() && obj.get("guildMaster").getAsBoolean();
+        return new GuildFileSummary(JsonSupport.getString(obj, "name", ""), gameGuildId, guildMaster);
     }
 
     public static void save(Guild guild, Path path) throws IOException {

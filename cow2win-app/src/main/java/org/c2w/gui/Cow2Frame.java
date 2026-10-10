@@ -151,7 +151,9 @@ public class Cow2Frame extends JFrame {
         this.actionBar = new ActionBar(appContext, actions);
         this.journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
         journalActions.registerActions(actions);
-        setJMenuBar(new MainMenuBar(actions));
+        // The input view registers "add / delete member" - before the menu bar needs them.
+        InputStageView inputView = new InputStageView(appContext, actions, actionBar::openTeamEntryFor);
+        setJMenuBar(new MainMenuBar(actions, appContext));
         this.contextBar = new ContextBar(appContext, actions);
         actionBar.buildBar();
 
@@ -165,7 +167,6 @@ public class Cow2Frame extends JFrame {
         // All three stages have a view.
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
-        InputStageView inputView = new InputStageView(appContext, actions, actionBar::openTeamEntryFor);
         addStageView(inputView);
         addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
         this.outputView = new OutputStageView(appContext, actions);

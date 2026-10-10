@@ -1,6 +1,5 @@
 package org.c2w.gui.cowscore;
 
-import org.c2w.gui.journal.JournalTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 
@@ -38,7 +37,7 @@ final class CowScoreInfoHtml {
                     + LanguageService.configuredLanguage() + " nor for " + FALLBACK_LANGUAGE);
             return "<html><body><p>" + escape(LanguageService.displayName(KEY_MISSING)) + "</p></body></html>";
         }
-        return fill(template, CowScoreInfoValues.values(JournalTexts.locale()));
+        return fill(template, CowScoreInfoValues.values(LanguageService.locale()));
     }
 
     /** The unfilled HTML of {@code language}, or null if that language has none. */

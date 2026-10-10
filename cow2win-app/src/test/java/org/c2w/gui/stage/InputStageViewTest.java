@@ -1,6 +1,7 @@
 package org.c2w.gui.stage;
 
 import org.c2w.data.journal.TeamKind;
+import org.c2w.data.journal.db.JournalDatabase;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.repository.Catalog;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
@@ -46,6 +48,8 @@ class InputStageViewTest {
     private String previousWorkspace;
     private AppContext context;
     private InputStageView view;
+    private GuildService guildService;
+    private MainActions actions;
     /** Members whose team assignment the view opened. */
     private final java.util.List<String> openedTeamEntries = new java.util.ArrayList<>();
 
@@ -54,15 +58,18 @@ class InputStageViewTest {
         previousWorkspace = Config.getWorkspacePath();
         Config.setWorkspacePath(workspace.toString());
         context = new AppContext(new Catalog(workspace));
-        GuildService guildService = new GuildService(context, RecentFiles.NONE);
+        guildService = new GuildService(context, RecentFiles.NONE);
         guildService.createGuild("Alpha", false);
         guildService.switchToGuild("Alpha");
         Guild testGuild = MemberOverviewModelTest.testGuild();
         context.setGuild(new Guild(context.guild().id(), context.guild().name(), testGuild.members(),
                 context.guild().gameGuildId()));
-        MainActions actions = new MainActions();
+        actions = new MainActions();
         for (ActionId id : ActionId.values()) {
-            actions.register(new AppAction(id, () -> { }));
+            // "Add / delete member" are registered by the view itself.
+            if (id != ActionId.ADD_MEMBER && id != ActionId.REMOVE_MEMBER) {
+                actions.register(new AppAction(id, () -> { }));
+            }
         }
         view = new InputStageView(context, actions, openedTeamEntries::add);
     }
@@ -217,18 +224,35 @@ class InputStageViewTest {
     }
 
     @Test
-    @DisplayName("\"+\" and \"-\" next to the count: \"-\" only with a selected member")
-    void memberButtons() {
-        assertTrue(view.addMemberButton().isEnabled());
+    @DisplayName("\"Add member\" / \"delete member\" are actions of the view: \"delete\" only with a selected member")
+    void memberActions() {
+        assertTrue(actions.get(ActionId.ADD_MEMBER).isEnabled());
         view.selectMember(null);
-        assertFalse(view.removeMemberButton().isEnabled());
+        assertFalse(actions.get(ActionId.REMOVE_MEMBER).isEnabled());
 
         view.selectMember("anna");
-        assertTrue(view.removeMemberButton().isEnabled());
+        assertTrue(actions.get(ActionId.REMOVE_MEMBER).isEnabled());
     }
 
     @Test
-    @DisplayName("\"+\" is disabled at the maximum number of members, with the reason as tooltip")
+    @DisplayName("Action list starts with add / delete member, then the team assignment")
+    void memberActionsInActionList() {
+        assertEquals(List.of(ActionId.ADD_MEMBER, ActionId.REMOVE_MEMBER, ActionId.OPEN_GUILD_TEAM_ENTRY),
+                view.actionList().rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
+    }
+
+    @Test
+    @DisplayName("Context menu and Del use the same actions; the header above the table has no buttons any more")
+    void contextMenuAndDeleteKey() {
+        List<javax.swing.Action> popupActions = java.util.Arrays.stream(view.memberPopup().getComponents())
+                .map(component -> ((javax.swing.JMenuItem) component).getAction()).toList();
+        assertEquals(List.of(actions.get(ActionId.ADD_MEMBER), actions.get(ActionId.REMOVE_MEMBER)), popupActions);
+        assertSame(actions.get(ActionId.REMOVE_MEMBER), view.table().getActionMap().get("c2w.removeMember"));
+        assertEquals(List.of(view.countLabel()), List.of(view.tableHeader().getComponents()));
+    }
+
+    @Test
+    @DisplayName("\"Add member\" is disabled at the maximum number of members, with the reason as tooltip")
     void addDisabledWhenFull() {
         List<org.c2w.data.model.GuildMember> members = new java.util.ArrayList<>();
         for (int i = 1; i <= Guild.MAX_MEMBERS; i++) {
@@ -237,9 +261,45 @@ class InputStageViewTest {
         context.setGuild(context.guild().withMembers(members));
         context.setGuildDirty(true); // fires dirtyStateChanged - the view refreshes
 
-        assertFalse(view.addMemberButton().isEnabled());
+        assertFalse(actions.get(ActionId.ADD_MEMBER).isEnabled());
         assertEquals(LanguageService.displayName("common.maxMembers", Guild.MAX_MEMBERS),
-                view.addMemberButton().getToolTipText());
+                actions.get(ActionId.ADD_MEMBER).getValue(javax.swing.Action.SHORT_DESCRIPTION));
+    }
+
+    @Test
+    @DisplayName("Without the guild master flag: no journal section and the journal is not read - an existing journal stays untouched")
+    void journalSectionHiddenWithoutGuildMaster() throws Exception {
+        // An old journal of a guild without the flag.
+        context.journal().repository(true);
+        context.journal().closeCurrent();
+        Path journalFile = guildService.guildDir("Alpha").resolve(JournalDatabase.FILE_NAME);
+        assertTrue(Files.isRegularFile(journalFile));
+        long size = Files.size(journalFile);
+        java.nio.file.attribute.FileTime modified = Files.getLastModifiedTime(journalFile);
+
+        guildService.switchToGuild("Alpha");
+
+        assertFalse(view.isJournalSectionShown());
+        assertTrue(view.journalSectionTexts().isEmpty());
+        assertFalse(context.journal().isOpen(), "the journal was read");
+        assertEquals(size, Files.size(journalFile));
+        assertEquals(modified, Files.getLastModifiedTime(journalFile));
+    }
+
+    @Test
+    @DisplayName("With the guild master flag the journal section is shown - decided again on every guild change")
+    void journalSectionForGuildMaster() throws Exception {
+        assertFalse(view.isJournalSectionShown());
+
+        guildService.createGuild("Master", true);
+        guildService.switchToGuild("Master");
+        assertTrue(view.isJournalSectionShown());
+        view.showJournal(JournalInfoModel.JournalInfo.of(JournalInfoModel.State.NO_JOURNAL));
+        List<String> texts = view.journalSectionTexts();
+        assertTrue(texts.size() == 1 && texts.get(0).contains(LanguageService.displayName("stageInfo.journal.none")), texts.toString());
+
+        guildService.switchToGuild("Alpha");
+        assertFalse(view.isJournalSectionShown());
     }
 
     @Test

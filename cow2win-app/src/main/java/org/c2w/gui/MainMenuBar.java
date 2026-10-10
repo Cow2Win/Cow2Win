@@ -4,6 +4,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.i18n.LanguageService;
+import org.c2w.service.AppContext;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -51,8 +52,9 @@ public final class MainMenuBar extends JMenuBar {
     static final Separator SEPARATOR = new Separator();
 
     /**
-     * The menus in display order: "File", "Guild" plus one menu per process stage. Every action in a
-     * menu titled with a {@link Stage#menuTextKey()}, submenus included, is of that stage.
+     * The menus in display order: "File", "Guild", one menu per process stage and last the
+     * "Weltenschlacht Journal" ({@link Stage#JOURNAL}, shown for a guild master only). Every action
+     * in a menu titled with a {@link Stage#menuTextKey()}, submenus included, is of that stage.
      * "File" also holds the master data entries for now (no menu of their own yet). Every
      * action appears in exactly one menu, except the {@link #TOOLBAR_ONLY} ones.
      */
@@ -60,23 +62,51 @@ public final class MainMenuBar extends JMenuBar {
             menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
             menu(Stage.GUILD.menuTextKey(), NEW_GUILD, REMOVE_GUILD),
             menu(Stage.INPUT.menuTextKey(),
-                    OPEN_GUILD_TEAM_ENTRY,
-                    SEPARATOR, JOURNAL_IMPORT, JOURNAL_SYNC,
-                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS),
+                    ADD_MEMBER, REMOVE_MEMBER,
+                    SEPARATOR, OPEN_GUILD_TEAM_ENTRY),
             menu(Stage.CONCEPT.menuTextKey(),
                     menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP),
                     SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
-                    SEPARATOR, SHOW_TEAMS,
-                    SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS),
-            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE));
+                    SEPARATOR, SHOW_TEAMS),
+            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE),
+            menu(Stage.JOURNAL.menuTextKey(),
+                    JOURNAL_IMPORT, JOURNAL_SYNC,
+                    SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS,
+                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS));
 
     /** The actions deliberately offered in the toolbar only, not in any menu. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);
 
-    public MainMenuBar(MainActions actions) {
+    /** The "Weltenschlacht Journal" menu - visible only while {@link AppContext#isJournalAvailable()}. */
+    private final JMenu journalMenu;
+
+    /**
+     * Builds every menu; the journal menu follows {@code context} - shown only while a guild
+     * master's guild is open, updated on every guild change.
+     */
+    public MainMenuBar(MainActions actions, AppContext context) {
+        JMenu journal = null;
         for (MenuSpec spec : MENUS) {
-            add(buildMenu(spec, actions));
+            JMenu menu = buildMenu(spec, actions);
+            if (spec.titleKey().equals(Stage.JOURNAL.menuTextKey())) {
+                journal = menu;
+            }
+            add(menu);
         }
+        this.journalMenu = journal;
+        Runnable update = () -> journalMenu.setVisible(context.isJournalAvailable());
+        update.run();
+        context.addListener(new AppContext.Listener() {
+            @Override
+            public void guildChanged() {
+                update.run();
+            }
+        });
+    }
+
+    /** The "Weltenschlacht Journal" menu - package-visible for tests. */
+    JMenu journalMenu() {
+        return journalMenu;
     }
 
     /** A menu spec from {@link ActionId}s, {@link #SEPARATOR}s and submenu {@link MenuSpec}s. */

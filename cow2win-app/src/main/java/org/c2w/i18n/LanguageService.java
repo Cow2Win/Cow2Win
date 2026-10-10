@@ -96,6 +96,15 @@ public class LanguageService {
         return configured;
     }
 
+    /** The locale of the configured language - for dates, numbers and upper case. */
+    public static Locale locale() {
+        return switch (configuredLanguage()) {
+            case "deutsch" -> Locale.GERMANY;
+            case "francais" -> Locale.FRANCE;
+            default -> Locale.UK;
+        };
+    }
+
     /**
      * Returns the display name for the given catalog id in the currently
      * configured language, or the id itself if no entry exists for it

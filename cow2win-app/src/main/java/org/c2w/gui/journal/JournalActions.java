@@ -14,6 +14,7 @@ import org.c2w.service.JournalMaintenanceService;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.io.File;
 import java.nio.file.Files;
@@ -32,8 +33,9 @@ import java.util.function.Predicate;
  * import assistant, the (single) battle list, battle details (several), "build
  * teams from logs", "update teams (sync)", and the
  * maintenance windows for players, seasons and name mappings. After every change
- * of the journal all open journal windows reload. All entries are disabled while
- * no guild is open.
+ * of the journal all open journal windows reload. All entries are disabled - and the
+ * open journal windows closed - unless a guild master's guild is open (only a guild
+ * master can export battle logs).
  */
 public final class JournalActions {
 
@@ -65,7 +67,8 @@ public final class JournalActions {
     /**
      * Registers the journal actions ("Import …", "Battle list …", the maintenance windows, ...)
      * in {@code actions} - the menu itself is built by {@code MainMenuBar}. They are only
-     * enabled while a guild is open.
+     * enabled while a guild master's guild is open ({@link AppContext#isJournalAvailable()});
+     * switching to another guild closes the open journal windows.
      */
     public void registerActions(MainActions actions) {
         List<AppAction> journalActions = List.of(
@@ -77,8 +80,11 @@ public final class JournalActions {
                 actions.register(new AppAction(ActionId.JOURNAL_SEASONS, this::openSeasons)),
                 actions.register(new AppAction(ActionId.JOURNAL_NAME_MAPPINGS, this::openNameMappings)));
         Runnable update = () -> {
-            boolean guildOpen = context.guild() != null && context.guildFilePath() != null;
-            journalActions.forEach(action -> action.setEnabled(guildOpen));
+            boolean available = context.isJournalAvailable();
+            journalActions.forEach(action -> action.setEnabled(available));
+            if (!available) {
+                closeWindows();
+            }
         };
         update.run();
         context.addListener(new AppContext.Listener() {
@@ -87,6 +93,21 @@ public final class JournalActions {
                 update.run();
             }
         });
+    }
+
+    /** Closes every open (modeless) journal window - the modal ones block the main window anyway. */
+    void closeWindows() {
+        details.forEach(Window::dispose);
+        details.clear();
+        for (Window window : new Window[]{battleList, players, seasons, nameMappings}) {
+            if (window != null) {
+                window.dispose();
+            }
+        }
+        battleList = null;
+        players = null;
+        seasons = null;
+        nameMappings = null;
     }
 
     /** Lets the user choose battle logs and imports them. */
@@ -125,6 +146,14 @@ public final class JournalActions {
         JournalImportDialog.open(frame, context, guildService, new JournalImportDialog.Host() {
             @Override
             public boolean switchToGuild(String folderName) {
+                // The journal is for a guild master's guild only - no switch to a guild without it.
+                if (!guildService.isGuildMasterGuild(folderName)) {
+                    Window parent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+                    JOptionPane.showMessageDialog(parent != null ? parent : frame,
+                            JournalTexts.text("journal.import.switchNotGuildMaster", folderName),
+                            JournalTexts.text("common.notPossibleTitle"), JOptionPane.INFORMATION_MESSAGE);
+                    return false;
+                }
                 return guildSwitcher.test(folderName);
             }
 

@@ -113,6 +113,16 @@ public class AppContext {
         return guild != null && guild.guildMaster();
     }
 
+    /**
+     * True if the Weltenschlacht journal's functions are offered for the open guild: a guild
+     * master's guild ({@link #isGuildMaster()}) loaded from a file - only a guild master can
+     * export battle logs. Otherwise every trace of the journal is hidden; its database stays
+     * untouched in the guild folder.
+     */
+    public boolean isJournalAvailable() {
+        return isGuildMaster() && guildFilePath != null;
+    }
+
     /** Replaces the currently open guild (e.g. after the user edited and saved it). */
     public void setGuild(Guild guild) {
         if (guild == null) {
