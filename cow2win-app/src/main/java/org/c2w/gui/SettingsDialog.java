@@ -65,16 +65,6 @@ public class SettingsDialog extends JDialog {
     /** Language file key for the workspace directory field's label (see {@link #buildUi()}). */
     private static final String KEY_WORKSPACE_DIRECTORY = "settingsDialog.workspaceDirectory";
 
-    /**
-     * Name of the dedicated workspace marker folder created inside a chosen
-     * directory when the user selects a workspace that is not itself such a
-     * folder (see {@link #normalizeWorkspaceDir(String)}). Keeping Cow2Win's
-     * data in its own {@value #WORKSPACE_MARKER_DIR_NAME} subfolder avoids
-     * mixing guilds/lineups/log into an arbitrary user-picked directory (e.g.
-     * a Documents folder that already holds unrelated files).
-     */
-    private static final String WORKSPACE_MARKER_DIR_NAME = WorkspaceMaintenance.WORKSPACE_DIR_NAME;
-
     /** Classpath path of the "save" button's icon - same icon every other save {@link FlatButton} in the app uses. */
     private static final String ICON_SAVE_SETTINGS = "/images/app/save.png";
 
@@ -420,7 +410,7 @@ public class SettingsDialog extends JDialog {
         if (chosen == null) {
             return;
         }
-        Path target = WorkspaceMaintenance.normalizeWorkspaceDir(Paths.get(chosen.trim())).toAbsolutePath().normalize();
+        Path target = Paths.get(chosen.trim()).toAbsolutePath().normalize();
         String title = LanguageService.displayName("settingsDialog.moveWorkspace");
         WorkspaceMaintenance.MoveProblem problem = WorkspaceMaintenance.checkMoveTarget(workspace, target);
         if (problem != null) {
@@ -451,21 +441,18 @@ public class SettingsDialog extends JDialog {
     }
 
     /**
-     * Normalizes a user-selected workspace directory so it always ends in a
-     * dedicated {@value #WORKSPACE_MARKER_DIR_NAME} folder: if the chosen
-     * folder is not itself named {@value #WORKSPACE_MARKER_DIR_NAME} (compared
-     * case-insensitively), a {@value #WORKSPACE_MARKER_DIR_NAME} subfolder is
-     * created inside it and that subfolder becomes the workspace. The folder is
-     * created eagerly here (rather than lazily on first write) so the returned
-     * path is a real, usable directory the moment it is saved. A blank
-     * selection is passed through unchanged, letting
-     * {@link Config#setWorkspacePath(String)} fall back to its default.
+     * The workspace directory as entered by the user: the folder itself is used
+     * as the workspace, no subfolder is appended. A non-blank folder is created
+     * eagerly here (rather than lazily on first write) so the returned path is
+     * a real, usable directory the moment it is saved. A blank selection is
+     * passed through unchanged, letting {@link Config#setWorkspacePath(String)}
+     * fall back to its default.
      */
-    private static String normalizeWorkspaceDir(String chosen) {
+    private static String prepareWorkspaceDir(String chosen) {
         if (chosen == null || chosen.isBlank()) {
             return chosen;
         }
-        Path workspace = WorkspaceMaintenance.normalizeWorkspaceDir(Paths.get(chosen.trim()));
+        Path workspace = Paths.get(chosen.trim());
         try {
             Files.createDirectories(workspace);
         } catch (IOException e) {
@@ -477,10 +464,10 @@ public class SettingsDialog extends JDialog {
     private void onOk() {
         String selectedLanguage = (String) languageComboBox.getSelectedItem();
         boolean languageChanged = !selectedLanguage.equals(LanguageService.configuredLanguage());
-        String workspacePath = normalizeWorkspaceDir(workspaceDirField.getText());
+        String workspacePath = prepareWorkspaceDir(workspaceDirField.getText());
         boolean workspaceChanged = !workspacePath.equals(Config.getWorkspacePath());
-        // Reflect the normalized (possibly .cow2Win-appended) path back into the
-        // field, so what is shown always matches what actually gets saved.
+        // Reflect the trimmed path back into the field, so what is shown always
+        // matches what actually gets saved.
         workspaceDirField.setText(workspacePath);
         Config.setLanguage(selectedLanguage);
         if (heroAlgorithmComboBox.getSelectedItem() != null) {

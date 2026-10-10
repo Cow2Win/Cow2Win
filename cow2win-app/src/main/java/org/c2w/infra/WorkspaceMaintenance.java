@@ -46,9 +46,6 @@ public final class WorkspaceMaintenance {
     /** The state before a restore, saved in the backup directory (overwrites an older one). */
     public static final String BEFORE_RESTORE_FILE_NAME = "workspace-before-restore.zip";
 
-    /** Name of the dedicated folder a workspace always lives in (see {@link #normalizeWorkspaceDir}). */
-    public static final String WORKSPACE_DIR_NAME = ".cow2Win";
-
     /** The technical log files directly in the workspace - never restored, never deleted by a restore. */
     static final Set<String> LOG_FILE_NAMES = Set.of(Logger.LOG_FILE_NAME, Logger.LOG_FILE_NAME + ".1");
 
@@ -132,17 +129,6 @@ public final class WorkspaceMaintenance {
             }
         }
         return choices;
-    }
-
-    /**
-     * The workspace folder for a folder the user chose: the folder itself if it is named
-     * {@value #WORKSPACE_DIR_NAME} (ignoring case), otherwise a {@value #WORKSPACE_DIR_NAME}
-     * folder inside it. Creates nothing.
-     */
-    public static Path normalizeWorkspaceDir(Path chosen) {
-        Path folderName = chosen.getFileName();
-        boolean alreadyWorkspaceDir = folderName != null && folderName.toString().equalsIgnoreCase(WORKSPACE_DIR_NAME);
-        return alreadyWorkspaceDir ? chosen : chosen.resolve(WORKSPACE_DIR_NAME);
     }
 
     /** Why {@code target} cannot take the workspace {@code workspace}, or {@code null} if it can. */
