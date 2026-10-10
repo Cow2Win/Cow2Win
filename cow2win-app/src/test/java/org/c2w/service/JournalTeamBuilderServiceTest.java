@@ -503,7 +503,7 @@ class JournalTeamBuilderServiceTest {
         context.guild().members().forEach(m -> memberNames.put(m.id(), m.name()));
         int hits = 0;
         int wrong = 0;
-        for (var summary : repo.listBattles(null)) {
+        for (var summary : repo.listBattles()) {
             var defense = repo.loadLog(summary.battleId(), LogDirection.DEFENSE);
             var attack = repo.loadLog(summary.battleId(), LogDirection.ATTACK);
             if (defense.isEmpty() || attack.isEmpty()) {

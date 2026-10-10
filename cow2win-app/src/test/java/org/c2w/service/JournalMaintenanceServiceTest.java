@@ -85,7 +85,7 @@ class JournalMaintenanceServiceTest {
 
     private int battle(String day) throws JournalException {
         LocalDate date = LocalDate.parse(day.substring(6) + "-" + day.substring(3, 5) + "-" + day.substring(0, 2));
-        return repo().listBattles(null).stream().filter(b -> b.date().equals(date)).findFirst().orElseThrow().battleId();
+        return repo().listBattles().stream().filter(b -> b.date().equals(date)).findFirst().orElseThrow().battleId();
     }
 
     @Test
@@ -93,8 +93,6 @@ class JournalMaintenanceServiceTest {
     void withoutJournal() throws Exception {
         assertEquals(Optional.empty(), service.repository());
         assertEquals(JournalCounts.NONE, service.countBattles(List.of(1)));
-        assertEquals(List.of(), service.seasonsFor(LocalDate.now()));
-        assertEquals(1, service.suggestNewSeason(LocalDate.of(2026, 10, 4)).number());
         assertEquals(0, service.reparse(null, null).logs());
         assertThrows(JournalException.class, () -> service.deleteBattles(List.of(1)));
         assertFalse(JournalDatabase.exists(guildService.guildDir("Alpha")));
@@ -111,91 +109,13 @@ class JournalMaintenanceServiceTest {
 
         assertEquals(new JournalCounts(1, 2, augeFights), service.countBattles(List.of(auge)));
         assertEquals(1, service.deleteBattles(List.of(auge)));
-        assertEquals(5, repo().listBattles(null).size());
+        assertEquals(5, repo().listBattles().size());
 
         JournalCounts two = service.countBattles(List.of(rakuen, elysium));
         assertEquals(new JournalCounts(2, 4, fights("21-09-2026") + fights("14-09-2026")), two);
         assertEquals(2, service.deleteBattles(List.of(rakuen, elysium, auge)));
-        assertEquals(3, repo().listBattles(null).size());
+        assertEquals(3, repo().listBattles().size());
         assertEquals(Optional.empty(), repo().findBattleSummary(rakuen));
-    }
-
-    @Test
-    @DisplayName("Seasons: create, edit with preview and reassignment, overlap rejected, delete with/without battles")
-    void seasons() throws Exception {
-        importAll(BattleLogTestFiles.BATTLE_DAYS);
-        Season first = repo().listSeasons().get(0);
-        assertEquals(LocalDate.of(2026, 9, 14), first.start(), "the import's first season");
-        assertTrue(repo().listBattles(null).stream().allMatch(b -> Objects.equals(b.seasonId(), first.id())));
-
-        // suggestion: after the last season in the 12-week raster
-        Season suggested = service.suggestNewSeason(LocalDate.of(2026, 10, 4));
-        assertEquals(0, suggested.id());
-        assertEquals(first.number() + 1, suggested.number());
-        assertEquals(first.end(), suggested.start());
-        assertEquals(first.end().plusWeeks(12), suggested.end());
-        assertEquals(Optional.empty(), service.findConflict(suggested));
-        assertEquals(0, service.previewSave(suggested));
-        JournalMaintenanceService.SeasonChange created = service.saveSeason(
-                new Season(0, suggested.number(), suggested.start(), suggested.end(), "Herbst"));
-        assertEquals(0, created.reassigned());
-        assertEquals("Herbst", created.season().note());
-
-        // moving the first season's start behind 21.09.: 14.09., 17.09. and 21.09. lose it
-        Season moved = new Season(first.id(), first.number(), LocalDate.of(2026, 9, 22), first.end(), null);
-        assertEquals(3, service.previewSave(moved));
-        assertEquals(3, service.saveSeason(moved).reassigned());
-        assertEquals(3, repo().listBattles(null).stream().filter(b -> b.seasonId() == null).count());
-
-        // a new season over 31.08. - 21.09. picks them up again
-        Season earlier = new Season(0, 0, LocalDate.of(2026, 8, 31), LocalDate.of(2026, 9, 22), null);
-        assertEquals(3, service.previewSave(earlier));
-        Season earlierSaved = service.saveSeason(earlier).season();
-        assertEquals(List.of(0, 0, 0, 1, 1, 1), repo().listBattles(null).stream()
-                .map(BattleSummary::seasonNumber).sorted().toList());
-
-        // overlap and duplicate numbers are rejected, naming the other season
-        Season overlapping = new Season(0, 7, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 10), null);
-        JournalMaintenanceService.SeasonConflict conflict = service.findConflict(overlapping).orElseThrow();
-        assertEquals(JournalMaintenanceService.SeasonConflict.Kind.OVERLAP, conflict.kind());
-        assertEquals(earlierSaved.id(), conflict.other().id());
-        assertThrows(JournalException.class, () -> service.saveSeason(overlapping));
-        Season sameNumber = new Season(0, 0, LocalDate.of(2027, 6, 1), LocalDate.of(2027, 7, 1), null);
-        assertEquals(JournalMaintenanceService.SeasonConflict.Kind.NUMBER_TAKEN,
-                service.findConflict(sameNumber).orElseThrow().kind());
-        assertEquals(3, repo().listSeasons().size(), "nothing saved");
-
-        // delete without battles: they stay, without season
-        assertEquals(3, service.countSeason(earlierSaved.id()).battles());
-        assertEquals(3, service.previewDelete(earlierSaved.id()));
-        JournalMaintenanceService.SeasonChange deleted = service.deleteSeason(earlierSaved.id(), false);
-        assertEquals(0, deleted.deleted());
-        assertEquals(6, repo().listBattles(null).size());
-        assertEquals(3, repo().listBattles(null).stream().filter(b -> b.seasonId() == null).count());
-
-        // delete with battles
-        JournalCounts firstCounts = service.countSeason(first.id());
-        assertEquals(3, firstCounts.battles());
-        assertEquals(3, service.deleteSeason(first.id(), true).deleted());
-        assertEquals(3, repo().listBattles(null).size());
-        assertThrows(JournalException.class, () -> service.deleteSeason(first.id(), true));
-    }
-
-    @Test
-    @DisplayName("Manual season: only a season containing the battle's day, or none")
-    void manualSeason() throws Exception {
-        importAll(List.of("24-09-2026"));
-        int auge = battle("24-09-2026");
-        Season first = repo().listSeasons().get(0);
-        Season later = repo().createSeason(first.number() + 1, first.end());
-
-        assertEquals(List.of(first), service.seasonsFor(LocalDate.of(2026, 9, 24)));
-        assertThrows(IllegalArgumentException.class, () -> service.assignSeason(auge, later.id()));
-        service.assignSeason(auge, null);
-        assertNull(repo().findBattleSummary(auge).orElseThrow().seasonId());
-        service.assignSeason(auge, first.id());
-        assertEquals(first.id(), repo().findBattleSummary(auge).orElseThrow().seasonId());
-        assertThrows(JournalException.class, () -> service.assignSeason(999, null));
     }
 
     @Test
@@ -232,14 +152,12 @@ class JournalMaintenanceServiceTest {
     }
 
     @Test
-    @DisplayName("Parse again: one and all battles; seasons and assignments stay, parser version, problems before/after")
+    @DisplayName("Parse again: one and all battles; assignments stay, parser version, problems before/after")
     void reparse() throws Exception {
         importAll(BattleLogTestFiles.BATTLE_DAYS);
         int auge = battle("24-09-2026");
         JournalPlayer puschel = repo().findOwnPlayer("Puschel").orElseThrow();
         repo().setAssignment(puschel.id(), null, AssignmentStatus.NOT_IN_COW2WIN);
-        Map<Integer, Integer> seasons = new HashMap<>();
-        repo().listBattles(null).forEach(b -> seasons.put(b.battleId(), b.seasonId()));
         long fightsBefore = repo().countAll().fights();
         List<int[]> progress = new ArrayList<>();
 
@@ -256,7 +174,6 @@ class JournalMaintenanceServiceTest {
         JournalMaintenanceService.ReparseResult all = service.reparse(null, null);
         assertEquals(12, all.logs());
         assertEquals(fightsBefore, repo().countAll().fights());
-        repo().listBattles(null).forEach(b -> assertEquals(seasons.get(b.battleId()), b.seasonId()));
         assertEquals(AssignmentStatus.NOT_IN_COW2WIN, repo().findAssignment(puschel.id()).orElseThrow().status());
         assertTrue(repo().listLogs(null).stream().allMatch(l -> l.parserVersion() == BattleLogParser.PARSER_VERSION));
     }
@@ -273,7 +190,7 @@ class JournalMaintenanceServiceTest {
                 .filter(u -> u.kind() == UnitKind.HERO && u.catalogId() != null).findFirst().orElseThrow();
         String content = Files.readString(original, StandardCharsets.UTF_8).replace(hero.name() + " |", "Neuheld |");
         repo().saveLog(BattleLogTestFiles.parser().parse(original.getFileName().toString(), content),
-                content.getBytes(StandardCharsets.UTF_8), null);
+                content.getBytes(StandardCharsets.UTF_8));
         int problems = repo().listLogs(auge).stream().mapToInt(LogInfo::problemCount).sum();
         assertTrue(problems > 0);
 

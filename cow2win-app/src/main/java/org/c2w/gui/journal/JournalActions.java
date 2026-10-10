@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  * {@code Cow2Frame} and {@code MainMenuBar}: choose battle logs and run the
  * import assistant, the (single) battle list, battle details (several), "build
  * teams from logs", "update teams (sync)", and the
- * maintenance windows for players, seasons and name mappings. After every change
+ * maintenance windows for players and name mappings. After every change
  * of the journal all open journal windows reload. All entries are disabled - and the
  * open journal windows closed - unless a guild master's guild is open (only a guild
  * master can export battle logs).
@@ -48,7 +48,6 @@ public final class JournalActions {
     private final List<JournalBattleDetailDialog> details = new ArrayList<>();
     private JournalBattleListDialog battleList;
     private JournalPlayersDialog players;
-    private JournalSeasonsDialog seasons;
     private JournalNameMappingsDialog nameMappings;
     /** Notified after every change of the journal and after the sync window closed (e.g. the data status). */
     private final List<Runnable> journalListeners = new ArrayList<>();
@@ -78,7 +77,6 @@ public final class JournalActions {
                 actions.register(new AppAction(ActionId.JOURNAL_BUILD_TEAMS, this::openTeamBuilder)),
                 actions.register(new AppAction(ActionId.JOURNAL_SYNC, this::openSync)),
                 actions.register(new AppAction(ActionId.JOURNAL_PLAYERS, this::openPlayers)),
-                actions.register(new AppAction(ActionId.JOURNAL_SEASONS, this::openSeasons)),
                 actions.register(new AppAction(ActionId.JOURNAL_NAME_MAPPINGS, this::openNameMappings)));
         Runnable update = () -> {
             boolean available = context.isJournalAvailable();
@@ -100,14 +98,13 @@ public final class JournalActions {
     void closeWindows() {
         details.forEach(Window::dispose);
         details.clear();
-        for (Window window : new Window[]{battleList, players, seasons, nameMappings}) {
+        for (Window window : new Window[]{battleList, players, nameMappings}) {
             if (window != null) {
                 window.dispose();
             }
         }
         battleList = null;
         players = null;
-        seasons = null;
         nameMappings = null;
     }
 
@@ -230,11 +227,6 @@ public final class JournalActions {
                 }
 
                 @Override
-                public void openSeasons() {
-                    JournalActions.this.openSeasons();
-                }
-
-                @Override
                 public void openNameMappings() {
                     JournalActions.this.openNameMappings();
                 }
@@ -285,16 +277,6 @@ public final class JournalActions {
         bringToFront(players);
     }
 
-    /** Shows the seasons (one window). */
-    public void openSeasons() {
-        if (seasons == null || !seasons.isDisplayable()) {
-            seasons = new JournalSeasonsDialog(frame, context, operations.service(), this::journalChanged);
-        } else {
-            seasons.reload();
-        }
-        bringToFront(seasons);
-    }
-
     /** Shows the name mappings (one window). */
     public void openNameMappings() {
         if (nameMappings == null || !nameMappings.isDisplayable()) {
@@ -305,7 +287,7 @@ public final class JournalActions {
         bringToFront(nameMappings);
     }
 
-    /** The journal changed (import, delete, season, assignment, parse again): every open journal window reloads. */
+    /** The journal changed (import, delete, assignment, parse again): every open journal window reloads. */
     public void journalChanged() {
         if (battleList != null && battleList.isDisplayable()) {
             battleList.reload();
@@ -314,9 +296,6 @@ public final class JournalActions {
         List.copyOf(details).forEach(JournalBattleDetailDialog::reload);
         if (players != null && players.isDisplayable()) {
             players.reload();
-        }
-        if (seasons != null && seasons.isDisplayable()) {
-            seasons.reload();
         }
         if (nameMappings != null && nameMappings.isDisplayable()) {
             nameMappings.reload();

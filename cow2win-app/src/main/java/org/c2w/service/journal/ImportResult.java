@@ -70,11 +70,10 @@ public record ImportResult(
      * @param battleId journal id
      * @param date     battle day
      * @param opponent opponent guild
-     * @param seasonId season, {@code null} if none
      * @param status   running or finished
      * @param verdict  control calculation
      */
-    public record BattleOutcome(int battleId, LocalDate date, GuildRef opponent, Integer seasonId,
+    public record BattleOutcome(int battleId, LocalDate date, GuildRef opponent,
                                 BattleStatus status, BattleLogCheck.Verdict verdict) {
     }
 
@@ -111,8 +110,6 @@ public record ImportResult(
             DUPLICATE_RENAME,
             /** The guild would get more than {@code Guild.MAX_MEMBERS} members. */
             MEMBER_LIMIT,
-            /** A season would overlap another one. */
-            SEASON_OVERLAP,
             /** The catalog id of a name answer does not exist. */
             INVALID_CATALOG_ID,
             /** The journal is open in another Cow2Win instance (H2 file lock) - nothing was changed. */

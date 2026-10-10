@@ -72,7 +72,7 @@ public final class MainMenuBar extends JMenuBar {
             menu(Stage.JOURNAL.menuTextKey(),
                     JOURNAL_IMPORT, JOURNAL_SYNC,
                     SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS,
-                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS));
+                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_NAME_MAPPINGS));
 
     /** The actions deliberately offered in the toolbar only, not in any menu. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);

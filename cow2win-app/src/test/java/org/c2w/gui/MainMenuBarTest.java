@@ -47,7 +47,7 @@ class MainMenuBarTest {
                     + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
             "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE",
             "menu.journal: JOURNAL_IMPORT, JOURNAL_SYNC, ---, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS, ---, "
-                    + "JOURNAL_PLAYERS, JOURNAL_SEASONS, JOURNAL_NAME_MAPPINGS");
+                    + "JOURNAL_PLAYERS, JOURNAL_NAME_MAPPINGS");
 
     /** Deliberately toolbar-only actions - the only ones not in any menu. */
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);
@@ -122,7 +122,7 @@ class MainMenuBarTest {
                 journal.add(id);
             }
         }
-        assertEquals(7, journal.size());
+        assertEquals(6, journal.size());
         assertEquals(journal, EnumSet.copyOf(MainMenuBar.menuFor(Stage.JOURNAL).allActionIds()));
         assertNull(Stage.JOURNAL.stageTextKey(), "the journal is no process stage (no tile, no action list)");
     }

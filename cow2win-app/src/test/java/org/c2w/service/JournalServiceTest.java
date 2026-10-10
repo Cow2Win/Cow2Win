@@ -61,7 +61,7 @@ class JournalServiceTest extends ServiceTestSupport {
         guildService.switchToGuild("Beta");
         JournalRepository repository = context.journal().repository(true).orElseThrow();
         Path file = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.ATTACK);
-        repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), null);
+        repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file));
         Path beta = guildService.guildDir("Beta");
 
         guildService.deleteGuild("Beta");

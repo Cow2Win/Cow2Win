@@ -81,7 +81,7 @@ class JournalInfoModelTest {
         JournalInfoModel.JournalInfo info = JournalInfoModel.load(context.journal());
 
         JournalRepository repository = context.journal().repository(false).orElseThrow();
-        List<BattleSummary> battles = repository.listBattles(null);
+        List<BattleSummary> battles = repository.listBattles();
         assertEquals(JournalInfoModel.State.LOADED, info.state());
         assertEquals(repository.countAll().battles(), info.battles());
         assertEquals(repository.countAll().logs(), info.logs());

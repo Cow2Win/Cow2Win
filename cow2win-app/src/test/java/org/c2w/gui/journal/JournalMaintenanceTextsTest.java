@@ -3,11 +3,12 @@ package org.c2w.gui.journal;
 import org.c2w.data.journal.BattleResult;
 import org.c2w.data.journal.GuildRef;
 import org.c2w.data.journal.LogDirection;
+import org.c2w.data.journal.Season;
+import org.c2w.data.journal.SeasonCalendar;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.JournalDatabase;
-import org.c2w.data.journal.db.Season;
 import org.c2w.data.journal.parse.BattleLogTestFiles;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.JournalMaintenanceService;
@@ -31,7 +32,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
 
     private static final BattleSummary AUGE = new BattleSummary(7, LocalDate.of(2026, 9, 24),
             new GuildRef("Das Schwarze Auge", 79, 114834), BattleResult.WIN, BattleStatus.FINISHED, 851, 2783, 1782,
-            Set.of(LogDirection.ATTACK, LogDirection.DEFENSE), 1, 1);
+            Set.of(LogDirection.ATTACK, LogDirection.DEFENSE), 16);
 
     @Test
     @DisplayName("Delete confirmations name date, opponent, logs and single fights")
@@ -46,26 +47,15 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
 
         String several = JournalTexts.deleteBattlesQuestion(List.of(AUGE, AUGE, AUGE), new JournalCounts(3, 5, 1310));
         assertEquals(JournalTexts.text("journal.delete.battles", "3", "5", "1.310"), several);
-
-        Season season = new Season(4, 2, LocalDate.of(2026, 9, 14), LocalDate.of(2026, 12, 7), null);
-        String only = JournalTexts.deleteSeasonQuestion(season, new JournalCounts(6, 12, 700), false);
-        assertTrue(only.contains(JournalTexts.seasonText(season)), only);
-        assertTrue(only.contains("6"), only);
-        assertFalse(only.contains("700"), "keeping the battles: no fights are deleted");
-        String with = JournalTexts.deleteSeasonQuestion(season, new JournalCounts(6, 12, 700), true);
-        assertEquals(JournalTexts.text("journal.delete.seasonWithBattles", JournalTexts.seasonText(season), "6", "12",
-                "700"), with);
-        assertTrue(JournalTexts.seasonText(season).contains(JournalTexts.date(LocalDate.of(2026, 12, 6))),
-                "the season is shown with its last day");
     }
 
     @Test
-    @DisplayName("Season conflict and parse-again result texts")
+    @DisplayName("Season item and parse-again result texts")
     void seasonAndReparseTexts() {
-        Season other = new Season(1, 3, LocalDate.of(2026, 9, 14), LocalDate.of(2026, 12, 7), null);
-        String overlap = JournalTexts.seasonConflict(new JournalMaintenanceService.SeasonConflict(
-                JournalMaintenanceService.SeasonConflict.Kind.OVERLAP, other));
-        assertTrue(overlap.contains(JournalTexts.seasonText(other)), overlap);
+        Season season = SeasonCalendar.standard().season(16);
+        assertEquals(JournalTexts.text("journal.battles.seasonItem", "16", JournalTexts.date(LocalDate.of(2026, 7, 13)),
+                JournalTexts.date(LocalDate.of(2026, 10, 4))), JournalTexts.seasonText(season),
+                "the season is shown with its last day");
 
         String result = JournalTexts.reparseResult(new JournalMaintenanceService.ReparseResult(12, 5, 1, List.of()));
         assertEquals(JournalTexts.text("journal.reparse.result", "12", "5", "1"), result);
@@ -124,8 +114,8 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
     @Test
     @DisplayName("Phase-5 texts use no straight apostrophe (MessageFormat would swallow it)")
     void noStraightApostrophes() {
-        List<String> prefixes = List.of("journal.detail.", "journal.players.", "journal.seasons.", "journal.mappings.",
-                "journal.delete.", "journal.reparse.", "journal.saveCsv.", "journal.assignSeason.", "journal.action.",
+        List<String> prefixes = List.of("journal.detail.", "journal.players.", "journal.mappings.",
+                "journal.delete.", "journal.reparse.", "journal.saveCsv.", "journal.action.",
                 "journal.removeGuild.", "journal.noJournal", "journal.outcome.", "journal.assignmentStatus.",
                 "journal.statusFilter.", "journal.resultFilter.", "journal.battles.count",
                 // phase 6

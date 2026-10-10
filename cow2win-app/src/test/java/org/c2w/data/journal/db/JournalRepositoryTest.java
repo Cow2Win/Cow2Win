@@ -99,7 +99,7 @@ class JournalRepositoryTest {
                 new String(raw, java.nio.charset.StandardCharsets.UTF_8));
         assertEquals(BattleResult.RUNNING, running.log().header().result());
 
-        SaveResult result = repository.saveLog(running, raw, null);
+        SaveResult result = repository.saveLog(running, raw);
 
         assertEquals(SaveResult.Outcome.CREATED, result.outcome());
         assertEquals(1, result.warnings().size(), result.warnings().toString());
@@ -120,7 +120,7 @@ class JournalRepositoryTest {
                 parsed.problems());
 
         OwnGuildMismatchException e = assertThrows(OwnGuildMismatchException.class,
-                () -> repository.saveLog(foreignLog, new byte[]{1, 2, 3}, null));
+                () -> repository.saveLog(foreignLog, new byte[]{1, 2, 3}));
 
         assertEquals(OWN_GAME_ID, e.storedGameGuildId());
         assertEquals(4711, e.logGameGuildId());
@@ -134,45 +134,7 @@ class JournalRepositoryTest {
         BattleLogParseResult renamed = BattleLogTestFiles.parser().parse("kampf.csv",
                 new String(raw, java.nio.charset.StandardCharsets.UTF_8));
 
-        assertThrows(IllegalArgumentException.class, () -> repository.saveLog(renamed, raw, null));
-    }
-
-    @Test
-    void seasons() throws Exception {
-        Season first = repository.createSeason(1, LocalDate.of(2026, 9, 14));
-        assertEquals(LocalDate.of(2026, 12, 7), first.end(), "12 weeks");
-        assertEquals(LocalDate.of(2026, 12, 6), first.lastDay());
-        Season second = repository.createSeason(2, first.end(), first.end().plusWeeks(12));
-
-        assertEquals(List.of(first, second), repository.listSeasons());
-        assertEquals(Optional.of(first), repository.findSeasonFor(LocalDate.of(2026, 9, 14)));
-        assertEquals(Optional.of(first), repository.findSeasonFor(LocalDate.of(2026, 12, 6)));
-        assertEquals(Optional.of(second), repository.findSeasonFor(LocalDate.of(2026, 12, 7)));
-        assertEquals(Optional.empty(), repository.findSeasonFor(LocalDate.of(2026, 9, 13)));
-
-        JournalException overlap = assertThrows(JournalException.class,
-                () -> repository.createSeason(3, LocalDate.of(2026, 11, 1)));
-        assertTrue(overlap.getMessage().contains("overlaps"), overlap.getMessage());
-        assertThrows(JournalException.class, () -> repository.createSeason(1, LocalDate.of(2027, 6, 1)));
-        assertThrows(JournalException.class, () -> repository.updateSeason(
-                new Season(second.id(), 2, LocalDate.of(2026, 12, 1), LocalDate.of(2027, 3, 1), null)));
-        Season moved = repository.updateSeason(new Season(second.id(), 2, first.end(), first.end().plusWeeks(13), "longer"));
-        assertEquals(List.of(first, moved), repository.listSeasons());
-
-        int battleId = save("de", "24-09-2026", LogDirection.ATTACK).battleId();
-        assertNull(summary(battleId).seasonId());
-        repository.assignSeason(battleId, first.id());
-        assertEquals(first.id(), summary(battleId).seasonId());
-        assertEquals(1, summary(battleId).seasonNumber());
-        assertEquals(1, repository.listBattles(first.id()).size());
-        assertEquals(0, repository.listBattles(second.id()).size());
-
-        // saveLog without season keeps the assignment, with season sets it.
-        save("de", "24-09-2026", LogDirection.DEFENSE);
-        assertEquals(first.id(), summary(battleId).seasonId());
-        Path file = BattleLogTestFiles.file("de", "21-09-2026", LogDirection.ATTACK);
-        int other = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), first.id()).battleId();
-        assertEquals(first.id(), summary(other).seasonId());
+        assertThrows(IllegalArgumentException.class, () -> repository.saveLog(renamed, raw));
     }
 
     @Test
@@ -202,26 +164,6 @@ class JournalRepositoryTest {
     }
 
     @Test
-    void deleteSeasonWithAndWithoutBattles() throws Exception {
-        Season first = repository.createSeason(1, LocalDate.of(2026, 9, 14));
-        int a = save("de", "24-09-2026", LogDirection.ATTACK).battleId();
-        int b = save("de", "21-09-2026", LogDirection.ATTACK).battleId();
-        repository.assignSeason(a, first.id());
-        repository.assignSeason(b, first.id());
-
-        assertTrue(repository.deleteSeason(first.id(), false));
-        assertEquals(2, repository.listBattles(null).size());
-        assertTrue(repository.listBattles(null).stream().allMatch(s -> s.seasonId() == null));
-
-        Season again = repository.createSeason(1, LocalDate.of(2026, 9, 14));
-        repository.assignSeason(a, again.id());
-        assertTrue(repository.deleteSeason(again.id(), true));
-        assertEquals(List.of(b), repository.listBattles(null).stream().map(BattleSummary::battleId).toList());
-        assertEquals(List.of(), repository.listSeasons());
-        assertEquals(2, count(db, "SELECT COUNT(*) FROM guild"), "own guild + Rakuen");
-    }
-
-    @Test
     void listBattlesForAllSixBattles() throws Exception {
         for (String day : BattleLogTestFiles.BATTLE_DAYS) {
             save("de", day, LogDirection.ATTACK);
@@ -230,7 +172,7 @@ class JournalRepositoryTest {
             }
         }
 
-        List<BattleSummary> battles = repository.listBattles(null);
+        List<BattleSummary> battles = repository.listBattles();
 
         assertEquals(List.of(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 9, 28), LocalDate.of(2026, 9, 24),
                 LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 17), LocalDate.of(2026, 9, 14)),
@@ -244,6 +186,30 @@ class JournalRepositoryTest {
         assertEquals(Set.of(LogDirection.ATTACK), battles.get(1).directions());
         assertEquals(Set.of(LogDirection.ATTACK, LogDirection.DEFENSE), battles.get(0).directions());
         assertEquals(SOJUS, battles.get(0).opponent().gameGuildId());
+        // 14.09. - 01.10.2026 lie in season 16 (13.07. - 04.10.2026), computed from the calendar
+        assertTrue(battles.stream().allMatch(b -> Integer.valueOf(16).equals(b.seasonNumber())));
+    }
+
+    @Test
+    void seasonNumberIsComputedFromTheBattleDate() throws Exception {
+        int battleId = save("de", "24-09-2026", LogDirection.ATTACK).battleId();
+        assertEquals(16, summary(battleId).seasonNumber());
+        assertEquals(16, repository.findBattleSummary(battleId).orElseThrow().seasonNumber());
+
+        db.transaction(c -> {
+            try (var st = c.createStatement()) {
+                st.executeUpdate("UPDATE battle SET battle_date = DATE '2026-10-11'"); // break before season 17
+            }
+            return null;
+        });
+        assertNull(summary(battleId).seasonNumber());
+        db.transaction(c -> {
+            try (var st = c.createStatement()) {
+                st.executeUpdate("UPDATE battle SET battle_date = DATE '2026-10-12'");
+            }
+            return null;
+        });
+        assertEquals(17, summary(battleId).seasonNumber());
     }
 
     @Test
@@ -293,19 +259,17 @@ class JournalRepositoryTest {
 
         assertThrows(JournalException.class, () -> repository.inTransaction(r -> {
             r.putNameMapping(NameMappingKind.HERO, "Neuheld", "dante");
-            r.createSeason(1, LocalDate.of(2026, 9, 14));
-            r.saveLog(BattleLogTestFiles.parse(file), raw, null);
+            r.saveLog(BattleLogTestFiles.parse(file), raw);
             throw new JournalException("simulated failure");
         }));
         assertEquals(0, count(db, "SELECT COUNT(*) FROM battle"));
-        assertEquals(List.of(), repository.listSeasons());
         assertEquals(List.of(), repository.listNameMappings());
 
         int battleId = repository.inTransaction(r -> {
-            Season season = r.createSeason(1, LocalDate.of(2026, 9, 14));
-            return r.saveLog(BattleLogTestFiles.parse(file), raw, season.id()).battleId();
+            r.putNameMapping(NameMappingKind.HERO, "Neuheld", "dante");
+            return r.saveLog(BattleLogTestFiles.parse(file), raw).battleId();
         });
-        assertEquals(1, summary(battleId).seasonNumber());
+        assertEquals(1, repository.listNameMappings().size());
         assertEquals(Optional.of(OWN_GAME_ID), repository.ownGameGuildId());
         assertEquals(Optional.of(JournalRepository.sha256(raw)), repository.findLogSha256(battleId, LogDirection.ATTACK));
     }
@@ -314,7 +278,7 @@ class JournalRepositoryTest {
 
     private SaveResult save(String folder, String day, LogDirection direction) throws Exception {
         Path file = BattleLogTestFiles.file(folder, day, direction);
-        return repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), null);
+        return repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file));
     }
 
     private int fights(int battleId, LogDirection direction) throws JournalException {
@@ -322,7 +286,7 @@ class JournalRepositoryTest {
     }
 
     private BattleSummary summary(int battleId) throws JournalException {
-        return repository.listBattles(null).stream().filter(s -> s.battleId() == battleId).findFirst().orElseThrow();
+        return repository.listBattles().stream().filter(s -> s.battleId() == battleId).findFirst().orElseThrow();
     }
 
     /** Players that occur only in fights of the given battle. */

@@ -57,7 +57,7 @@ public final class JournalInfoModel {
             }
             JournalCounts counts = repository.get().countAll();
             // listBattles is newest first (day, then id) - see JournalSyncService#newestDefenseBattleDate.
-            List<BattleSummary> battles = repository.get().listBattles(null);
+            List<BattleSummary> battles = repository.get().listBattles();
             LocalDate newestDefense = battles.stream()
                     .filter(b -> b.directions() != null && b.directions().contains(LogDirection.DEFENSE))
                     .map(BattleSummary::date)

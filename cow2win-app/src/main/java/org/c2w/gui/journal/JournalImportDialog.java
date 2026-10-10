@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * The import assistant of the Weltenschlacht journal (modal): reads the chosen
  * battle logs in the background ({@link JournalImportService#prepare}), shows
- * the steps of an {@link ImportWizardModel} - overview, guild, season, players,
+ * the steps of an {@link ImportWizardModel} - overview, guild, players,
  * unknown names, summary; only those with content - and imports in the
  * background ({@link JournalImportService#execute}), then shows the result.
  * "Cancel" changes nothing. No import logic here: questions, suggestions and
@@ -216,7 +216,6 @@ public final class JournalImportDialog extends JDialog {
         JComponent page = switch (step) {
             case OVERVIEW -> new OverviewStepPanel(model.plan(), this::switchGuild);
             case GUILD -> guildPage();
-            case SEASON -> seasonPage();
             case PLAYERS -> new PlayersStepPanel(model, this::updateButtons);
             case NAMES -> new NamesStepPanel(model, this::catalog, this::updateButtons);
             case SUMMARY -> summaryPage();
@@ -266,58 +265,11 @@ public final class JournalImportDialog extends JDialog {
         return panel;
     }
 
-    private JComponent seasonPage() {
-        JPanel panel = verticalPanel();
-        for (SeasonQuestion q : model.plan().seasonQuestions()) {
-            JPanel box = verticalPanel();
-            box.setBorder(BorderFactory.createTitledBorder(JournalTexts.of("seasonKind", q.kind()) + " – "
-                    + JournalTexts.text("journal.season.number", String.valueOf(q.suggestedNumber()))));
-            box.add(new JLabel(JournalTexts.text("journal.season.battles",
-                    q.battleDates().stream().map(JournalTexts::date).collect(Collectors.joining(", ")))));
-
-            LocalDate start = model.seasonStart(q.id()).orElse(q.suggestedStart());
-            JSpinner date = dateSpinner(start);
-            JLabel end = new JLabel();
-            JRadioButton assign = new JRadioButton(JournalTexts.text("journal.season.assign"), model.seasonStart(q.id()).isPresent());
-            JRadioButton none = new JRadioButton(JournalTexts.text("journal.season.none"), model.seasonStart(q.id()).isEmpty());
-            ButtonGroup group = new ButtonGroup();
-            group.add(assign);
-            group.add(none);
-            Runnable apply = () -> {
-                if (assign.isSelected()) {
-                    model.setSeasonStart(q.id(), toLocalDate((Date) date.getValue()));
-                } else {
-                    model.setNoSeason(q.id());
-                }
-                date.setEnabled(assign.isSelected());
-                end.setText(model.seasonEnd(q.id())
-                        .map(e -> JournalTexts.text("journal.season.end", JournalTexts.date(e.minusDays(1)))).orElse(" "));
-                updateButtons();
-            };
-            assign.addActionListener(e -> apply.run());
-            none.addActionListener(e -> apply.run());
-            date.addChangeListener(e -> apply.run());
-
-            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-            row.setAlignmentX(LEFT_ALIGNMENT);
-            row.add(assign);
-            row.add(new JLabel(JournalTexts.text("journal.season.start")));
-            row.add(date);
-            row.add(end);
-            box.add(row);
-            box.add(none);
-            apply.run();
-            panel.add(box);
-        }
-        return new JScrollPane(panel);
-    }
-
     private JComponent summaryPage() {
         ImportWizardModel.Summary s = model.summary();
         JPanel panel = verticalPanel();
         panel.add(new JLabel(JournalTexts.text("journal.summary.battles", String.valueOf(s.battlesNew()),
                 String.valueOf(s.battlesUpdated()), String.valueOf(s.battlesUnchanged()))));
-        panel.add(new JLabel(JournalTexts.text("journal.summary.seasons", String.valueOf(s.seasonsNew()))));
         if (s.linkGuild()) {
             panel.add(new JLabel(JournalTexts.text("journal.summary.linkGuild",
                     JournalTexts.opponent(model.plan().guildLink().gameGuild()))));

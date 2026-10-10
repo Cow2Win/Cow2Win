@@ -109,25 +109,23 @@ public final class JournalRepository {
      *       SHA-256, then nothing is written ({@link SaveResult.Outcome#UNCHANGED}).</li>
      *   <li>The battle's head data (ranking points, result, status) follow the saved log;
      *       a finished battle is not set back to running by a running export (warning).</li>
-     *   <li>{@code seasonId}, if given, is assigned to the battle; otherwise an existing
-     *       assignment stays.</li>
      * </ul>
      *
      * @throws IllegalArgumentException  if the file name was not recognized (no head data)
      * @throws OwnGuildMismatchException if the log was exported by another guild than the journal's
-     * @throws JournalException          on database errors (e.g. an unknown season id)
+     * @throws JournalException          on database errors
      */
-    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, Integer seasonId) throws JournalException {
-        return saveLog(parsed, rawCsv, seasonId, false);
+    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv) throws JournalException {
+        return saveLog(parsed, rawCsv, false);
     }
 
     /**
-     * Like {@link #saveLog(BattleLogParseResult, byte[], Integer)}; with
+     * Like {@link #saveLog(BattleLogParseResult, byte[])}; with
      * {@code replaceUnchanged} an existing log with the same SHA-256 is replaced
      * too (outcome {@link SaveResult.Outcome#REPLACED}) - for parsing a stored
      * log again with a newer parser or new name mappings.
      */
-    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, Integer seasonId, boolean replaceUnchanged)
+    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, boolean replaceUnchanged)
             throws JournalException {
         if (parsed == null || rawCsv == null) {
             throw new IllegalArgumentException("saveLog needs a parse result and the raw CSV");
@@ -139,11 +137,11 @@ public final class JournalRepository {
         }
         String sha256 = sha256(rawCsv);
         byte[] compressed = gzip(rawCsv);
-        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256, seasonId, replaceUnchanged));
+        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256, replaceUnchanged));
     }
 
     private SaveResult save(Connection c, BattleLogParseResult parsed, int rawSize, byte[] compressed, String sha256,
-                            Integer seasonId, boolean replaceUnchanged) throws SQLException, JournalException {
+                            boolean replaceUnchanged) throws SQLException, JournalException {
         BattleLog log = parsed.log();
         BattleLogHeader h = log.header();
         LocalDateTime now = now();
@@ -167,9 +165,6 @@ public final class JournalRepository {
                 if (rs.next()) {
                     existingLogId = rs.getInt("id");
                     if (!replaceUnchanged && sha256.equals(rs.getString("sha256"))) {
-                        if (seasonId != null) {
-                            updateSeasonOfBattle(c, battleId, seasonId, now);
-                        }
                         return new SaveResult(battleId, false, SaveResult.Outcome.UNCHANGED, warnings);
                     }
                 }
@@ -190,9 +185,6 @@ public final class JournalRepository {
 
         if (!battleCreated) {
             updateBattleHead(c, battleId, h, now, warnings);
-        }
-        if (seasonId != null) {
-            updateSeasonOfBattle(c, battleId, seasonId, now);
         }
         if (existingLogId != null) {
             cleanup(c);
@@ -346,16 +338,6 @@ public final class JournalRepository {
         try (PreparedStatement ps = c.prepareStatement("UPDATE battle SET updated_at = ? WHERE id = ?")) {
             ps.setTimestamp(1, Timestamp.valueOf(now));
             ps.setInt(2, battleId);
-            ps.executeUpdate();
-        }
-    }
-
-    private static void updateSeasonOfBattle(Connection c, int battleId, Integer seasonId, LocalDateTime now)
-            throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("UPDATE battle SET season_id = ?, updated_at = ? WHERE id = ?")) {
-            setInt(ps, 1, seasonId);
-            ps.setTimestamp(2, Timestamp.valueOf(now));
-            ps.setInt(3, battleId);
             ps.executeUpdate();
         }
     }
@@ -557,7 +539,7 @@ public final class JournalRepository {
     /**
      * Parses the stored original CSV of one log again with {@code parser} (current
      * parser version and name mappings) and replaces the log - even though the file
-     * is unchanged. The season and the player assignments stay (players keep their
+     * is unchanged. The player assignments stay (players keep their
      * ids because they are found by name); the parser version is updated.
      *
      * @return empty if the battle has no log of this direction
@@ -599,7 +581,7 @@ public final class JournalRepository {
                 throw new JournalException("The stored log " + fileName + " is no longer recognized as the "
                         + direction + " log of battle " + battleId);
             }
-            SaveResult saved = save(c, parsed, raw.length, compressed, sha256(raw), null, true);
+            SaveResult saved = save(c, parsed, raw.length, compressed, sha256(raw), true);
             if (saved.battleId() != battleId) {
                 throw new JournalException("The stored log " + fileName + " now belongs to another battle ("
                         + saved.battleId() + " instead of " + battleId + ")");
@@ -782,9 +764,12 @@ public final class JournalRepository {
         });
     }
 
-    /** All battles, or those of one season, newest first. */
-    public List<BattleSummary> listBattles(Integer seasonIdOrNull) throws JournalException {
-        return battles(seasonIdOrNull == null ? null : "b.season_id = ?", seasonIdOrNull);
+    /**
+     * All battles, newest first. The season of a battle is computed from its date
+     * with {@link SeasonCalendar#standard()}.
+     */
+    public List<BattleSummary> listBattles() throws JournalException {
+        return battles(null, null);
     }
 
     /** The list row of one battle. */
@@ -793,12 +778,13 @@ public final class JournalRepository {
     }
 
     private List<BattleSummary> battles(String condition, Integer parameter) throws JournalException {
+        SeasonCalendar calendar = SeasonCalendar.standard();
         return db.read(c -> {
-            String sql = "SELECT b.id, b.battle_date, b.result, b.status, b.ranking_points, b.season_id,"
-                    + " s.season_number, g.name, g.server, g.game_guild_id,"
+            String sql = "SELECT b.id, b.battle_date, b.result, b.status, b.ranking_points,"
+                    + " g.name, g.server, g.game_guild_id,"
                     + " (SELECT points_total FROM battle_log l WHERE l.battle_id = b.id AND l.direction = 'ATTACK') AS own_points,"
                     + " (SELECT points_total FROM battle_log l WHERE l.battle_id = b.id AND l.direction = 'DEFENSE') AS opp_points"
-                    + " FROM battle b JOIN guild g ON g.id = b.opponent_guild_id LEFT JOIN season s ON s.id = b.season_id"
+                    + " FROM battle b JOIN guild g ON g.id = b.opponent_guild_id"
                     + (condition == null ? "" : " WHERE " + condition)
                     + " ORDER BY b.battle_date DESC, b.id DESC";
             List<BattleSummary> result = new ArrayList<>();
@@ -817,16 +803,16 @@ public final class JournalRepository {
                         if (opp != null) {
                             directions.add(LogDirection.DEFENSE);
                         }
+                        LocalDate date = rs.getObject("battle_date", LocalDate.class);
                         result.add(new BattleSummary(
                                 rs.getInt("id"),
-                                rs.getObject("battle_date", LocalDate.class),
+                                date,
                                 new GuildRef(rs.getString("name"), rs.getInt("server"), rs.getLong("game_guild_id")),
                                 enumOrNull(BattleResult.class, rs.getString("result")),
                                 BattleStatus.valueOf(rs.getString("status")),
                                 rs.getObject("ranking_points", Integer.class),
                                 own, opp, directions,
-                                rs.getObject("season_id", Integer.class),
-                                rs.getObject("season_number", Integer.class)));
+                                calendar.numberOf(date).orElse(null)));
                     }
                 }
             }
@@ -880,11 +866,6 @@ public final class JournalRepository {
         return counts("b.id IN (" + String.join(", ", Collections.nCopies(ids.size(), "?")) + ")", ids);
     }
 
-    /** Battles, logs and single fights assigned to a season. */
-    public JournalCounts countSeason(int seasonId) throws JournalException {
-        return counts("b.season_id = ?", List.of(seasonId));
-    }
-
     private JournalCounts counts(String condition, List<Integer> parameters) throws JournalException {
         return db.read(c -> {
             int[] values = new int[3];
@@ -906,178 +887,6 @@ public final class JournalRepository {
             }
             return new JournalCounts(values[0], values[1], values[2]);
         });
-    }
-
-    // =====================================================================
-    // Seasons
-    // =====================================================================
-
-    /** Creates a season of {@link Season#DEFAULT_LENGTH} starting on {@code start}. */
-    public Season createSeason(int number, LocalDate start) throws JournalException {
-        return createSeason(number, start, start.plus(Season.DEFAULT_LENGTH));
-    }
-
-    /**
-     * Creates a season covering {@code start <= day < end}.
-     *
-     * @throws JournalException if the number is taken or the season overlaps another one
-     */
-    public Season createSeason(int number, LocalDate start, LocalDate end) throws JournalException {
-        Season candidate = new Season(0, number, start, end, null);
-        return db.transaction(c -> {
-            checkSeason(c, candidate);
-            try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO season (season_number, start_date, end_date) VALUES (?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS)) {
-                ps.setInt(1, number);
-                ps.setObject(2, start);
-                ps.setObject(3, end);
-                ps.executeUpdate();
-                return new Season(generatedId(ps), number, start, end, null);
-            }
-        });
-    }
-
-    /** Changes number, dates and note of an existing season (same checks as {@link #createSeason}). */
-    public Season updateSeason(Season season) throws JournalException {
-        return db.transaction(c -> {
-            checkSeason(c, season);
-            try (PreparedStatement ps = c.prepareStatement(
-                    "UPDATE season SET season_number = ?, start_date = ?, end_date = ?, note = ? WHERE id = ?")) {
-                ps.setInt(1, season.number());
-                ps.setObject(2, season.start());
-                ps.setObject(3, season.end());
-                ps.setString(4, season.note());
-                ps.setInt(5, season.id());
-                if (ps.executeUpdate() != 1) {
-                    throw new JournalException("Unknown season id " + season.id());
-                }
-            }
-            return season;
-        });
-    }
-
-    private static void checkSeason(Connection c, Season season) throws SQLException, JournalException {
-        try (PreparedStatement ps = c.prepareStatement(
-                "SELECT season_number, start_date, end_date FROM season WHERE id <> ?"
-                        + " AND (season_number = ? OR (start_date < ? AND ? < end_date))")) {
-            ps.setInt(1, season.id());
-            ps.setInt(2, season.number());
-            ps.setObject(3, season.end());
-            ps.setObject(4, season.start());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int number = rs.getInt(1);
-                    throw new JournalException(number == season.number()
-                            ? "Season number " + number + " already exists"
-                            : "Season " + season.number() + " (" + season.start() + " - " + season.lastDay()
-                            + ") overlaps season " + number + " (" + rs.getObject(2, LocalDate.class) + " - "
-                            + rs.getObject(3, LocalDate.class).minusDays(1) + ")");
-                }
-            }
-        }
-    }
-
-    /** All seasons, oldest first. */
-    public List<Season> listSeasons() throws JournalException {
-        return db.read(c -> {
-            List<Season> seasons = new ArrayList<>();
-            try (Statement st = c.createStatement();
-                 ResultSet rs = st.executeQuery("SELECT * FROM season ORDER BY start_date")) {
-                while (rs.next()) {
-                    seasons.add(season(rs));
-                }
-            }
-            return seasons;
-        });
-    }
-
-    /** The season containing {@code date}. */
-    public Optional<Season> findSeasonFor(LocalDate date) throws JournalException {
-        return db.read(c -> {
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT * FROM season WHERE start_date <= ? AND ? < end_date")) {
-                ps.setObject(1, date);
-                ps.setObject(2, date);
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next() ? Optional.of(season(rs)) : Optional.<Season>empty();
-                }
-            }
-        });
-    }
-
-    /** Assigns a battle to a season ({@code null} removes the assignment). */
-    public void assignSeason(int battleId, Integer seasonId) throws JournalException {
-        db.transaction(c -> {
-            updateSeasonOfBattle(c, battleId, seasonId, now());
-            return null;
-        });
-    }
-
-    /** The season containing the battle's date: the subquery used by the reassignment. */
-    private static final String SEASON_BY_DATE =
-            "(SELECT s.id FROM season s WHERE s.start_date <= b.battle_date AND b.battle_date < s.end_date)";
-
-    /**
-     * Assigns every battle to the season containing its date, battles outside all
-     * seasons to none - call after seasons changed, in the same transaction (see
-     * {@link #inTransaction}). A manual "no season" of a battle inside a season is
-     * undone by this.
-     *
-     * @return number of battles whose season changed
-     */
-    public int reassignSeasonsByDate() throws JournalException {
-        LocalDateTime now = now();
-        return db.transaction(c -> {
-            try (PreparedStatement ps = c.prepareStatement("UPDATE battle b SET season_id = " + SEASON_BY_DATE
-                    + ", updated_at = ? WHERE b.season_id IS DISTINCT FROM " + SEASON_BY_DATE)) {
-                ps.setTimestamp(1, Timestamp.valueOf(now));
-                return ps.executeUpdate();
-            }
-        });
-    }
-
-    /** Preview of {@link #reassignSeasonsByDate()}: how many battles would change their season - writes nothing. */
-    public int countSeasonReassignments() throws JournalException {
-        return db.read(c -> {
-            try (Statement st = c.createStatement();
-                 ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM battle b WHERE b.season_id IS DISTINCT FROM "
-                         + SEASON_BY_DATE)) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        });
-    }
-
-    /**
-     * Preview for a planned change of the seasons: how many battles would change
-     * their season if the journal had exactly {@code seasons} (e.g. the stored ones
-     * with one edited, added or removed) and {@link #reassignSeasonsByDate()} ran.
-     * A season with an id not stored yet (a new one) counts as a change for every
-     * battle it would get. Writes nothing.
-     */
-    public int countSeasonReassignments(Collection<Season> seasons) throws JournalException {
-        return db.read(c -> {
-            int changes = 0;
-            try (Statement st = c.createStatement();
-                 ResultSet rs = st.executeQuery("SELECT battle_date, season_id FROM battle")) {
-                while (rs.next()) {
-                    LocalDate date = rs.getObject(1, LocalDate.class);
-                    Integer current = rs.getObject(2, Integer.class);
-                    Season target = seasons.stream().filter(s -> s.contains(date)).findFirst().orElse(null);
-                    boolean same = target == null ? current == null : current != null && current == target.id();
-                    if (!same) {
-                        changes++;
-                    }
-                }
-            }
-            return changes;
-        });
-    }
-
-    private static Season season(ResultSet rs) throws SQLException {
-        return new Season(rs.getInt("id"), rs.getInt("season_number"), rs.getObject("start_date", LocalDate.class),
-                rs.getObject("end_date", LocalDate.class), rs.getString("note"));
     }
 
     // =====================================================================
@@ -1413,28 +1222,6 @@ public final class JournalRepository {
             int deleted;
             try (PreparedStatement ps = c.prepareStatement("DELETE FROM battle WHERE id = ?")) {
                 ps.setInt(1, battleId);
-                deleted = ps.executeUpdate();
-            }
-            cleanup(c);
-            return deleted == 1;
-        });
-    }
-
-    /**
-     * Deletes a season. With {@code includeBattles} all its battles are deleted too,
-     * otherwise they stay without a season. Cleans up afterwards. False if it did not exist.
-     */
-    public boolean deleteSeason(int seasonId, boolean includeBattles) throws JournalException {
-        return db.transaction(c -> {
-            if (includeBattles) {
-                try (PreparedStatement ps = c.prepareStatement("DELETE FROM battle WHERE season_id = ?")) {
-                    ps.setInt(1, seasonId);
-                    ps.executeUpdate();
-                }
-            }
-            int deleted;
-            try (PreparedStatement ps = c.prepareStatement("DELETE FROM season WHERE id = ?")) {
-                ps.setInt(1, seasonId);
                 deleted = ps.executeUpdate();
             }
             cleanup(c);

@@ -10,14 +10,15 @@ import java.util.Locale;
 /**
  * The filters of the battle list - all combined with AND. Swing-free.
  *
- * @param seasonId     only battles of this season, {@code null} = all
+ * @param seasonNumber only battles of this season (number, see {@code BattleSummary#seasonNumber}),
+ *                     {@code null} = all
  * @param opponentText opponent name contains this text (case-insensitive), blank = all
  * @param from         battle day on or after, {@code null} = open
  * @param to           battle day on or before, {@code null} = open
  * @param status       running / finished / all
  * @param result       victory / defeat / draw / all - a running battle has no result yet
  */
-public record BattleListFilter(Integer seasonId, String opponentText, LocalDate from, LocalDate to,
+public record BattleListFilter(Integer seasonNumber, String opponentText, LocalDate from, LocalDate to,
                                StatusFilter status, ResultFilter result) {
 
     /** Status choices. */
@@ -36,29 +37,29 @@ public record BattleListFilter(Integer seasonId, String opponentText, LocalDate 
         result = result == null ? ResultFilter.ALL : result;
     }
 
-    public BattleListFilter withSeason(Integer newSeasonId) {
-        return new BattleListFilter(newSeasonId, opponentText, from, to, status, result);
+    public BattleListFilter withSeason(Integer newSeasonNumber) {
+        return new BattleListFilter(newSeasonNumber, opponentText, from, to, status, result);
     }
 
     public BattleListFilter withOpponentText(String text) {
-        return new BattleListFilter(seasonId, text, from, to, status, result);
+        return new BattleListFilter(seasonNumber, text, from, to, status, result);
     }
 
     public BattleListFilter withPeriod(LocalDate newFrom, LocalDate newTo) {
-        return new BattleListFilter(seasonId, opponentText, newFrom, newTo, status, result);
+        return new BattleListFilter(seasonNumber, opponentText, newFrom, newTo, status, result);
     }
 
     public BattleListFilter withStatus(StatusFilter newStatus) {
-        return new BattleListFilter(seasonId, opponentText, from, to, newStatus, result);
+        return new BattleListFilter(seasonNumber, opponentText, from, to, newStatus, result);
     }
 
     public BattleListFilter withResult(ResultFilter newResult) {
-        return new BattleListFilter(seasonId, opponentText, from, to, status, newResult);
+        return new BattleListFilter(seasonNumber, opponentText, from, to, status, newResult);
     }
 
     /** True if the battle passes every filter. */
     public boolean matches(BattleSummary b) {
-        if (seasonId != null && !seasonId.equals(b.seasonId())) {
+        if (seasonNumber != null && !seasonNumber.equals(b.seasonNumber())) {
             return false;
         }
         String text = opponentText.strip().toLowerCase(Locale.ROOT);

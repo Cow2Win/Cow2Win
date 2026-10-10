@@ -80,7 +80,7 @@ public final class JournalTeamBuilderService {
             return plan(List.of(), Map.of(), guild, guildFile);
         }
         List<BattleLogs> battles = new ArrayList<>();
-        for (BattleSummary b : repo.get().listBattles(null)) {
+        for (BattleSummary b : repo.get().listBattles()) {
             if (!b.directions().contains(LogDirection.DEFENSE)) {
                 continue;
             }

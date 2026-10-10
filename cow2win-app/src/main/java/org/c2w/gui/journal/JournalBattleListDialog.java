@@ -1,9 +1,9 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.journal.BattleResult;
+import org.c2w.data.journal.Season;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.db.BattleSummary;
-import org.c2w.data.journal.db.Season;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 
@@ -30,9 +30,12 @@ import java.util.stream.Collectors;
  * The battle list of the open guild's journal (not modal): date, opponent,
  * result, ranking points, own/opponent points, stored logs, season - newest
  * first, sortable, filterable (season, opponent, period, status, result; the
- * filter lives in {@link JournalBattleTableModel}). Double click / Enter /
- * "Details …" opens the battle detail; the context menu and the Delete key offer
- * the battle actions (several battles at once for "parse again" and "delete").
+ * filter lives in {@link JournalBattleTableModel}). The season of a battle is
+ * computed from its date ({@link org.c2w.data.journal.SeasonCalendar}); the
+ * season filter offers only the seasons that contain a stored battle. Double
+ * click / Enter / "Details …" opens the battle detail; the context menu and the
+ * Delete key offer the battle actions (several battles at once for "parse again"
+ * and "delete" - e.g. a whole season: filter it, select all, Delete).
  * Follows the open guild (reloads and retitles on a guild switch), reads in the
  * background and never creates a journal file. Battle logs can be dropped onto
  * it to import them.
@@ -47,8 +50,6 @@ public final class JournalBattleListDialog extends JDialog {
         void openDetail(int battleId);
 
         void openPlayers();
-
-        void openSeasons();
 
         void openNameMappings();
 
@@ -233,12 +234,9 @@ public final class JournalBattleListDialog extends JDialog {
         panel.add(Box.createHorizontalStrut(16));
         JButton players = new JButton(JournalTexts.text("journal.action.players"));
         players.addActionListener(e -> host.openPlayers());
-        JButton seasons = new JButton(JournalTexts.text("journal.action.seasons"));
-        seasons.addActionListener(e -> host.openSeasons());
         JButton mappings = new JButton(JournalTexts.text("journal.action.nameMappings"));
         mappings.addActionListener(e -> host.openNameMappings());
         panel.add(players);
-        panel.add(seasons);
         panel.add(mappings);
         return panel;
     }
@@ -304,7 +302,7 @@ public final class JournalBattleListDialog extends JDialog {
             seasonFilter.setModel(seasons);
             for (int i = 0; i < seasons.getSize(); i++) {
                 if (seasons.getElementAt(i) instanceof Season s && tableModel.seasonFilter() != null
-                        && s.id() == tableModel.seasonFilter()) {
+                        && tableModel.seasonFilter() == s.number()) {
                     seasonFilter.setSelectedIndex(i);
                 }
             }
@@ -330,7 +328,7 @@ public final class JournalBattleListDialog extends JDialog {
         }
         Object season = seasonFilter.getSelectedItem();
         tableModel.setFilter(new BattleListFilter(
-                season instanceof Season s ? s.id() : null,
+                season instanceof Season s ? s.number() : null,
                 opponentFilter.getText(),
                 fromEnabled.isSelected() ? JournalImportDialog.toLocalDate((java.util.Date) fromDate.getValue()) : null,
                 toEnabled.isSelected() ? JournalImportDialog.toLocalDate((java.util.Date) toDate.getValue()) : null,
@@ -393,10 +391,6 @@ public final class JournalBattleListDialog extends JDialog {
         if (single) {
             menu.add(host.operations().saveCsvMenu(this, battles.get(0)));
         }
-        JMenuItem season = new JMenuItem(JournalTexts.text("journal.action.assignSeason"));
-        season.setEnabled(single);
-        season.addActionListener(ev -> host.operations().assignSeason(this, battles.get(0)));
-        menu.add(season);
         menu.addSeparator();
         JMenuItem delete = new JMenuItem(JournalTexts.text("journal.action.delete"));
         delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));

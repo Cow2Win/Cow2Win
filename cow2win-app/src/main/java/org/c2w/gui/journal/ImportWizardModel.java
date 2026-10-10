@@ -4,7 +4,6 @@ import org.c2w.data.journal.LogDirection;
 import org.c2w.data.model.Guild;
 import org.c2w.service.journal.*;
 
-import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -14,9 +13,10 @@ import java.util.*;
  * ({@link JournalImportDialog}) only shows this model and forwards input to it;
  * all checks and suggestions come from the {@link ImportPlan} of the service.
  *
- * <p>Defaults: link the guild = yes; season = the suggested start; player = the
- * first name suggestion if there is one, else {@code OPEN}; unknown name = leave
- * unknown.
+ * <p>Defaults: link the guild = yes; player = the first name suggestion if there
+ * is one, else {@code OPEN}; unknown name = leave unknown. There is no season
+ * question: the season of a battle follows from its date
+ * ({@link org.c2w.data.journal.SeasonCalendar}).
  */
 public final class ImportWizardModel {
 
@@ -24,7 +24,6 @@ public final class ImportWizardModel {
     public enum Step {
         OVERVIEW,
         GUILD,
-        SEASON,
         PLAYERS,
         NAMES,
         SUMMARY
@@ -40,14 +39,13 @@ public final class ImportWizardModel {
      * @param battlesNew       battles not yet in the journal
      * @param battlesUpdated   battles in the journal that get a new or replaced log
      * @param battlesUnchanged battles whose imported logs are identical to the stored ones
-     * @param seasonsNew       seasons that will be created
      * @param linkGuild        the guild gets linked to the game guild
      * @param membersNew       members that will be created (without teams)
      * @param membersRenamed   members that will be renamed
      * @param assignments      players that will be linked to a member (automatic + answered)
      * @param nameMappings     name mappings that will be stored
      */
-    public record Summary(int battlesNew, int battlesUpdated, int battlesUnchanged, int seasonsNew, boolean linkGuild,
+    public record Summary(int battlesNew, int battlesUpdated, int battlesUnchanged, boolean linkGuild,
                           int membersNew, int membersRenamed, int assignments, int nameMappings) {
 
         /** True if the Cow2Win guild changes (and is unsaved afterwards). */
@@ -62,7 +60,6 @@ public final class ImportWizardModel {
     private int index;
 
     private boolean linkGuild = true;
-    private final Map<String, Optional<LocalDate>> seasonStarts = new HashMap<>();
     private final Map<String, PlayerAnswer> playerAnswers = new HashMap<>();
     private final Map<String, String> nameAnswers = new HashMap<>();
 
@@ -80,9 +77,6 @@ public final class ImportWizardModel {
         for (PlayerQuestion q : plan.playerQuestions()) {
             playerAnswers.put(q.id(), defaultAnswer(q));
         }
-        for (SeasonQuestion q : plan.seasonQuestions()) {
-            seasonStarts.put(q.id(), Optional.of(q.suggestedStart()));
-        }
     }
 
     private static List<Step> computeSteps(ImportPlan plan) {
@@ -93,9 +87,6 @@ public final class ImportWizardModel {
         result.add(Step.OVERVIEW);
         if (plan.guildLink() != null) {
             result.add(Step.GUILD);
-        }
-        if (!plan.seasonQuestions().isEmpty()) {
-            result.add(Step.SEASON);
         }
         if (!plan.playerQuestions().isEmpty() || !plan.autoAssignments().isEmpty()) {
             result.add(Step.PLAYERS);
@@ -218,26 +209,6 @@ public final class ImportWizardModel {
 
     public void setLinkGuild(boolean link) {
         this.linkGuild = link;
-    }
-
-    // --- seasons ---
-
-    /** The chosen start of a season question, empty = no season. */
-    public Optional<LocalDate> seasonStart(String questionId) {
-        return seasonStarts.getOrDefault(questionId, Optional.empty());
-    }
-
-    /** The end (exclusive first day after the season) that follows from the chosen start. */
-    public Optional<LocalDate> seasonEnd(String questionId) {
-        return seasonStart(questionId).map(start -> start.plus(org.c2w.data.journal.db.Season.DEFAULT_LENGTH));
-    }
-
-    public void setSeasonStart(String questionId, LocalDate start) {
-        seasonStarts.put(questionId, Optional.of(Objects.requireNonNull(start)));
-    }
-
-    public void setNoSeason(String questionId) {
-        seasonStarts.put(questionId, Optional.empty());
     }
 
     // --- players ---
@@ -372,9 +343,6 @@ public final class ImportWizardModel {
         if (plan.guildLink() != null) {
             answers = answers.withGuildLink(linkGuild);
         }
-        for (SeasonQuestion q : plan.seasonQuestions()) {
-            answers = answers.withSeason(q.id(), seasonStart(q.id()).orElse(null));
-        }
         for (PlayerQuestion q : plan.playerQuestions()) {
             answers = answers.withPlayer(q.id(), playerAnswer(q.id()));
         }
@@ -401,7 +369,6 @@ public final class ImportWizardModel {
                 battlesUpdated++;
             }
         }
-        int seasonsNew = (int) plan.seasonQuestions().stream().filter(q -> seasonStart(q.id()).isPresent()).count();
         int membersNew = 0;
         int membersRenamed = 0;
         int assignments = plan.autoAssignments().size();
@@ -420,7 +387,7 @@ public final class ImportWizardModel {
                 }
             }
         }
-        return new Summary(battlesNew, battlesUpdated, battlesUnchanged, seasonsNew,
+        return new Summary(battlesNew, battlesUpdated, battlesUnchanged,
                 plan.guildLink() != null && linkGuild, membersNew, membersRenamed, assignments, nameAnswers.size());
     }
 

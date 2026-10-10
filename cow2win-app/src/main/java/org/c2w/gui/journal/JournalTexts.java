@@ -1,10 +1,10 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.journal.GuildRef;
+import org.c2w.data.journal.Season;
 import org.c2w.data.journal.TeamKind;
 import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalCounts;
-import org.c2w.data.journal.db.Season;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.TitanElement;
 import org.c2w.gui.common.Glyphs;
@@ -163,28 +163,9 @@ public final class JournalTexts {
                 number(counts.fights()));
     }
 
-    /** The confirmation for deleting a season, with or without its battles. */
-    public static String deleteSeasonQuestion(Season season, JournalCounts counts, boolean includeBattles) {
-        String seasonText = seasonText(season);
-        return includeBattles
-                ? text("journal.delete.seasonWithBattles", seasonText, String.valueOf(counts.battles()),
-                String.valueOf(counts.logs()), number(counts.fights()))
-                : text("journal.delete.seasonOnly", seasonText, String.valueOf(counts.battles()));
-    }
-
-    /** "Season 2 (14.09.2026 – 06.12.2026)". */
+    /** "Season 16 (13.07.2026 – 04.10.2026)" - start and last day. */
     public static String seasonText(Season s) {
         return text("journal.battles.seasonItem", String.valueOf(s.number()), date(s.start()), date(s.lastDay()));
-    }
-
-    /** Why a season cannot be saved, naming the colliding season. */
-    public static String seasonConflict(JournalMaintenanceService.SeasonConflict conflict) {
-        return text("journal.seasons.conflict." + conflict.kind().name(), seasonText(conflict.other()));
-    }
-
-    /** "n battles change their season." - shown before a season change is saved. */
-    public static String reassignPreview(int battles) {
-        return text("journal.seasons.reassignPreview", String.valueOf(battles));
     }
 
     /** "n logs parsed again, parse problems a → b" (+ failures). */

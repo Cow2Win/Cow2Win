@@ -48,12 +48,12 @@ class JournalActionsTest {
     }
 
     @Test
-    @DisplayName("All seven journal actions are enabled only while a guild master's guild is open")
+    @DisplayName("All six journal actions are enabled only while a guild master's guild is open")
     void enabledOnlyForGuildMaster() throws Exception {
         MainActions actions = new MainActions();
         new JournalActions(null, context, guildService, folder -> false).registerActions(actions);
         List<ActionId> journalIds = Arrays.stream(ActionId.values()).filter(id -> id.stage() == Stage.JOURNAL).toList();
-        assertEquals(7, journalIds.size());
+        assertEquals(6, journalIds.size());
         assertTrue(journalIds.stream().noneMatch(id -> actions.get(id).isEnabled()), "no guild open");
 
         guildService.createGuild("Plain", false);

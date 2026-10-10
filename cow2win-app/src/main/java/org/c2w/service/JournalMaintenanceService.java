@@ -9,15 +9,15 @@ import org.c2w.data.model.GuildMember;
 import org.c2w.infra.Logger;
 
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Supplier;
 
 /**
  * Maintenance of the open guild's Weltenschlacht journal, without any GUI:
- * deleting battles and seasons, editing seasons (battles are reassigned by date
- * in the same transaction), setting a battle's season by hand, correcting player
- * assignments and name mappings, and parsing stored logs again.
+ * deleting battles, correcting player assignments and name mappings, and parsing
+ * stored logs again. Seasons are not maintained here: the season of a battle is
+ * computed from its date ({@link org.c2w.data.journal.SeasonCalendar}); a whole
+ * season is deleted by filtering the battle list and deleting all its battles.
  *
  * <p>Nothing here changes the Cow2Win guild (members, teams) - assignments only
  * link journal players to existing members. Reading methods never create a
@@ -108,179 +108,6 @@ public final class JournalMaintenanceService {
         GuildLog.event(guildDir(repo), key, args);
     }
 
-    /** The seasons a battle of {@code date} may be assigned to by hand: those containing the date. */
-    public List<Season> seasonsFor(LocalDate date) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        if (repo.isEmpty()) {
-            return List.of();
-        }
-        return repo.get().listSeasons().stream().filter(s -> s.contains(date)).toList();
-    }
-
-    /**
-     * Sets the season of a battle by hand: a season containing the battle's date, or
-     * {@code null} for none.
-     *
-     * @throws IllegalArgumentException if the season does not contain the battle's date
-     * @throws JournalException         if the battle or season does not exist
-     */
-    public void assignSeason(int battleId, Integer seasonId) throws JournalException {
-        JournalRepository repo = existing();
-        BattleSummary battle = repo.findBattleSummary(battleId)
-                .orElseThrow(() -> new JournalException("Unknown battle id " + battleId));
-        Season season = null;
-        if (seasonId != null) {
-            season = repo.listSeasons().stream().filter(s -> s.id() == seasonId).findFirst()
-                    .orElseThrow(() -> new JournalException("Unknown season id " + seasonId));
-            if (!season.contains(battle.date())) {
-                throw new IllegalArgumentException("Season " + season.number() + " does not contain " + battle.date());
-            }
-        }
-        repo.assignSeason(battleId, seasonId);
-        if (season != null) {
-            logBattleEvent(repo, "guildLog.battleSeasonAssigned", battle, season.number());
-        } else {
-            logBattleEvent(repo, "guildLog.battleSeasonRemoved", battle);
-        }
-    }
-
-    // =====================================================================
-    // Seasons
-    // =====================================================================
-
-    /** Why a season cannot be saved: its number is taken, or it overlaps another season. */
-    public record SeasonConflict(Kind kind, Season other) {
-        public enum Kind {NUMBER_TAKEN, OVERLAP}
-    }
-
-    /**
-     * Result of a season change.
-     *
-     * @param season     the saved season ({@code null} after deleting)
-     * @param reassigned battles whose season changed by the reassignment by date
-     * @param deleted    battles deleted with the season
-     */
-    public record SeasonChange(Season season, int reassigned, int deleted) {
-    }
-
-    /**
-     * A new season after the last one in the 12-week raster (number + 1, start = end of
-     * the last season); without seasons: number 1 from the oldest battle (else today).
-     * The returned season has id 0 (not stored).
-     */
-    public Season suggestNewSeason(LocalDate today) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        List<Season> seasons = repo.isPresent() ? repo.get().listSeasons() : List.of();
-        if (!seasons.isEmpty()) {
-            Season last = seasons.get(seasons.size() - 1);
-            int number = seasons.stream().mapToInt(Season::number).max().orElse(0) + 1;
-            return new Season(0, number, last.end(), last.end().plus(Season.DEFAULT_LENGTH), null);
-        }
-        LocalDate start = today;
-        if (repo.isPresent()) {
-            start = repo.get().listBattles(null).stream().map(BattleSummary::date).min(Comparator.naturalOrder())
-                    .orElse(today);
-        }
-        return new Season(0, 1, start, start.plus(Season.DEFAULT_LENGTH), null);
-    }
-
-    /** The first stored season {@code candidate} collides with (same number or overlapping dates). */
-    public Optional<SeasonConflict> findConflict(Season candidate) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        if (repo.isEmpty()) {
-            return Optional.empty();
-        }
-        for (Season other : repo.get().listSeasons()) {
-            if (other.id() == candidate.id()) {
-                continue;
-            }
-            if (other.number() == candidate.number()) {
-                return Optional.of(new SeasonConflict(SeasonConflict.Kind.NUMBER_TAKEN, other));
-            }
-            if (other.start().isBefore(candidate.end()) && candidate.start().isBefore(other.end())) {
-                return Optional.of(new SeasonConflict(SeasonConflict.Kind.OVERLAP, other));
-            }
-        }
-        return Optional.empty();
-    }
-
-    /** Preview: battles that would change their season if {@code candidate} were saved (id 0 = new). */
-    public int previewSave(Season candidate) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        if (repo.isEmpty()) {
-            return 0;
-        }
-        List<Season> seasons = new ArrayList<>(repo.get().listSeasons());
-        seasons.removeIf(s -> s.id() == candidate.id());
-        seasons.add(candidate);
-        return repo.get().countSeasonReassignments(seasons);
-    }
-
-    /** Preview: battles that would lose their season if the season were deleted keeping its battles. */
-    public int previewDelete(int seasonId) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        if (repo.isEmpty()) {
-            return 0;
-        }
-        List<Season> seasons = new ArrayList<>(repo.get().listSeasons());
-        seasons.removeIf(s -> s.id() == seasonId);
-        return repo.get().countSeasonReassignments(seasons);
-    }
-
-    /** Battles, logs and single fights of a season - for the delete confirmation. */
-    public JournalCounts countSeason(int seasonId) throws JournalException {
-        Optional<JournalRepository> repo = repository();
-        return repo.isEmpty() ? JournalCounts.NONE : repo.get().countSeason(seasonId);
-    }
-
-    /**
-     * Creates ({@code season.id() == 0}) or updates a season and reassigns all battles
-     * by date - in one transaction.
-     *
-     * @throws JournalException if the season collides with another one (see {@link #findConflict})
-     */
-    public SeasonChange saveSeason(Season season) throws JournalException {
-        JournalRepository repo = existing();
-        SeasonChange change = repo.inTransaction(r -> {
-            Season saved = season.id() == 0
-                    ? withNote(r.createSeason(season.number(), season.start(), season.end()), season.note(), r)
-                    : r.updateSeason(season);
-            return new SeasonChange(saved, r.reassignSeasonsByDate(), 0);
-        });
-        Logger.log("Journal: saved season " + change.season().number() + " (" + change.season().start() + " - "
-                + change.season().lastDay() + "), " + change.reassigned() + " battle(s) reassigned");
-        GuildLog.event(guildDir(repo), season.id() == 0 ? "guildLog.seasonCreated" : "guildLog.seasonChanged",
-                change.season().number());
-        return change;
-    }
-
-    private static Season withNote(Season created, String note, JournalRepository r) throws JournalException {
-        if (note == null || note.isBlank()) {
-            return created;
-        }
-        return r.updateSeason(new Season(created.id(), created.number(), created.start(), created.end(), note));
-    }
-
-    /**
-     * Deletes a season - with all its battles, or keeping them (then they are without
-     * season) - and reassigns the remaining battles by date, in one transaction.
-     */
-    public SeasonChange deleteSeason(int seasonId, boolean includeBattles) throws JournalException {
-        JournalRepository repo = existing();
-        Integer number = repo.listSeasons().stream().filter(s -> s.id() == seasonId).map(Season::number)
-                .findFirst().orElse(null);
-        SeasonChange change = repo.inTransaction(r -> {
-            int battles = includeBattles ? r.countSeason(seasonId).battles() : 0;
-            if (!r.deleteSeason(seasonId, includeBattles)) {
-                throw new JournalException("Unknown season id " + seasonId);
-            }
-            return new SeasonChange(null, r.reassignSeasonsByDate(), battles);
-        });
-        Logger.log("Journal: deleted season " + seasonId + (includeBattles ? " with " + change.deleted() + " battle(s)" : ""));
-        GuildLog.event(guildDir(repo), "guildLog.seasonDeleted", number == null ? seasonId : number);
-        return change;
-    }
-
     // =====================================================================
     // Players
     // =====================================================================
@@ -365,7 +192,7 @@ public final class JournalMaintenanceService {
     /**
      * Parses the stored original CSVs of these battles ({@code null}: of all battles)
      * again with the current parser and name mappings and replaces the logs - even if
-     * the files are unchanged. Seasons and player assignments stay; no questions, no
+     * the files are unchanged. Player assignments stay; no questions, no
      * guild changes (new unknown players have no assignment = open). Every log is
      * replaced in its own transaction; a failing log is reported and left as it was.
      */

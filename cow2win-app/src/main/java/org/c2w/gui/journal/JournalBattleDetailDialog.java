@@ -204,9 +204,6 @@ public final class JournalBattleDetailDialog extends JDialog {
                 b.ownPoints() == null ? "–" : JournalTexts.number(b.ownPoints()),
                 b.opponentPoints() == null ? "–" : JournalTexts.number(b.opponentPoints())));
         add.accept(JournalTexts.text("journal.detail.check"), JournalTexts.of("verdict", model.check().verdict()));
-        add.accept(JournalTexts.text("journal.detail.season"), b.seasonNumber() == null
-                ? JournalTexts.text("journal.detail.noSeason")
-                : JournalTexts.text("journal.season.number", String.valueOf(b.seasonNumber())));
         for (LogDirection direction : List.of(LogDirection.DEFENSE, LogDirection.ATTACK)) {
             Optional<LogInfo> info = model.logs().stream().filter(l -> l.direction() == direction).findFirst();
             add.accept(JournalTexts.text("journal.detail.log", JournalTexts.of("direction", direction)),

@@ -122,7 +122,7 @@ public final class JournalSyncService {
 
     private static Optional<BattleSummary> newestDefenseBattle(JournalRepository repo) throws JournalException {
         // listBattles is newest first (day, then id)
-        return repo.listBattles(null).stream().filter(b -> b.directions().contains(LogDirection.DEFENSE)).findFirst();
+        return repo.listBattles().stream().filter(b -> b.directions().contains(LogDirection.DEFENSE)).findFirst();
     }
 
     private static Map<Certainty, Long> countByCertainty(SyncPlan plan) {

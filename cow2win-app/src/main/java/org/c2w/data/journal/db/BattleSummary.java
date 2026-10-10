@@ -19,8 +19,8 @@ import java.util.Set;
  * @param ownPoints      sum of the attack log, {@code null} without one
  * @param opponentPoints sum of the defense log, {@code null} without one
  * @param directions     the stored log directions
- * @param seasonId       season id, {@code null} if not assigned
- * @param seasonNumber   season number, {@code null} if not assigned
+ * @param seasonNumber   season number from {@link org.c2w.data.journal.SeasonCalendar} (computed
+ *                       from the date, never stored), {@code null} in a break or before the first season
  */
 public record BattleSummary(
         int battleId,
@@ -32,7 +32,6 @@ public record BattleSummary(
         Integer ownPoints,
         Integer opponentPoints,
         Set<LogDirection> directions,
-        Integer seasonId,
         Integer seasonNumber
 ) {
     public BattleSummary {

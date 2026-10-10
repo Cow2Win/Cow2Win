@@ -40,7 +40,7 @@ class JournalRoundTripTest {
                 List<Path> files = BattleLogTestFiles.files(folder);
                 List<Integer> battleIds = new ArrayList<>();
                 for (Path file : files) {
-                    SaveResult result = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), null);
+                    SaveResult result = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file));
                     assertEquals(SaveResult.Outcome.CREATED, result.outcome(), file.toString());
                     battleIds.add(result.battleId());
                 }
@@ -70,7 +70,7 @@ class JournalRoundTripTest {
         try (JournalDatabase db = JournalDatabase.open(tempDir, true).orElseThrow()) {
             JournalRepository repository = new JournalRepository(db);
             Path file = BattleLogTestFiles.file("de", "01-10-2026", LogDirection.DEFENSE);
-            int battleId = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), null).battleId();
+            int battleId = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file)).battleId();
 
             BattleLogParseResult loaded = repository.loadLog(battleId, LogDirection.DEFENSE).orElseThrow();
 
@@ -98,12 +98,12 @@ class JournalRoundTripTest {
             for (Path file : files) {
                 byte[] raw = Files.readAllBytes(file);
                 bytes += raw.length;
-                if (repository.saveLog(BattleLogTestFiles.parse(file), raw, null).outcome()
+                if (repository.saveLog(BattleLogTestFiles.parse(file), raw).outcome()
                         == SaveResult.Outcome.REPLACED) {
                     replaced++;
                 }
             }
-            assertEquals(6, repository.listBattles(null).size());
+            assertEquals(6, repository.listBattles().size());
         }
         long millis = (System.nanoTime() - start) / 1_000_000;
         long size = size(guildDir);
@@ -112,7 +112,7 @@ class JournalRoundTripTest {
         try (JournalDatabase db = JournalDatabase.open(referenceDir, true).orElseThrow()) {
             JournalRepository repository = new JournalRepository(db);
             for (Path file : BattleLogTestFiles.files("de")) {
-                repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), null);
+                repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file));
             }
         }
         long reference = size(referenceDir);

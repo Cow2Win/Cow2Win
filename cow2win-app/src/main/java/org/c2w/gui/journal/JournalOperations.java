@@ -5,7 +5,6 @@ import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.LogInfo;
-import org.c2w.data.journal.db.Season;
 import org.c2w.gui.FileChoosers;
 import org.c2w.service.JournalMaintenanceService;
 
@@ -14,14 +13,13 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
  * The battle actions offered by the battle list and the battle detail: delete,
- * parse again, save the original CSV, set the season by hand. Every database
+ * parse again, save the original CSV. Every database
  * access runs in the background; after a change {@code onChanged} runs (on the
  * Swing thread) so all journal windows reload.
  */
@@ -141,37 +139,6 @@ final class JournalOperations {
         });
     }
 
-    /** Lets the user pick a season containing the battle's day, or none. */
-    void assignSeason(Component parent, BattleSummary battle) {
-        JournalSwing.background(parent, () -> service.seasonsFor(battle.date()), (List<Season> seasons) -> {
-            List<Object> choices = new ArrayList<>();
-            choices.add(JournalTexts.text("journal.assignSeason.none"));
-            choices.addAll(seasons);
-            JComboBox<Object> combo = new JComboBox<>(choices.toArray());
-            combo.setRenderer(PlayersStepPanel.textRenderer(item -> item instanceof Season s
-                    ? JournalTexts.seasonText(s) : String.valueOf(item)));
-            for (Season s : seasons) {
-                if (battle.seasonId() != null && s.id() == battle.seasonId()) {
-                    combo.setSelectedItem(s);
-                }
-            }
-            JPanel panel = new JPanel(new BorderLayout(0, 6));
-            panel.add(new JLabel(JournalTexts.text("journal.assignSeason.question", JournalTexts.date(battle.date()),
-                    battle.opponent().name())), BorderLayout.NORTH);
-            panel.add(combo, BorderLayout.CENTER);
-            if (JOptionPane.showConfirmDialog(parent, panel, JournalTexts.text("journal.assignSeason.title"),
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
-                return;
-            }
-            Integer seasonId = combo.getSelectedItem() instanceof Season s ? s.id() : null;
-            JournalSwing.background(parent, () -> {
-                service.assignSeason(battle.battleId(), seasonId);
-                return seasonId;
-            }, done -> onChanged.run());
-        });
-    }
-
-    /** A "save original CSV" menu with one entry per stored log of the battle. */
     JMenu saveCsvMenu(Component parent, BattleSummary battle) {
         JMenu menu = new JMenu(JournalTexts.text("journal.action.saveCsv"));
         for (LogDirection direction : List.of(LogDirection.DEFENSE, LogDirection.ATTACK)) {

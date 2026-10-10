@@ -34,7 +34,7 @@ class JournalPanelsSmokeTest extends JournalGuiTestSupport {
         List<PlanError> switched = new ArrayList<>();
         ImportPlan foreign = new ImportPlan(plan.files(), List.of(),
                 List.of(new PlanError(PlanError.Kind.LOGS_OF_OTHER_GUILD, "Beta", 193861L)), 193861L,
-                null, List.of(), List.of(), List.of(), List.of(), 0, plan.guildFile());
+                null, List.of(), List.of(), List.of(), 0, plan.guildFile());
         OverviewStepPanel errors = new OverviewStepPanel(foreign, switched::add);
         JButton switchButton = find(errors, JButton.class).get(0);
         switchButton.doClick();

@@ -1,8 +1,11 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.journal.BattleResult;
+import org.c2w.data.journal.GuildRef;
 import org.c2w.data.journal.LogDirection;
+import org.c2w.data.journal.SeasonCalendar;
 import org.c2w.data.journal.db.BattleStatus;
+import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalDatabase;
 import org.c2w.data.journal.parse.BattleLogTestFiles;
 import org.c2w.gui.journal.JournalBattleTableModel.Column;
@@ -15,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,7 +58,7 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         assertEquals(2879, model.getValueAt(0, Column.OPPONENT_POINTS.ordinal()));
         assertEquals(JournalTexts.of("battles.logs", LogDirection.ATTACK) + "/"
                 + JournalTexts.of("battles.logs", LogDirection.DEFENSE), model.getValueAt(0, Column.LOGS.ordinal()));
-        assertEquals(1, model.getValueAt(0, Column.SEASON.ordinal()));
+        assertEquals(16, model.getValueAt(0, Column.SEASON.ordinal()), "computed from the date");
 
         int auge = rowOf(model, LocalDate.of(2026, 9, 24));
         assertEquals(851, model.getValueAt(auge, Column.RANKING_POINTS.ordinal()));
@@ -62,13 +66,13 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         int rakuen = rowOf(model, LocalDate.of(2026, 9, 21));
         assertEquals(-286, model.getValueAt(rakuen, Column.RANKING_POINTS.ordinal()));
 
-        int seasonId = model.data().seasons().get(0).id();
-        model.setSeasonFilter(seasonId);
+        assertEquals(List.of(SeasonCalendar.standard().season(16)), model.data().seasons(), "only seasons with battles");
+        model.setSeasonFilter(16);
         assertEquals(6, model.getRowCount());
-        model.setSeasonFilter(seasonId + 100);
+        model.setSeasonFilter(17);
         assertEquals(0, model.getRowCount());
         model.setData(JournalBattleTableModel.load(context.journal()));
-        assertNull(model.seasonFilter(), "a filter on a season that does not exist is reset");
+        assertNull(model.seasonFilter(), "a filter on a season without battles is reset");
         assertEquals(6, model.getRowCount());
         model.setSeasonFilter(null);
         assertEquals(6, model.getRowCount());
@@ -118,13 +122,49 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         assertEquals(JournalTexts.text("journal.battles.count", "2", "6"), model.countText());
         assertEquals(6, model.totalCount());
 
-        int seasonId = model.data().seasons().get(0).id();
-        model.setSeasonFilter(seasonId);
+        model.setSeasonFilter(16);
         assertEquals(2, model.shownCount(), "the season filter keeps the other filters");
         model.setFilter(BattleListFilter.NONE);
         assertEquals(6, model.shownCount());
         assertEquals(-1, model.rowOf(999));
         assertEquals(0, model.rowOf(model.battle(0).battleId()));
+    }
+
+    @Test
+    @DisplayName("Season filter: only seasons with battles, oldest first; a battle in a break only under 'all'")
+    void seasonFilterByNumber() {
+        SeasonCalendar calendar = SeasonCalendar.standard();
+        List<BattleSummary> battles = List.of(
+                battle(1, LocalDate.of(2026, 10, 15)),  // season 17
+                battle(2, LocalDate.of(2026, 10, 11)),  // break between 16 and 17
+                battle(3, LocalDate.of(2026, 9, 24)),   // season 16
+                battle(4, LocalDate.of(2026, 1, 20)));  // season 14 - season 15 has no battle
+        JournalBattleTableModel model = new JournalBattleTableModel();
+        model.setData(new JournalBattleTableModel.Data(true, battles));
+
+        assertEquals(List.of(calendar.season(14), calendar.season(16), calendar.season(17)), model.data().seasons());
+        assertNull(model.getValueAt(model.rowOf(2), Column.SEASON.ordinal()));
+
+        assertEquals(4, model.shownCount());
+        model.setSeasonFilter(16);
+        assertEquals(List.of(LocalDate.of(2026, 9, 24)), dates(model));
+        model.setSeasonFilter(17);
+        assertEquals(List.of(LocalDate.of(2026, 10, 15)), dates(model));
+        model.setSeasonFilter(null);
+        assertEquals(4, model.shownCount(), "the battle in the break appears under 'all' only");
+
+        // all battles of season 17 deleted: the filter falls back to "all"
+        model.setSeasonFilter(17);
+        model.setData(new JournalBattleTableModel.Data(true, battles.subList(1, 4)));
+        assertNull(model.seasonFilter());
+        assertEquals(3, model.shownCount());
+        assertEquals(List.of(calendar.season(14), calendar.season(16)), model.data().seasons());
+    }
+
+    private static BattleSummary battle(int id, LocalDate date) {
+        return new BattleSummary(id, date, new GuildRef("Opponent " + id, 1, 1000 + id), BattleResult.WIN,
+                BattleStatus.FINISHED, 800, 3000, 2000, Set.of(LogDirection.ATTACK),
+                SeasonCalendar.standard().numberOf(date).orElse(null));
     }
 
     private static List<LocalDate> dates(JournalBattleTableModel model) {

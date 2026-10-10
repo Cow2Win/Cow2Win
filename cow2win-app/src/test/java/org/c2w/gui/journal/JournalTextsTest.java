@@ -34,7 +34,6 @@ class JournalTextsTest {
         GROUPS.put("warning", PlannedBattle.Warning.values());
         GROUPS.put("logAction", PlannedBattle.LogAction.values());
         GROUPS.put("answer", PlayerAnswer.Kind.values());
-        GROUPS.put("seasonKind", SeasonQuestion.Kind.values());
         GROUPS.put("nameKind", NameMappingKind.values());
         GROUPS.put("battleResult", BattleResult.values());
         GROUPS.put("battleStatus", BattleStatus.values());
@@ -57,7 +56,6 @@ class JournalTextsTest {
         GROUPS.put("detail.fort.captured", LogDirection.values());
         GROUPS.put("detail.fort.score", LogDirection.values());
         GROUPS.put("players.memberHint", JournalPlayersModel.HintKind.values());
-        GROUPS.put("seasons.conflict", org.c2w.service.JournalMaintenanceService.SeasonConflict.Kind.values());
         // phase 6
         GROUPS.put("teamKind", TeamKind.values());
         GROUPS.put("compositionSource", TeamBuildPlan.CompositionSource.values());
@@ -74,7 +72,7 @@ class JournalTextsTest {
     /** Groups always formatted with arguments - their apostrophes are doubled in the files. */
     private static final List<String> FORMATTED_GROUPS = List.of("planError", "block", "team", "evidence",
             "detail.summary", "detail.fort.undefended", "detail.fort.captured", "detail.fort.score",
-            "players.memberHint", "seasons.conflict", "teams.target", "teams.error", "sync.error", "sync.hint");
+            "players.memberHint", "teams.target", "teams.error", "sync.error", "sync.hint");
 
     @Test
     @DisplayName("Every enum value has a non-empty text in every language")

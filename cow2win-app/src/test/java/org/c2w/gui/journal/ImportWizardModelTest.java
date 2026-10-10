@@ -11,9 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,24 +39,23 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
         ImportWizardModel model = new ImportWizardModel(
                 prepare("de", SEP_24, LogDirection.ATTACK, LogDirection.DEFENSE), context.guild());
 
-        assertEquals(List.of(Step.OVERVIEW, Step.GUILD, Step.SEASON, Step.PLAYERS, Step.SUMMARY), model.steps());
+        assertEquals(List.of(Step.OVERVIEW, Step.GUILD, Step.PLAYERS, Step.SUMMARY), model.steps());
         assertEquals(Step.OVERVIEW, model.currentStep());
         assertFalse(model.canGoBack());
         assertFalse(model.canImport(), "only on the last step");
 
         model.next();
         model.next();
-        model.next();
         assertEquals(Step.PLAYERS, model.currentStep());
         model.back();
-        assertEquals(Step.SEASON, model.currentStep());
+        assertEquals(Step.GUILD, model.currentStep());
         model.next();
         model.next();
         assertEquals(Step.SUMMARY, model.currentStep());
         assertTrue(model.isLastStep());
         assertFalse(model.canGoNext());
         assertTrue(model.canImport());
-        assertEquals(4, model.currentIndex());
+        assertEquals(3, model.currentIndex());
     }
 
     @Test
@@ -84,37 +81,28 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
     }
 
     @Test
-    @DisplayName("Default answers: link = yes, season = suggestion, player = first name suggestion or OPEN")
+    @DisplayName("Default answers: link = yes, player = first name suggestion or OPEN")
     void defaults() throws Exception {
         setSampleMembers();
         ImportPlan plan = prepare("de", SEP_24, LogDirection.ATTACK, LogDirection.DEFENSE);
         ImportWizardModel model = new ImportWizardModel(plan, context.guild());
 
         assertTrue(model.linkGuild());
-        SeasonQuestion season = plan.seasonQuestions().get(0);
-        assertEquals(Optional.of(season.suggestedStart()), model.seasonStart(season.id()));
-        assertEquals(Optional.of(LocalDate.of(2026, 12, 17)), model.seasonEnd(season.id()));
         assertEquals(PlayerAnswer.assign("Ordensriter"), model.playerAnswer(question(plan, "Ordensritter").id()));
         assertEquals(PlayerAnswer.of(PlayerAnswer.Kind.OPEN), model.playerAnswer(question(plan, "Faern").id()));
 
         ImportAnswers answers = model.toAnswers();
         assertEquals(Boolean.TRUE, answers.linkGuild());
-        assertEquals(Optional.of(season.suggestedStart()), answers.seasons().get(season.id()));
         assertEquals(PlayerAnswer.assign("Ordensriter"), answers.players().get(question(plan, "Ordensritter").id()));
     }
 
     @Test
-    @DisplayName("Answers become ImportAnswers (changed season start, no season, RENAME, CREATE) and are accepted")
+    @DisplayName("Answers become ImportAnswers (RENAME, CREATE) and are accepted")
     void answersToImportAnswers() throws Exception {
         setSampleMembers();
         ImportPlan plan = prepare("de", SEP_24, LogDirection.ATTACK, LogDirection.DEFENSE);
         ImportWizardModel model = new ImportWizardModel(plan, context.guild());
-        SeasonQuestion season = plan.seasonQuestions().get(0);
 
-        model.setSeasonStart(season.id(), LocalDate.of(2026, 9, 21));
-        assertEquals(Optional.of(LocalDate.of(2026, 9, 21)), model.toAnswers().seasons().get(season.id()));
-        model.setNoSeason(season.id());
-        assertEquals(Optional.empty(), model.toAnswers().seasons().get(season.id()));
         model.setPlayerAnswer(question(plan, "Faern").id(), PlayerAnswer.of(PlayerAnswer.Kind.CREATE));
         model.setPlayerAnswer(question(plan, "Xavior").id(), PlayerAnswer.rename("Ordensriter"));
         model.setPlayerAnswer(question(plan, "Ordensritter").id(), PlayerAnswer.of(PlayerAnswer.Kind.FORMER));
@@ -127,7 +115,6 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
         assertTrue(result.isSuccess(), result.errors().toString());
         assertEquals(List.of("Faern"), result.createdMembers());
         assertEquals("Xavior", result.renamedMembers().get(0).newName());
-        assertNull(result.battles().get(0).seasonId(), "no season");
     }
 
     @Test
@@ -223,7 +210,6 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
 
         assertEquals(1, s.battlesNew());
         assertEquals(0, s.battlesUpdated());
-        assertEquals(1, s.seasonsNew());
         assertTrue(s.linkGuild());
         assertEquals(1, s.membersNew());
         assertEquals(1, s.membersRenamed());

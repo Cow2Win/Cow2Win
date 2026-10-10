@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
  * Two steps:
  * <ol>
  *   <li>{@link #prepare} reads and checks the files and collects the questions
- *       (guild link, seasons, players, unknown names) - it writes nothing;</li>
+ *       (guild link, players, unknown names) - it writes nothing;</li>
  *   <li>{@link #execute} validates the answers, changes the guild in memory
  *       (left unsaved, like any edit) and writes the journal in one transaction.</li>
  * </ol>
@@ -49,8 +48,6 @@ public final class JournalImportService {
 
     /** Maximum Levenshtein distance of normalized names for a name suggestion. */
     public static final int MAX_NAME_DISTANCE = 2;
-
-    private static final long SEASON_DAYS = ChronoUnit.DAYS.between(LocalDate.EPOCH, LocalDate.EPOCH.plus(Season.DEFAULT_LENGTH));
 
     private final AppContext context;
     private final GuildService guildService;
@@ -138,22 +135,19 @@ public final class JournalImportService {
             return errorPlan(plannedFiles(drafts, Map.of()), errors, ownId, guild.members().size(), guildFile);
         }
 
-        // 3.3 battles, 3.4 seasons
+        // 3.3 battles
         List<BattleKey> keys = new ArrayList<>(byBattle.keySet());
         keys.sort(Comparator.comparing(BattleKey::date).thenComparingLong(BattleKey::opponentId));
         Map<BattleKey, Integer> battleIndex = new HashMap<>();
         Map<Integer, BattleSummary> summaries = new HashMap<>();
-        List<Season> seasons = new ArrayList<>();
         if (repo.isPresent()) {
-            repo.get().listBattles(null).forEach(s -> summaries.put(s.battleId(), s));
-            seasons.addAll(repo.get().listSeasons());
+            repo.get().listBattles().forEach(s -> summaries.put(s.battleId(), s));
         }
         List<BattleDraft> battleDrafts = new ArrayList<>();
         for (BattleKey key : keys) {
             battleIndex.put(key, battleDrafts.size());
-            battleDrafts.add(battle(repo, key, byBattle.get(key), summaries, seasons));
+            battleDrafts.add(battle(repo, key, byBattle.get(key), summaries));
         }
-        List<SeasonQuestion> seasonQuestions = seasonQuestions(battleDrafts, seasons);
         List<PlannedBattle> battles = battleDrafts.stream().map(BattleDraft::toPlanned).toList();
 
         // 3.5 players (defense logs only), 3.6 unknown names (both logs)
@@ -162,13 +156,13 @@ public final class JournalImportService {
         players(repo, guild, drafts, autoAssignments, playerQuestions);
         List<UnknownNameQuestion> unknownNames = unknownNames(parser.names(), drafts);
 
-        return new ImportPlan(plannedFiles(drafts, battleIndex), battles, List.of(), ownId, guildLink, seasonQuestions,
+        return new ImportPlan(plannedFiles(drafts, battleIndex), battles, List.of(), ownId, guildLink,
                 autoAssignments, playerQuestions, unknownNames, guild.members().size(), guildFile);
     }
 
     private ImportPlan errorPlan(List<PlannedFile> files, List<PlanError> errors, Long ownId, int members,
                                  Path guildFile) {
-        return new ImportPlan(files, List.of(), errors, ownId, null, List.of(), List.of(), List.of(), List.of(),
+        return new ImportPlan(files, List.of(), errors, ownId, null, List.of(), List.of(), List.of(),
                 members, guildFile);
     }
 
@@ -212,7 +206,7 @@ public final class JournalImportService {
     }
 
     private BattleDraft battle(Optional<JournalRepository> repo, BattleKey key, Map<LogDirection, FileDraft> files,
-                               Map<Integer, BattleSummary> summaries, List<Season> seasons) throws JournalException {
+                               Map<Integer, BattleSummary> summaries) throws JournalException {
         FileDraft any = files.containsKey(LogDirection.ATTACK) ? files.get(LogDirection.ATTACK) : files.get(LogDirection.DEFENSE);
         BattleLogHeader header = any.header();
         Integer battleId = repo.isPresent() ? repo.get().findBattle(key.date(), key.opponentId()).orElse(null) : null;
@@ -251,47 +245,7 @@ public final class JournalImportService {
         if (files.values().stream().anyMatch(f -> !f.parsed.problems().isEmpty())) {
             warnings.add(PlannedBattle.Warning.PARSE_PROBLEMS);
         }
-        Integer seasonId = summary != null && summary.seasonId() != null ? summary.seasonId()
-                : seasons.stream().filter(s -> s.contains(key.date())).map(Season::id).findFirst().orElse(null);
-        return new BattleDraft(key, header, battleId, status, check, actions, seasonId, warnings);
-    }
-
-    /** One question per suggested season for the battles outside every known season (12-week raster). */
-    private static List<SeasonQuestion> seasonQuestions(List<BattleDraft> battles, List<Season> seasons) {
-        List<BattleDraft> open = battles.stream().filter(b -> b.seasonId == null).toList();
-        if (open.isEmpty()) {
-            return List.of();
-        }
-        Map<LocalDate, SeasonSuggestion> byStart = new TreeMap<>();
-        LocalDate anchor = open.stream().map(b -> b.key.date()).min(Comparator.naturalOrder()).orElseThrow();
-        for (BattleDraft b : open) {
-            SeasonSuggestion s = suggest(b.key.date(), seasons, anchor);
-            byStart.computeIfAbsent(s.start, k -> s).dates.add(b.key.date());
-            b.seasonQuestionId = SeasonQuestion.idFor(s.start);
-        }
-        return byStart.values().stream()
-                .map(s -> new SeasonQuestion(SeasonQuestion.idFor(s.start), s.kind, s.start, s.number,
-                        s.dates.stream().distinct().sorted().toList()))
-                .toList();
-    }
-
-    private static SeasonSuggestion suggest(LocalDate date, List<Season> seasons, LocalDate anchor) {
-        if (seasons.isEmpty()) {
-            long k = ChronoUnit.DAYS.between(anchor, date) / SEASON_DAYS;
-            return new SeasonSuggestion(k == 0 ? SeasonQuestion.Kind.FIRST : SeasonQuestion.Kind.NEW,
-                    anchor.plusDays(k * SEASON_DAYS), (int) k + 1);
-        }
-        Season first = seasons.stream().min(Comparator.comparing(Season::start)).orElseThrow();
-        if (date.isBefore(first.start())) {
-            long k = Math.ceilDiv(ChronoUnit.DAYS.between(date, first.start()), SEASON_DAYS);
-            return new SeasonSuggestion(SeasonQuestion.Kind.EARLIER, first.start().minusDays(k * SEASON_DAYS),
-                    first.number() - (int) k);
-        }
-        Season before = seasons.stream().filter(s -> !s.end().isAfter(date))
-                .max(Comparator.comparing(Season::end)).orElse(first);
-        long k = ChronoUnit.DAYS.between(before.end(), date) / SEASON_DAYS;
-        return new SeasonSuggestion(SeasonQuestion.Kind.NEW, before.end().plusDays(k * SEASON_DAYS),
-                before.number() + (int) k + 1);
+        return new BattleDraft(key, header, battleId, status, check, actions, warnings);
     }
 
     /** Player questions and automatic assignments - from the defenders of the DEFENSE logs only. */
@@ -615,35 +569,6 @@ public final class JournalImportService {
             errors.add(error(ImportResult.ImportError.Kind.MEMBER_LIMIT, null));
         }
 
-        Map<String, SeasonQuestion> seasonQuestions = new HashMap<>();
-        plan.seasonQuestions().forEach(q -> seasonQuestions.put(q.id(), q));
-        for (String id : a.seasons().keySet()) {
-            if (!seasonQuestions.containsKey(id)) {
-                errors.add(error(ImportResult.ImportError.Kind.ANSWER_NOT_ALLOWED, id));
-            }
-        }
-        List<Season> existing = new ArrayList<>();
-        Optional<JournalRepository> repo = journal.repository(false);
-        if (repo.isPresent()) {
-            existing.addAll(repo.get().listSeasons());
-        }
-        List<Map.Entry<String, LocalDate>> starts = new ArrayList<>();
-        for (SeasonQuestion q : plan.seasonQuestions()) {
-            Optional<LocalDate> start = a.seasons().getOrDefault(q.id(), Optional.of(q.suggestedStart()));
-            if (start.isEmpty()) {
-                continue;
-            }
-            LocalDate s = start.get();
-            LocalDate end = s.plus(Season.DEFAULT_LENGTH);
-            boolean overlaps = existing.stream().anyMatch(x -> s.isBefore(x.end()) && x.start().isBefore(end))
-                    || starts.stream().anyMatch(x -> s.isBefore(x.getValue().plus(Season.DEFAULT_LENGTH))
-                    && x.getValue().isBefore(end));
-            if (overlaps) {
-                errors.add(error(ImportResult.ImportError.Kind.SEASON_OVERLAP, q.id()));
-            }
-            starts.add(Map.entry(q.id(), s));
-        }
-
         Map<String, UnknownNameQuestion> nameQuestions = new HashMap<>();
         plan.unknownNames().forEach(q -> nameQuestions.put(q.id(), q));
         NameResolver names = baseParser().names();
@@ -675,18 +600,6 @@ public final class JournalImportService {
         }
         BattleLogParser parser = parser(repo.nameMappingsByKind());
 
-        Map<String, Integer> seasonIds = new HashMap<>();
-        Set<Integer> usedNumbers = new HashSet<>(repo.listSeasons().stream().map(Season::number).toList());
-        for (SeasonQuestion q : plan.seasonQuestions()) {
-            Optional<LocalDate> start = a.seasons().getOrDefault(q.id(), Optional.of(q.suggestedStart()));
-            if (start.isPresent()) {
-                int number = usedNumbers.contains(q.suggestedNumber())
-                        ? usedNumbers.stream().max(Integer::compare).orElse(0) + 1 : q.suggestedNumber();
-                usedNumbers.add(number);
-                seasonIds.put(q.id(), repo.createSeason(number, start.get()).id());
-            }
-        }
-
         Map<Integer, Integer> battleIds = new LinkedHashMap<>();
         for (PlannedFile file : plan.files()) {
             if (file.status() != PlannedFile.Status.READY) {
@@ -694,15 +607,13 @@ public final class JournalImportService {
                 continue;
             }
             PlannedBattle battle = plan.battles().get(file.battleKey());
-            Integer seasonId = battle.seasonId() != null ? battle.seasonId()
-                    : battle.seasonQuestionId() == null ? null : seasonIds.get(battle.seasonQuestionId());
             BattleLogParseResult parsed;
             try {
                 parsed = parser.parse(file.path().getFileName().toString(), new ByteArrayInputStream(file.rawCsv()));
             } catch (IOException e) {
                 throw new JournalException("Could not parse " + file.path() + " again: " + e.getMessage(), e);
             }
-            SaveResult saved = repo.saveLog(parsed, file.rawCsv(), seasonId);
+            SaveResult saved = repo.saveLog(parsed, file.rawCsv());
             summary.files.add(new ImportResult.FileResult(file.path(), saved.outcome(), file.status()));
             summary.warnings.addAll(saved.warnings());
             if (saved.outcome() != SaveResult.Outcome.UNCHANGED) {
@@ -720,12 +631,12 @@ public final class JournalImportService {
         }
 
         Map<Integer, BattleSummary> stored = new HashMap<>();
-        repo.listBattles(null).forEach(s -> stored.put(s.battleId(), s));
+        repo.listBattles().forEach(s -> stored.put(s.battleId(), s));
         for (Map.Entry<Integer, Integer> e : battleIds.entrySet()) {
             PlannedBattle battle = plan.battles().get(e.getKey());
             BattleSummary s = stored.get(e.getValue());
             summary.battles.add(new ImportResult.BattleOutcome(e.getValue(), battle.date(), battle.opponent(),
-                    s == null ? null : s.seasonId(), s == null ? battle.status() : s.status(), battle.check().verdict()));
+                    s == null ? battle.status() : s.status(), battle.check().verdict()));
         }
         return summary;
     }
@@ -845,12 +756,10 @@ public final class JournalImportService {
         final BattleStatus status;
         final BattleLogCheck.Result check;
         final Map<LogDirection, PlannedBattle.LogAction> actions;
-        final Integer seasonId;
         final List<PlannedBattle.Warning> warnings;
-        String seasonQuestionId;
 
         BattleDraft(BattleKey key, BattleLogHeader header, Integer battleId, BattleStatus status,
-                    BattleLogCheck.Result check, Map<LogDirection, PlannedBattle.LogAction> actions, Integer seasonId,
+                    BattleLogCheck.Result check, Map<LogDirection, PlannedBattle.LogAction> actions,
                     List<PlannedBattle.Warning> warnings) {
             this.key = key;
             this.header = header;
@@ -858,26 +767,12 @@ public final class JournalImportService {
             this.status = status;
             this.check = check;
             this.actions = actions;
-            this.seasonId = seasonId;
             this.warnings = warnings;
         }
 
         PlannedBattle toPlanned() {
             return new PlannedBattle(key.date(), header.opponent(), battleId, header.result(), status,
-                    header.rankingPoints(), check, actions, seasonId, seasonQuestionId, warnings);
-        }
-    }
-
-    private static final class SeasonSuggestion {
-        final SeasonQuestion.Kind kind;
-        final LocalDate start;
-        final int number;
-        final List<LocalDate> dates = new ArrayList<>();
-
-        SeasonSuggestion(SeasonQuestion.Kind kind, LocalDate start, int number) {
-            this.kind = kind;
-            this.start = start;
-            this.number = number;
+                    header.rankingPoints(), check, actions, warnings);
         }
     }
 

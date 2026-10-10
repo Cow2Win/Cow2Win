@@ -1,11 +1,12 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.journal.LogDirection;
+import org.c2w.data.journal.Season;
+import org.c2w.data.journal.SeasonCalendar;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalRepository;
-import org.c2w.data.journal.db.Season;
 import org.c2w.service.JournalStore;
 
 import javax.swing.table.AbstractTableModel;
@@ -58,14 +59,22 @@ public final class JournalBattleTableModel extends AbstractTableModel {
      *
      * @param hasJournal false if the guild has no journal file yet (nothing was created)
      * @param battles    all battles, newest first
-     * @param seasons    all seasons, oldest first
      */
-    public record Data(boolean hasJournal, List<BattleSummary> battles, List<Season> seasons) {
-        public static final Data EMPTY = new Data(false, List.of(), List.of());
+    public record Data(boolean hasJournal, List<BattleSummary> battles) {
+        public static final Data EMPTY = new Data(false, List.of());
 
         public Data {
             battles = List.copyOf(battles);
-            seasons = List.copyOf(seasons);
+        }
+
+        /**
+         * The seasons of the season filter: only those containing at least one battle,
+         * oldest first (battles in a break or before the first season have none).
+         */
+        public List<Season> seasons() {
+            SeasonCalendar calendar = SeasonCalendar.standard();
+            return battles.stream().map(BattleSummary::seasonNumber).filter(Objects::nonNull)
+                    .distinct().sorted().map(calendar::season).toList();
         }
     }
 
@@ -73,19 +82,20 @@ public final class JournalBattleTableModel extends AbstractTableModel {
     private BattleListFilter filter = BattleListFilter.NONE;
     private List<BattleSummary> rows = List.of();
 
-    /** Reads the battles and seasons of the open guild's journal - never creates a journal file. */
+    /** Reads the battles of the open guild's journal - never creates a journal file. */
     public static Data load(JournalStore store) throws JournalException {
         Optional<JournalRepository> repo = store.repository(false);
         if (repo.isEmpty()) {
             return Data.EMPTY;
         }
-        return new Data(true, repo.get().listBattles(null), repo.get().listSeasons());
+        return new Data(true, repo.get().listBattles());
     }
 
+    /** New data; a season filter whose season has no battle any more is reset to "all". */
     public void setData(Data newData) {
         this.data = Objects.requireNonNull(newData);
-        Integer seasonId = filter.seasonId();
-        if (seasonId != null && newData.seasons().stream().noneMatch(s -> s.id() == seasonId)) {
+        Integer seasonNumber = filter.seasonNumber();
+        if (seasonNumber != null && newData.battles().stream().noneMatch(b -> seasonNumber.equals(b.seasonNumber()))) {
             filter = filter.withSeason(null);
         }
         applyFilter();
@@ -95,13 +105,14 @@ public final class JournalBattleTableModel extends AbstractTableModel {
         return data;
     }
 
-    /** Only the battles of this season ({@code null} = all); the other filters stay. */
-    public void setSeasonFilter(Integer seasonId) {
-        setFilter(filter.withSeason(seasonId));
+    /** Only the battles of the season with this number ({@code null} = all); the other filters stay. */
+    public void setSeasonFilter(Integer seasonNumber) {
+        setFilter(filter.withSeason(seasonNumber));
     }
 
+    /** The number of the filtered season, {@code null} = all. */
     public Integer seasonFilter() {
-        return filter.seasonId();
+        return filter.seasonNumber();
     }
 
     /** Shows only the battles passing {@code newFilter}. */

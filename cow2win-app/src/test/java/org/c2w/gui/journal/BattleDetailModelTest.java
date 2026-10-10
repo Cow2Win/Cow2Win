@@ -21,7 +21,7 @@ class BattleDetailModelTest extends JournalGuiTestSupport {
     }
 
     private BattleDetailModel load(LocalDate date) throws Exception {
-        int id = repo().listBattles(null).stream().filter(b -> b.date().equals(date)).findFirst().orElseThrow().battleId();
+        int id = repo().listBattles().stream().filter(b -> b.date().equals(date)).findFirst().orElseThrow().battleId();
         return BattleDetailModel.load(repo(), id, context.guild()).orElseThrow();
     }
 
@@ -154,7 +154,7 @@ class BattleDetailModelTest extends JournalGuiTestSupport {
     @DisplayName("A deleted battle cannot be loaded")
     void deletedBattle() throws Exception {
         importWithDefaults(prepare("de", SEP_24, LogDirection.DEFENSE));
-        int id = repo().listBattles(null).get(0).battleId();
+        int id = repo().listBattles().get(0).battleId();
         repo().deleteBattle(id);
 
         assertEquals(Optional.empty(), BattleDetailModel.load(repo(), id, context.guild()));

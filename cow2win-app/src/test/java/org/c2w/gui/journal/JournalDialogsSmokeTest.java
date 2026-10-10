@@ -53,7 +53,7 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
     }
 
     @Test
-    @DisplayName("Battle list, all battle details, players, seasons and name mappings build and paint")
+    @DisplayName("Battle list, all battle details, players and name mappings build and paint")
     void dialogs() throws Exception {
         JournalBattleListDialog list = onEdt(() -> new JournalBattleListDialog(null, context, new JournalBattleListDialog.Host() {
             @Override
@@ -69,10 +69,6 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             }
 
             @Override
-            public void openSeasons() {
-            }
-
-            @Override
             public void openNameMappings() {
             }
 
@@ -84,7 +80,7 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         waitFor(() -> find(list, JTable.class).getRowCount() == 6);
         paint(list);
 
-        for (var battle : context.journal().repository(false).orElseThrow().listBattles(null)) {
+        for (var battle : context.journal().repository(false).orElseThrow().listBattles()) {
             JournalBattleDetailDialog detail = onEdt(() -> new JournalBattleDetailDialog(null, context,
                     new JournalBattleDetailDialog.Host() {
                         @Override
@@ -125,10 +121,6 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             return null;
         });
         paint(players);
-
-        JournalSeasonsDialog seasons = onEdt(() -> new JournalSeasonsDialog(null, context, operations.service(), () -> { }));
-        waitFor(() -> find(seasons, JTable.class).getRowCount() == 1);
-        paint(seasons);
 
         operations.service().putNameMapping(org.c2w.data.journal.NameMappingKind.HERO, "Neuheld", "dante");
         JournalNameMappingsDialog mappings = onEdt(() -> new JournalNameMappingsDialog(null, context, operations));

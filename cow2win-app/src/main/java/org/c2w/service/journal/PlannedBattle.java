@@ -21,8 +21,6 @@ import java.util.Map;
  * @param rankingPoints    ranking points from the imported file(s)
  * @param check            control calculation with the imported files plus the other direction from the journal
  * @param actions          per imported direction: new, replaces the stored log, or unchanged
- * @param seasonId         the season the battle will belong to without asking, {@code null} if asked or none
- * @param seasonQuestionId the season question deciding it, {@code null} if not asked
  * @param warnings         things to point out
  */
 public record PlannedBattle(
@@ -34,8 +32,6 @@ public record PlannedBattle(
         Integer rankingPoints,
         BattleLogCheck.Result check,
         Map<LogDirection, LogAction> actions,
-        Integer seasonId,
-        String seasonQuestionId,
         List<Warning> warnings
 ) {
     public PlannedBattle {

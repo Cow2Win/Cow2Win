@@ -55,7 +55,6 @@ public enum ActionId {
     JOURNAL_BATTLES("menu.journal.battles", Stage.JOURNAL, Opens.WINDOW),
     JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.JOURNAL, Opens.WINDOW),
     JOURNAL_PLAYERS("journal.action.players", Stage.JOURNAL, Opens.WINDOW),
-    JOURNAL_SEASONS("journal.action.seasons", Stage.JOURNAL, Opens.WINDOW),
     JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.JOURNAL, Opens.WINDOW);
 
     /**

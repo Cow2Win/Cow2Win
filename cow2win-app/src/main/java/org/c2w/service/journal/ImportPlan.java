@@ -13,7 +13,6 @@ import java.util.List;
  * @param errors            reasons why nothing can be imported (empty if importable)
  * @param ownGameGuildId    game guild id of the exporting guild, {@code null} if unknown
  * @param guildLink         asked if the open guild has no game guild id yet, else {@code null}
- * @param seasonQuestions   seasons to decide
  * @param autoAssignments   defenders assigned without asking (information)
  * @param playerQuestions   defenders to decide (only from defense logs)
  * @param unknownNames      names without catalog id (both logs)
@@ -26,7 +25,6 @@ public record ImportPlan(
         List<PlanError> errors,
         Long ownGameGuildId,
         GuildLinkQuestion guildLink,
-        List<SeasonQuestion> seasonQuestions,
         List<PlayerAutoAssignment> autoAssignments,
         List<PlayerQuestion> playerQuestions,
         List<UnknownNameQuestion> unknownNames,
@@ -37,7 +35,6 @@ public record ImportPlan(
         files = files == null ? List.of() : List.copyOf(files);
         battles = battles == null ? List.of() : List.copyOf(battles);
         errors = errors == null ? List.of() : List.copyOf(errors);
-        seasonQuestions = seasonQuestions == null ? List.of() : List.copyOf(seasonQuestions);
         autoAssignments = autoAssignments == null ? List.of() : List.copyOf(autoAssignments);
         playerQuestions = playerQuestions == null ? List.of() : List.copyOf(playerQuestions);
         unknownNames = unknownNames == null ? List.of() : List.copyOf(unknownNames);

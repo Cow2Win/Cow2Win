@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -21,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JournalDatabaseTest {
 
-    private static final List<String> V1_AND_TEST_V2 = List.of(
-            "/journal/schema/V1__initial.sql", "/journal/test-migrations/V2__test_marker.sql");
+    private static final String V1 = "/journal/schema/V1__initial.sql";
+    private static final List<String> V1_AND_TEST_V2 = List.of(V1, "/journal/test-migrations/V2__test_marker.sql");
 
     @TempDir
     Path guildDir;
@@ -40,12 +41,12 @@ class JournalDatabaseTest {
     }
 
     @Test
-    void createsTheFileAndMigratesToVersion1() throws Exception {
+    void createsTheFileAndMigratesToTheLatestVersion() throws Exception {
         try (JournalDatabase db = JournalDatabase.open(guildDir, true).orElseThrow()) {
             assertTrue(JournalDatabase.exists(guildDir));
             assertTrue(Files.isRegularFile(guildDir.resolve("journal.mv.db")));
-            assertEquals(1, db.schemaVersion());
-            assertEquals(List.of(1), versions(db));
+            assertEquals(2, db.schemaVersion());
+            assertEquals(List.of(1, 2), versions(db));
         }
     }
 
@@ -54,14 +55,14 @@ class JournalDatabaseTest {
         JournalDatabase.open(guildDir, true).orElseThrow().close();
 
         try (JournalDatabase db = JournalDatabase.open(guildDir, false).orElseThrow()) {
-            assertEquals(List.of(1), versions(db));
-            assertEquals(1, count(db, "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SEASON'"));
+            assertEquals(List.of(1, 2), versions(db));
+            assertEquals(1, count(db, "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'BATTLE'"));
         }
     }
 
     @Test
     void migratesAV1DatabaseToANewerScriptVersion() throws Exception {
-        JournalDatabase.open(guildDir, true).orElseThrow().close();
+        JournalDatabase.open(guildDir, true, new SchemaMigrator(List.of(V1))).orElseThrow().close();
 
         try (JournalDatabase db = JournalDatabase.open(guildDir, false, new SchemaMigrator(V1_AND_TEST_V2))
                 .orElseThrow()) {
@@ -73,6 +74,41 @@ class JournalDatabaseTest {
         try (JournalDatabase db = JournalDatabase.open(guildDir, false, new SchemaMigrator(V1_AND_TEST_V2))
                 .orElseThrow()) {
             assertEquals(List.of(1, 2), versions(db));
+        }
+    }
+
+    @Test
+    void migrationV2DropsTheSeasonsAndKeepsTheBattles() throws Exception {
+        try (JournalDatabase db = JournalDatabase.open(guildDir, true, new SchemaMigrator(List.of(V1))).orElseThrow()) {
+            db.transaction(c -> {
+                try (Statement st = c.createStatement()) {
+                    st.execute("INSERT INTO season (id, season_number, start_date, end_date, note)"
+                            + " VALUES (1, 1, DATE '2026-09-14', DATE '2026-12-07', 'own numbering')");
+                    st.execute("INSERT INTO guild (id, game_guild_id, name, server, is_own) VALUES (1, 193861, 'Own', 63, TRUE)");
+                    st.execute("INSERT INTO guild (id, game_guild_id, name, server, is_own) VALUES (2, 114834, 'Auge', 12, FALSE)");
+                    st.execute("INSERT INTO battle (battle_date, own_guild_id, opponent_guild_id, season_id, ranking_points,"
+                            + " result, status, created_at, updated_at) VALUES (DATE '2026-09-24', 1, 2, 1, 851, 'WIN',"
+                            + " 'FINISHED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+                    st.execute("INSERT INTO battle (battle_date, own_guild_id, opponent_guild_id, season_id, ranking_points,"
+                            + " result, status, created_at, updated_at) VALUES (DATE '2026-10-11', 1, 2, NULL, 0, 'RUNNING',"
+                            + " 'RUNNING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+                }
+                return null;
+            });
+        }
+
+        try (JournalDatabase db = JournalDatabase.open(guildDir, false).orElseThrow()) {
+            assertEquals(List.of(1, 2), versions(db));
+            assertEquals(0, count(db, "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SEASON'"));
+            assertEquals(0, count(db, "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS"
+                    + " WHERE TABLE_NAME = 'BATTLE' AND COLUMN_NAME = 'SEASON_ID'"));
+            assertEquals(2, count(db, "SELECT COUNT(*) FROM battle"));
+
+            List<BattleSummary> battles = new JournalRepository(db).listBattles();
+            assertEquals(List.of(LocalDate.of(2026, 10, 11), LocalDate.of(2026, 9, 24)),
+                    battles.stream().map(BattleSummary::date).toList());
+            assertNull(battles.get(0).seasonNumber(), "break before season 17");
+            assertEquals(16, battles.get(1).seasonNumber(), "from the calendar, not the stored season 1");
         }
     }
 
@@ -91,13 +127,15 @@ class JournalDatabaseTest {
                 () -> JournalDatabase.open(guildDir, false));
         assertTrue(e.getMessage().contains("99"), e.getMessage());
 
-        // Still exactly as before (read with plain JDBC, bypassing the migration): versions 1 and 99.
+        // Still exactly as before (read with plain JDBC, bypassing the migration): versions 1, 2 and 99.
         String url = "jdbc:h2:file:" + guildDir.toAbsolutePath().resolve(JournalDatabase.BASE_NAME) + ";IFEXISTS=TRUE";
         try (Connection c = DriverManager.getConnection(url, "sa", "");
              Statement st = c.createStatement();
              ResultSet rs = st.executeQuery("SELECT version FROM schema_version ORDER BY version")) {
             assertTrue(rs.next());
             assertEquals(1, rs.getInt(1));
+            assertTrue(rs.next());
+            assertEquals(2, rs.getInt(1));
             assertTrue(rs.next());
             assertEquals(99, rs.getInt(1));
             assertFalse(rs.next());
@@ -127,12 +165,12 @@ class JournalDatabaseTest {
         try (JournalDatabase db = JournalDatabase.open(guildDir, true).orElseThrow()) {
             assertThrows(JournalException.class, () -> db.transaction(c -> {
                 try (Statement st = c.createStatement()) {
-                    st.execute("INSERT INTO season (season_number, start_date, end_date) VALUES (1, DATE '2026-01-01', DATE '2026-03-26')");
-                    st.execute("INSERT INTO season (season_number, start_date, end_date) VALUES (1, DATE '2026-04-01', DATE '2026-06-24')");
+                    st.execute("INSERT INTO guild (game_guild_id, name, server, is_own) VALUES (1, 'Own', 1, TRUE)");
+                    st.execute("INSERT INTO guild (game_guild_id, name, server, is_own) VALUES (1, 'Twice', 1, FALSE)");
                 }
                 return null;
             }));
-            assertEquals(0, count(db, "SELECT COUNT(*) FROM season"));
+            assertEquals(0, count(db, "SELECT COUNT(*) FROM guild"));
         }
     }
 

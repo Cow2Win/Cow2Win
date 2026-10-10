@@ -34,7 +34,8 @@ public final class SchemaMigrator {
 
     /** The schema scripts of this Cow2Win version, in version order. */
     public static final List<String> SCRIPTS = List.of(
-            "/journal/schema/V1__initial.sql");
+            "/journal/schema/V1__initial.sql",
+            "/journal/schema/V2__drop_seasons.sql");
 
     private static final Pattern SCRIPT_NAME = Pattern.compile("(?:^|/)V(\\d+)__[^/]+\\.sql$");
 

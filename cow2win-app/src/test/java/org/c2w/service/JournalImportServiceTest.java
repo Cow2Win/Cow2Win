@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,20 +60,15 @@ class JournalImportServiceTest extends ServiceTestSupport {
         assertEquals(before + 1, GuildLog.read(alphaDir()).size());
     }
 
-    // --- guild link, seasons, files ---
+    // --- guild link, files ---
 
     @Test
-    @DisplayName("First import: guild link and first season are asked, then the guild is linked (unsaved)")
+    @DisplayName("First import: only the guild link is asked, then the guild is linked (unsaved)")
     void firstImport() throws Exception {
         ImportPlan plan = service().prepare(files("de", SEP_24, LogDirection.ATTACK, LogDirection.DEFENSE));
 
         assertTrue(plan.isImportable(), plan.errors().toString());
         assertEquals(OWN_GAME_ID, plan.guildLink().gameGuild().gameGuildId());
-        assertEquals(1, plan.seasonQuestions().size());
-        SeasonQuestion season = plan.seasonQuestions().get(0);
-        assertEquals(SeasonQuestion.Kind.FIRST, season.kind());
-        assertEquals(LocalDate.of(2026, 9, 24), season.suggestedStart());
-        assertEquals(1, season.suggestedNumber());
 
         ImportResult result = service().execute(plan, ImportAnswers.defaults());
 
@@ -83,13 +77,10 @@ class JournalImportServiceTest extends ServiceTestSupport {
         assertEquals(OWN_GAME_ID, context.guild().gameGuildId());
         assertTrue(context.isGuildDirty(), "guild changed but not saved");
         assertTrue(JournalDatabase.exists(alphaDir()));
-        BattleSummary battle = repo().listBattles(null).get(0);
+        BattleSummary battle = repo().listBattles().get(0);
         assertEquals(BattleResult.WIN, battle.result());
         assertEquals(851, battle.rankingPoints());
-        Season stored = repo().listSeasons().get(0);
-        assertEquals(LocalDate.of(2026, 9, 24), stored.start());
-        assertEquals(LocalDate.of(2026, 12, 17), stored.end(), "24.09. + 12 weeks (end exclusive)");
-        assertEquals(stored.id(), battle.seasonId());
+        assertEquals(16, battle.seasonNumber(), "season from the calendar, nothing asked");
         assertEquals(1, result.battles().size());
         assertEquals(BattleLogCheck.Verdict.MATCHES, result.battles().get(0).verdict());
     }
@@ -154,7 +145,6 @@ class JournalImportServiceTest extends ServiceTestSupport {
         ImportPlan second = service().prepare(files("fr", SEP_24, LogDirection.DEFENSE));
 
         assertNull(second.guildLink(), "already linked");
-        assertEquals(List.of(), second.seasonQuestions(), "the battle already has its season");
         PlannedBattle battle = second.battles().get(0);
         assertNotNull(battle.existingBattleId());
         assertEquals(BattleLogCheck.Verdict.MATCHES, battle.check().verdict());
@@ -162,8 +152,8 @@ class JournalImportServiceTest extends ServiceTestSupport {
         assertFalse(second.playerQuestions().isEmpty());
 
         assertTrue(service().execute(second, ImportAnswers.defaults()).isSuccess());
-        assertEquals(1, repo().listBattles(null).size());
-        assertEquals(Set.of(LogDirection.ATTACK, LogDirection.DEFENSE), repo().listBattles(null).get(0).directions());
+        assertEquals(1, repo().listBattles().size());
+        assertEquals(Set.of(LogDirection.ATTACK, LogDirection.DEFENSE), repo().listBattles().get(0).directions());
     }
 
     @Test
@@ -186,50 +176,16 @@ class JournalImportServiceTest extends ServiceTestSupport {
     }
 
     @Test
-    @DisplayName("All 6 German battles at once: one question for the first season from 14.09.")
+    @DisplayName("All 6 German battles at once: no season question, all in season 16")
     void severalBattlesAtOnce() throws Exception {
         ImportPlan plan = service().prepare(BattleLogTestFiles.files("de"));
 
         assertEquals(6, plan.battles().size());
-        assertEquals(1, plan.seasonQuestions().size());
-        SeasonQuestion q = plan.seasonQuestions().get(0);
-        assertEquals(SeasonQuestion.Kind.FIRST, q.kind());
-        assertEquals(LocalDate.of(2026, 9, 14), q.suggestedStart());
-        assertEquals(6, q.battleDates().size());
-        assertTrue(plan.battles().stream().allMatch(b -> q.id().equals(b.seasonQuestionId())));
-
         ImportResult result = service().execute(plan, ImportAnswers.defaults());
 
         assertTrue(result.isSuccess(), result.errors().toString());
-        Season season = repo().listSeasons().get(0);
-        assertEquals(LocalDate.of(2026, 12, 6), season.lastDay());
-        assertTrue(repo().listBattles(null).stream().allMatch(b -> Integer.valueOf(season.id()).equals(b.seasonId())));
+        assertTrue(repo().listBattles().stream().allMatch(b -> Integer.valueOf(16).equals(b.seasonNumber())));
         assertEquals(6, result.battles().size());
-    }
-
-    @Test
-    @DisplayName("Season raster: a battle after the last season gets a NEW question in the 12-week raster")
-    void newSeasonInRaster() throws Exception {
-        assertTrue(service().execute(service().prepare(files("de", "14-09-2026", LogDirection.ATTACK)),
-                ImportAnswers.defaults()).isSuccess());
-        // Shrink the first season so that 24.09. lies after it: 14.09. - 21.09.
-        Season first = repo().listSeasons().get(0);
-        repo().updateSeason(new Season(first.id(), 1, first.start(), LocalDate.of(2026, 9, 21), null));
-
-        ImportPlan plan = service().prepare(files("de", SEP_24, LogDirection.ATTACK));
-
-        SeasonQuestion q = plan.seasonQuestions().get(0);
-        assertEquals(SeasonQuestion.Kind.NEW, q.kind());
-        assertEquals(LocalDate.of(2026, 9, 21), q.suggestedStart());
-        assertEquals(2, q.suggestedNumber());
-
-        ImportResult refused = service().execute(plan, ImportAnswers.defaults().withSeason(q.id(), LocalDate.of(2026, 9, 15)));
-        assertEquals(ImportResult.ImportError.Kind.SEASON_OVERLAP, refused.errors().get(0).kind());
-        assertEquals(1, repo().listBattles(null).size(), "nothing written");
-
-        ImportResult noSeason = service().execute(plan, ImportAnswers.defaults().withSeason(q.id(), null));
-        assertTrue(noSeason.isSuccess());
-        assertNull(noSeason.battles().get(0).seasonId());
     }
 
     @Test
