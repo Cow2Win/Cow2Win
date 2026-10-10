@@ -26,37 +26,20 @@
         <maven.resources.plugin.version>3.5.0</maven.resources.plugin.version>
         <jpackage.maven.plugin.version>1.8.0</jpackage.maven.plugin.version>
         <app.mainClass>org.c2w.C2WApp</app.mainClass>
-        <!-- Folder/exe name used by jpackage - deliberately NOT ${project.name}
-             ("Cow 2", with a space) to keep the installed folder and Cow2Win.exe
-             name script-friendly. -->
         <app.name>Cow2Win</app.name>
-        <!-- jpackage's "app-version" option must be a clean digits-and-dots version (no
-             "-SNAPSHOT"/qualifiers), so this is intentionally decoupled from
-             ${project.version} rather than reused from it. Bump by hand for now. -->
-        <app.version>1.0.6</app.version>
+        <app.version>1.0.7</app.version>
         <app.vendor>org.c2w</app.vendor>
-        <!-- Set -Ddist.skip=true to skip the jpackage/zip steps below (e.g. for a
-             quick "mvn clean test") without touching the rest of the build. -->
         <dist.skip>false</dist.skip>
     </properties>
     <dependencies>
-        <!-- JSON (de)serialization for the data/repository catalog and workspace files -
-             replaces the previous hand-rolled, dependency-free JSON parsers/writers (see
-             git history before 2026-09-10). -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>
-        <!-- Embedded SQL database (file mode) for the Weltenschlacht journal - added
-             2026-10-03 (Schlachtplan phase 0.3). Pure-Java JDBC driver, registered via
-             META-INF/services/java.sql.Driver (hence the ServicesResourceTransformer in
-             the shade plugin) and needing extra JDK modules in the bundled runtime (see
-             the jpackage addModules below). -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency>
-        <!-- Test framework (added 2026-09-10, first tests: BestPossibleLineupAlgorithmTest). -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -68,12 +51,6 @@
         </dependency>
     </dependencies>
     <build>
-        <!-- Only app-version.properties needs Maven resource filtering (so its
-             "${app.version}" placeholder becomes the real, build-time value read
-             at runtime by org.c2w.infra.AppVersion, in turn used by UpdateChecker
-             - Cow2Win todos 1.1) - every other resource (JSON catalogs, images,
-             language files) is copied through unfiltered, so none of them can
-             ever have a "${...}"-looking substring accidentally "resolved" away. -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -91,18 +68,10 @@
             </resource>
         </resources>
         <plugins>
-            <!-- Explicit version so Maven's default (which may not understand the JUnit
-                 Platform) doesn't silently skip the tests (version: parent pluginManagement). -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-
-            <!-- Stages a plain copy of src/main/resources under target/app-content/resources
-                 so it can be dropped into the packaged app image as a real, on-disk
-                 "resources" folder (see the jpackage appContentPaths below) - separate from
-                 (and in addition to) the same files being compiled into the jar's classpath
-                 as usual via the standard resources:resources execution. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -133,11 +102,6 @@
                 </executions>
             </plugin>
 
-            <!-- Builds a single executable "fat" jar (gson merged in, Main-Class set) into
-                 target/jpackage-input/ - this is jpackage's "input" directory below, kept separate
-                 from the normal target/Cow2Win-1.0-SNAPSHOT.jar produced by the standard
-                 jar:jar execution (that one is untouched and still what gets deployed as
-                 the plain Maven artifact). -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -162,9 +126,6 @@
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
                                         <exclude>module-info.class</exclude>
-                                        <!-- gson's versioned module descriptor: with Multi-Release
-                                             (below) it would make the fat jar look like the
-                                             "com.google.gson" module. -->
                                         <exclude>META-INF/versions/*/module-info.class</exclude>
                                     </excludes>
                                 </filter>
@@ -179,9 +140,6 @@
                                         <Multi-Release>true</Multi-Release>
                                     </manifestEntries>
                                 </transformer>
-                                <!-- Merges META-INF/services/* of all jars instead of keeping
-                                     only the first one - H2 registers its JDBC driver via
-                                     META-INF/services/java.sql.Driver. -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
@@ -189,17 +147,6 @@
                 </executions>
             </plugin>
 
-            <!-- The actual "real" deploy artifact: runs the JDK's own jpackage tool to
-                 build a Windows app-image under target/dist/Cow2Win/ containing
-                 Cow2Win.exe, a bundled runtime/ (a jlink-built JRE - no separately
-                 installed Java needed to run it) and, via appContentPaths, a plain
-                 resources/ folder (the staged copy from the execution above).
-
-                 Requires a full JDK 24 (with jmods, i.e. not a JRE-only install) on the
-                 machine running `mvn package`/`deploy` - jpackage is bundled with the JDK
-                 since Java 14, but needs jmods to build the custom runtime image.
-                 jpackage always targets the OS it runs on, so this produces a Windows
-                 app-image when run here. -->
             <plugin>
                 <groupId>org.panteleyev</groupId>
                 <artifactId>jpackage-maven-plugin</artifactId>
@@ -229,21 +176,6 @@
                                  in-app frame icon, see Cow2Frame#FRAME_ICON_PATH). Without this,
                                  jpackage falls back to the default Java coffee-cup icon. -->
                             <icon>${project.basedir}/src/main/resources/images/app/cow.ico</icon>
-                            <!-- JDK modules of the bundled runtime - check with
-                                 `jdeps -print-module-deps` on the shaded jar (README
-                                 "Distribution package"). A missing module only shows up in the
-                                 installed app, never in the IDE (full JDK there).
-                                 - java.net.http: org.c2w.infra.UpdateChecker (HttpClient)
-                                 H2 (determined with `jdeps -verbose:class` on the H2 jar):
-                                 - java.sql: JDBC itself (pulls in java.logging, java.xml and
-                                   java.transaction.xa transitively)
-                                 - java.naming: org.h2.util.JdbcUtils / JdbcDataSource
-                                 - java.management: org.h2.util.Utils (memory/GC info), JMX
-                                 (a plain embedded file DB also runs with java.sql alone; the two
-                                 above are kept as cheap insurance for less common code paths)
-                                 Not added (H2 features we don't use): java.compiler (Java source
-                                 functions), java.scripting (script triggers), java.instrument
-                                 (Profiler agent), jdk.net (TCP server socket options). -->
                             <addModules>
                                 <addModule>java.base</addModule>
                                 <addModule>java.desktop</addModule>
