@@ -196,9 +196,10 @@ final class BattleReplayPanel extends JPanel {
         side.add(Box.createVerticalStrut(8));
 
         // legend
-        JPanel legend = new JPanel(new GridLayout(2, 2, 6, 2));
+        JPanel legend = new JPanel(new GridLayout(3, 2, 6, 2));
         legend.add(legendItem(BattleReplayMapPanel.Dot.HELD, "journal.replay.legend.held"));
         legend.add(legendItem(BattleReplayMapPanel.Dot.TAKEN, "journal.replay.legend.taken." + direction.name()));
+        legend.add(legendItem(BattleReplayMapPanel.Dot.REPELLED, "journal.replay.legend.repelled." + direction.name()));
         legend.add(legendItem(BattleReplayMapPanel.Dot.FREE, "journal.replay.legend.free"));
         legend.add(legendItem(BattleReplayMapPanel.Dot.LOCKED, "journal.replay.legend.locked"));
         legend.setAlignmentX(LEFT_ALIGNMENT);

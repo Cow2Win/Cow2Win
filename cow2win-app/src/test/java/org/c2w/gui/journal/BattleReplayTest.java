@@ -100,6 +100,7 @@ class BattleReplayTest extends JournalGuiTestSupport {
             assertEquals(FortificationRepository.count(), state.forts().size());
             for (BattleReplay.FortState f : state.forts().values()) {
                 assertTrue(f.beaten().isEmpty(), f.fort().id());
+                assertTrue(f.repelled().isEmpty(), f.fort().id());
                 assertTrue(f.free().isEmpty(), f.fort().id());
                 assertFalse(f.captured(), f.fort().id());
                 assertFalse(f.current(), f.fort().id());
@@ -118,6 +119,7 @@ class BattleReplayTest extends JournalGuiTestSupport {
         assertFalse(bridge.locked());
         assertTrue(bridge.current());
         assertEquals(Set.of(1, 2, 3, 4, 5, 6), bridge.beaten());
+        assertTrue(bridge.repelled().isEmpty(), "beaten in the end - no longer red");
         for (String id : List.of("bastion-of-fire", "bastion-of-ice", "gates-of-nature", "spring-of-elements",
                 "foundry", "engineerium")) {
             assertFalse(state.forts().get(id).locked(), id);
@@ -151,6 +153,8 @@ class BattleReplayTest extends JournalGuiTestSupport {
         assertEquals(1, state.good(), "a repelled attack is good");
         assertEquals(0, state.bad());
         assertTrue(state.forts().get("bridge").beaten().isEmpty(), "the attacker lost - nothing beaten");
+        assertEquals(Set.of(6), state.forts().get("bridge").repelled(), "the attacker lost - red dot");
+        assertTrue(attack.stateAt(6).forts().get("bridge").repelled().contains(3), "lost attack at position 3 - red");
 
         BattleReplay.State end = defense.stateAt(defense.size());
         long fell = defense.steps().stream().filter(s -> s.kind() == BattleDetailModel.ReplayStep.Kind.FIGHT

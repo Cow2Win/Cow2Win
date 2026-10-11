@@ -19,7 +19,8 @@ import java.util.Map;
  * The simplified map of the visual replay: all fortifications of the catalog
  * (heroes and titans together) on their grid ({@code row}/{@code column}, 8 x 5),
  * lines to their prerequisites, and per fortification a tile with one dot per
- * position - defended, beaten, captured without a fight. Captured and locked
+ * position - defended, beaten (green), attacked in vain (red), captured without
+ * a fight. Captured and locked
  * fortifications and the current one are marked. Only for the replay - the
  * map of the strategic concept is a different thing.
  */
@@ -47,7 +48,7 @@ final class BattleReplayMapPanel extends JComponent {
 
     /** How a position dot looks. */
     enum Dot {
-        HELD, TAKEN, FREE, LOCKED
+        HELD, TAKEN, REPELLED, FREE, LOCKED
     }
 
     private final LogDirection direction;
@@ -235,7 +236,8 @@ final class BattleReplayMapPanel extends JComponent {
         BattleDetailModel.ReplayStep step = state.current();
         for (int p = 1; p <= capacity; p++) {
             double px = dx + (p - 1) * gap;
-            Dot dot = f.beaten().contains(p) ? Dot.TAKEN : f.free().contains(p) ? Dot.FREE : Dot.HELD;
+            Dot dot = f.beaten().contains(p) ? Dot.TAKEN : f.repelled().contains(p) ? Dot.REPELLED
+                    : f.free().contains(p) ? Dot.FREE : Dot.HELD;
             paintDot(g, dot, direction, px, dy, d);
             if (f.current() && step != null && step.kind() == BattleDetailModel.ReplayStep.Kind.FIGHT
                     && step.position() == p) {
@@ -259,6 +261,10 @@ final class BattleReplayMapPanel extends JComponent {
             }
             case TAKEN -> {
                 g.setColor(GREEN);
+                g.fill(circle);
+            }
+            case REPELLED -> {
+                g.setColor(RED);
                 g.fill(circle);
             }
             case FREE -> {

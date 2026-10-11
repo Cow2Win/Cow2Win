@@ -23,13 +23,14 @@ public final class BattleReplay {
      *
      * @param fort        the catalog entry
      * @param beaten      positions where the attacker won a fight up to this step
+     * @param repelled    positions where the attacker lost a fight up to this step and has not won one yet
      * @param free        positions shown as captured without a fight (see {@link #freePositions})
      * @param captured    captured up to this step
      * @param locked      has prerequisites and none of them is captured yet (never if captured)
      * @param current     the fortification of the current step
      */
-    public record FortState(Fortification fort, Set<Integer> beaten, Set<Integer> free, boolean captured,
-                            boolean locked, boolean current) {
+    public record FortState(Fortification fort, Set<Integer> beaten, Set<Integer> repelled, Set<Integer> free,
+                            boolean captured, boolean locked, boolean current) {
         public int capacity() {
             return fort.capacity();
         }
@@ -113,6 +114,7 @@ public final class BattleReplay {
     public State stateAt(int step) {
         int n = Math.max(0, Math.min(step, steps.size()));
         Map<String, Set<Integer>> beaten = new HashMap<>();
+        Map<String, Set<Integer>> repelled = new HashMap<>();
         Map<String, Integer> freeCount = new HashMap<>();
         Set<String> captured = new HashSet<>();
         int points = 0;
@@ -130,8 +132,8 @@ public final class BattleReplay {
                     } else {
                         bad++;
                     }
-                    if (s.attackerWins() && id != null) {
-                        beaten.computeIfAbsent(id, k -> new TreeSet<>()).add(s.position());
+                    if (id != null) {
+                        (s.attackerWins() ? beaten : repelled).computeIfAbsent(id, k -> new TreeSet<>()).add(s.position());
                     }
                 }
                 case UNDEFENDED -> {
@@ -156,7 +158,11 @@ public final class BattleReplay {
             List<Integer> candidates = unfought.get(f.id());
             int count = Math.min(freeCount.getOrDefault(f.id(), 0), Math.min(f.capacity(), candidates.size()));
             Set<Integer> free = new TreeSet<>(candidates.subList(0, count));
-            states.put(f.id(), new FortState(f, Collections.unmodifiableSet(beaten.getOrDefault(f.id(), new TreeSet<>())),
+            Set<Integer> fortBeaten = beaten.getOrDefault(f.id(), new TreeSet<>());
+            Set<Integer> fortRepelled = new TreeSet<>(repelled.getOrDefault(f.id(), Set.of()));
+            fortRepelled.removeAll(fortBeaten);
+            states.put(f.id(), new FortState(f, Collections.unmodifiableSet(fortBeaten),
+                    Collections.unmodifiableSet(fortRepelled),
                     Collections.unmodifiableSet(free), isCaptured, locked,
                     current != null && f.id().equals(current.fortificationId())));
         }
