@@ -30,13 +30,13 @@ import java.util.function.Predicate;
 
 /**
  * The "Weltenschlacht Journal" actions and their windows - kept out of
- * {@code Cow2Frame} and {@code MainMenuBar}: choose battle logs and run the
- * import assistant, the (single) battle list, battle details (several), "build
- * teams from logs", "update teams (sync)", and the
- * maintenance windows for players and name mappings. After every change
- * of the journal all open journal windows reload. All entries are disabled - and the
- * open journal windows closed - unless a guild master's guild is open (only a guild
- * master can export battle logs).
+ * {@code Cow2Frame} and {@code MainMenuBar}: the (single) battle list - where
+ * battle logs are chosen and the import assistant runs -, battle details
+ * (several), "build teams from logs", "update teams (sync)", and the maintenance
+ * windows for players and name mappings (the latter opened from the players
+ * window). After every change of the journal all open journal windows reload.
+ * All entries are disabled - and the open journal windows closed - unless a
+ * guild master's guild is open (only a guild master can export battle logs).
  */
 public final class JournalActions {
 
@@ -65,19 +65,17 @@ public final class JournalActions {
     }
 
     /**
-     * Registers the journal actions ("Import …", "Battle list …", the maintenance windows, ...)
+     * Registers the journal menu actions ("Battle list …", sync, build teams, "Players …")
      * in {@code actions} - the menu itself is built by {@code MainMenuBar}. They are only
      * enabled while a guild master's guild is open ({@link AppContext#isJournalAvailable()});
      * switching to another guild closes the open journal windows.
      */
     public void registerActions(MainActions actions) {
         List<AppAction> journalActions = List.of(
-                actions.register(new AppAction(ActionId.JOURNAL_IMPORT, this::importWithChooser)),
                 actions.register(new AppAction(ActionId.JOURNAL_BATTLES, this::openBattleList)),
                 actions.register(new AppAction(ActionId.JOURNAL_BUILD_TEAMS, this::openTeamBuilder)),
                 actions.register(new AppAction(ActionId.JOURNAL_SYNC, this::openSync)),
-                actions.register(new AppAction(ActionId.JOURNAL_PLAYERS, this::openPlayers)),
-                actions.register(new AppAction(ActionId.JOURNAL_NAME_MAPPINGS, this::openNameMappings)));
+                actions.register(new AppAction(ActionId.JOURNAL_PLAYERS, this::openPlayers)));
         Runnable update = () -> {
             boolean available = context.isJournalAvailable();
             journalActions.forEach(action -> action.setEnabled(available));
@@ -255,14 +253,15 @@ public final class JournalActions {
     /** Shows the player assignments (one window). */
     public void openPlayers() {
         if (players == null || !players.isDisplayable()) {
-            players = new JournalPlayersDialog(frame, context, operations.service(), this::journalChanged);
+            players = new JournalPlayersDialog(frame, context, operations.service(), this::journalChanged,
+                    this::openNameMappings);
         } else {
             players.reload();
         }
         bringToFront(players);
     }
 
-    /** Shows the name mappings (one window). */
+    /** Shows the name mappings (one window) - opened from the players window. */
     public void openNameMappings() {
         if (nameMappings == null || !nameMappings.isDisplayable()) {
             nameMappings = new JournalNameMappingsDialog(frame, context, operations);

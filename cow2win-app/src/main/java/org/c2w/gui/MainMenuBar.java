@@ -53,10 +53,12 @@ public final class MainMenuBar extends JMenuBar {
 
     /**
      * The menus in display order: "File", "Guild", one menu per process stage and last the
-     * "Weltenschlacht Journal" ({@link Stage#JOURNAL}, shown for a guild master only). Every action
-     * in a menu titled with a {@link Stage#menuTextKey()}, submenus included, is of that stage.
-     * "File" also holds the master data entries for now (no menu of their own yet). Every
-     * action appears in exactly one menu, except the {@link #TOOLBAR_ONLY} ones.
+     * "Weltenschlacht Journal" ({@link Stage#JOURNAL}, shown for a guild master only) - its first
+     * entry is the battle list, where battle logs are also imported; the name mappings are opened
+     * from the players window. Every action in a menu titled with a {@link Stage#menuTextKey()},
+     * submenus included, is of that stage. "File" also holds the master data entries for now (no
+     * menu of their own yet). Every action appears in exactly one menu, except the
+     * {@link #TOOLBAR_ONLY} ones.
      */
     static final List<MenuSpec> MENUS = List.of(
             menu("menu.file", SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS),
@@ -70,9 +72,9 @@ public final class MainMenuBar extends JMenuBar {
                     SEPARATOR, SHOW_TEAMS),
             menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE),
             menu(Stage.JOURNAL.menuTextKey(),
-                    JOURNAL_IMPORT, JOURNAL_SYNC,
-                    SEPARATOR, JOURNAL_BATTLES, JOURNAL_BUILD_TEAMS,
-                    SEPARATOR, JOURNAL_PLAYERS, JOURNAL_NAME_MAPPINGS));
+                    JOURNAL_BATTLES,
+                    SEPARATOR, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS,
+                    SEPARATOR, JOURNAL_PLAYERS));
 
     /** The actions deliberately offered in the toolbar only, not in any menu. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);

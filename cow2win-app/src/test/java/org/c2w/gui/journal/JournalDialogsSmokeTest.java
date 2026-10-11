@@ -111,7 +111,16 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             paint(detail);
         }
 
-        JournalPlayersDialog players = onEdt(() -> new JournalPlayersDialog(null, context, operations.service(), () -> { }));
+        java.util.concurrent.atomic.AtomicInteger mappingsOpened = new java.util.concurrent.atomic.AtomicInteger();
+        JournalPlayersDialog players = onEdt(() -> new JournalPlayersDialog(null, context, operations.service(), () -> { },
+                mappingsOpened::incrementAndGet));
+        AbstractButton openMappings = buttonWithTooltip(players, JournalTexts.text("journal.action.nameMappings"));
+        assertNotNull(openMappings);
+        onEdt(() -> {
+            openMappings.doClick();
+            return null;
+        });
+        assertEquals(1, mappingsOpened.get(), "the button opens the name mappings via the journal menu");
         waitFor(() -> find(players, JTable.class).getRowCount() > 0);
         onEdt(() -> {
             find(players, JTable.class).setRowSelectionInterval(0, 0);

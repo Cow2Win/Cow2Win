@@ -49,13 +49,14 @@ public enum ActionId {
     /** Takes the checked entries of the change plan into the live lineup - see {@code ChangePlanPanel#applyToLive}. */
     APPLY_TO_LIVE("action.applyToLive", Stage.OUTPUT),
 
-    /** The Weltenschlacht journal - for a guild master only, see {@link Stage#JOURNAL}. */
-    JOURNAL_IMPORT("menu.journal.import", Stage.JOURNAL, Opens.WINDOW),
-    JOURNAL_SYNC("menu.journal.sync", Stage.JOURNAL, Opens.WINDOW),
+    /**
+     * The Weltenschlacht journal - for a guild master only, see {@link Stage#JOURNAL}. Importing
+     * happens in the battle list, the name mappings open from the players window.
+     */
     JOURNAL_BATTLES("menu.journal.battles", Stage.JOURNAL, Opens.WINDOW),
+    JOURNAL_SYNC("menu.journal.sync", Stage.JOURNAL, Opens.WINDOW),
     JOURNAL_BUILD_TEAMS("menu.journal.buildTeams", Stage.JOURNAL, Opens.WINDOW),
-    JOURNAL_PLAYERS("journal.action.players", Stage.JOURNAL, Opens.WINDOW),
-    JOURNAL_NAME_MAPPINGS("journal.action.nameMappings", Stage.JOURNAL, Opens.WINDOW);
+    JOURNAL_PLAYERS("journal.action.players", Stage.JOURNAL, Opens.WINDOW);
 
     /**
      * Readability marker for the constructor: {@code Opens.WINDOW} = the action opens a window

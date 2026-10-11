@@ -2,6 +2,8 @@ package org.c2w.gui.journal;
 
 import org.c2w.data.journal.db.AssignmentStatus;
 import org.c2w.data.model.GuildMember;
+import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.IconLoader;
 import org.c2w.service.AppContext;
 import org.c2w.service.JournalMaintenanceService;
 
@@ -19,9 +21,14 @@ import java.util.stream.Collectors;
  * and last team power(s); filters "only open" / "only problems"; changing the
  * status or the assigned member. Below, hints about members of the open guild
  * without a journal player or missing from the latest defense logs. The guild
- * itself is never changed here - no renaming, no new members.
+ * itself is never changed here - no renaming, no new members. The icon button
+ * at the top left opens the name mappings (a window of its own, managed by the
+ * journal menu).
  */
 public final class JournalPlayersDialog extends JDialog {
+
+    private static final String ICON_NAME_MAPPINGS = "/images/app/mappings.png";
+    private static final int TOOLBAR_ICON_SIZE = 20;
 
     private final AppContext context;
     private final JournalMaintenanceService service;
@@ -43,7 +50,12 @@ public final class JournalPlayersDialog extends JDialog {
         }
     };
 
-    public JournalPlayersDialog(Window owner, AppContext context, JournalMaintenanceService service, Runnable onChanged) {
+    /**
+     * @param onChanged        runs after an assignment was changed
+     * @param openNameMappings opens (or brings to front) the name mappings window
+     */
+    public JournalPlayersDialog(Window owner, AppContext context, JournalMaintenanceService service, Runnable onChanged,
+                                Runnable openNameMappings) {
         super(owner, ModalityType.MODELESS);
         this.context = context;
         this.service = service;
@@ -61,7 +73,13 @@ public final class JournalPlayersDialog extends JDialog {
             }
         });
 
+        FlatButton nameMappings = new FlatButton(
+                IconLoader.iconFor(ICON_NAME_MAPPINGS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        nameMappings.setToolTipText(JournalTexts.text("journal.action.nameMappings"));
+        nameMappings.addActionListener(e -> openNameMappings.run());
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        top.add(nameMappings);
+        top.add(Box.createHorizontalStrut(16));
         top.add(onlyOpen);
         top.add(onlyProblems);
         top.add(message);
