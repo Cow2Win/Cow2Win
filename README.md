@@ -184,6 +184,12 @@ fixes it.
 - **First start** (`org.c2w.service.WorkspaceBootstrap`) - creates a "Demo" guild pre-filled from
   `data/guild.json`/`data/default.lineup` (read from the packaged
   `resources/` folder, or from `cow2win-app/src/main/resources` in the IDE).
+  The demo guild is a real guild with anonymized names (members, guilds; its own
+  game guild id is 1), with the guild master flag and a pre-imported
+  Weltenschlacht Journal: one sample battle, whose attack and defense log
+  (`data/demo-journal/*.csv`) are imported on the first start with the logic of
+  the import dialog (`JournalImportService`), so the journal database always has
+  the schema of the running version. A failed import is only logged.
 
 ## Weltenschlacht Journal (user guide)
 

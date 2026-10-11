@@ -1,6 +1,7 @@
 package org.c2w.service;
 
 import org.c2w.data.model.Guild;
+import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.GuildRepository;
@@ -12,16 +13,25 @@ import org.c2w.infra.JsonSupport;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.infra.WorkspaceMaintenance;
+import org.c2w.service.journal.ImportAnswers;
+import org.c2w.service.journal.ImportPlan;
+import org.c2w.service.journal.ImportResult;
+import org.c2w.service.journal.PlayerAnswer;
+import org.c2w.service.journal.PlayerQuestion;
+import org.c2w.service.journal.UnknownNameQuestion;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Everything that has to happen before the first window opens: the first-run
@@ -38,6 +48,8 @@ public final class WorkspaceBootstrap {
     // See JsonSupport#resolveDataFile for how these resolve in the IDE vs. the packaged app.
     private static final Path DEMO_GUILD_PATH = JsonSupport.resolveDataFile("data", "guild.json");
     private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
+    /** Battle logs imported into the demo guild's journal on the first start. */
+    private static final Path DEMO_JOURNAL_DIR = JsonSupport.resolveDataFile("data", "demo-journal");
 
     /** Date and time of a restored backup in the notice after the start. */
     private static final DateTimeFormatter BACKUP_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -147,15 +159,16 @@ public final class WorkspaceBootstrap {
         boolean guildLoaded = loadGuildContext(context);
         loadLineupContext(context);
 
-        if (firstStart) {
-            loadDemo(context);
-        }
+        boolean demoGuildLoaded = firstStart && loadDemo(context);
         if (guildLoaded) {
             Path guildDir = context.guildFilePath().getParent();
             if (firstStart) {
                 GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME, 0);
             }
             GuildLog.event(guildDir, "guildLog.guildOpened");
+        }
+        if (demoGuildLoaded) {
+            importDemoJournal(context);
         }
         return context;
     }
@@ -188,12 +201,20 @@ public final class WorkspaceBootstrap {
      * from starting up (same pattern as {@link #loadGuildContext} /
      * {@link #loadLineupContext}); the just-created empty guild/lineup
      * remain in place as a safe fallback for whichever half failed.
+     *
+     * <p>If the demo guild was loaded, {@link #start} then imports the battle logs in
+     * {@code data/demo-journal} into its Weltenschlacht journal (after the guild log's
+     * "created"/"opened" entries) - see {@link #importDemoJournal}.
+     *
+     * @return true if the demo guild was loaded
      */
-    private static void loadDemo(AppContext context) {
+    private static boolean loadDemo(AppContext context) {
+        boolean guildLoaded = false;
         try {
             Guild demoGuild = GuildRepository.load(DEMO_GUILD_PATH, context.catalog());
             GuildRepository.save(demoGuild, context.guildFilePath());
             context.setGuild(demoGuild);
+            guildLoaded = true;
         } catch (IOException e) {
             Logger.logException("Could not load demo guild from " + DEMO_GUILD_PATH, e);
         }
@@ -204,6 +225,73 @@ public final class WorkspaceBootstrap {
             context.set(demoLineup, context.lineupFilePath());
         } catch (IOException e) {
             Logger.logException("Could not load demo lineup from " + DEMO_GUILD_LINEUP, e);
+        }
+
+        return guildLoaded;
+    }
+
+    /**
+     * Imports the bundled battle logs ({@code *.csv} in {@code data/demo-journal}) into the
+     * journal of the open (demo) guild - without a dialog, but with the same logic as the
+     * import dialog ({@link JournalImportService#prepare}/{@link JournalImportService#execute}),
+     * so the journal database always has the schema of this app version. The questions get
+     * the answers a user would give: link the guild, assign a defender to the member of the
+     * same name (never create members), leave unknown names unknown. If the import changed
+     * the guild, it is saved, so the demo guild has no unsaved changes after the first start.
+     *
+     * <p>Failures are only logged - the start goes on, guild and lineup stay as they are. The
+     * journal database is closed afterwards, so nothing keeps it locked.
+     */
+    private static void importDemoJournal(AppContext context) {
+        if (!Files.isDirectory(DEMO_JOURNAL_DIR)) {
+            Logger.log("No demo journal at " + DEMO_JOURNAL_DIR);
+            return;
+        }
+        try {
+            List<Path> files;
+            try (Stream<Path> listing = Files.list(DEMO_JOURNAL_DIR)) {
+                files = listing.filter(p -> p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".csv"))
+                        .sorted().toList();
+            }
+            if (files.isEmpty()) {
+                return;
+            }
+            GuildService guildService = new GuildService(context);
+            JournalImportService importer = new JournalImportService(context, guildService);
+            ImportPlan plan = importer.prepare(files);
+            if (!plan.isImportable()) {
+                Logger.log("Demo journal not imported: " + plan.errors());
+                return;
+            }
+            ImportAnswers answers = ImportAnswers.defaults();
+            if (plan.guildLink() != null) {
+                answers = answers.withGuildLink(true);
+            }
+            for (PlayerQuestion question : plan.playerQuestions()) {
+                String name = question.rawName().strip();
+                Optional<GuildMember> member = context.guild().members().stream()
+                        .filter(m -> m.name().strip().equals(name) || m.id().strip().equals(name)).findFirst();
+                if (member.isPresent()) {
+                    answers = answers.withPlayer(question.id(), PlayerAnswer.assign(member.get().id()));
+                } else {
+                    Logger.log("Demo journal: player \"" + question.rawName() + "\" left open");
+                }
+            }
+            for (UnknownNameQuestion unknown : plan.unknownNames()) {
+                Logger.log("Demo journal: unknown " + unknown.kind() + " name \"" + unknown.rawName() + "\" skipped");
+            }
+            ImportResult result = importer.execute(plan, answers);
+            if (!result.isSuccess()) {
+                Logger.log("Demo journal not imported: " + result.errors());
+                return;
+            }
+            if (context.isGuildDirty()) {
+                guildService.saveGuild(GuildService.SaveOrigin.JOURNAL_IMPORT);
+            }
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not import the demo journal from " + DEMO_JOURNAL_DIR, e);
+        } finally {
+            context.journal().closeCurrent();
         }
     }
     /**

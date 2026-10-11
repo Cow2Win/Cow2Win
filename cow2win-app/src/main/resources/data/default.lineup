@@ -1,593 +1,278 @@
 {
   "guildId": "demo",
   "guildName": "Demo",
-  "algorithmName": "Best possible lineup",
-  "createdAt": "2026-09-09T20:19:06.251151200",
+  "algorithmName": "Heroes: CowScore maximizer; Titans: Best possible lineup",
+  "createdAt": "2026-10-11T21:03:35.722468300",
   "entries": [
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Ketilar",
+      "teamMemberId": "Team 22092302",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 1110030,
-      "buffFitScore": 0,
-      "weightedScore": 1110030
+      "teamIndex": 0
     },
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Team 123",
+      "teamMemberId": "Furiosa",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 1096841,
-      "buffFitScore": 0,
-      "weightedScore": 1096841
+      "teamIndex": 1
     },
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Team Adam",
+      "teamMemberId": "Mathilda",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 1082693,
-      "buffFitScore": 0,
-      "weightedScore": 1082693
+      "teamIndex": 1
     },
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Team 234",
+      "teamMemberId": "Marty McFly",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 1065612,
-      "buffFitScore": 0,
-      "weightedScore": 1065612
+      "teamIndex": 0
     },
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Ketilar",
+      "teamMemberId": "Furiosa",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 1055376,
-      "buffFitScore": 0,
-      "weightedScore": 1055376
+      "teamIndex": 2
     },
     {
       "fortificationId": "heros-bridge",
-      "teamMemberId": "Team 123",
+      "teamMemberId": "Sarah Connor",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 1042352,
-      "buffFitScore": 0,
-      "weightedScore": 1042352
+      "teamIndex": 1
     },
     {
       "fortificationId": "barracks",
-      "teamMemberId": "x_x",
+      "teamMemberId": "Ellen Ripley",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 122062,
-      "buffFitScore": 0,
-      "weightedScore": 122062
+      "teamIndex": 0
     },
     {
       "fortificationId": "lighthouse",
-      "teamMemberId": "BIG DADDY",
+      "teamMemberId": "Team 17041985",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 185811,
-      "buffFitScore": 0,
-      "weightedScore": 185811
+      "teamIndex": 0
     },
     {
       "fortificationId": "mage-academy",
-      "teamMemberId": "Charlie",
+      "teamMemberId": "Jack Sparrow",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 246765,
-      "buffFitScore": 0,
-      "weightedScore": 246765
-    },
-    {
-      "fortificationId": "bastion",
-      "teamMemberId": "Team 2203",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 576753,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 0
     },
     {
       "fortificationId": "engineerium",
-      "teamMemberId": "Iroha",
+      "teamMemberId": "Sarah Connor",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 420967,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 0
     },
     {
       "fortificationId": "foundry",
-      "teamMemberId": "Iroha",
+      "teamMemberId": "Indiana Jones",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 435876,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "HERO",
+      "teamIndex": 1
     },
     {
       "fortificationId": "shooting-range",
-      "teamMemberId": "x_x",
+      "teamMemberId": "Furiosa",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 258710,
-      "buffFitScore": 2,
-      "weightedScore": 2
+      "teamIndex": 0
     },
     {
       "fortificationId": "alchemy-tower",
-      "teamMemberId": "Team Adam",
+      "teamMemberId": "John Wick",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 901028,
-      "buffFitScore": 4,
-      "weightedScore": 4
-    },
-    {
-      "fortificationId": "citadel",
-      "teamMemberId": "BIG DADDY",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 293959,
-      "buffFitScore": 0,
-      "weightedScore": 293959
+      "teamIndex": 0
     },
     {
       "fortificationId": "city-hall",
-      "teamMemberId": "Team 123",
+      "teamMemberId": "Maverick",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 997639,
-      "buffFitScore": 5,
-      "weightedScore": 5
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Ethan Hunt",
+      "teamType": "HERO",
+      "teamIndex": 0
     },
     {
       "fortificationId": "barracks",
-      "teamMemberId": "x_x",
+      "teamMemberId": "Neo",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 334497,
-      "buffFitScore": 0,
-      "weightedScore": 334497
+      "teamIndex": 0
     },
     {
       "fortificationId": "lighthouse",
-      "teamMemberId": "HW Team 3",
+      "teamMemberId": "Forrest",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 399969,
-      "buffFitScore": 0,
-      "weightedScore": 399969
+      "teamIndex": 0
     },
     {
       "fortificationId": "mage-academy",
-      "teamMemberId": "Charlie",
+      "teamMemberId": "Trinity",
       "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 421057,
-      "buffFitScore": 0,
-      "weightedScore": 421057
-    },
-    {
-      "fortificationId": "bastion",
-      "teamMemberId": "HW Team 3",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 697720,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 0
     },
     {
       "fortificationId": "engineerium",
-      "teamMemberId": "Team 2203",
+      "teamMemberId": "Rocky",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 530807,
-      "buffFitScore": 1,
-      "weightedScore": 1
+      "teamIndex": 0
     },
     {
       "fortificationId": "foundry",
-      "teamMemberId": "Team 2203",
+      "teamMemberId": "Mathilda",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 453775,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "shooting-range",
-      "teamMemberId": "Team 234",
-      "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 865766,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "alchemy-tower",
-      "teamMemberId": "Team 234",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 830889,
-      "buffFitScore": 3,
-      "weightedScore": 3
-    },
-    {
-      "fortificationId": "citadel",
-      "teamMemberId": "Iroha",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 582692,
-      "buffFitScore": 0,
-      "weightedScore": 582692
-    },
-    {
-      "fortificationId": "city-hall",
-      "teamMemberId": "Cow lover",
-      "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 916171,
-      "buffFitScore": 4,
-      "weightedScore": 4
-    },
-    {
-      "fortificationId": "barracks",
-      "teamMemberId": "HW Team 3",
-      "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 642558,
-      "buffFitScore": 0,
-      "weightedScore": 642558
-    },
-    {
-      "fortificationId": "lighthouse",
-      "teamMemberId": "Team Adam",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 707782,
-      "buffFitScore": 0,
-      "weightedScore": 707782
-    },
-    {
-      "fortificationId": "mage-academy",
-      "teamMemberId": "BIG DADDY",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 739254,
-      "buffFitScore": 0,
-      "weightedScore": 739254
+      "teamIndex": 0
     },
     {
       "fortificationId": "bastion",
-      "teamMemberId": "GM",
+      "teamMemberId": "Neo",
       "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 885893,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "engineerium",
-      "teamMemberId": "Cow lover",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 796453,
-      "buffFitScore": 1,
-      "weightedScore": 1
-    },
-    {
-      "fortificationId": "foundry",
-      "teamMemberId": "John",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 896006,
-      "buffFitScore": 2,
-      "weightedScore": 2
+      "teamIndex": 1
     },
     {
       "fortificationId": "shooting-range",
-      "teamMemberId": "Ketilar",
+      "teamMemberId": "Mathilda",
       "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 873341,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "alchemy-tower",
-      "teamMemberId": "John",
-      "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 923944,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "citadel",
-      "teamMemberId": "Charlie",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 827665,
-      "buffFitScore": 0,
-      "weightedScore": 827665
-    },
-    {
-      "fortificationId": "city-hall",
-      "teamMemberId": "John",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 941898,
-      "buffFitScore": 4,
-      "weightedScore": 4
-    },
-    {
-      "fortificationId": "lighthouse",
-      "teamMemberId": "GM",
-      "teamType": "HERO",
-      "teamIndex": 2,
-      "totalPower": 1023087,
-      "buffFitScore": 0,
-      "weightedScore": 1023087
-    },
-    {
-      "fortificationId": "bastion",
-      "teamMemberId": "Cow lover",
-      "teamType": "HERO",
-      "teamIndex": 1,
-      "totalPower": 1035659,
-      "buffFitScore": 1,
-      "weightedScore": 1
-    },
-    {
-      "fortificationId": "engineerium",
-      "teamMemberId": "GM",
-      "teamType": "HERO",
-      "teamIndex": 0,
-      "totalPower": 1036563,
-      "buffFitScore": 1,
-      "weightedScore": 1
+      "teamIndex": 2
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "Cow lover",
+      "teamMemberId": "Ellen Ripley",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 1075091,
-      "buffFitScore": 0,
-      "weightedScore": 1075091
+      "teamIndex": 0
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "GM",
+      "teamMemberId": "John Wick",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 995321,
-      "buffFitScore": 0,
-      "weightedScore": 995321
+      "teamIndex": 0
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "John",
+      "teamMemberId": "Indiana Jones",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 969349,
-      "buffFitScore": 0,
-      "weightedScore": 969349
+      "teamIndex": 0
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "Team 123",
+      "teamMemberId": "Ellen Ripley",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 923350,
-      "buffFitScore": 0,
-      "weightedScore": 923350
+      "teamIndex": 1
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "Team 234",
+      "teamMemberId": "Furiosa",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 895919,
-      "buffFitScore": 0,
-      "weightedScore": 895919
+      "teamIndex": 0
     },
     {
       "fortificationId": "bridge",
-      "teamMemberId": "Ketilar",
+      "teamMemberId": "Marty McFly",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 825370,
-      "buffFitScore": 0,
-      "weightedScore": 825370
+      "teamIndex": 0
     },
     {
       "fortificationId": "bastion-of-fire",
-      "teamMemberId": "Iroha",
+      "teamMemberId": "John Wick",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 378978,
-      "buffFitScore": 4,
-      "weightedScore": 4
+      "teamIndex": 1
     },
     {
       "fortificationId": "bastion-of-ice",
-      "teamMemberId": "Charlie",
+      "teamMemberId": "Team 17041985",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 725902,
-      "buffFitScore": 4,
-      "weightedScore": 4
+      "teamIndex": 0
     },
     {
       "fortificationId": "gates-of-nature",
-      "teamMemberId": "Cow lover",
+      "teamMemberId": "Hannah",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 520489,
-      "buffFitScore": 4,
-      "weightedScore": 4
+      "teamIndex": 0
     },
     {
       "fortificationId": "moon-temple",
-      "teamMemberId": "Team 234",
+      "teamMemberId": "Jonas",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 535847,
-      "buffFitScore": 2,
-      "weightedScore": 2
+      "teamIndex": 0
     },
     {
       "fortificationId": "sun-temple",
-      "teamMemberId": "BIG DADDY",
+      "teamMemberId": "Team 22092302",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 167922,
-      "buffFitScore": 3,
-      "weightedScore": 3
-    },
-    {
-      "fortificationId": "altar-of-life",
-      "teamMemberId": "x_x",
-      "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 103309,
-      "buffFitScore": 0,
-      "weightedScore": 103309
-    },
-    {
-      "fortificationId": "ether-prism",
-      "teamMemberId": "x_x",
-      "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 229287,
-      "buffFitScore": 0,
-      "weightedScore": 229287
+      "teamIndex": 0
     },
     {
       "fortificationId": "spring-of-elements",
-      "teamMemberId": "Charlie",
+      "teamMemberId": "Felix",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 270246,
-      "buffFitScore": 0,
-      "weightedScore": 270246
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Mathilda",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Team 03112011",
+      "teamType": "TITAN",
+      "teamIndex": 0
     },
     {
       "fortificationId": "bastion-of-fire",
-      "teamMemberId": "HW Team 3",
+      "teamMemberId": "Sarah Connor",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 323803,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 1
     },
     {
       "fortificationId": "bastion-of-ice",
-      "teamMemberId": "Team 2203",
+      "teamMemberId": "Neo",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 291018,
-      "buffFitScore": 3,
-      "weightedScore": 3
+      "teamIndex": 0
     },
     {
       "fortificationId": "gates-of-nature",
-      "teamMemberId": "Team 123",
+      "teamMemberId": "Team 28021990",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 735323,
-      "buffFitScore": 4,
-      "weightedScore": 4
+      "teamIndex": 0
     },
     {
       "fortificationId": "moon-temple",
-      "teamMemberId": "BIG DADDY",
+      "teamMemberId": "Lena",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 536820,
-      "buffFitScore": 2,
-      "weightedScore": 2
+      "teamIndex": 0
     },
     {
       "fortificationId": "sun-temple",
-      "teamMemberId": "Ketilar",
+      "teamMemberId": "Mia",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 551524,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "altar-of-life",
-      "teamMemberId": "HW Team 3",
-      "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 273188,
-      "buffFitScore": 0,
-      "weightedScore": 273188
-    },
-    {
-      "fortificationId": "ether-prism",
-      "teamMemberId": "Iroha",
-      "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 343099,
-      "buffFitScore": 0,
-      "weightedScore": 343099
+      "teamIndex": 0
     },
     {
       "fortificationId": "spring-of-elements",
-      "teamMemberId": "Team 2203",
+      "teamMemberId": "Maverick",
       "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 525120,
-      "buffFitScore": 0,
-      "weightedScore": 525120
+      "teamIndex": 1
     },
     {
-      "fortificationId": "bastion-of-fire",
-      "teamMemberId": "Team Adam",
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Sarah Connor",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 682749,
-      "buffFitScore": 1,
-      "weightedScore": 1
+      "teamIndex": 0
     },
     {
-      "fortificationId": "bastion-of-ice",
-      "teamMemberId": "John",
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Maverick",
       "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 647110,
-      "buffFitScore": 2,
-      "weightedScore": 2
-    },
-    {
-      "fortificationId": "gates-of-nature",
-      "teamMemberId": "Team Adam",
-      "teamType": "TITAN",
-      "teamIndex": 0,
-      "totalPower": 666389,
-      "buffFitScore": 3,
-      "weightedScore": 3
-    },
-    {
-      "fortificationId": "moon-temple",
-      "teamMemberId": "GM",
-      "teamType": "TITAN",
-      "teamIndex": 1,
-      "totalPower": 626197,
-      "buffFitScore": 0,
-      "weightedScore": 0
+      "teamIndex": 0
     }
   ]
 }
