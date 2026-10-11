@@ -15,7 +15,9 @@ import java.util.*;
  * fight is "held" or "fallen", in the attack log our player is the attacker and a
  * fight is "won" or "lost" ({@link Fight#attackerWins()} is always the attacker's
  * view, so it is flipped for the defense log) - an overview per fortification and
- * direction, and the parse problems.
+ * direction, the parse problems, and per log the rows as {@link ReplayStep}s in
+ * file order for the visual replay ({@link #replay(LogDirection)}, see
+ * {@link BattleReplay}).
  *
  * <p>Own players are shown with their log name; the assignment is added only
  * where it says more: "log name → member" if the member is named differently,
@@ -190,9 +192,64 @@ public final class BattleDetailModel {
     public record ProblemRow(LogDirection direction, int lineNumber, String line, String reason) {
     }
 
+    /**
+     * One row of a log as a step of the visual replay, in file order (the
+     * chronological order - the log has no time of day).
+     *
+     * @param kind              single fight, undefended positions or captured fortification
+     * @param fortificationId   catalog id, {@code null} if the name is unknown
+     * @param fortificationName raw name from the log
+     * @param position          fight only: the position fought at, else 0
+     * @param attackerWins      fight only: the result column (attacker's view); true for the other kinds
+     * @param attackerName      fight only: attacking player (raw name), else {@code ""}
+     * @param attackerPower     fight only: attacker's team power, else 0
+     * @param defenderName      fight only: defending player (raw name), else {@code ""}
+     * @param defenderPower     fight only: defender's team power, else 0
+     * @param freePositions     undefended only: positions captured without a fight, else 0
+     * @param points            points of the row (always the attacker's)
+     * @param lineNumber        line in the file
+     */
+    public record ReplayStep(Kind kind, String fortificationId, String fortificationName, int position,
+                             boolean attackerWins, String attackerName, int attackerPower, String defenderName,
+                             int defenderPower, int freePositions, int points, int lineNumber) {
+
+        /** What happened in a step. */
+        public enum Kind {
+            FIGHT, UNDEFENDED, CAPTURED
+        }
+
+        /** True for a single fight that went well for us (attack: won, defense: held). */
+        public boolean good(LogDirection direction) {
+            return kind == Kind.FIGHT && (direction == LogDirection.ATTACK) == attackerWins;
+        }
+
+        /** True for a single fight that went badly for us. */
+        public boolean bad(LogDirection direction) {
+            return kind == Kind.FIGHT && !good(direction);
+        }
+
+        /** Display name: catalog name in the display language, else the raw name. */
+        public String displayName() {
+            return JournalTexts.fortification(fortificationId, fortificationName);
+        }
+
+        static ReplayStep of(BattleLogEntry entry) {
+            return switch (entry) {
+                case Fight f -> new ReplayStep(Kind.FIGHT, f.fortificationId(), f.fortificationName(), f.position(),
+                        f.attackerWins(), f.attacker().playerName(), f.attacker().teamPower(),
+                        f.defender().playerName(), f.defender().teamPower(), 0, f.points(), f.lineNumber());
+                case FortEvent e -> new ReplayStep(e.kind() == FortEventKind.UNDEFENDED ? Kind.UNDEFENDED : Kind.CAPTURED,
+                        e.fortificationId(), e.fortificationName(), 0, true, "", 0, "", 0,
+                        e.kind() == FortEventKind.UNDEFENDED && e.freePositions() != null ? e.freePositions() : 0,
+                        e.points(), e.lineNumber());
+            };
+        }
+    }
+
     private final BattleSummary battle;
     private final List<LogInfo> logs;
     private final Map<LogDirection, DirectionView> views = new EnumMap<>(LogDirection.class);
+    private final Map<LogDirection, List<ReplayStep>> replays = new EnumMap<>(LogDirection.class);
     private final List<ProblemRow> problems = new ArrayList<>();
     private final BattleLogCheck.Result check;
     private final GuildRef ownGuild;
@@ -224,6 +281,7 @@ public final class BattleDetailModel {
             LogInfo info = logs.stream().filter(l -> l.direction() == direction).findFirst().orElse(null);
             views.put(direction, new DirectionView(direction, info,
                     group(direction, result.log(), assignments, memberNames)));
+            replays.put(direction, result.log().entries().stream().map(ReplayStep::of).toList());
             for (ParseProblem p : result.problems()) {
                 problems.add(new ProblemRow(direction, p.lineNumber(), p.line(), p.reason()));
             }
@@ -357,6 +415,11 @@ public final class BattleDetailModel {
 
     public Optional<DirectionView> view(LogDirection direction) {
         return Optional.ofNullable(views.get(direction));
+    }
+
+    /** The rows of one log as replay steps in file order - empty if the battle has no such log. */
+    public List<ReplayStep> replay(LogDirection direction) {
+        return replays.getOrDefault(direction, List.of());
     }
 
     /** Ranking point check of both logs. */

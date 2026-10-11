@@ -135,6 +135,115 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
     }
 
     @Test
+    @DisplayName("Battle detail: tab order, visual tabs step with Next / Back, a missing log offers the import")
+    void replayTabs() throws Exception {
+        int battleId = context.journal().repository(false).orElseThrow().listBattles().stream()
+                .filter(b -> b.date().equals(java.time.LocalDate.of(2026, 10, 1))).findFirst().orElseThrow().battleId();
+        JournalBattleDetailDialog detail = openDetail(battleId);
+        JTabbedPane tabs = find(detail, JTabbedPane.class);
+        List<String> titles = onEdt(() -> {
+            List<String> t = new ArrayList<>();
+            for (int i = 0; i < tabs.getTabCount(); i++) {
+                t.add(tabs.getTitleAt(i));
+            }
+            return t;
+        });
+        assertEquals(List.of(JournalTexts.text("journal.detail.tab.general"),
+                JournalTexts.of("direction", org.c2w.data.journal.LogDirection.DEFENSE),
+                JournalTexts.of("direction", org.c2w.data.journal.LogDirection.ATTACK),
+                JournalTexts.text("journal.detail.tab.attackVisual"),
+                JournalTexts.text("journal.detail.tab.defenseVisual"),
+                JournalTexts.text("journal.detail.tab.forts")), titles.subList(0, 6));
+        assertEquals(1, onEdt(tabs::getSelectedIndex), "opens on the defense");
+
+        for (int tab : new int[]{3, 4}) {
+            BattleReplayPanel replay = onEdt(() -> {
+                tabs.setSelectedIndex(tab);
+                return findIn(tabs.getComponentAt(tab), BattleReplayPanel.class);
+            });
+            assertNotNull(replay);
+            assertEquals(0, onEdt(replay::step), "starts at the start");
+            AbstractButton back = buttonWithText(replay, JournalTexts.text("journal.replay.prev"));
+            AbstractButton next = buttonWithText(replay, JournalTexts.text("journal.replay.next"));
+            assertFalse(onEdt(back::isEnabled), "back is off at the start");
+            assertTrue(onEdt(next::isEnabled));
+            paint(detail);
+            onEdt(() -> {
+                next.doClick();
+                next.doClick();
+                next.doClick();
+                return null;
+            });
+            assertEquals(3, onEdt(replay::step));
+            assertTrue(onEdt(back::isEnabled));
+            paint(detail);
+            onEdt(() -> {
+                back.doClick();
+                return null;
+            });
+            assertEquals(2, onEdt(replay::step));
+            onEdt(() -> {
+                replay.goTo(replay.stepCount());
+                return null;
+            });
+            assertFalse(onEdt(next::isEnabled), "next is off at the end");
+            paint(detail);
+        }
+        assertEquals(92, onEdt(() -> findIn(tabs.getComponentAt(3), BattleReplayPanel.class).stepCount()));
+        assertEquals(67, onEdt(() -> findIn(tabs.getComponentAt(4), BattleReplayPanel.class).stepCount()));
+
+        // the step of a visual tab survives a reload
+        onEdt(() -> {
+            findIn(tabs.getComponentAt(3), BattleReplayPanel.class).goTo(11);
+            detail.reload();
+            return null;
+        });
+        waitFor(() -> find(detail, JTabbedPane.class) != tabs);
+        JTabbedPane reloaded = find(detail, JTabbedPane.class);
+        assertEquals(11, onEdt(() -> findIn(reloaded.getComponentAt(3), BattleReplayPanel.class).step()));
+
+        // another guild with only the attack log: "Defense (visual)" shows the hint and the import
+        guildService.createGuild("Beta", false);
+        guildService.switchToGuild("Beta");
+        assertTrue(service().execute(service().prepare(List.of(BattleLogTestFiles.file("de", "01-10-2026",
+                org.c2w.data.journal.LogDirection.ATTACK))), ImportAnswers.defaults()).isSuccess());
+        int onlyAttack = context.journal().repository(false).orElseThrow().listBattles().get(0).battleId();
+        JournalBattleDetailDialog partial = openDetail(onlyAttack);
+        JTabbedPane partialTabs = find(partial, JTabbedPane.class);
+        assertNull(onEdt(() -> findIn(partialTabs.getComponentAt(4), BattleReplayPanel.class)));
+        assertNotNull(buttonWithText((Container) onEdt(() -> partialTabs.getComponentAt(4)),
+                JournalTexts.text("journal.battles.import")));
+        assertNotNull(onEdt(() -> findIn(partialTabs.getComponentAt(3), BattleReplayPanel.class)));
+        paint(partial);
+    }
+
+    private JournalBattleDetailDialog openDetail(int battleId) throws Exception {
+        JournalBattleDetailDialog detail = onEdt(() -> new JournalBattleDetailDialog(null, context,
+                new JournalBattleDetailDialog.Host() {
+                    @Override
+                    public void importWithChooser() {
+                    }
+                }, battleId));
+        waitFor(() -> findOrNull(detail, JTabbedPane.class) != null);
+        return detail;
+    }
+
+    private static AbstractButton buttonWithText(Container root, String text) {
+        for (Component c : root.getComponents()) {
+            if (c instanceof AbstractButton b && text.equals(b.getText())) {
+                return b;
+            }
+            if (c instanceof Container inner) {
+                AbstractButton found = buttonWithText(inner, text);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Test
     @DisplayName("'Build teams from logs' builds and paints, also its members and proposals")
     void teamBuilder() throws Exception {
         JournalTeamBuilderDialog dialog = onEdt(() -> JournalTeamBuilderDialog.create(null, context, guildService));

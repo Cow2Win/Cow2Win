@@ -18,7 +18,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,9 +29,11 @@ import java.util.stream.Collectors;
  * The detail of one battle (not modal, several may be open), in tabs: General
  * (head data and both logs), Defense (our defenders per fortification -
  * held/fallen - with a short evaluation; hint + import if the defense log is
- * missing), Attack (display only), Fortifications (overview per fortification
- * and direction) and Problems (only if there are parse problems). It opens on
- * Defense; a reload keeps the chosen tab. Teams of a fight are shown below the
+ * missing), Attack (display only), Attack (visual) and Defense (visual) - the
+ * battle step by step on a simplified map of the fortifications, see
+ * {@link BattleReplayPanel}; each keeps its step across reloads -, Fortifications
+ * (overview per fortification and direction) and Problems (only if there are
+ * parse problems). It opens on Defense; a reload keeps the chosen tab. Teams of a fight are shown below the
  * fights when the log contains them. Display only - battles are deleted in the
  * battle list; the detail closes when its battle is gone. All content comes
  * from a {@link BattleDetailModel}, read in the background.
@@ -62,6 +66,8 @@ public final class JournalBattleDetailDialog extends JDialog {
     private BattleDetailModel model;
     /** The tab shown, kept across reloads - the detail opens on the defense. */
     private int selectedTab = DEFENSE_TAB;
+    /** The step of each visual tab, kept across reloads. */
+    private final Map<LogDirection, Integer> replaySteps = new EnumMap<>(LogDirection.class);
 
     public JournalBattleDetailDialog(Window owner, AppContext context, Host host, int battleId) {
         super(owner, ModalityType.MODELESS);
@@ -128,6 +134,8 @@ public final class JournalBattleDetailDialog extends JDialog {
         tabs.addTab(JournalTexts.text("journal.detail.tab.general"), generalTab());
         tabs.addTab(JournalTexts.of("direction", LogDirection.DEFENSE), directionTab(LogDirection.DEFENSE));
         tabs.addTab(JournalTexts.of("direction", LogDirection.ATTACK), directionTab(LogDirection.ATTACK));
+        tabs.addTab(JournalTexts.text("journal.detail.tab.attackVisual"), replayTab(LogDirection.ATTACK));
+        tabs.addTab(JournalTexts.text("journal.detail.tab.defenseVisual"), replayTab(LogDirection.DEFENSE));
         tabs.addTab(JournalTexts.text("journal.detail.tab.forts"), fortsTab());
         if (model.hasProblems()) {
             tabs.addTab(JournalTexts.text("journal.detail.tab.problems", String.valueOf(model.problems().size())),
@@ -194,19 +202,7 @@ public final class JournalBattleDetailDialog extends JDialog {
     private JComponent directionTab(LogDirection direction) {
         Optional<BattleDetailModel.DirectionView> found = model.view(direction);
         if (found.isEmpty()) {
-            JPanel panel = new JPanel(new GridBagLayout());
-            JPanel inner = JournalImportDialog.verticalPanel();
-            JLabel label = new JLabel(JournalTexts.text(direction == LogDirection.DEFENSE
-                    ? "journal.detail.noDefense" : "journal.detail.noAttack"));
-            label.setAlignmentX(CENTER_ALIGNMENT);
-            inner.add(label);
-            JButton importButton = new JButton(JournalTexts.text("journal.battles.import"));
-            importButton.setAlignmentX(CENTER_ALIGNMENT);
-            importButton.addActionListener(e -> host.importWithChooser());
-            inner.add(Box.createVerticalStrut(8));
-            inner.add(importButton);
-            panel.add(inner);
-            return panel;
+            return missingLog(direction);
         }
         BattleDetailModel.DirectionView view = found.get();
         UnitsPanel units = view.hasUnits() ? new UnitsPanel(context.catalog()) : null;
@@ -255,6 +251,34 @@ public final class JournalBattleDetailDialog extends JDialog {
             panel.add(split, BorderLayout.CENTER);
         }
         return panel;
+    }
+
+    /** Hint + import button for a direction whose log is missing. */
+    private JComponent missingLog(LogDirection direction) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel inner = JournalImportDialog.verticalPanel();
+        JLabel label = new JLabel(JournalTexts.text(direction == LogDirection.DEFENSE
+                ? "journal.detail.noDefense" : "journal.detail.noAttack"));
+        label.setAlignmentX(CENTER_ALIGNMENT);
+        inner.add(label);
+        JButton importButton = new JButton(JournalTexts.text("journal.battles.import"));
+        importButton.setAlignmentX(CENTER_ALIGNMENT);
+        importButton.addActionListener(e -> host.importWithChooser());
+        inner.add(Box.createVerticalStrut(8));
+        inner.add(importButton);
+        panel.add(inner);
+        return panel;
+    }
+
+    // --- attack / defense (visual) ---
+
+    /** The battle step by step on the map; the step survives a reload as long as it still exists. */
+    private JComponent replayTab(LogDirection direction) {
+        if (model.view(direction).isEmpty()) {
+            return missingLog(direction);
+        }
+        return new BattleReplayPanel(direction, model.replay(direction), model,
+                replaySteps.getOrDefault(direction, 0), s -> replaySteps.put(direction, s));
     }
 
     private static String summary(BattleDetailModel.DirectionView view) {
