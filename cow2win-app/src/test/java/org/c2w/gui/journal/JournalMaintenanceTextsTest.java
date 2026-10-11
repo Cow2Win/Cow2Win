@@ -117,7 +117,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
         List<String> prefixes = List.of("journal.detail.", "journal.players.", "journal.mappings.",
                 "journal.delete.", "journal.reparse.", "journal.saveCsv.", "journal.action.",
                 "journal.removeGuild.", "journal.noJournal", "journal.outcome.", "journal.assignmentStatus.",
-                "journal.statusFilter.", "journal.resultFilter.", "journal.battles.count",
+                "journal.resultFilter.", "journal.battles.count",
                 // phase 6
                 "journal.teams.", "journal.teamKind.", "journal.compositionSource.", "journal.skipReason.",
                 "journal.players.createAll", "journal.players.resetAll", "menu.journal.buildTeams");

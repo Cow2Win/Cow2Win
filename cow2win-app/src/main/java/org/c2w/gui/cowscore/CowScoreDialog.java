@@ -4,8 +4,8 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FlatButton;
-import org.c2w.gui.common.HintStyle;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.InfoArea;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
 import org.c2w.gui.pet.PetCowScorePanel;
@@ -64,6 +64,8 @@ public final class CowScoreDialog extends JDialog {
     private static final String ICON_SAVE_SCORES = "/images/app/save.png";
     private static final String ICON_RESTORE_DEFAULTS = "/images/app/restore.png";
     private static final int TOOLBAR_ICON_SIZE = 20;
+    /** Height of the information area of each tab - the same in every tab, so switching does not move the content. */
+    private static final int INFO_ROWS = 3;
 
     /** Width with the list at {@link CowScoreLayout#MIN_LIST_WIDTH}, and the minimum height - see {@link #sizeToContent}. */
     private static final int BASE_WIDTH = 740;
@@ -145,15 +147,11 @@ public final class CowScoreDialog extends JDialog {
         tabs.addTab(LanguageService.displayName(KEY_INFO_TAB), buildInfoTab());
         // In CowScoreTab order (EnumMap), so each tab lands at tabIndex(tab).
         panels.forEach((tab, panel) -> {
-            InfoArea info = new InfoArea();
+            InfoArea info = new InfoArea(INFO_ROWS);
             info.setText(infoText(tab));
             infoAreas.put(tab, info);
-            // Space between the hint frame and the tab - the frame itself is painted by InfoArea.
-            JPanel infoHolder = new JPanel(new BorderLayout());
-            infoHolder.setBorder(BorderFactory.createEmptyBorder(10, 12, 8, 12));
-            infoHolder.add(info, BorderLayout.CENTER);
             JPanel content = new JPanel(new BorderLayout());
-            content.add(infoHolder, BorderLayout.NORTH);
+            content.add(InfoArea.framed(info), BorderLayout.NORTH);
             content.add(panel.component(), BorderLayout.CENTER);
             tabs.addTab(LanguageService.displayName(tab.textKey()), content);
             panel.addChangeListener(e -> updateUnsavedState());
@@ -305,43 +303,6 @@ public final class CowScoreDialog extends JDialog {
     /** The text of the information area of the active tab, null on "Info" (it has none) - package-visible for tests. */
     String infoText() {
         return selectedTab().map(tab -> infoAreas.get(tab).getText()).orElse(null);
-    }
-
-    /**
-     * The information area at the top of a tab: wrapped, read-only white text in a teal-tinted
-     * frame with rounded corners, like the "Live" label of the context bar (see {@link HintStyle}).
-     * Its preferred width is tiny, so the text never decides the dialog's width, and it is always
-     * three lines high (plus padding), so switching tabs does not move the content.
-     */
-    private static final class InfoArea extends JTextArea {
-        private static final int ROWS = 3;
-        /** Corner arc of the frame - 14 px radius. */
-        private static final int ARC = 28;
-
-        InfoArea() {
-            setLineWrap(true);
-            setWrapStyleWord(true);
-            setEditable(false);
-            setFocusable(false);
-            setOpaque(false);
-            setForeground(Color.WHITE);
-            // The look and feel sets text areas in bold - the information reads like a label.
-            setFont(UIManager.getFont("Label.font"));
-            // Padding between the frame and the text.
-            setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            HintStyle.paintHintBackground(g, this, HintStyle.TEAL, ARC);
-            super.paintComponent(g);
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            Insets insets = getInsets();
-            return new Dimension(1, ROWS * getRowHeight() + insets.top + insets.bottom);
-        }
     }
 
     /** Index of {@code tab} in the tabbed pane - behind the "Info" tab, so not its {@link CowScoreTab#ordinal()}. */

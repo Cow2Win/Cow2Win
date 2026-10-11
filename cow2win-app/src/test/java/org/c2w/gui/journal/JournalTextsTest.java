@@ -48,7 +48,6 @@ class JournalTextsTest {
         // phase 5
         GROUPS.put("assignmentStatus", org.c2w.data.journal.db.AssignmentStatus.values());
         GROUPS.put("outcome", BattleDetailModel.Outcome.values());
-        GROUPS.put("statusFilter", BattleListFilter.StatusFilter.values());
         GROUPS.put("resultFilter", BattleListFilter.ResultFilter.values());
         GROUPS.put("action.saveCsv", LogDirection.values());
         GROUPS.put("detail.summary", LogDirection.values());
@@ -133,6 +132,10 @@ class JournalTextsTest {
         assertEquals("0", JournalTexts.rankingPoints(0));
         assertEquals("", JournalTexts.rankingPoints(null));
         assertEquals("1.382.741", JournalTexts.number(1_382_741));
+        assertEquals("+4.512", JournalTexts.rankingPointsTotal(4512));
+        assertEquals("-286", JournalTexts.rankingPointsTotal(-286));
+        assertEquals("-1.630", JournalTexts.rankingPointsTotal(-1630));
+        assertEquals("0", JournalTexts.rankingPointsTotal(0));
     }
 
     @Test

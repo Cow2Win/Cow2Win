@@ -46,6 +46,8 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
 
         assertEquals(6, model.getRowCount());
         assertEquals(Column.values().length, model.getColumnCount());
+        assertEquals(Column.SEASON, Column.values()[0], "season is the first column");
+        assertEquals(JournalTexts.text("journal.battles.col.season"), model.getColumnName(0));
         assertEquals(LocalDate.class, model.getColumnClass(Column.DATE.ordinal()));
         assertEquals(Integer.class, model.getColumnClass(Column.OWN_POINTS.ordinal()));
 
@@ -79,7 +81,7 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
     }
 
     @Test
-    @DisplayName("Filters: opponent, period, status, result and combinations; 'n of m battles'")
+    @DisplayName("Filters: opponent, result, season and combinations; 'n of m battles'")
     void filters() throws Exception {
         assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
         JournalBattleTableModel model = new JournalBattleTableModel();
@@ -93,18 +95,9 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         model.setFilter(none.withOpponentText("союз"));
         assertEquals(1, model.shownCount(), "Cyrillic, lower case");
 
-        model.setFilter(none.withPeriod(LocalDate.of(2026, 9, 17), LocalDate.of(2026, 9, 24)));
-        assertEquals(List.of(LocalDate.of(2026, 9, 24), LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 17)),
-                dates(model), "both ends included");
-        model.setFilter(none.withPeriod(LocalDate.of(2026, 9, 25), null));
-        assertEquals(2, model.shownCount(), "open end");
-        model.setFilter(none.withPeriod(null, LocalDate.of(2026, 9, 14)));
-        assertEquals(1, model.shownCount(), "open start");
-
-        model.setFilter(none.withStatus(BattleListFilter.StatusFilter.RUNNING));
-        assertEquals(List.of(LocalDate.of(2026, 10, 1)), dates(model));
-        model.setFilter(none.withStatus(BattleListFilter.StatusFilter.FINISHED));
-        assertEquals(5, model.shownCount());
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.ALL));
+        assertEquals(6, model.shownCount(), "'all' includes the running battle");
+        assertTrue(dates(model).contains(LocalDate.of(2026, 10, 1)));
 
         model.setFilter(none.withResult(BattleListFilter.ResultFilter.WIN));
         assertEquals(List.of(LocalDate.of(2026, 9, 24), LocalDate.of(2026, 9, 17)), dates(model));
@@ -113,10 +106,13 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         model.setFilter(none.withResult(BattleListFilter.ResultFilter.DRAW));
         assertEquals(0, model.shownCount(), "a running battle is no draw");
 
-        model.setFilter(none.withResult(BattleListFilter.ResultFilter.WIN).withPeriod(LocalDate.of(2026, 9, 20), null));
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.WIN).withOpponentText("AUGE"));
         assertEquals(List.of(LocalDate.of(2026, 9, 24)), dates(model));
-        model.setFilter(none.withResult(BattleListFilter.ResultFilter.LOSS).withOpponentText("r")
-                .withStatus(BattleListFilter.StatusFilter.FINISHED));
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.LOSS).withOpponentText("союз"));
+        assertEquals(0, model.shownCount(), "the running battle has no result");
+        model.setFilter(none.withSeason(16).withOpponentText("союз"));
+        assertEquals(List.of(LocalDate.of(2026, 10, 1)), dates(model), "season + opponent, result 'all'");
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.LOSS).withOpponentText("r"));
         assertEquals(List.of(LocalDate.of(2026, 9, 28), LocalDate.of(2026, 9, 21)), dates(model),
                 "Rebel Alliance, Rakuen (Elysium has no r)");
         assertEquals(JournalTexts.text("journal.battles.count", "2", "6"), model.countText());
@@ -159,6 +155,55 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
         assertNull(model.seasonFilter());
         assertEquals(3, model.shownCount());
         assertEquals(List.of(calendar.season(14), calendar.season(16)), model.data().seasons());
+    }
+
+    @Test
+    @DisplayName("Totals of the shown battles: ranking points without the running battle, points with it")
+    void totals() throws Exception {
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        JournalBattleTableModel model = new JournalBattleTableModel();
+        model.setData(JournalBattleTableModel.load(context.journal()));
+        List<BattleSummary> all = model.data().battles();
+        BattleListFilter none = BattleListFilter.NONE;
+
+        long finishedRanking = all.stream().filter(b -> b.status() != BattleStatus.RUNNING)
+                .mapToLong(BattleSummary::rankingPoints).sum();
+        long own = all.stream().mapToLong(BattleSummary::ownPoints).sum();
+        long opponent = all.stream().mapToLong(BattleSummary::opponentPoints).sum();
+        assertEquals(new JournalBattleTableModel.Totals(finishedRanking, own, opponent), model.shownTotals(), "no filter");
+
+        model.setFilter(none.withOpponentText("союз"));
+        assertEquals(new JournalBattleTableModel.Totals(0, 4990, 2879), model.shownTotals(),
+                "the running battle: points yes, ranking points no");
+
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.LOSS).withOpponentText("rakuen"));
+        assertEquals(-286, model.shownTotals().rankingPoints(), "a defeat is subtracted");
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.WIN).withOpponentText("auge"));
+        assertEquals(851, model.shownTotals().rankingPoints());
+
+        model.setFilter(none.withResult(BattleListFilter.ResultFilter.LOSS));
+        long losses = all.stream().filter(b -> b.status() != BattleStatus.RUNNING && b.result() == BattleResult.LOSS)
+                .mapToLong(BattleSummary::rankingPoints).sum();
+        assertEquals(losses, model.shownTotals().rankingPoints());
+        assertTrue(losses < 0);
+
+        model.setFilter(none.withOpponentText("no such guild"));
+        assertEquals(new JournalBattleTableModel.Totals(0, 0, 0), model.shownTotals());
+    }
+
+    @Test
+    @DisplayName("Totals follow the season filter")
+    void totalsBySeason() {
+        JournalBattleTableModel model = new JournalBattleTableModel();
+        model.setData(new JournalBattleTableModel.Data(true, List.of(
+                battle(1, LocalDate.of(2026, 10, 15)),    // season 17
+                battle(2, LocalDate.of(2026, 9, 24)),     // season 16
+                battle(3, LocalDate.of(2026, 9, 21)))));  // season 16
+        assertEquals(new JournalBattleTableModel.Totals(2400, 9000, 6000), model.shownTotals());
+        model.setSeasonFilter(16);
+        assertEquals(new JournalBattleTableModel.Totals(1600, 6000, 4000), model.shownTotals());
+        model.setData(JournalBattleTableModel.Data.EMPTY);
+        assertEquals(new JournalBattleTableModel.Totals(0, 0, 0), model.shownTotals());
     }
 
     private static BattleSummary battle(int id, LocalDate date) {

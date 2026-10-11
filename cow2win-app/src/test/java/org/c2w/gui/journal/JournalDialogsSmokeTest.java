@@ -65,14 +65,6 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             }
 
             @Override
-            public void openPlayers() {
-            }
-
-            @Override
-            public void openNameMappings() {
-            }
-
-            @Override
             public JournalOperations operations() {
                 return operations;
             }

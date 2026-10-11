@@ -222,16 +222,6 @@ public final class JournalActions {
                 }
 
                 @Override
-                public void openPlayers() {
-                    JournalActions.this.openPlayers();
-                }
-
-                @Override
-                public void openNameMappings() {
-                    JournalActions.this.openNameMappings();
-                }
-
-                @Override
                 public JournalOperations operations() {
                     return operations;
                 }

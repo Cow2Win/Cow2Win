@@ -16,22 +16,24 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Rows of the battle list: one battle of the journal per row, optionally only
- * those of one season. Values are typed (date, numbers) so the table sorts them
- * correctly; the renderer formats them. Usable without a window (tests).
+ * Rows of the battle list: one battle of the journal per row (season first),
+ * optionally filtered by season, opponent and result ({@link BattleListFilter}).
+ * Values are typed (date, numbers) so the table sorts them correctly; the
+ * renderer formats them. Also counts and sums the shown battles ({@link #countText()},
+ * {@link #shownTotals()}). Usable without a window (tests).
  */
 public final class JournalBattleTableModel extends AbstractTableModel {
 
     /** The columns, in display order. */
     public enum Column {
+        SEASON(Integer.class),
         DATE(LocalDate.class),
         OPPONENT(String.class),
         RESULT(String.class),
         RANKING_POINTS(Integer.class),
         OWN_POINTS(Integer.class),
         OPPONENT_POINTS(Integer.class),
-        LOGS(String.class),
-        SEASON(Integer.class);
+        LOGS(String.class);
 
         private final Class<?> type;
 
@@ -39,9 +41,15 @@ public final class JournalBattleTableModel extends AbstractTableModel {
             this.type = type;
         }
 
+        /** The value type of the column. */
+        public Class<?> type() {
+            return type;
+        }
+
         /** Language file key of the header. */
         public String key() {
             return "journal.battles.col." + switch (this) {
+                case SEASON -> "season";
                 case DATE -> "date";
                 case OPPONENT -> "opponent";
                 case RESULT -> "result";
@@ -49,7 +57,6 @@ public final class JournalBattleTableModel extends AbstractTableModel {
                 case OWN_POINTS -> "ownPoints";
                 case OPPONENT_POINTS -> "opponentPoints";
                 case LOGS -> "logs";
-                case SEASON -> "season";
             };
         }
     }
@@ -145,6 +152,31 @@ public final class JournalBattleTableModel extends AbstractTableModel {
         return JournalTexts.text("journal.battles.count", String.valueOf(shownCount()), String.valueOf(totalCount()));
     }
 
+    /**
+     * Sums of the shown (filtered) battles - what the table shows in each column.
+     *
+     * @param rankingPoints  ranking points of the finished battles (a running battle has none yet)
+     * @param ownPoints      own points of all shown battles, the running one included (its current state)
+     * @param opponentPoints opponent points of all shown battles, the running one included
+     */
+    public record Totals(long rankingPoints, long ownPoints, long opponentPoints) {
+    }
+
+    /** The sums of the shown battles, see {@link Totals}. */
+    public Totals shownTotals() {
+        long ranking = 0;
+        long own = 0;
+        long opponent = 0;
+        for (BattleSummary b : rows) {
+            if (b.status() != BattleStatus.RUNNING && b.rankingPoints() != null) {
+                ranking += b.rankingPoints();
+            }
+            own += b.ownPoints() == null ? 0 : b.ownPoints();
+            opponent += b.opponentPoints() == null ? 0 : b.opponentPoints();
+        }
+        return new Totals(ranking, own, opponent);
+    }
+
     /** The battle of a (model) row. */
     public BattleSummary battle(int row) {
         return rows.get(row);
@@ -184,6 +216,7 @@ public final class JournalBattleTableModel extends AbstractTableModel {
     public Object getValueAt(int row, int column) {
         BattleSummary b = rows.get(row);
         return switch (Column.values()[column]) {
+            case SEASON -> b.seasonNumber();
             case DATE -> b.date();
             case OPPONENT -> JournalTexts.opponent(b.opponent());
             case RESULT -> resultText(b);
@@ -191,7 +224,6 @@ public final class JournalBattleTableModel extends AbstractTableModel {
             case OWN_POINTS -> b.ownPoints();
             case OPPONENT_POINTS -> b.opponentPoints();
             case LOGS -> logs(b);
-            case SEASON -> b.seasonNumber();
         };
     }
 

@@ -4,6 +4,9 @@ import org.c2w.data.journal.BattleResult;
 import org.c2w.data.journal.Season;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.db.BattleSummary;
+import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.InfoArea;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 
@@ -27,13 +30,19 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * The battle list of the open guild's journal (not modal): date, opponent,
- * result, ranking points, own/opponent points, stored logs, season - newest
- * first, sortable, filterable (season, opponent, period, status, result; the
- * filter lives in {@link JournalBattleTableModel}). The season of a battle is
+ * The battle list of the open guild's journal (not modal): season, date,
+ * opponent, result, ranking points, own/opponent points, stored logs - newest
+ * first, sortable, filterable (season, opponent, result; the filter lives in
+ * {@link JournalBattleTableModel}). Victories, defeats and the running battle
+ * are tinted over the whole row. The season of a battle is
  * computed from its date ({@link org.c2w.data.journal.SeasonCalendar}); the
- * season filter offers only the seasons that contain a stored battle. Double
- * click / Enter / "Details …" opens the battle detail; the context menu and the
+ * season filter offers only the seasons that contain a stored battle. The
+ * toolbar in the north holds the icon buttons "Import …" and "Details …" and
+ * the filters (season, result, opponent); players and name mappings are only in
+ * the main menu. Below the toolbar an information area explains what the list
+ * is for; the information panel in the south shows "n of m battles" and the sums
+ * of ranking points, own and opponent points of the shown battles. Double click
+ * / Enter / "Details …" opens the battle detail; the context menu and the
  * Delete key offer the battle actions (several battles at once for "parse again"
  * and "delete" - e.g. a whole season: filter it, select all, Delete).
  * Follows the open guild (reloads and retitles on a guild switch), reads in the
@@ -49,12 +58,13 @@ public final class JournalBattleListDialog extends JDialog {
 
         void openDetail(int battleId);
 
-        void openPlayers();
-
-        void openNameMappings();
-
         JournalOperations operations();
     }
+
+    private static final String ICON_IMPORT = "/images/app/box-arrow-down.png";
+    private static final String ICON_DETAILS = "/images/app/arrows-in-line-horizontal.png";
+    private static final int TOOLBAR_ICON_SIZE = 20;
+    private static final int INFO_ROWS = 2;
 
     private final AppContext context;
     private final Host host;
@@ -62,16 +72,14 @@ public final class JournalBattleListDialog extends JDialog {
     private final JTable table;
     private final JComboBox<Object> seasonFilter = new JComboBox<>();
     private final JTextField opponentFilter = new JTextField(12);
-    private final JCheckBox fromEnabled = new JCheckBox(JournalTexts.text("journal.battles.from"));
-    private final JSpinner fromDate = JournalImportDialog.dateSpinner(LocalDate.now().minusMonths(3));
-    private final JCheckBox toEnabled = new JCheckBox(JournalTexts.text("journal.battles.to"));
-    private final JSpinner toDate = JournalImportDialog.dateSpinner(LocalDate.now());
-    private final JComboBox<BattleListFilter.StatusFilter> statusFilter =
-            new JComboBox<>(BattleListFilter.StatusFilter.values());
     private final JComboBox<BattleListFilter.ResultFilter> resultFilter =
             new JComboBox<>(BattleListFilter.ResultFilter.values());
     private final JLabel countLabel = new JLabel(" ");
-    private final JButton detailsButton = new JButton(JournalTexts.text("journal.button.details"));
+    private final JLabel rankingPointsTotal = new JLabel(" ");
+    private final JLabel ownPointsTotal = new JLabel(" ");
+    private final JLabel opponentPointsTotal = new JLabel(" ");
+    private final FlatButton detailsButton =
+            new FlatButton(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
     private final JPanel center = new JPanel(new CardLayout());
     private final JLabel message = new JLabel("", SwingConstants.CENTER);
     private final AppContext.Listener listener = new AppContext.Listener() {
@@ -95,10 +103,17 @@ public final class JournalBattleListDialog extends JDialog {
         table.setRowSorter(sorter);
         table.setFillsViewportHeight(true);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.setDefaultRenderer(Object.class, new Renderer());
-        table.setDefaultRenderer(Integer.class, new Renderer());
-        table.setDefaultRenderer(LocalDate.class, new Renderer());
+        // One renderer for every column: the look and feel installs its own (untinted) renderers
+        // for String/Integer/..., so class-based defaults would leave some cells uncolored.
+        Renderer renderer = new Renderer();
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
+        table.setIntercellSpacing(new Dimension(0, 0)); // no gaps between the tinted cells
         table.getColumnModel().getColumn(JournalBattleTableModel.Column.OPPONENT.ordinal()).setPreferredWidth(220);
+        int seasonWidth = table.getTableHeader().getFontMetrics(table.getTableHeader().getFont())
+                .stringWidth(table.getColumnName(JournalBattleTableModel.Column.SEASON.ordinal())) + 24;
+        table.getColumnModel().getColumn(JournalBattleTableModel.Column.SEASON.ordinal()).setPreferredWidth(Math.max(40, seasonWidth));
         table.setToolTipText(JournalTexts.text("journal.battles.dropHint"));
         table.getSelectionModel().addListSelectionListener(e -> updateButtons());
         table.addMouseListener(new MouseAdapter() {
@@ -122,7 +137,7 @@ public final class JournalBattleListDialog extends JDialog {
         bindKey(KeyEvent.VK_ENTER, "openDetails", this::openDetails);
         bindKey(KeyEvent.VK_DELETE, "deleteSelected", this::deleteSelected);
 
-        JComponent top = filterPanel();
+        JComponent top = buildNorth();
 
         JPanel empty = new JPanel(new GridBagLayout());
         JPanel emptyContent = JournalImportDialog.verticalPanel();
@@ -141,7 +156,7 @@ public final class JournalBattleListDialog extends JDialog {
         JPanel root = new JPanel(new BorderLayout());
         root.add(top, BorderLayout.NORTH);
         root.add(center, BorderLayout.CENTER);
-        root.add(buttonPanel(), BorderLayout.SOUTH);
+        root.add(buildInfoPanel(), BorderLayout.SOUTH);
         setContentPane(root);
         TransferHandler drop = new FileDropHandler(host::importFiles);
         for (JComponent c : List.of(root, table, empty, scroll)) {
@@ -149,48 +164,42 @@ public final class JournalBattleListDialog extends JDialog {
         }
 
         context.addListener(listener);
-        setSize(1000, 520);
+        // High enough for the information area and the totals panel next to about ten table rows.
+        setSize(1000, 625);
         setLocationRelativeTo(owner);
         updateButtons();
+        updateInfo();
         reload();
     }
 
-    /** Two rows: season, opponent, period - then status, result, reset and "n of m battles". */
-    private JComponent filterPanel() {
-        JPanel first = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        first.add(new JLabel(JournalTexts.text("journal.battles.season")));
-        first.add(seasonFilter);
-        first.add(new JLabel(JournalTexts.text("journal.battles.opponentFilter")));
-        first.add(opponentFilter);
-        first.add(fromEnabled);
-        first.add(fromDate);
-        first.add(toEnabled);
-        first.add(toDate);
-        JPanel second = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        second.add(new JLabel(JournalTexts.text("journal.battles.status")));
-        second.add(statusFilter);
-        second.add(new JLabel(JournalTexts.text("journal.battles.result")));
-        second.add(resultFilter);
-        JButton reset = new JButton(JournalTexts.text("journal.battles.resetFilter"));
-        second.add(reset);
-        second.add(Box.createHorizontalStrut(12));
-        second.add(countLabel);
-        JPanel panel = new JPanel(new GridLayout(2, 1));
-        panel.add(first);
-        panel.add(second);
+    /**
+     * One row like the other dialogs' toolbars: import and details (icon buttons),
+     * then the filters season, result, opponent.
+     */
+    private JComponent buildToolbar() {
+        detailsButton.setToolTipText(JournalTexts.text("journal.button.details"));
+        // The look and feel does not gray out a recolored icon by itself.
+        detailsButton.setDisabledIcon(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, Color.GRAY));
+        detailsButton.addActionListener(e -> openDetails());
+        FlatButton importButton = new FlatButton(IconLoader.iconFor(ICON_IMPORT, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        importButton.setToolTipText(JournalTexts.text("journal.battles.import"));
+        importButton.addActionListener(e -> host.importFiles(List.of()));
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        panel.add(importButton);
+        panel.add(detailsButton);
+        panel.add(Box.createHorizontalStrut(16));
+        panel.add(new JLabel(JournalTexts.text("journal.battles.season")));
+        panel.add(seasonFilter);
+        panel.add(new JLabel(JournalTexts.text("journal.battles.result")));
+        panel.add(resultFilter);
+        panel.add(new JLabel(JournalTexts.text("journal.battles.opponentFilter")));
+        panel.add(opponentFilter);
 
         seasonFilter.setRenderer(PlayersStepPanel.textRenderer(this::seasonText));
-        statusFilter.setRenderer(PlayersStepPanel.textRenderer(v -> JournalTexts.of("statusFilter", (Enum<?>) v)));
         resultFilter.setRenderer(PlayersStepPanel.textRenderer(v -> JournalTexts.of("resultFilter", (Enum<?>) v)));
-        fromDate.setEnabled(false);
-        toDate.setEnabled(false);
         seasonFilter.addActionListener(e -> applyFilter());
-        statusFilter.addActionListener(e -> applyFilter());
         resultFilter.addActionListener(e -> applyFilter());
-        fromEnabled.addActionListener(e -> applyFilter());
-        toEnabled.addActionListener(e -> applyFilter());
-        fromDate.addChangeListener(e -> applyFilter());
-        toDate.addChangeListener(e -> applyFilter());
         opponentFilter.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -207,38 +216,41 @@ public final class JournalBattleListDialog extends JDialog {
                 applyFilter();
             }
         });
-        reset.addActionListener(e -> {
-            updatingFilter = true;
-            try {
-                seasonFilter.setSelectedIndex(0);
-                opponentFilter.setText("");
-                fromEnabled.setSelected(false);
-                toEnabled.setSelected(false);
-                statusFilter.setSelectedItem(BattleListFilter.StatusFilter.ALL);
-                resultFilter.setSelectedItem(BattleListFilter.ResultFilter.ALL);
-            } finally {
-                updatingFilter = false;
-            }
-            applyFilter();
-        });
         return panel;
     }
 
-    private JComponent buttonPanel() {
+    /** The toolbar with the information area below it. */
+    private JComponent buildNorth() {
+        InfoArea info = new InfoArea(INFO_ROWS);
+        info.setText(JournalTexts.text("journal.battles.info"));
+        JPanel north = new JPanel(new BorderLayout());
+        north.add(buildToolbar(), BorderLayout.NORTH);
+        north.add(InfoArea.framed(info), BorderLayout.CENTER);
+        return north;
+    }
+
+    /** One row: "n of m battles" and the sums of the shown battles. */
+    private JComponent buildInfoPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
-        detailsButton.addActionListener(e -> openDetails());
-        panel.add(detailsButton);
-        JButton importButton = new JButton(JournalTexts.text("journal.battles.import"));
-        importButton.addActionListener(e -> host.importFiles(List.of()));
-        panel.add(importButton);
-        panel.add(Box.createHorizontalStrut(16));
-        JButton players = new JButton(JournalTexts.text("journal.action.players"));
-        players.addActionListener(e -> host.openPlayers());
-        JButton mappings = new JButton(JournalTexts.text("journal.action.nameMappings"));
-        mappings.addActionListener(e -> host.openNameMappings());
-        panel.add(players);
-        panel.add(mappings);
+        for (JLabel label : List.of(countLabel, rankingPointsTotal, ownPointsTotal, opponentPointsTotal)) {
+            if (label != countLabel) {
+                panel.add(new JLabel("·"));
+            }
+            panel.add(label);
+        }
         return panel;
+    }
+
+    /** Count and sums of the shown battles - after every filter change and reload. */
+    private void updateInfo() {
+        countLabel.setText(tableModel.countText());
+        JournalBattleTableModel.Totals totals = tableModel.shownTotals();
+        rankingPointsTotal.setText(JournalTexts.text("journal.battles.total.rankingPoints",
+                JournalTexts.rankingPointsTotal(totals.rankingPoints())));
+        ownPointsTotal.setText(JournalTexts.text("journal.battles.total.ownPoints",
+                JournalTexts.number(totals.ownPoints())));
+        opponentPointsTotal.setText(JournalTexts.text("journal.battles.total.opponentPoints",
+                JournalTexts.number(totals.opponentPoints())));
     }
 
     private void bindKey(int key, String name, Runnable action) {
@@ -316,7 +328,7 @@ public final class JournalBattleListDialog extends JDialog {
                 table.getSelectionModel().addSelectionInterval(view, view);
             }
         }
-        countLabel.setText(tableModel.countText());
+        updateInfo();
         boolean empty = data.battles().isEmpty();
         ((CardLayout) center.getLayout()).show(center, empty ? "empty" : "table");
         updateButtons();
@@ -330,13 +342,8 @@ public final class JournalBattleListDialog extends JDialog {
         tableModel.setFilter(new BattleListFilter(
                 season instanceof Season s ? s.number() : null,
                 opponentFilter.getText(),
-                fromEnabled.isSelected() ? JournalImportDialog.toLocalDate((java.util.Date) fromDate.getValue()) : null,
-                toEnabled.isSelected() ? JournalImportDialog.toLocalDate((java.util.Date) toDate.getValue()) : null,
-                (BattleListFilter.StatusFilter) statusFilter.getSelectedItem(),
                 (BattleListFilter.ResultFilter) resultFilter.getSelectedItem()));
-        fromDate.setEnabled(fromEnabled.isSelected());
-        toDate.setEnabled(toEnabled.isSelected());
-        countLabel.setText(tableModel.countText());
+        updateInfo();
         updateButtons();
     }
 
@@ -403,20 +410,27 @@ public final class JournalBattleListDialog extends JDialog {
         return item instanceof Season s ? JournalTexts.seasonText(s) : String.valueOf(item);
     }
 
-    /** Formats dates and numbers, colors the rows by result. */
+    /**
+     * The renderer of every column: formats dates and numbers, colors the whole row
+     * by result (always opaque - the look and feel paints table cells transparent).
+     * Season and logs are centered, the points right-aligned, date, opponent and
+     * result left-aligned; the headers keep their own alignment.
+     */
     private final class Renderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus,
                                                        int row, int column) {
+            JournalBattleTableModel.Column col = JournalBattleTableModel.Column.values()[table.convertColumnIndexToModel(column)];
             Object shown = value;
             if (value instanceof LocalDate date) {
                 shown = JournalTexts.date(date);
             } else if (value instanceof Integer number) {
-                shown = column == JournalBattleTableModel.Column.RANKING_POINTS.ordinal()
-                        ? JournalTexts.rankingPoints(number) : JournalTexts.number(number);
+                shown = col == JournalBattleTableModel.Column.RANKING_POINTS ? JournalTexts.rankingPoints(number)
+                        : JournalTexts.number(number);
             }
             super.getTableCellRendererComponent(table, shown, selected, focus, row, column);
-            setHorizontalAlignment(value instanceof Integer ? RIGHT : LEFT);
+            setOpaque(true);
+            setHorizontalAlignment(alignment(col));
             if (!selected) {
                 BattleSummary battle = tableModel.battle(table.convertRowIndexToModel(row));
                 Color tint = battle.status() == BattleStatus.RUNNING ? JournalSwing.RUNNING
@@ -425,6 +439,14 @@ public final class JournalBattleListDialog extends JDialog {
                 setBackground(JournalSwing.blend(table.getBackground(), tint));
             }
             return this;
+        }
+
+        private static int alignment(JournalBattleTableModel.Column col) {
+            return switch (col) {
+                case SEASON, LOGS -> CENTER;
+                case RANKING_POINTS, OWN_POINTS, OPPONENT_POINTS -> RIGHT;
+                case DATE, OPPONENT, RESULT -> LEFT;
+            };
         }
     }
 

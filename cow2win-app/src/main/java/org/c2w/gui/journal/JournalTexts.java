@@ -94,6 +94,11 @@ public final class JournalTexts {
         return points > 0 ? "+" + points : String.valueOf(points);
     }
 
+    /** A sum of ranking points with sign and grouping, e.g. "+4.512", "-286", "0". */
+    public static String rankingPointsTotal(long points) {
+        return points > 0 ? "+" + number(points) : number(points);
+    }
+
     /** A date in the format of the configured language. */
     public static String date(LocalDate date) {
         return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale()).format(date);
