@@ -6,6 +6,8 @@
 # Battle-log test data: keep byte-identical to the game's export (CRLF line
 # endings) on every machine, including Linux CI - no newline conversion.
 cow2win-app/src/test/resources/battlelog/**/*.csv -text
+# The same for the demo battle logs imported on the first start.
+cow2win-app/src/main/resources/data/demo-journal/*.csv -text
 
 # Binary files
 *.png binary
