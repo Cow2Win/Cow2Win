@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @param direction     attack or defense log
  * @param language      game language of the export ({@code deutsch}, {@code english}, {@code francais})
  * @param fileName      original file name
- * @param importedAt    when the log was saved (or last parsed again)
+ * @param importedAt    when the log was saved (or last replaced by a later export)
  * @param parserVersion parser version that produced the stored rows
  * @param problemCount  number of parse problems
  * @param fightCount    number of single fights

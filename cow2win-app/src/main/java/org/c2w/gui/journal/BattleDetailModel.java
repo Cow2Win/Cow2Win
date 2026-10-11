@@ -17,8 +17,10 @@ import java.util.*;
  * view, so it is flipped for the defense log) - an overview per fortification and
  * direction, and the parse problems.
  *
- * <p>Own players are shown with their assignment: "log name → member", or the
- * status, or a hint that the assigned member no longer exists in the guild.
+ * <p>Own players are shown with their log name; the assignment is added only
+ * where it says more: "log name → member" if the member is named differently,
+ * the status if the player is not assigned, or a hint that the assigned member
+ * no longer exists in the guild.
  */
 public final class BattleDetailModel {
 
@@ -54,12 +56,18 @@ public final class BattleDetailModel {
             return status == AssignmentStatus.ASSIGNED && memberName == null;
         }
 
-        /** E.g. "Puschel → Puschel", "Vale·· (open)", "Old (member no longer exists)". */
+        /**
+         * The log name, with the assignment only where it says more: "Puschel" (assigned
+         * to a member of exactly that name), "Puschel2 → Puschel" (member named
+         * differently), "Old → (member no longer exists)", "Vale·· (open)".
+         */
         public String label() {
             String name = JournalTexts.visibleSpaces(rawName);
             if (status == AssignmentStatus.ASSIGNED) {
-                return memberName == null
-                        ? JournalTexts.text("journal.detail.player.memberMissing", name)
+                if (memberName == null) {
+                    return JournalTexts.text("journal.detail.player.memberMissing", name);
+                }
+                return rawName.strip().equals(memberName.strip()) ? name
                         : JournalTexts.text("journal.detail.player.assigned", name, memberName);
             }
             return JournalTexts.text("journal.detail.player.status", name,

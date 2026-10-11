@@ -22,12 +22,8 @@ class LiveLineupTextsTest {
 
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
 
-    /**
-     * Keys that may still say "original": the original CSV file of a battle log (not the lineup),
-     * and the reserved-name message, which names both "Live" and "Original" on purpose.
-     */
-    private static final Set<String> EXCEPTIONS = Set.of(
-            "journal.action.saveCsv", "journal.saveCsv.title", "mainFrame.newLineup.reservedName");
+    /** Keys that may still say "original": the reserved-name message names both "Live" and "Original" on purpose. */
+    private static final Set<String> EXCEPTIONS = Set.of("mainFrame.newLineup.reservedName");
 
     @Test
     @DisplayName("No language file value calls the lineup \"Original\"")

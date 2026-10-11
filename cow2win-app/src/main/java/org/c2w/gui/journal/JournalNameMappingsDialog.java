@@ -18,19 +18,17 @@ import java.util.Optional;
 /**
  * The manual name mappings of the journal (not modal): kind, raw name and the
  * catalog entry it maps to (display name and image). Change (choose from the
- * catalog of that kind) and delete. Changes apply to future imports; stored
- * battles are updated by "parse again" - offered right here for all battles.
+ * catalog of that kind) and delete. Changes apply to future imports only;
+ * stored battles keep the ids they were imported with.
  */
 public final class JournalNameMappingsDialog extends JDialog {
 
     private final AppContext context;
     private final JournalMaintenanceService service;
-    private final JournalOperations operations;
     private final MappingTableModel tableModel = new MappingTableModel();
     private final JTable table;
     private final JButton changeButton = new JButton(JournalTexts.text("journal.mappings.change"));
     private final JButton deleteButton = new JButton(JournalTexts.text("journal.mappings.delete"));
-    private final JButton reparseButton = new JButton(JournalTexts.text("journal.action.reparseAll"));
     private final JLabel hint = new JLabel(" ");
     private boolean hasJournal;
     private final AppContext.Listener listener = new AppContext.Listener() {
@@ -44,7 +42,6 @@ public final class JournalNameMappingsDialog extends JDialog {
         super(owner, ModalityType.MODELESS);
         this.context = context;
         this.service = operations.service();
-        this.operations = operations;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         table = JournalSwing.table(tableModel);
@@ -65,12 +62,9 @@ public final class JournalNameMappingsDialog extends JDialog {
 
         changeButton.addActionListener(e -> selected().ifPresent(this::change));
         deleteButton.addActionListener(e -> selected().ifPresent(this::delete));
-        reparseButton.addActionListener(e -> operations.reparse(this, null));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
         buttons.add(changeButton);
         buttons.add(deleteButton);
-        buttons.add(Box.createHorizontalStrut(16));
-        buttons.add(reparseButton);
         JPanel south = new JPanel(new BorderLayout());
         south.add(hint, BorderLayout.NORTH);
         south.add(buttons, BorderLayout.SOUTH);
@@ -121,7 +115,6 @@ public final class JournalNameMappingsDialog extends JDialog {
         boolean selection = hasJournal && selected().isPresent();
         changeButton.setEnabled(selection);
         deleteButton.setEnabled(selection);
-        reparseButton.setEnabled(hasJournal);
     }
 
     private void changed() {

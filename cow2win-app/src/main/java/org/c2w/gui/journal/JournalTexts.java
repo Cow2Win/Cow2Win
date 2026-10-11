@@ -11,7 +11,6 @@ import org.c2w.gui.common.Glyphs;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
-import org.c2w.service.JournalMaintenanceService;
 import org.c2w.service.journal.PlanError;
 import org.c2w.service.journal.PlayerQuestion;
 import org.c2w.service.journal.SyncRow;
@@ -171,16 +170,6 @@ public final class JournalTexts {
     /** "Season 16 (13.07.2026 – 04.10.2026)" - start and last day. */
     public static String seasonText(Season s) {
         return text("journal.battles.seasonItem", String.valueOf(s.number()), date(s.start()), date(s.lastDay()));
-    }
-
-    /** "n logs parsed again, parse problems a → b" (+ failures). */
-    public static String reparseResult(JournalMaintenanceService.ReparseResult r) {
-        String text = text("journal.reparse.result", String.valueOf(r.logs()), String.valueOf(r.problemsBefore()),
-                String.valueOf(r.problemsAfter()));
-        if (!r.failures().isEmpty()) {
-            text += "\n" + text("journal.reparse.failures", String.valueOf(r.failures().size()));
-        }
-        return text;
     }
 
     /**

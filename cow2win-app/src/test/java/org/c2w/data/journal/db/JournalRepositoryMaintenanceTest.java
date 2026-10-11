@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -159,71 +158,7 @@ class JournalRepositoryMaintenanceTest {
         assertEquals(List.of(), repository.recentDefenders(0).battleDays());
     }
 
-    @Test
-    @DisplayName("saveLog with replaceUnchanged replaces an identical file; assignments stay")
-    void replaceUnchanged() throws Exception {
-        int battleId = save("de", "24-09-2026", LogDirection.DEFENSE).battleId();
-        JournalPlayer puschel = repository.findOwnPlayer("Puschel").orElseThrow();
-        repository.setAssignment(puschel.id(), "m1", AssignmentStatus.ASSIGNED);
-        long fights = count(db, "SELECT COUNT(*) FROM fight");
-
-        assertEquals(SaveResult.Outcome.UNCHANGED, save("de", "24-09-2026", LogDirection.DEFENSE).outcome());
-        Path file = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.DEFENSE);
-        SaveResult forced = repository.saveLog(BattleLogTestFiles.parse(file), Files.readAllBytes(file), true);
-
-        assertEquals(SaveResult.Outcome.REPLACED, forced.outcome());
-        assertEquals(battleId, forced.battleId());
-        assertEquals(fights, count(db, "SELECT COUNT(*) FROM fight"));
-        assertEquals(1, count(db, "SELECT COUNT(*) FROM battle_log"));
-        assertEquals(puschel, repository.findOwnPlayer("Puschel").orElseThrow(), "same player id");
-        assertEquals("m1", repository.findAssignment(puschel.id()).orElseThrow().memberId());
-    }
-
-    @Test
-    @DisplayName("reparseLog applies new name mappings to the stored original CSV")
-    void reparseLogWithNameMappings() throws Exception {
-        // An attack log with an unknown hero name: the first hero's name replaced by "Neuheld".
-        Path original = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.ATTACK);
-        BattleLog parsedOriginal = BattleLogTestFiles.parse(original).log();
-        FightUnit hero = parsedOriginal.fights().stream().flatMap(f -> f.attacker().units().stream())
-                .filter(u -> u.kind() == UnitKind.HERO && u.catalogId() != null).findFirst().orElseThrow();
-        String content = Files.readString(original, StandardCharsets.UTF_8).replace(hero.name() + " |", "Neuheld |");
-        byte[] raw = content.getBytes(StandardCharsets.UTF_8);
-        BattleLogParser parser = BattleLogTestFiles.parser();
-        BattleLogParseResult unknown = parser.parse(original.getFileName().toString(), content);
-        int battleId = repository.saveLog(unknown, raw).battleId();
-        int problemsBefore = unknown.problems().size();
-        assertTrue(problemsBefore > 0, "the unknown name is a parse problem");
-        assertTrue(neuheldIds(battleId).contains(null));
-
-        repository.putNameMapping(NameMappingKind.HERO, "Neuheld", hero.catalogId());
-        JournalRepository.Reparsed reparsed = repository.reparseLog(battleId, LogDirection.ATTACK,
-                parser.withNameMappings(repository.nameMappingsByKind())).orElseThrow();
-
-        assertEquals(problemsBefore, reparsed.problemsBefore());
-        assertTrue(reparsed.problemsAfter() < problemsBefore, reparsed.toString());
-        assertEquals(parsedOriginal.fights().size(), reparsed.fights());
-        assertEquals(Set.of(hero.catalogId()), neuheldIds(battleId));
-        assertEquals(1, count(db, "SELECT COUNT(*) FROM battle_log"));
-        assertEquals(Optional.of(JournalRepository.sha256(raw)), repository.findLogSha256(battleId, LogDirection.ATTACK));
-
-        assertTrue(repository.deleteNameMapping(NameMappingKind.HERO, "Neuheld"));
-        repository.reparseLog(battleId, LogDirection.ATTACK, parser);
-        assertTrue(neuheldIds(battleId).contains(null), "without the mapping the name is unknown again");
-
-        assertEquals(Optional.empty(), repository.reparseLog(battleId, LogDirection.DEFENSE, parser));
-    }
-
     // --- helpers ---
-
-    private Set<String> neuheldIds(int battleId) throws JournalException {
-        Set<String> ids = new HashSet<>();
-        repository.loadLog(battleId, LogDirection.ATTACK).orElseThrow().log().fights().stream()
-                .flatMap(f -> f.attacker().units().stream()).filter(u -> u.name().equals("Neuheld"))
-                .forEach(u -> ids.add(u.catalogId()));
-        assertFalse(ids.isEmpty());
-        return ids;
-    }
 
     private void saveAllSix() throws Exception {
         for (String day : BattleLogTestFiles.BATTLE_DAYS) {

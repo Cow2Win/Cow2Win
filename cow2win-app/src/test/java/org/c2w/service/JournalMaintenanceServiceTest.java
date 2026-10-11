@@ -2,9 +2,7 @@ package org.c2w.service;
 
 import org.c2w.data.journal.LogDirection;
 import org.c2w.data.journal.NameMappingKind;
-import org.c2w.data.journal.UnitKind;
 import org.c2w.data.journal.db.*;
-import org.c2w.data.journal.parse.BattleLogParser;
 import org.c2w.data.journal.parse.BattleLogTestFiles;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
@@ -17,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -93,7 +90,6 @@ class JournalMaintenanceServiceTest {
     void withoutJournal() throws Exception {
         assertEquals(Optional.empty(), service.repository());
         assertEquals(JournalCounts.NONE, service.countBattles(List.of(1)));
-        assertEquals(0, service.reparse(null, null).logs());
         assertThrows(JournalException.class, () -> service.deleteBattles(List.of(1)));
         assertFalse(JournalDatabase.exists(guildService.guildDir("Alpha")));
     }
@@ -149,59 +145,6 @@ class JournalMaintenanceServiceTest {
         assertTrue(service.isValidMappingTarget(NameMappingKind.TOTEM, "FIRE"));
         assertTrue(service.deleteNameMapping(NameMappingKind.HERO, "Neuheld"));
         assertFalse(service.deleteNameMapping(NameMappingKind.HERO, "Neuheld"));
-    }
-
-    @Test
-    @DisplayName("Parse again: one and all battles; assignments stay, parser version, problems before/after")
-    void reparse() throws Exception {
-        importAll(BattleLogTestFiles.BATTLE_DAYS);
-        int auge = battle("24-09-2026");
-        JournalPlayer puschel = repo().findOwnPlayer("Puschel").orElseThrow();
-        repo().setAssignment(puschel.id(), null, AssignmentStatus.NOT_IN_COW2WIN);
-        long fightsBefore = repo().countAll().fights();
-        List<int[]> progress = new ArrayList<>();
-
-        JournalMaintenanceService.ReparseResult one = service.reparse(List.of(auge),
-                (done, total) -> progress.add(new int[]{done, total}));
-
-        assertEquals(2, one.logs());
-        assertEquals(0, one.problemsBefore());
-        assertEquals(0, one.problemsAfter());
-        assertEquals(List.of(), one.failures());
-        assertEquals(2, progress.get(progress.size() - 1)[0]);
-        assertEquals(2, progress.get(progress.size() - 1)[1]);
-
-        JournalMaintenanceService.ReparseResult all = service.reparse(null, null);
-        assertEquals(12, all.logs());
-        assertEquals(fightsBefore, repo().countAll().fights());
-        assertEquals(AssignmentStatus.NOT_IN_COW2WIN, repo().findAssignment(puschel.id()).orElseThrow().status());
-        assertTrue(repo().listLogs(null).stream().allMatch(l -> l.parserVersion() == BattleLogParser.PARSER_VERSION));
-    }
-
-    @Test
-    @DisplayName("Parse again after a name mapping: the stored log carries the new id, problems drop")
-    void reparseWithNewMapping() throws Exception {
-        importAll(List.of("24-09-2026"));
-        int auge = battle("24-09-2026");
-        // Replace the attack log by one with an unknown hero name (as an older catalog would have had).
-        Path original = BattleLogTestFiles.file("de", "24-09-2026", LogDirection.ATTACK);
-        var hero = BattleLogTestFiles.parse(original).log().fights().stream()
-                .flatMap(f -> f.attacker().units().stream())
-                .filter(u -> u.kind() == UnitKind.HERO && u.catalogId() != null).findFirst().orElseThrow();
-        String content = Files.readString(original, StandardCharsets.UTF_8).replace(hero.name() + " |", "Neuheld |");
-        repo().saveLog(BattleLogTestFiles.parser().parse(original.getFileName().toString(), content),
-                content.getBytes(StandardCharsets.UTF_8));
-        int problems = repo().listLogs(auge).stream().mapToInt(LogInfo::problemCount).sum();
-        assertTrue(problems > 0);
-
-        service.putNameMapping(NameMappingKind.HERO, "Neuheld", hero.catalogId());
-        JournalMaintenanceService.ReparseResult result = service.reparse(null, null);
-
-        assertEquals(problems, result.problemsBefore());
-        assertTrue(result.problemsAfter() < problems);
-        assertTrue(repo().loadLog(auge, LogDirection.ATTACK).orElseThrow().log().fights().stream()
-                .flatMap(f -> f.attacker().units().stream()).filter(u -> u.name().equals("Neuheld"))
-                .allMatch(u -> hero.catalogId().equals(u.catalogId())));
     }
 
     // --- helpers ---

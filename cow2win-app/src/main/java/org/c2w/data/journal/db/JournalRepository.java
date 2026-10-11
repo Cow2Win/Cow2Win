@@ -30,8 +30,7 @@ import java.util.zip.GZIPOutputStream;
  * has at most one attack and one defense log; saving a later export of the
  * same direction replaces the earlier one completely (exports are
  * append-only), saving the identical file again changes nothing. The original
- * CSV is kept (gzip) with its SHA-256, so logs can be parsed again after a
- * parser improvement.
+ * CSV is kept (gzip) with its SHA-256.
  *
  * <p>Raw texts (player, fortification and unit names, buff and color texts)
  * are stored unchanged next to the resolved ids; {@link #loadLog} rebuilds the
@@ -116,17 +115,6 @@ public final class JournalRepository {
      * @throws JournalException          on database errors
      */
     public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv) throws JournalException {
-        return saveLog(parsed, rawCsv, false);
-    }
-
-    /**
-     * Like {@link #saveLog(BattleLogParseResult, byte[])}; with
-     * {@code replaceUnchanged} an existing log with the same SHA-256 is replaced
-     * too (outcome {@link SaveResult.Outcome#REPLACED}) - for parsing a stored
-     * log again with a newer parser or new name mappings.
-     */
-    public SaveResult saveLog(BattleLogParseResult parsed, byte[] rawCsv, boolean replaceUnchanged)
-            throws JournalException {
         if (parsed == null || rawCsv == null) {
             throw new IllegalArgumentException("saveLog needs a parse result and the raw CSV");
         }
@@ -137,11 +125,11 @@ public final class JournalRepository {
         }
         String sha256 = sha256(rawCsv);
         byte[] compressed = gzip(rawCsv);
-        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256, replaceUnchanged));
+        return db.transaction(c -> save(c, parsed, rawCsv.length, compressed, sha256));
     }
 
-    private SaveResult save(Connection c, BattleLogParseResult parsed, int rawSize, byte[] compressed, String sha256,
-                            boolean replaceUnchanged) throws SQLException, JournalException {
+    private SaveResult save(Connection c, BattleLogParseResult parsed, int rawSize, byte[] compressed, String sha256)
+            throws SQLException, JournalException {
         BattleLog log = parsed.log();
         BattleLogHeader h = log.header();
         LocalDateTime now = now();
@@ -164,7 +152,7 @@ public final class JournalRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     existingLogId = rs.getInt("id");
-                    if (!replaceUnchanged && sha256.equals(rs.getString("sha256"))) {
+                    if (sha256.equals(rs.getString("sha256"))) {
                         return new SaveResult(battleId, false, SaveResult.Outcome.UNCHANGED, warnings);
                     }
                 }
@@ -522,73 +510,6 @@ public final class JournalRepository {
         }
         cache.put(key, id);
         return id;
-    }
-
-    /**
-     * Result of {@link #reparseLog}.
-     *
-     * @param battleId      the battle
-     * @param direction     the log direction
-     * @param problemsBefore parse problems stored before
-     * @param problemsAfter  parse problems now
-     * @param fights         single fights now
-     */
-    public record Reparsed(int battleId, LogDirection direction, int problemsBefore, int problemsAfter, int fights) {
-    }
-
-    /**
-     * Parses the stored original CSV of one log again with {@code parser} (current
-     * parser version and name mappings) and replaces the log - even though the file
-     * is unchanged. The player assignments stay (players keep their
-     * ids because they are found by name); the parser version is updated.
-     *
-     * @return empty if the battle has no log of this direction
-     * @throws JournalException if the stored file cannot be parsed any more, or no longer
-     *                          belongs to this battle (nothing is changed then)
-     */
-    public Optional<Reparsed> reparseLog(int battleId, LogDirection direction, BattleLogParser parser)
-            throws JournalException {
-        if (parser == null) {
-            throw new IllegalArgumentException("reparseLog needs a parser");
-        }
-        return db.transaction(c -> {
-            String fileName;
-            byte[] compressed;
-            int problemsBefore;
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT l.file_name, l.raw_csv, (SELECT COUNT(*) FROM parse_problem p WHERE p.battle_log_id = l.id)"
-                            + " FROM battle_log l WHERE l.battle_id = ? AND l.direction = ?")) {
-                ps.setInt(1, battleId);
-                ps.setString(2, direction.name());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return Optional.<Reparsed>empty();
-                    }
-                    fileName = rs.getString(1);
-                    compressed = rs.getBytes(2);
-                    problemsBefore = rs.getInt(3);
-                }
-            }
-            byte[] raw = gunzip(compressed);
-            BattleLogParseResult parsed;
-            try {
-                parsed = parser.parse(fileName, new ByteArrayInputStream(raw));
-            } catch (IOException e) {
-                throw new JournalException("The stored log " + fileName + " cannot be parsed: " + e.getMessage(), e);
-            }
-            BattleLogHeader h = parsed.log().header();
-            if (!h.isComplete() || h.direction() != direction) {
-                throw new JournalException("The stored log " + fileName + " is no longer recognized as the "
-                        + direction + " log of battle " + battleId);
-            }
-            SaveResult saved = save(c, parsed, raw.length, compressed, sha256(raw), true);
-            if (saved.battleId() != battleId) {
-                throw new JournalException("The stored log " + fileName + " now belongs to another battle ("
-                        + saved.battleId() + " instead of " + battleId + ")");
-            }
-            return Optional.of(new Reparsed(battleId, direction, problemsBefore, parsed.problems().size(),
-                    parsed.log().fights().size()));
-        });
     }
 
     // =====================================================================
@@ -1179,7 +1100,7 @@ public final class JournalRepository {
 
     /**
      * Removes the manual mapping of {@code rawName} (compared via {@code GameNameNormalizer}).
-     * Stored logs keep their ids until they are parsed again ({@link #reparseLog}).
+     * Applies to future imports only - stored logs keep the ids they were imported with.
      *
      * @return false if there was no such mapping
      */

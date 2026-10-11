@@ -244,11 +244,6 @@ public final class JournalActions {
         JournalBattleDetailDialog detail = new JournalBattleDetailDialog(owner, context,
                 new JournalBattleDetailDialog.Host() {
                     @Override
-                    public JournalOperations operations() {
-                        return operations;
-                    }
-
-                    @Override
                     public void importWithChooser() {
                         JournalActions.this.importWithChooser();
                     }
@@ -277,7 +272,7 @@ public final class JournalActions {
         bringToFront(nameMappings);
     }
 
-    /** The journal changed (import, delete, assignment, parse again): every open journal window reloads. */
+    /** The journal changed (import, delete, assignment): every open journal window reloads. */
     public void journalChanged() {
         if (battleList != null && battleList.isDisplayable()) {
             battleList.reload();

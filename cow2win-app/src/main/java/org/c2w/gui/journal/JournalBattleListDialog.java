@@ -37,14 +37,15 @@ import java.util.stream.Collectors;
  * are tinted over the whole row. The season of a battle is
  * computed from its date ({@link org.c2w.data.journal.SeasonCalendar}); the
  * season filter offers only the seasons that contain a stored battle. The
- * toolbar in the north holds the icon buttons "Import …" and "Details …" and
+ * toolbar in the north holds the icon buttons "Import …", "Details …" and
+ * "Delete" (all selected battles, like the Delete key) and
  * the filters (season, result, opponent); players and name mappings are only in
  * the main menu. Below the toolbar an information area explains what the list
  * is for; the information panel in the south shows "n of m battles" and the sums
  * of ranking points, own and opponent points of the shown battles. Double click
- * / Enter / "Details …" opens the battle detail; the context menu and the
- * Delete key offer the battle actions (several battles at once for "parse again"
- * and "delete" - e.g. a whole season: filter it, select all, Delete).
+ * / Enter / "Details …" opens the battle detail; the delete button, the context
+ * menu and the Delete key delete all selected battles (e.g. a whole season:
+ * filter it, select all, Delete).
  * Follows the open guild (reloads and retitles on a guild switch), reads in the
  * background and never creates a journal file. Battle logs can be dropped onto
  * it to import them.
@@ -61,8 +62,9 @@ public final class JournalBattleListDialog extends JDialog {
         JournalOperations operations();
     }
 
-    private static final String ICON_IMPORT = "/images/app/box-arrow-down.png";
+    private static final String ICON_IMPORT = "/images/app/add.png";
     private static final String ICON_DETAILS = "/images/app/arrows-in-line-horizontal.png";
+    private static final String ICON_DELETE = "/images/app/delete.png";
     private static final int TOOLBAR_ICON_SIZE = 20;
     private static final int INFO_ROWS = 2;
 
@@ -80,6 +82,8 @@ public final class JournalBattleListDialog extends JDialog {
     private final JLabel opponentPointsTotal = new JLabel(" ");
     private final FlatButton detailsButton =
             new FlatButton(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    private final FlatButton deleteButton =
+            new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, IconLoader.RED));
     private final JPanel center = new JPanel(new CardLayout());
     private final JLabel message = new JLabel("", SwingConstants.CENTER);
     private final AppContext.Listener listener = new AppContext.Listener() {
@@ -181,6 +185,9 @@ public final class JournalBattleListDialog extends JDialog {
         // The look and feel does not gray out a recolored icon by itself.
         detailsButton.setDisabledIcon(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, Color.GRAY));
         detailsButton.addActionListener(e -> openDetails());
+        deleteButton.setToolTipText(JournalTexts.text("journal.action.delete"));
+        deleteButton.setDisabledIcon(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, Color.GRAY));
+        deleteButton.addActionListener(e -> deleteSelected());
         FlatButton importButton = new FlatButton(IconLoader.iconFor(ICON_IMPORT, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
         importButton.setToolTipText(JournalTexts.text("journal.battles.import"));
         importButton.addActionListener(e -> host.importFiles(List.of()));
@@ -188,6 +195,7 @@ public final class JournalBattleListDialog extends JDialog {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
         panel.add(importButton);
         panel.add(detailsButton);
+        panel.add(deleteButton);
         panel.add(Box.createHorizontalStrut(16));
         panel.add(new JLabel(JournalTexts.text("journal.battles.season")));
         panel.add(seasonFilter);
@@ -359,7 +367,9 @@ public final class JournalBattleListDialog extends JDialog {
     }
 
     private void updateButtons() {
-        detailsButton.setEnabled(selectedBattles().size() == 1);
+        int selected = selectedBattles().size();
+        detailsButton.setEnabled(selected == 1);
+        deleteButton.setEnabled(selected > 0);
     }
 
     private void openDetails() {
@@ -370,7 +380,7 @@ public final class JournalBattleListDialog extends JDialog {
     }
 
     private void deleteSelected() {
-        host.operations().deleteBattles(this, selectedBattles(), null);
+        host.operations().deleteBattles(this, selectedBattles());
     }
 
     private void popup(MouseEvent e) {
@@ -385,19 +395,11 @@ public final class JournalBattleListDialog extends JDialog {
         if (battles.isEmpty()) {
             return;
         }
-        boolean single = battles.size() == 1;
         JPopupMenu menu = new JPopupMenu();
         JMenuItem details = new JMenuItem(JournalTexts.text("journal.button.details"));
-        details.setEnabled(single);
+        details.setEnabled(battles.size() == 1);
         details.addActionListener(ev -> openDetails());
         menu.add(details);
-        JMenuItem reparse = new JMenuItem(JournalTexts.text("journal.action.reparse"));
-        reparse.addActionListener(ev -> host.operations().reparse(this,
-                battles.stream().map(BattleSummary::battleId).toList()));
-        menu.add(reparse);
-        if (single) {
-            menu.add(host.operations().saveCsvMenu(this, battles.get(0)));
-        }
         menu.addSeparator();
         JMenuItem delete = new JMenuItem(JournalTexts.text("journal.action.delete"));
         delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));

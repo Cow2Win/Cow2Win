@@ -1,6 +1,5 @@
 package org.c2w.service;
 
-import org.c2w.data.journal.LogDirection;
 import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.db.*;
 import org.c2w.data.journal.parse.BattleLogParser;
@@ -14,10 +13,10 @@ import java.util.function.Supplier;
 
 /**
  * Maintenance of the open guild's Weltenschlacht journal, without any GUI:
- * deleting battles, correcting player assignments and name mappings, and parsing
- * stored logs again. Seasons are not maintained here: the season of a battle is
- * computed from its date ({@link org.c2w.data.journal.SeasonCalendar}); a whole
- * season is deleted by filtering the battle list and deleting all its battles.
+ * deleting battles and correcting player assignments and name mappings.
+ * Seasons are not maintained here: the season of a battle is computed from its
+ * date ({@link org.c2w.data.journal.SeasonCalendar}); a whole season is deleted
+ * by filtering the battle list and deleting all its battles.
  *
  * <p>Nothing here changes the Cow2Win guild (members, teams) - assignments only
  * link journal players to existing members. Reading methods never create a
@@ -25,15 +24,6 @@ import java.util.function.Supplier;
  * otherwise).
  */
 public final class JournalMaintenanceService {
-
-    /** Progress of a longer task, e.g. parsing many logs again. */
-    @FunctionalInterface
-    public interface Progress {
-        Progress NONE = (done, total) -> {
-        };
-
-        void update(int done, int total);
-    }
 
     private final JournalStore journal;
     private final Supplier<BattleLogParser> parserFactory;
@@ -143,8 +133,8 @@ public final class JournalMaintenanceService {
     }
 
     /**
-     * Changes the catalog id of a manual name mapping. Applies to future imports and
-     * to logs parsed again ({@link #reparse}).
+     * Changes the catalog id of a manual name mapping. Applies to future imports
+     * (stored logs keep the ids they were imported with).
      *
      * @throws IllegalArgumentException if the id is not in the catalog of that kind
      */
@@ -165,92 +155,6 @@ public final class JournalMaintenanceService {
             GuildLog.event(guildDir(repo), "guildLog.nameMappingDeleted", rawName);
         }
         return deleted;
-    }
-
-    // =====================================================================
-    // Parse again
-    // =====================================================================
-
-    /**
-     * Result of parsing stored logs again.
-     *
-     * @param logs           logs parsed again and replaced
-     * @param problemsBefore parse problems of these logs before
-     * @param problemsAfter  parse problems of these logs now
-     * @param failures       logs that could not be parsed again (they stay unchanged)
-     */
-    public record ReparseResult(int logs, int problemsBefore, int problemsAfter, List<Failure> failures) {
-        public ReparseResult {
-            failures = List.copyOf(failures);
-        }
-
-        /** A log that could not be parsed again. */
-        public record Failure(int battleId, LogDirection direction, String message) {
-        }
-    }
-
-    /**
-     * Parses the stored original CSVs of these battles ({@code null}: of all battles)
-     * again with the current parser and name mappings and replaces the logs - even if
-     * the files are unchanged. Player assignments stay; no questions, no
-     * guild changes (new unknown players have no assignment = open). Every log is
-     * replaced in its own transaction; a failing log is reported and left as it was.
-     */
-    public ReparseResult reparse(Collection<Integer> battleIdsOrNull, Progress progress) throws JournalException {
-        Optional<JournalRepository> found = repository();
-        if (found.isEmpty()) {
-            return new ReparseResult(0, 0, 0, List.of());
-        }
-        JournalRepository repo = found.get();
-        Map<NameMappingKind, Map<String, String>> mappings = repo.nameMappingsByKind();
-        BattleLogParser parser = mappings.isEmpty() ? baseParser() : baseParser().withNameMappings(mappings);
-        Set<Integer> wanted = battleIdsOrNull == null ? null : new HashSet<>(battleIdsOrNull);
-        List<LogInfo> logs = repo.listLogs(null).stream()
-                .filter(l -> wanted == null || wanted.contains(l.battleId())).toList();
-        Progress p = progress == null ? Progress.NONE : progress;
-        int done = 0;
-        int before = 0;
-        int after = 0;
-        List<ReparseResult.Failure> failures = new ArrayList<>();
-        p.update(0, logs.size());
-        for (LogInfo log : logs) {
-            try {
-                Optional<JournalRepository.Reparsed> reparsed = repo.reparseLog(log.battleId(), log.direction(), parser);
-                if (reparsed.isPresent()) {
-                    done++;
-                    before += reparsed.get().problemsBefore();
-                    after += reparsed.get().problemsAfter();
-                }
-            } catch (JournalLockedException e) {
-                throw e;
-            } catch (JournalException e) {
-                Logger.logException("Could not parse the " + log.direction() + " log of battle " + log.battleId()
-                        + " again", e);
-                failures.add(new ReparseResult.Failure(log.battleId(), log.direction(), e.getMessage()));
-            }
-            p.update(done + failures.size(), logs.size());
-        }
-        Logger.log("Journal: parsed " + done + " log(s) again, parse problems " + before + " -> " + after
-                + (failures.isEmpty() ? "" : ", " + failures.size() + " failed"));
-        if (done > 0) {
-            logReparsed(repo, battleIdsOrNull);
-        }
-        return new ReparseResult(done, before, after, failures);
-    }
-
-    /** The guild log entry for {@link #reparse}: all battles, one battle (date, opponent) or a number of battles. */
-    private static void logReparsed(JournalRepository repo, Collection<Integer> battleIdsOrNull) throws JournalException {
-        if (battleIdsOrNull == null) {
-            GuildLog.event(guildDir(repo), "guildLog.allBattlesReparsed");
-            return;
-        }
-        Set<Integer> ids = new LinkedHashSet<>(battleIdsOrNull);
-        Optional<BattleSummary> single = ids.size() == 1 ? repo.findBattleSummary(ids.iterator().next()) : Optional.empty();
-        if (single.isPresent()) {
-            logBattleEvent(repo, "guildLog.battleReparsed", single.get());
-        } else {
-            GuildLog.event(guildDir(repo), "guildLog.battlesReparsed", ids.size());
-        }
     }
 
     private synchronized BattleLogParser baseParser() {

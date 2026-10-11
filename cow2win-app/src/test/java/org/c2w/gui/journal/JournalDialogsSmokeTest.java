@@ -71,21 +71,26 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         }));
         waitFor(() -> find(list, JTable.class).getRowCount() == 6);
         paint(list);
+        AbstractButton delete = buttonWithTooltip(list, JournalTexts.text("journal.action.delete"));
+        assertNotNull(delete);
+        assertFalse(onEdt(delete::isEnabled), "delete needs a selection");
+        onEdt(() -> {
+            find(list, JTable.class).setRowSelectionInterval(0, 1);
+            return null;
+        });
+        assertTrue(onEdt(delete::isEnabled), "delete works on several battles");
 
         for (var battle : context.journal().repository(false).orElseThrow().listBattles()) {
             JournalBattleDetailDialog detail = onEdt(() -> new JournalBattleDetailDialog(null, context,
                     new JournalBattleDetailDialog.Host() {
-                        @Override
-                        public JournalOperations operations() {
-                            return operations;
-                        }
-
                         @Override
                         public void importWithChooser() {
                         }
                     }, battle.battleId()));
             waitFor(() -> findOrNull(detail, JTabbedPane.class) != null);
             JTabbedPane tabs = find(detail, JTabbedPane.class);
+            assertEquals(JournalTexts.text("journal.detail.tab.general"), onEdt(() -> tabs.getTitleAt(0)));
+            assertEquals(1, onEdt(tabs::getSelectedIndex), "opens on the defense");
             for (int i = 0; i < onEdt(tabs::getTabCount); i++) {
                 int tab = i;
                 onEdt(() -> {
@@ -96,8 +101,8 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             }
             // select a fight: the units panel (17.09. defense, all attack logs) shows the teams
             onEdt(() -> {
-                tabs.setSelectedIndex(1);
-                JTable fights = findIn(tabs.getComponentAt(1), JTable.class);
+                tabs.setSelectedIndex(2);
+                JTable fights = findIn(tabs.getComponentAt(2), JTable.class);
                 if (fights != null && fights.getRowCount() > 0) {
                     fights.setRowSelectionInterval(0, 0);
                 }
@@ -185,6 +190,21 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         if (OUT != null) {
             javax.imageio.ImageIO.write(image, "png", Path.of(OUT, String.format("%02d.png", ++images)).toFile());
         }
+    }
+
+    private static AbstractButton buttonWithTooltip(Container root, String tooltip) {
+        for (Component c : root.getComponents()) {
+            if (c instanceof AbstractButton b && tooltip.equals(b.getToolTipText())) {
+                return b;
+            }
+            if (c instanceof Container inner) {
+                AbstractButton found = buttonWithTooltip(inner, tooltip);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     private static <T extends Component> T find(Container root, Class<T> type) {

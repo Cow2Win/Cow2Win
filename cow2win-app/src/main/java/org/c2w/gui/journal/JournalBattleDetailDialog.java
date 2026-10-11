@@ -24,31 +24,31 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * The detail of one battle (not modal, several may be open): head data, then the
- * tabs Defense (our defenders per fortification - held/fallen - with a short
- * evaluation; hint + import if the defense log is missing), Attack (display
- * only), Fortifications (overview per fortification and direction) and Problems
- * (only if there are parse problems). Teams of a fight are shown below the
- * fights when the log contains them. All content comes from a
- * {@link BattleDetailModel}, read in the background.
+ * The detail of one battle (not modal, several may be open), in tabs: General
+ * (head data and both logs), Defense (our defenders per fortification -
+ * held/fallen - with a short evaluation; hint + import if the defense log is
+ * missing), Attack (display only), Fortifications (overview per fortification
+ * and direction) and Problems (only if there are parse problems). It opens on
+ * Defense; a reload keeps the chosen tab. Teams of a fight are shown below the
+ * fights when the log contains them. Display only - battles are deleted in the
+ * battle list; the detail closes when its battle is gone. All content comes
+ * from a {@link BattleDetailModel}, read in the background.
  */
 public final class JournalBattleDetailDialog extends JDialog {
 
     /** What the detail needs from the journal menu. */
     public interface Host {
-        JournalOperations operations();
-
         /** Starts an import with the file chooser. */
         void importWithChooser();
     }
+
+    /** Index of the defense tab, behind "General". */
+    private static final int DEFENSE_TAB = 1;
 
     private final AppContext context;
     private final Host host;
     private final int battleId;
     private final JPanel content = new JPanel(new BorderLayout(0, 8));
-    private final JButton reparseButton = new JButton(JournalTexts.text("journal.action.reparse"));
-    private final JButton saveCsvButton = new JButton(JournalTexts.text("journal.action.saveCsv") + " …");
-    private final JButton deleteButton = new JButton(JournalTexts.text("journal.action.delete"));
     /** The guild file the battle belongs to - the detail closes when another guild is opened. */
     private final Path guildFile;
     private final AppContext.Listener listener = new AppContext.Listener() {
@@ -60,7 +60,8 @@ public final class JournalBattleDetailDialog extends JDialog {
         }
     };
     private BattleDetailModel model;
-    private int selectedTab;
+    /** The tab shown, kept across reloads - the detail opens on the defense. */
+    private int selectedTab = DEFENSE_TAB;
 
     public JournalBattleDetailDialog(Window owner, AppContext context, Host host, int battleId) {
         super(owner, ModalityType.MODELESS);
@@ -75,33 +76,12 @@ public final class JournalBattleDetailDialog extends JDialog {
         JPanel root = new JPanel(new BorderLayout(0, 8));
         root.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         root.add(content, BorderLayout.CENTER);
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        buttons.add(reparseButton);
-        buttons.add(saveCsvButton);
-        buttons.add(deleteButton);
         JPanel south = new JPanel(new BorderLayout());
-        south.add(buttons, BorderLayout.WEST);
         JButton close = new JButton(JournalTexts.text("journal.button.close"));
         close.addActionListener(e -> dispose());
         south.add(close, BorderLayout.EAST);
         root.add(south, BorderLayout.SOUTH);
         setContentPane(root);
-
-        reparseButton.addActionListener(e -> host.operations().reparse(this, List.of(battleId)));
-        saveCsvButton.addActionListener(e -> {
-            if (model != null) {
-                JPopupMenu menu = new JPopupMenu();
-                for (Component item : host.operations().saveCsvMenu(this, model.battle()).getMenuComponents()) {
-                    menu.add(item);
-                }
-                menu.show(saveCsvButton, 0, saveCsvButton.getHeight());
-            }
-        });
-        deleteButton.addActionListener(e -> {
-            if (model != null) {
-                host.operations().deleteBattles(this, List.of(model.battle()), this::dispose);
-            }
-        });
 
         setSize(1300, 820);
         setLocationRelativeTo(owner);
@@ -124,7 +104,6 @@ public final class JournalBattleDetailDialog extends JDialog {
             dispose();
             return;
         }
-        enableActions(false);
         JournalSwing.background(this, () -> {
             Optional<JournalRepository> repo = context.journal().repository(false);
             if (repo.isEmpty()) {
@@ -140,20 +119,13 @@ public final class JournalBattleDetailDialog extends JDialog {
         });
     }
 
-    private void enableActions(boolean enabled) {
-        reparseButton.setEnabled(enabled);
-        saveCsvButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
-    }
-
     private void show(BattleDetailModel newModel) {
         this.model = newModel;
         BattleSummary b = model.battle();
         setTitle(JournalTexts.text("journal.detail.title", JournalTexts.date(b.date()), b.opponent().name()));
         content.removeAll();
-        content.add(header(), BorderLayout.NORTH);
-
         JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab(JournalTexts.text("journal.detail.tab.general"), generalTab());
         tabs.addTab(JournalTexts.of("direction", LogDirection.DEFENSE), directionTab(LogDirection.DEFENSE));
         tabs.addTab(JournalTexts.of("direction", LogDirection.ATTACK), directionTab(LogDirection.ATTACK));
         tabs.addTab(JournalTexts.text("journal.detail.tab.forts"), fortsTab());
@@ -166,12 +138,12 @@ public final class JournalBattleDetailDialog extends JDialog {
         content.add(tabs, BorderLayout.CENTER);
         content.revalidate();
         content.repaint();
-        enableActions(true);
     }
 
-    // --- head ---
+    // --- general ---
 
-    private JComponent header() {
+    /** The head data of the battle and its logs, at the top left. */
+    private JComponent generalTab() {
         BattleSummary b = model.battle();
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -211,7 +183,10 @@ public final class JournalBattleDetailDialog extends JDialog {
                             JournalTexts.dateTime(l.importedAt()), String.valueOf(l.parserVersion()),
                             String.valueOf(l.problemCount()))).orElse(JournalTexts.text("journal.detail.noLog")));
         }
-        return panel;
+        JPanel tab = new JPanel(new BorderLayout());
+        tab.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        tab.add(panel, BorderLayout.NORTH);
+        return tab;
     }
 
     // --- defense / attack ---

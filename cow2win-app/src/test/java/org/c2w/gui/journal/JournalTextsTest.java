@@ -49,7 +49,6 @@ class JournalTextsTest {
         GROUPS.put("assignmentStatus", org.c2w.data.journal.db.AssignmentStatus.values());
         GROUPS.put("outcome", BattleDetailModel.Outcome.values());
         GROUPS.put("resultFilter", BattleListFilter.ResultFilter.values());
-        GROUPS.put("action.saveCsv", LogDirection.values());
         GROUPS.put("detail.summary", LogDirection.values());
         GROUPS.put("detail.fort.undefended", LogDirection.values());
         GROUPS.put("detail.fort.captured", LogDirection.values());

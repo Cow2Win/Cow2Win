@@ -103,7 +103,7 @@ class BattleDetailModelTest extends JournalGuiTestSupport {
         assertEquals(AssignmentStatus.ASSIGNED, puschel.status());
         assertEquals("Puschel", puschel.memberName());
         assertFalse(puschel.memberMissing());
-        assertEquals(JournalTexts.text("journal.detail.player.assigned", "Puschel", "Puschel"), puschel.label());
+        assertEquals("Puschel", puschel.label(), "same name as the member: only the log name");
 
         BattleDetailModel.OwnPlayer open = model.defense().orElseThrow().fights().stream()
                 .map(BattleDetailModel.FightRow::ourPlayer).filter(p -> p.status() == AssignmentStatus.OPEN)
@@ -117,6 +117,25 @@ class BattleDetailModelTest extends JournalGuiTestSupport {
         BattleDetailModel.OwnPlayer gone = player(after, "Puschel");
         assertTrue(gone.memberMissing());
         assertEquals(JournalTexts.text("journal.detail.player.memberMissing", "Puschel"), gone.label());
+    }
+
+    @Test
+    @DisplayName("Player labels: the member is added only if it is named differently")
+    void playerLabelOnlyOnDifference() {
+        assertEquals("Puschel", new BattleDetailModel.OwnPlayer("Puschel", AssignmentStatus.ASSIGNED, "m1", "Puschel").label());
+        assertEquals(JournalTexts.text("journal.detail.player.assigned", "Puschel2", "Puschel"),
+                new BattleDetailModel.OwnPlayer("Puschel2", AssignmentStatus.ASSIGNED, "m1", "Puschel").label());
+        assertEquals(JournalTexts.text("journal.detail.player.assigned", "puschel", "Puschel"),
+                new BattleDetailModel.OwnPlayer("puschel", AssignmentStatus.ASSIGNED, "m1", "Puschel").label(),
+                "no case tolerance");
+        assertEquals(JournalTexts.visibleSpaces("Vale  "),
+                new BattleDetailModel.OwnPlayer("Vale  ", AssignmentStatus.ASSIGNED, "m2", "Vale").label(),
+                "compared after strip, shown with visible spaces");
+        assertEquals(JournalTexts.text("journal.detail.player.memberMissing", "Old"),
+                new BattleDetailModel.OwnPlayer("Old", AssignmentStatus.ASSIGNED, "m3", null).label());
+        assertEquals(JournalTexts.text("journal.detail.player.status", "New",
+                JournalTexts.of("assignmentStatus", AssignmentStatus.OPEN)),
+                new BattleDetailModel.OwnPlayer("New", AssignmentStatus.OPEN, null, null).label());
     }
 
     @Test

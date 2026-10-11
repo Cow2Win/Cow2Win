@@ -11,7 +11,6 @@ import org.c2w.data.journal.db.JournalCounts;
 import org.c2w.data.journal.db.JournalDatabase;
 import org.c2w.data.journal.parse.BattleLogTestFiles;
 import org.c2w.i18n.LanguageService;
-import org.c2w.service.JournalMaintenanceService;
 import org.c2w.service.journal.ImportAnswers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,18 +49,12 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
     }
 
     @Test
-    @DisplayName("Season item and parse-again result texts")
-    void seasonAndReparseTexts() {
+    @DisplayName("Season item text")
+    void seasonText() {
         Season season = SeasonCalendar.standard().season(16);
         assertEquals(JournalTexts.text("journal.battles.seasonItem", "16", JournalTexts.date(LocalDate.of(2026, 7, 13)),
                 JournalTexts.date(LocalDate.of(2026, 10, 4))), JournalTexts.seasonText(season),
                 "the season is shown with its last day");
-
-        String result = JournalTexts.reparseResult(new JournalMaintenanceService.ReparseResult(12, 5, 1, List.of()));
-        assertEquals(JournalTexts.text("journal.reparse.result", "12", "5", "1"), result);
-        String failed = JournalTexts.reparseResult(new JournalMaintenanceService.ReparseResult(1, 0, 0,
-                List.of(new JournalMaintenanceService.ReparseResult.Failure(1, LogDirection.ATTACK, "x"))));
-        assertTrue(failed.contains(JournalTexts.text("journal.reparse.failures", "1")), failed);
     }
 
     @Test
@@ -115,7 +108,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
     @DisplayName("Phase-5 texts use no straight apostrophe (MessageFormat would swallow it)")
     void noStraightApostrophes() {
         List<String> prefixes = List.of("journal.detail.", "journal.players.", "journal.mappings.",
-                "journal.delete.", "journal.reparse.", "journal.saveCsv.", "journal.action.",
+                "journal.delete.", "journal.action.",
                 "journal.removeGuild.", "journal.noJournal", "journal.outcome.", "journal.assignmentStatus.",
                 "journal.resultFilter.", "journal.battles.count",
                 // phase 6
