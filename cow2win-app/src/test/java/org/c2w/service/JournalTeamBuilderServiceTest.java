@@ -283,6 +283,28 @@ class JournalTeamBuilderServiceTest {
     }
 
     @Test
+    @DisplayName("Source battle: the newest battle with known heroes/titans - a newer battle with power only is skipped")
+    void sourceBattleIsNewestWithComposition() {
+        BattleLog newest = log(LogDirection.DEFENSE, defense("Max", "citadel", 1, 1_100_000, List.of()));
+        BattleLog middle = log(LogDirection.DEFENSE, defense("Max", "citadel", 2, 1_000_000, heroUnits(HEROES, null)));
+        BattleLog oldest = log(LogDirection.DEFENSE, defense("Max", "barracks", 1, 700_000, heroUnits(HEROES_2, null)));
+        Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(), List.of())));
+
+        TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(
+                new JournalTeamBuilderService.BattleLogs(1, DAY.minusWeeks(2), oldest, null),
+                new JournalTeamBuilderService.BattleLogs(2, DAY.minusWeeks(1), middle, null),
+                new JournalTeamBuilderService.BattleLogs(3, DAY, newest, null)), Map.of("Max", assigned("max")), guild, null);
+
+        MemberPlan member = plan.member("max").orElseThrow();
+        assertEquals(DAY.minusWeeks(1), member.sourceDate());
+        List<Proposal> proposals = member.proposals();
+        assertEquals(2, proposals.size());
+        assertTrue(proposals.get(0).fromSourceBattle() && proposals.get(0).preselected(), proposals.toString());
+        assertEquals(1_000_000, proposals.get(0).power());
+        assertFalse(proposals.get(1).fromSourceBattle() || proposals.get(1).preselected(), proposals.toString());
+    }
+
+    @Test
     @DisplayName("A dropped team (power only) takes no slot: both teams with heroes stay available")
     void powerOnlyTakesNoSlot() {
         HeroTeam kept = new HeroTeam("max", 0, heroes(HEROES_3), null, null, 2_000_000, DAY.minusWeeks(2));

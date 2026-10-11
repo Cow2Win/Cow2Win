@@ -27,9 +27,9 @@ import java.util.*;
  * <ul>
  *   <li>Members and teams come from the DEFENSE logs: our defenders, the team kind
  *       from the fortification type, the team power, fortification + position.</li>
- *   <li>The source battle of a member is the newest battle it defends in; every
- *       (fortification, position) there is one proposal. Teams seen only in older
- *       battles are extra proposals, not preselected.</li>
+ *   <li>The source battle of a member is the newest battle it defends in with a team
+ *       of known heroes/titans; every such (fortification, position) there is one
+ *       proposal. Teams seen only in older battles are extra proposals, not preselected.</li>
  *   <li>Composition: the defender's units in the defense log, else an attack team
  *       of the same player in the SAME battle with EXACTLY the same team power
  *       (5 resolved heroes or titans) - no tolerance. A team without composition (power only)
@@ -142,21 +142,15 @@ public final class JournalTeamBuilderService {
 
     /**
      * The proposals of a member - empty if none is left: teams without composition are dropped
-     * right away. The source battle stays the newest battle the member defends in, even if all
-     * its teams were dropped.
+     * right away, so the source battle is the newest battle with a team of known heroes/titans.
      */
     private static Optional<MemberPlan> memberPlan(GuildMember member, Set<String> names,
                                                    List<BattleLogs> newestFirst) {
         // every (fortification, position) with composition the member defended, per battle, newest battle first
-        LocalDate sourceDate = null;
         List<List<Seen>> perBattle = new ArrayList<>();
         for (BattleLogs b : newestFirst) {
-            List<LogTeam> teams = JournalTeams.logTeams(b.defense(), names, m -> Logger.log("Team builder: " + m));
-            if (teams.isEmpty()) {
-                continue;
-            }
             List<Seen> seen = new ArrayList<>();
-            for (LogTeam t : teams) {
+            for (LogTeam t : JournalTeams.logTeams(b.defense(), names, m -> Logger.log("Team builder: " + m))) {
                 int power = t.firstPower();
                 Composition composition = composition(b, t.fights(), names, t.kind(), power);
                 if (composition != null) {
@@ -164,14 +158,14 @@ public final class JournalTeamBuilderService {
                             composition));
                 }
             }
-            if (sourceDate == null) {
-                sourceDate = b.date();
+            if (!seen.isEmpty()) {
+                perBattle.add(seen);
             }
-            perBattle.add(seen);
         }
-        if (perBattle.stream().allMatch(List::isEmpty)) {
+        if (perBattle.isEmpty()) {
             return Optional.empty();
         }
+        LocalDate sourceDate = perBattle.get(0).get(0).battle().date();
         List<Seen> source = new ArrayList<>(perBattle.get(0));
         source.sort(Comparator.comparing(Seen::kind));
         List<Seen> extra = new ArrayList<>();

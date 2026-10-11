@@ -95,7 +95,7 @@ public record TeamBuildPlan(List<MemberPlan> members, List<SkippedPlayer> skippe
      * @param position           position in the fortification
      * @param battleId           journal battle id
      * @param battleDate         battle day
-     * @param fromSourceBattle   true if seen in the member's newest battle, false for an older one
+     * @param fromSourceBattle   true if seen in the member's source battle (newest with known heroes/titans), false for an older one
      * @param composition        the heroes/titans (never {@code null} - teams known by power only are no proposals)
      * @param status            whether it can be applied
      * @param existingTeamIndex  {@link ProposalStatus#ALREADY_PRESENT}: the matching team, else -1
@@ -121,7 +121,7 @@ public record TeamBuildPlan(List<MemberPlan> members, List<SkippedPlayer> skippe
      * @param memberId     Cow2Win member id
      * @param memberName   member name
      * @param logNames     the member's names in the defense logs (several after renames)
-     * @param sourceDate   day of the newest battle the member defends in
+     * @param sourceDate   day of the source battle (newest battle with a team of known heroes/titans)
      * @param proposals    source battle first (hero teams, then titan teams), then older battles (newest first)
      * @param freeHeroSlots free hero team slots (no team yet)
      * @param freeTitanSlots free titan team slots
