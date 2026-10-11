@@ -163,7 +163,8 @@ public final class WorkspaceBootstrap {
         if (guildLoaded) {
             Path guildDir = context.guildFilePath().getParent();
             if (firstStart) {
-                GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME, 0);
+                GuildLog.event(guildDir, "guildLog.guildCreated", DEFAULT_GUILD_NAME,
+                        context.isGuildMaster() ? 1 : 0);
             }
             GuildLog.event(guildDir, "guildLog.guildOpened");
         }
