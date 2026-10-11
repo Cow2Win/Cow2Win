@@ -23,6 +23,9 @@ import java.util.function.IntConsumer;
  * next to it the current step, the running score, the last steps and a legend,
  * below a timeline with one bar per step and the buttons start / back / next / end
  * (also on the keys Home, Left, Right, End). Starts at step 0 unless a step is given.
+ *
+ * <p>Colors follow the log's result column in both directions - the attacker's view:
+ * green = the attacker won, red = the attacker lost, gold = fortification captured.
  */
 final class BattleReplayPanel extends JPanel {
 
@@ -112,11 +115,8 @@ final class BattleReplayPanel extends JPanel {
         JLabel title = new JLabel(JournalTexts.text("journal.replay.title." + direction.name(),
                 JournalTexts.visibleSpaces(name)));
         title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize2D() + 2));
-        JLabel good = grey(new JLabel(JournalTexts.text("journal.replay.goodHint")));
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         left.add(title);
-        left.add(Box.createHorizontalStrut(14));
-        left.add(good);
         JLabel order = grey(new JLabel(JournalTexts.text("journal.replay.orderHint"), new InfoIcon(), SwingConstants.LEFT));
         JPanel header = new JPanel(new BorderLayout());
         header.add(left, BorderLayout.WEST);
@@ -157,8 +157,10 @@ final class BattleReplayPanel extends JPanel {
         // running score
         JPanel score = new JPanel(new GridLayout(2, 4, 6, 0));
         String[] keys = {"points", "good", "bad", "forts"};
-        Color[] colors = {null, BattleReplayMapPanel.GREEN, BattleReplayMapPanel.RED,
-                direction == LogDirection.ATTACK ? BattleReplayMapPanel.GOLD : BattleReplayMapPanel.RED};
+        // colored by the attacker's result, like everything else: attacker wins = green
+        boolean attack = direction == LogDirection.ATTACK;
+        Color[] colors = {null, attack ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED,
+                attack ? BattleReplayMapPanel.RED : BattleReplayMapPanel.GREEN, BattleReplayMapPanel.GOLD};
         for (int i = 0; i < 4; i++) {
             scoreValues[i] = new JLabel("0", SwingConstants.CENTER);
             scoreValues[i].setFont(scoreValues[i].getFont().deriveFont(Font.BOLD, scoreValues[i].getFont().getSize2D() + 3));
@@ -227,9 +229,9 @@ final class BattleReplayPanel extends JPanel {
         buttons.add(last);
         JPanel legend = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         legend.add(barLegend(BattleReplayMapPanel.GREEN, "journal.replay.label." + (direction == LogDirection.ATTACK
-                ? "win" : "held")));
+                ? "win" : "fell")));
         legend.add(barLegend(BattleReplayMapPanel.RED, "journal.replay.label." + (direction == LogDirection.ATTACK
-                ? "loss" : "fell")));
+                ? "loss" : "held")));
         legend.add(barLegend(BattleReplayMapPanel.GREY, "journal.replay.label.undefended"));
         legend.add(barLegend(BattleReplayMapPanel.GOLD, "journal.replay.label." + (direction == LogDirection.ATTACK
                 ? "captured" : "lost")));
@@ -475,16 +477,16 @@ final class BattleReplayPanel extends JPanel {
 
     private Color labelColor(BattleDetailModel.ReplayStep s) {
         return switch (s.kind()) {
-            case FIGHT -> s.good(direction) ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
+            case FIGHT -> s.attackerWins() ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
             case UNDEFENDED -> BattleReplayMapPanel.GREY;
-            case CAPTURED -> direction == LogDirection.ATTACK ? BattleReplayMapPanel.GOLD : BattleReplayMapPanel.RED;
+            case CAPTURED -> BattleReplayMapPanel.GOLD;
         };
     }
 
     /** The color of a step's bar on the timeline. */
     private Color barColor(BattleDetailModel.ReplayStep s) {
         return switch (s.kind()) {
-            case FIGHT -> s.good(direction) ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
+            case FIGHT -> s.attackerWins() ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
             case UNDEFENDED -> BattleReplayMapPanel.GREY;
             case CAPTURED -> BattleReplayMapPanel.GOLD;
         };

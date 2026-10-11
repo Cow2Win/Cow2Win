@@ -159,7 +159,8 @@ final class BattleReplayMapPanel extends JComponent {
         RoundRectangle2D tile = tile(f.fort(), f.current());
         Color bg = background();
         Color fg = foreground();
-        Color own = direction == LogDirection.ATTACK ? GREEN : RED;
+        // captured = the attacker won the fortification - the same color in both directions
+        Color own = GREEN;
         Composite composite = g.getComposite();
         if (f.locked()) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
@@ -238,7 +239,7 @@ final class BattleReplayMapPanel extends JComponent {
             paintDot(g, dot, direction, px, dy, d);
             if (f.current() && step != null && step.kind() == BattleDetailModel.ReplayStep.Kind.FIGHT
                     && step.position() == p) {
-                g.setColor(step.good(direction) ? GREEN : RED);
+                g.setColor(step.attackerWins() ? GREEN : RED);
                 g.setStroke(new BasicStroke((float) (2.2 * s)));
                 double r = 4 * s;
                 g.draw(new Ellipse2D.Double(px - r, dy - r, d + 2 * r, d + 2 * r));
@@ -257,7 +258,7 @@ final class BattleReplayMapPanel extends JComponent {
                 g.fill(circle);
             }
             case TAKEN -> {
-                g.setColor(direction == LogDirection.ATTACK ? GREEN : RED);
+                g.setColor(GREEN);
                 g.fill(circle);
             }
             case FREE -> {

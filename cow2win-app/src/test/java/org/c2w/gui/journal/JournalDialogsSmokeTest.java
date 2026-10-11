@@ -101,8 +101,8 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             }
             // select a fight: the units panel (17.09. defense, all attack logs) shows the teams
             onEdt(() -> {
-                tabs.setSelectedIndex(2);
-                JTable fights = findIn(tabs.getComponentAt(2), JTable.class);
+                tabs.setSelectedIndex(3);
+                JTable fights = findIn(tabs.getComponentAt(3), JTable.class);
                 if (fights != null && fights.getRowCount() > 0) {
                     fights.setRowSelectionInterval(0, 0);
                 }
@@ -150,13 +150,13 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         });
         assertEquals(List.of(JournalTexts.text("journal.detail.tab.general"),
                 JournalTexts.of("direction", org.c2w.data.journal.LogDirection.DEFENSE),
+                JournalTexts.text("journal.detail.tab.defenseVisual"),
                 JournalTexts.of("direction", org.c2w.data.journal.LogDirection.ATTACK),
                 JournalTexts.text("journal.detail.tab.attackVisual"),
-                JournalTexts.text("journal.detail.tab.defenseVisual"),
                 JournalTexts.text("journal.detail.tab.forts")), titles.subList(0, 6));
         assertEquals(1, onEdt(tabs::getSelectedIndex), "opens on the defense");
 
-        for (int tab : new int[]{3, 4}) {
+        for (int tab : new int[]{2, 4}) {
             BattleReplayPanel replay = onEdt(() -> {
                 tabs.setSelectedIndex(tab);
                 return findIn(tabs.getComponentAt(tab), BattleReplayPanel.class);
@@ -189,18 +189,18 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
             assertFalse(onEdt(next::isEnabled), "next is off at the end");
             paint(detail);
         }
-        assertEquals(92, onEdt(() -> findIn(tabs.getComponentAt(3), BattleReplayPanel.class).stepCount()));
-        assertEquals(67, onEdt(() -> findIn(tabs.getComponentAt(4), BattleReplayPanel.class).stepCount()));
+        assertEquals(92, onEdt(() -> findIn(tabs.getComponentAt(4), BattleReplayPanel.class).stepCount()));
+        assertEquals(67, onEdt(() -> findIn(tabs.getComponentAt(2), BattleReplayPanel.class).stepCount()));
 
         // the step of a visual tab survives a reload
         onEdt(() -> {
-            findIn(tabs.getComponentAt(3), BattleReplayPanel.class).goTo(11);
+            findIn(tabs.getComponentAt(4), BattleReplayPanel.class).goTo(11);
             detail.reload();
             return null;
         });
         waitFor(() -> find(detail, JTabbedPane.class) != tabs);
         JTabbedPane reloaded = find(detail, JTabbedPane.class);
-        assertEquals(11, onEdt(() -> findIn(reloaded.getComponentAt(3), BattleReplayPanel.class).step()));
+        assertEquals(11, onEdt(() -> findIn(reloaded.getComponentAt(4), BattleReplayPanel.class).step()));
 
         // another guild with only the attack log: "Defense (visual)" shows the hint and the import
         guildService.createGuild("Beta", false);
@@ -210,10 +210,10 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
         int onlyAttack = context.journal().repository(false).orElseThrow().listBattles().get(0).battleId();
         JournalBattleDetailDialog partial = openDetail(onlyAttack);
         JTabbedPane partialTabs = find(partial, JTabbedPane.class);
-        assertNull(onEdt(() -> findIn(partialTabs.getComponentAt(4), BattleReplayPanel.class)));
-        assertNotNull(buttonWithText((Container) onEdt(() -> partialTabs.getComponentAt(4)),
+        assertNull(onEdt(() -> findIn(partialTabs.getComponentAt(2), BattleReplayPanel.class)));
+        assertNotNull(buttonWithText((Container) onEdt(() -> partialTabs.getComponentAt(2)),
                 JournalTexts.text("journal.battles.import")));
-        assertNotNull(onEdt(() -> findIn(partialTabs.getComponentAt(3), BattleReplayPanel.class)));
+        assertNotNull(onEdt(() -> findIn(partialTabs.getComponentAt(4), BattleReplayPanel.class)));
         paint(partial);
     }
 

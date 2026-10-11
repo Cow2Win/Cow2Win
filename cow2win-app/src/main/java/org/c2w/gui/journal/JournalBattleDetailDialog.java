@@ -29,12 +29,12 @@ import java.util.stream.Collectors;
  * The detail of one battle (not modal, several may be open), in tabs: General
  * (head data and both logs), Defense (our defenders per fortification -
  * held/fallen - with a short evaluation; hint + import if the defense log is
- * missing), Attack (display only), Attack (visual) and Defense (visual) - the
+ * missing), Defense (visual), Attack (display only), Attack (visual) - the
  * battle step by step on a simplified map of the fortifications, see
  * {@link BattleReplayPanel}; each keeps its step across reloads -, Fortifications
  * (overview per fortification and direction) and Problems (only if there are
- * parse problems). It opens on Defense; a reload keeps the chosen tab. Teams of a fight are shown below the
- * fights when the log contains them. Display only - battles are deleted in the
+ * parse problems). It opens on Defense; a reload keeps the chosen tab. Teams
+ * of a fight are shown below the fights when the log contains them. Display only - battles are deleted in the
  * battle list; the detail closes when its battle is gone. All content comes
  * from a {@link BattleDetailModel}, read in the background.
  */
@@ -133,9 +133,9 @@ public final class JournalBattleDetailDialog extends JDialog {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab(JournalTexts.text("journal.detail.tab.general"), generalTab());
         tabs.addTab(JournalTexts.of("direction", LogDirection.DEFENSE), directionTab(LogDirection.DEFENSE));
+        tabs.addTab(JournalTexts.text("journal.detail.tab.defenseVisual"), replayTab(LogDirection.DEFENSE));
         tabs.addTab(JournalTexts.of("direction", LogDirection.ATTACK), directionTab(LogDirection.ATTACK));
         tabs.addTab(JournalTexts.text("journal.detail.tab.attackVisual"), replayTab(LogDirection.ATTACK));
-        tabs.addTab(JournalTexts.text("journal.detail.tab.defenseVisual"), replayTab(LogDirection.DEFENSE));
         tabs.addTab(JournalTexts.text("journal.detail.tab.forts"), fortsTab());
         if (model.hasProblems()) {
             tabs.addTab(JournalTexts.text("journal.detail.tab.problems", String.valueOf(model.problems().size())),
