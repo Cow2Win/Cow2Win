@@ -10,10 +10,10 @@ import java.util.*;
 /**
  * What {@code JournalTeamBuilderService#prepare} found: per guild member the
  * team proposals from the journal's defense logs, matched against the member's
- * current teams. Writes nothing; the GUI shows it and answers with a
- * {@link TeamBuildSelection}.
+ * current teams. Only teams with known heroes/titans are proposed. Writes nothing;
+ * the GUI shows it and answers with a {@link TeamBuildSelection}.
  *
- * @param members                per member with log data: its proposals (members by name)
+ * @param members                per member with at least one proposal: its proposals (members by name)
  * @param skippedPlayers         defenders not linked to an existing member, with the reason
  * @param membersWithoutLogData  ids of guild members that defend in no stored defense log
  * @param defenseLogs            number of battles with a defense log in the journal
@@ -33,9 +33,7 @@ public record TeamBuildPlan(List<MemberPlan> members, List<SkippedPlayer> skippe
         /** The defense log has the defender's units for this fight (rare, e.g. 17.09.2026). */
         DEFENSE_UNITS,
         /** An attack team of the same player in the same battle has exactly the same team power. */
-        ATTACK_EXACT_POWER,
-        /** Only the team power is known. */
-        POWER_ONLY
+        ATTACK_EXACT_POWER
     }
 
     /**
@@ -98,25 +96,18 @@ public record TeamBuildPlan(List<MemberPlan> members, List<SkippedPlayer> skippe
      * @param battleId           journal battle id
      * @param battleDate         battle day
      * @param fromSourceBattle   true if seen in the member's newest battle, false for an older one
-     * @param composition        heroes/titans if known, else {@code null} ({@link #source()} POWER_ONLY)
-     * @param knownCompositions  compositions of the same kind seen in other fights of the member (newest
-     *                           first) - offered for a proposal without composition, never set automatically
-     * @param status             whether it can be applied
+     * @param composition        the heroes/titans (never {@code null} - teams known by power only are no proposals)
+     * @param status            whether it can be applied
      * @param existingTeamIndex  {@link ProposalStatus#ALREADY_PRESENT}: the matching team, else -1
      * @param suggestedTarget    {@link ProposalStatus#AVAILABLE}: the suggested target, else {@code null}
      * @param preselected        selected by default (available and from the source battle)
      */
     public record Proposal(String id, String memberId, TeamKind kind, int power, String fortificationId,
                            String fortificationName, int position, int battleId, LocalDate battleDate,
-                           boolean fromSourceBattle, Composition composition, List<Composition> knownCompositions,
-                           ProposalStatus status, int existingTeamIndex, Target suggestedTarget,
-                           boolean preselected) {
+                           boolean fromSourceBattle, Composition composition, ProposalStatus status,
+                           int existingTeamIndex, Target suggestedTarget, boolean preselected) {
         public Proposal {
-            knownCompositions = List.copyOf(knownCompositions);
-        }
-
-        public CompositionSource source() {
-            return composition == null ? CompositionSource.POWER_ONLY : composition.source();
+            Objects.requireNonNull(composition);
         }
 
         public boolean selectable() {
@@ -187,15 +178,5 @@ public record TeamBuildPlan(List<MemberPlan> members, List<SkippedPlayer> skippe
     /** The plan of a member. */
     public Optional<MemberPlan> member(String memberId) {
         return members.stream().filter(m -> m.memberId().equals(memberId)).findFirst();
-    }
-
-    /** Number of proposals per composition source. */
-    public Map<CompositionSource, Integer> countBySource() {
-        Map<CompositionSource, Integer> counts = new EnumMap<>(CompositionSource.class);
-        for (CompositionSource s : CompositionSource.values()) {
-            counts.put(s, 0);
-        }
-        proposals().forEach(p -> counts.merge(p.source(), 1, Integer::sum));
-        return counts;
     }
 }

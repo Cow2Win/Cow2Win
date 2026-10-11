@@ -112,7 +112,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
                 "journal.removeGuild.", "journal.noJournal", "journal.outcome.", "journal.assignmentStatus.",
                 "journal.resultFilter.", "journal.battles.count",
                 // phase 6
-                "journal.teams.", "journal.teamKind.", "journal.compositionSource.", "journal.skipReason.",
+                "journal.teams.", "journal.teamKind.", "journal.skipReason.",
                 "journal.players.createAll", "journal.players.resetAll", "menu.journal.buildTeams");
         List<String> wrong = new ArrayList<>();
         for (String language : LanguageService.availableLanguages()) {

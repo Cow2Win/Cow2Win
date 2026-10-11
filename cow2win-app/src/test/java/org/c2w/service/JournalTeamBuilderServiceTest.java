@@ -91,11 +91,13 @@ class JournalTeamBuilderServiceTest {
         TeamBuildPlan plan = service.prepare();
 
         assertEquals(6, plan.defenseLogs());
-        assertEquals(27, plan.members().size(), "every created member defends somewhere");
         assertEquals(List.of(), plan.skippedPlayers());
-        assertEquals(List.of(), plan.membersWithoutLogData());
+        assertEquals(List.of(), plan.membersWithoutLogData(), "every created member defends somewhere");
+        assertTrue(plan.members().size() > 0 && plan.members().size() <= 27, "members with proposals");
+        assertTrue(plan.members().stream().allMatch(m -> !m.proposals().isEmpty()));
+        assertTrue(plan.proposals().stream().allMatch(p -> p.composition() != null), "no proposal by power only");
 
-        // every composition (of a proposal or offered as known) against the real guild of 04.10.2026
+        // every composition against the real guild of 04.10.2026
         Guild truth = fixture();
         Map<String, GuildMember> truthByName = new HashMap<>();
         truth.members().forEach(m -> truthByName.put(GameNameNormalizer.key(m.name()), m));
@@ -108,33 +110,26 @@ class JournalTeamBuilderServiceTest {
             GuildMember real = truthByName.get(GameNameNormalizer.key(member.memberName()));
             if (real == null) {
                 notInFixture.add(member.memberName());
-                assertTrue(member.proposals().stream().allMatch(p -> p.composition() == null
-                        && p.knownCompositions().isEmpty()), member.memberName() + " has nothing to check");
                 continue;
             }
             for (Proposal p : member.proposals()) {
-                List<Composition> compositions = new ArrayList<>(p.knownCompositions());
-                if (p.composition() != null) {
-                    compositions.add(p.composition());
+                Composition c = p.composition();
+                if (!seen.add(member.memberId() + new TreeSet<>(c.unitIds()))) {
+                    continue;
                 }
-                for (Composition c : compositions) {
-                    if (!seen.add(member.memberId() + new TreeSet<>(c.unitIds()))) {
-                        continue;
-                    }
-                    checked.merge(c.source(), 1, Integer::sum);
-                    if (!hasTeam(real, c)) {
-                        if (c.source() == CompositionSource.ATTACK_EXACT_POWER) {
-                            attackMismatches.add(member.memberName() + " " + c);
-                        } else {
-                            assertEquals(LocalDate.of(2026, 9, 17), c.battleDate(), "defense units only on 17.09.");
-                            defenseMismatches.add(member.memberName() + " " + c.kind());
-                        }
+                checked.merge(c.source(), 1, Integer::sum);
+                if (!hasTeam(real, c)) {
+                    if (c.source() == CompositionSource.ATTACK_EXACT_POWER) {
+                        attackMismatches.add(member.memberName() + " " + c);
+                    } else {
+                        assertEquals(LocalDate.of(2026, 9, 17), c.battleDate(), "defense units only on 17.09.");
+                        defenseMismatches.add(member.memberName() + " " + c.kind());
                     }
                 }
             }
         }
         System.out.println("Team builder end-to-end: members=" + plan.members().size() + ", proposals="
-                + plan.proposals().size() + " " + plan.countBySource() + ", from source battle="
+                + plan.proposals().size() + ", from source battle="
                 + plan.proposals().stream().filter(Proposal::fromSourceBattle).count() + ", distinct compositions "
                 + checked + ", attack mismatches " + attackMismatches.size() + ", 17.09. defense deviations "
                 + defenseMismatches + ", not in the real guild " + notInFixture);
@@ -154,14 +149,10 @@ class JournalTeamBuilderServiceTest {
         assertEquals(new TreeSet<>(List.of("Andy TITAN", "Jay TITAN", "NeoSouls HERO", "Ordensritter HERO",
                 "Team Gandagom TITAN", "Vale TITAN")), defenseMismatches);
 
-        // proposals: source battle preselected, older battles not; known compositions only offered
+        // proposals: source battle preselected, older battles not
         assertTrue(plan.proposals().stream().filter(p -> !p.fromSourceBattle()).noneMatch(Proposal::preselected));
         assertTrue(plan.proposals().stream().filter(Proposal::fromSourceBattle)
                 .allMatch(p -> p.preselected() == (p.status() == ProposalStatus.AVAILABLE)));
-        assertTrue(plan.proposals().stream().anyMatch(p -> p.composition() == null && !p.knownCompositions().isEmpty()),
-                "a known composition is offered for a proposal without one");
-        assertTrue(plan.proposals().stream().filter(p -> p.composition() != null)
-                .allMatch(p -> p.knownCompositions().isEmpty()));
 
         // apply the preselection: only new teams, power from the source battle, lastModified = battle day
         TeamBuildSelection preselected = TeamBuildSelection.preselected(plan);
@@ -180,7 +171,7 @@ class JournalTeamBuilderServiceTest {
                         && p.battleDate().equals(t.lastModified())), p.toString());
             }
         }
-        System.out.println("Team builder applied: " + result.created() + " teams, " + result.bySource()
+        System.out.println("Team builder applied: " + result.created() + " teams"
                 + ", dropped pets " + result.droppedPets() + ", dropped totems " + result.droppedTotems());
     }
 
@@ -261,26 +252,6 @@ class JournalTeamBuilderServiceTest {
         assertTrue(context.isGuildDirty());
     }
 
-    @Test
-    @DisplayName("A known composition from another fight is only offered; chosen, it is applied")
-    void knownCompositionIsOnlyOffered() throws Exception {
-        importAllCreatingMembers();
-        TeamBuildPlan plan = service.prepare();
-        Proposal p = plan.proposals().stream()
-                .filter(x -> x.composition() == null && !x.knownCompositions().isEmpty() && x.selectable())
-                .findFirst().orElseThrow();
-        Composition known = p.knownCompositions().get(0);
-        assertEquals(p.kind(), known.kind());
-
-        TeamBuildSelection selection = TeamBuildSelection.none().with(p.id(), p.suggestedTarget());
-        assertTrue(service.apply(plan, selection.withComposition(p.id(), known)).isSuccess());
-        GuildMember m = member(p.memberId());
-        Set<String> ids = new HashSet<>(known.unitIds());
-        assertTrue(p.kind() == TeamKind.HERO
-                ? m.heroTeams().stream().anyMatch(t -> ids.equals(new HashSet<>(t.heroes().stream().map(Hero::id).toList())))
-                : m.titanTeams().stream().anyMatch(t -> ids.equals(new HashSet<>(t.titans().stream().map(Titan::id).toList()))));
-    }
-
     // =====================================================================
     // rules with in-memory logs
     // =====================================================================
@@ -288,6 +259,66 @@ class JournalTeamBuilderServiceTest {
     private static final LocalDate DAY = LocalDate.of(2026, 9, 24);
     private static final List<String> HEROES = List.of("dante", "aurora", "nebula", "sebastian", "martha");
     private static final List<String> HEROES_2 = List.of("galahad", "yasmine", "maya", "jhu", "astaroth");
+    private static final List<String> HEROES_3 = List.of("dante", "galahad", "aurora", "yasmine", "nebula");
+
+    @Test
+    @DisplayName("A team without composition is no proposal; a member with only such teams gets no member plan")
+    void powerOnlyIsNoProposal() {
+        BattleLog defense = log(LogDirection.DEFENSE,
+                defense("Max", "citadel", 1, 1_000_000, List.of()), defense("Max", "citadel", 2, 900_000, List.of()),
+                defense("Moritz", "citadel", 3, 800_000, List.of()),
+                defense("Moritz", "barracks", 1, 700_000, heroUnits(HEROES, null)));
+        Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(), List.of()),
+                new GuildMember("moritz", "Moritz", List.of(), List.of())));
+
+        TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(new JournalTeamBuilderService.BattleLogs(1, DAY,
+                defense, null)), Map.of("Max", assigned("max"), "Moritz", assigned("moritz")), guild, null);
+
+        assertTrue(plan.member("max").isEmpty(), "only teams known by power");
+        assertEquals(List.of(), plan.membersWithoutLogData(), "Max defends - it just has nothing to offer");
+        List<Proposal> proposals = plan.member("moritz").orElseThrow().proposals();
+        assertEquals(1, proposals.size());
+        assertEquals(700_000, proposals.get(0).power());
+        assertEquals(HEROES, proposals.get(0).composition().unitIds());
+    }
+
+    @Test
+    @DisplayName("A dropped team (power only) takes no slot: both teams with heroes stay available")
+    void powerOnlyTakesNoSlot() {
+        HeroTeam kept = new HeroTeam("max", 0, heroes(HEROES_3), null, null, 2_000_000, DAY.minusWeeks(2));
+        Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(kept), List.of())));
+        BattleLog defense = log(LogDirection.DEFENSE,
+                defense("Max", "citadel", 1, 1_100_000, List.of()),
+                defense("Max", "citadel", 2, 1_000_000, heroUnits(HEROES, null)),
+                defense("Max", "barracks", 1, 900_000, heroUnits(HEROES_2, null)));
+
+        TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(new JournalTeamBuilderService.BattleLogs(1, DAY,
+                defense, null)), Map.of("Max", assigned("max")), guild, null);
+
+        MemberPlan member = plan.member("max").orElseThrow();
+        assertEquals(2, member.freeHeroSlots());
+        assertEquals(2, member.proposals().size());
+        assertTrue(member.proposals().stream().allMatch(p -> p.status() == ProposalStatus.AVAILABLE
+                && p.suggestedTarget().equals(TeamBuildPlan.Target.NEW) && p.preselected()), member.toString());
+    }
+
+    @Test
+    @DisplayName("A team known by power only never counts as already present")
+    void powerOnlyIsNotPresent() {
+        HeroTeam kept = new HeroTeam("max", 0, heroes(HEROES_3), null, null, 1_000_000, DAY.minusWeeks(2));
+        Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(kept), List.of())));
+        BattleLog defense = log(LogDirection.DEFENSE,
+                defense("Max", "citadel", 1, 1_000_000, List.of()),
+                defense("Max", "barracks", 1, 700_000, heroUnits(HEROES, null)));
+
+        TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(new JournalTeamBuilderService.BattleLogs(1, DAY,
+                defense, null)), Map.of("Max", assigned("max")), guild, null);
+
+        List<Proposal> proposals = plan.member("max").orElseThrow().proposals();
+        assertEquals(1, proposals.size());
+        assertEquals(700_000, proposals.get(0).power());
+        assertEquals(ProposalStatus.AVAILABLE, proposals.get(0).status());
+    }
 
     @Test
     @DisplayName("Composition from the attack log only with exactly the same power (1 % off: none)")
@@ -319,8 +350,10 @@ class JournalTeamBuilderServiceTest {
     @DisplayName("More than 3 hero teams: the 4th proposal is over the limit")
     void limits() {
         BattleLog defense = log(LogDirection.DEFENSE,
-                defense("Max", "citadel", 1, 1_000_000, List.of()), defense("Max", "citadel", 2, 900_000, List.of()),
-                defense("Max", "barracks", 1, 800_000, List.of()), defense("Max", "bastion", 1, 700_000, List.of()));
+                defense("Max", "citadel", 1, 1_000_000, heroUnits(HEROES, null)),
+                defense("Max", "citadel", 2, 900_000, heroUnits(HEROES_2, null)),
+                defense("Max", "barracks", 1, 800_000, heroUnits(HEROES_3, null)),
+                defense("Max", "bastion", 1, 700_000, heroUnits(HEROES, null)));
         Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(), List.of())));
 
         TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(new JournalTeamBuilderService.BattleLogs(1, DAY,
@@ -330,15 +363,16 @@ class JournalTeamBuilderServiceTest {
         assertEquals(4, proposals.size());
         assertEquals(3, proposals.stream().filter(p -> p.status() == ProposalStatus.AVAILABLE).count());
         assertEquals(1, proposals.stream().filter(p -> p.status() == ProposalStatus.OVER_LIMIT).count());
-        assertTrue(proposals.stream().allMatch(p -> p.source() == CompositionSource.POWER_ONLY));
+        assertTrue(proposals.stream().allMatch(p -> p.composition().source() == CompositionSource.DEFENSE_UNITS));
     }
 
     @Test
     @DisplayName("Older battles: a team seen only before is an extra proposal, not preselected")
     void olderBattles() {
-        BattleLog newer = log(LogDirection.DEFENSE, defense("Max", "citadel", 1, 1_000_000, List.of()));
-        BattleLog older = log(LogDirection.DEFENSE, defense("Max", "barracks", 3, 1_005_000, List.of()),
-                defense("Max", "bastion", 2, 700_000, List.of()));
+        BattleLog newer = log(LogDirection.DEFENSE, defense("Max", "citadel", 1, 1_000_000, heroUnits(HEROES, null)));
+        BattleLog older = log(LogDirection.DEFENSE, defense("Max", "barracks", 3, 1_005_000, heroUnits(HEROES_2, null)),
+                defense("Max", "bastion", 2, 700_000, heroUnits(HEROES_3, null)),
+                defense("Max", "bastion", 3, 650_000, List.of()));
         Guild guild = new Guild("g", "G", List.of(new GuildMember("max", "Max", List.of(), List.of())));
 
         TeamBuildPlan plan = JournalTeamBuilderService.plan(List.of(
@@ -346,7 +380,8 @@ class JournalTeamBuilderServiceTest {
                 new JournalTeamBuilderService.BattleLogs(2, DAY, newer, null)), Map.of("Max", assigned("max")), guild, null);
 
         List<Proposal> proposals = plan.member("max").orElseThrow().proposals();
-        assertEquals(2, proposals.size(), "1.005.000 is within 3 % of the source team - the same team");
+        assertEquals(2, proposals.size(), "1.005.000 is within 3 % of the source team - the same team; "
+                + "650.000 is known by power only");
         assertTrue(proposals.get(0).fromSourceBattle());
         assertTrue(proposals.get(0).preselected());
         assertFalse(proposals.get(1).fromSourceBattle());
@@ -415,7 +450,7 @@ class JournalTeamBuilderServiceTest {
         TitanTeam built = member("max").titanTeams().get(0);
         assertEquals(titanIds, built.titans().stream().map(Titan::id).toList());
         assertFalse(built.totems().contains(notAllowed));
-        assertEquals(Map.of(CompositionSource.DEFENSE_UNITS, 1), ok.bySource());
+        assertEquals(1, ok.created());
     }
 
     @Test
@@ -439,6 +474,10 @@ class JournalTeamBuilderServiceTest {
         return JournalTeamBuilderService.composition(new JournalTeamBuilderService.BattleLogs(1, DAY,
                         log(LogDirection.DEFENSE, defense), log(LogDirection.ATTACK, attack)),
                 List.of(defense), Set.of("Max"), TeamKind.HERO, defense.defender().teamPower());
+    }
+
+    private List<Hero> heroes(List<String> ids) {
+        return ids.stream().map(id -> context.catalog().heroes().findById(id).orElseThrow()).toList();
     }
 
     private GuildMember member(String id) {

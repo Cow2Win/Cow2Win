@@ -202,7 +202,7 @@ public final class JournalActions {
         if (context.guild() == null) {
             return;
         }
-        JournalTeamBuilderDialog.open(frame, context, guildService, this::journalChanged);
+        JournalTeamBuilderDialog.open(frame, context, guildService, this::journalChanged, this::openPlayers);
     }
 
     /** Shows the battle list (one window, brought to front if already open). */

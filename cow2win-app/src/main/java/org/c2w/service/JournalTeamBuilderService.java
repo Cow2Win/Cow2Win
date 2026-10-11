@@ -32,7 +32,10 @@ import java.util.*;
  *       battles are extra proposals, not preselected.</li>
  *   <li>Composition: the defender's units in the defense log, else an attack team
  *       of the same player in the SAME battle with EXACTLY the same team power
- *       (5 resolved heroes or titans) - no tolerance; else power only.</li>
+ *       (5 resolved heroes or titans) - no tolerance. A team without composition (power only)
+ *       is dropped before older battles are matched and targets are given: it is no proposal,
+ *       takes no slot and is never "already present". A member left without proposals gets no
+ *       {@link MemberPlan}.</li>
  *   <li>Teams with heroes/titans are never changed; only missing teams are added
  *       and empty teams (no heroes/titans) filled. Lineups are not touched.</li>
  * </ul>
@@ -91,7 +94,7 @@ public final class JournalTeamBuilderService {
         }
         TeamBuildPlan plan = plan(battles, repo.get().ownAssignmentsByName(), guild, guildFile);
         Logger.log("Team builder: " + battles.size() + " defense log(s), " + plan.members().size() + " member(s), "
-                + plan.proposals().size() + " proposal(s) " + plan.countBySource());
+                + plan.proposals().size() + " proposal(s)");
         return plan;
     }
 
@@ -124,7 +127,7 @@ public final class JournalTeamBuilderService {
 
         List<MemberPlan> plans = new ArrayList<>();
         for (Map.Entry<String, Set<String>> e : logNames.entrySet()) {
-            plans.add(memberPlan(members.get(e.getKey()), e.getValue(), newestFirst));
+            memberPlan(members.get(e.getKey()), e.getValue(), newestFirst).ifPresent(plans::add);
         }
         plans.sort(Comparator.comparing(MemberPlan::memberName, String.CASE_INSENSITIVE_ORDER));
         List<String> withoutData = guild.members().stream().map(GuildMember::id)
@@ -137,19 +140,37 @@ public final class JournalTeamBuilderService {
                         int power, Composition composition) {
     }
 
-    private static MemberPlan memberPlan(GuildMember member, Set<String> names, List<BattleLogs> newestFirst) {
-        // every (fortification, position) the member defended, per battle, newest battle first
+    /**
+     * The proposals of a member - empty if none is left: teams without composition are dropped
+     * right away. The source battle stays the newest battle the member defends in, even if all
+     * its teams were dropped.
+     */
+    private static Optional<MemberPlan> memberPlan(GuildMember member, Set<String> names,
+                                                   List<BattleLogs> newestFirst) {
+        // every (fortification, position) with composition the member defended, per battle, newest battle first
+        LocalDate sourceDate = null;
         List<List<Seen>> perBattle = new ArrayList<>();
         for (BattleLogs b : newestFirst) {
+            List<LogTeam> teams = JournalTeams.logTeams(b.defense(), names, m -> Logger.log("Team builder: " + m));
+            if (teams.isEmpty()) {
+                continue;
+            }
             List<Seen> seen = new ArrayList<>();
-            for (LogTeam t : JournalTeams.logTeams(b.defense(), names, m -> Logger.log("Team builder: " + m))) {
+            for (LogTeam t : teams) {
                 int power = t.firstPower();
-                seen.add(new Seen(b, t.fortificationId(), t.fortificationName(), t.position(), t.kind(), power,
-                        composition(b, t.fights(), names, t.kind(), power)));
+                Composition composition = composition(b, t.fights(), names, t.kind(), power);
+                if (composition != null) {
+                    seen.add(new Seen(b, t.fortificationId(), t.fortificationName(), t.position(), t.kind(), power,
+                            composition));
+                }
             }
-            if (!seen.isEmpty()) {
-                perBattle.add(seen);
+            if (sourceDate == null) {
+                sourceDate = b.date();
             }
+            perBattle.add(seen);
+        }
+        if (perBattle.stream().allMatch(List::isEmpty)) {
+            return Optional.empty();
         }
         List<Seen> source = new ArrayList<>(perBattle.get(0));
         source.sort(Comparator.comparing(Seen::kind));
@@ -163,16 +184,7 @@ public final class JournalTeamBuilderService {
                 }
             }
         }
-        // known compositions: every composition of the member, newest first, distinct by units
-        List<Composition> known = new ArrayList<>();
-        for (List<Seen> battle : perBattle) {
-            for (Seen s : battle) {
-                if (s.composition() != null && known.stream().noneMatch(k -> k.sameUnits(s.composition()))) {
-                    known.add(s.composition());
-                }
-            }
-        }
-        return match(member, names, perBattle.get(0).get(0).battle().date(), source, extra, known);
+        return Optional.of(match(member, names, sourceDate, source, extra));
     }
 
     /** The team kind of a fight - see {@link JournalTeams#teamKind}. */
@@ -213,12 +225,12 @@ public final class JournalTeamBuilderService {
         return JournalTeams.fromUnits(units, kind, source, date, power);
     }
 
-    /** Same team: same kind and power within the tolerance, or - if both known - the same units. */
+    /** Same team: same kind and power within the tolerance, or the same units. */
     private static boolean sameTeam(Seen a, Seen b) {
         if (a.kind() != b.kind()) {
             return false;
         }
-        if (a.composition() != null && b.composition() != null && a.composition().sameUnits(b.composition())) {
+        if (a.composition().sameUnits(b.composition())) {
             return true;
         }
         return closePower(a.power(), b.power());
@@ -231,7 +243,7 @@ public final class JournalTeamBuilderService {
     // --- matching with the guild ---
 
     private static MemberPlan match(GuildMember member, Set<String> names, LocalDate sourceDate, List<Seen> source,
-                                    List<Seen> extra, List<Composition> known) {
+                                    List<Seen> extra) {
         List<Proposal> proposals = new ArrayList<>();
         Map<TeamKind, Integer> free = new EnumMap<>(TeamKind.class);
         Map<TeamKind, List<Integer>> emptyTeams = new EnumMap<>(TeamKind.class);
@@ -283,11 +295,9 @@ public final class JournalTeamBuilderService {
                 boolean fromSource = kindSource.contains(s);
                 ProposalStatus status = present.containsKey(s) ? ProposalStatus.ALREADY_PRESENT
                         : targets.containsKey(s) ? ProposalStatus.AVAILABLE : ProposalStatus.OVER_LIMIT;
-                List<Composition> offered = s.composition() != null ? List.of()
-                        : known.stream().filter(c -> c.kind() == kind).toList();
                 proposals.add(new Proposal(proposalId(member, s), member.id(), kind, s.power(), s.fortificationId(),
                         s.fortificationName(), s.position(), s.battle().battleId(), s.battle().date(), fromSource,
-                        s.composition(), offered, status, present.getOrDefault(s, -1), targets.get(s),
+                        s.composition(), status, present.getOrDefault(s, -1), targets.get(s),
                         fromSource && status == ProposalStatus.AVAILABLE));
             }
         }
@@ -312,7 +322,7 @@ public final class JournalTeamBuilderService {
 
     /** A team with heroes/titans matches a seen team: same units, or power within the tolerance. */
     private static boolean matches(Team team, Seen s) {
-        if (s.composition() != null && new HashSet<>(s.composition().unitIds()).equals(team.unitIds())) {
+        if (new HashSet<>(s.composition().unitIds()).equals(team.unitIds())) {
             return true;
         }
         return team.power() > 0 && closePower(team.power(), s.power());
@@ -324,7 +334,7 @@ public final class JournalTeamBuilderService {
 
     /**
      * Adds the selected proposals to the open guild - new teams at the next free index,
-     * or filling the chosen empty team - with power, heroes/titans (if known), pet or
+     * or filling the chosen empty team - with power, heroes/titans, pet or
      * totems, {@code lastModified} = battle day and no war flag. Teams with heroes/titans
      * are never touched. Validates everything first; on any error nothing changes. On
      * success the guild is set via {@link GuildService} and is unsaved.
@@ -342,12 +352,11 @@ public final class JournalTeamBuilderService {
         if (applied.created + applied.filled > 0) {
             guildService.updateGuild(applied.guild);
         }
-        Logger.log("Team builder: " + applied.created + " team(s) added, " + applied.filled + " filled "
-                + applied.bySource);
+        Logger.log("Team builder: " + applied.created + " team(s) added, " + applied.filled + " filled");
         if (applied.created + applied.filled > 0) {
             GuildLog.event(GuildLog.dirOf(plan.guildFile()), "guildLog.journalTeamsBuilt", applied.created + applied.filled);
         }
-        return new TeamBuildResult(List.of(), applied.created, applied.filled, applied.bySource, applied.droppedPets,
+        return new TeamBuildResult(List.of(), applied.created, applied.filled, applied.droppedPets,
                 applied.droppedTotems);
     }
 
@@ -366,7 +375,6 @@ public final class JournalTeamBuilderService {
     /** What {@link #applyTo} produced. */
     static final class Applied {
         final List<TeamBuildResult.Error> errors = new ArrayList<>();
-        final Map<CompositionSource, Integer> bySource = new EnumMap<>(CompositionSource.class);
         final List<TeamBuildResult.DroppedPet> droppedPets = new ArrayList<>();
         final List<TeamBuildResult.DroppedTotem> droppedTotems = new ArrayList<>();
         Guild guild;
@@ -412,11 +420,7 @@ public final class JournalTeamBuilderService {
         int errorsBefore = result.errors.size();
         for (Proposal p : proposals) {
             Target target = selection.targets().get(p.id());
-            Composition composition = p.composition() != null ? p.composition() : selection.compositions().get(p.id());
-            if (composition != null && composition.kind() != p.kind()) {
-                error(result, TeamBuildResult.Error.Kind.INVALID_COMPOSITION, p);
-                continue;
-            }
+            Composition composition = p.composition();
             boolean hero = p.kind() == TeamKind.HERO;
             int size = hero ? heroTeams.size() : titanTeams.size();
             int index;
@@ -436,7 +440,7 @@ public final class JournalTeamBuilderService {
                     continue;
                 }
             }
-            if (hero && composition != null && composition.petId() != null) {
+            if (hero && composition.petId() != null) {
                 String other = selectedPets.put(composition.petId(), p.id());
                 if (other != null) {
                     error(result, TeamBuildResult.Error.Kind.DUPLICATE_PET, p);
@@ -461,8 +465,6 @@ public final class JournalTeamBuilderService {
             } else {
                 result.filled++;
             }
-            result.bySource.merge(composition == null ? CompositionSource.POWER_ONLY : composition.source(), 1,
-                    Integer::sum);
         }
         if (result.errors.size() > errorsBefore) {
             return member;
@@ -504,8 +506,7 @@ public final class JournalTeamBuilderService {
 
     private static HeroTeam heroTeam(GuildMember member, int index, Proposal p, Composition c, Catalog catalog,
                                      Applied result) {
-        HeroTeam team = JournalTeams.heroTeam(member.id(), index, c == null ? List.of() : c.unitIds(),
-                c == null ? null : c.petId(), null, p.power(), p.battleDate(), catalog,
+        HeroTeam team = JournalTeams.heroTeam(member.id(), index, c.unitIds(), c.petId(), null, p.power(), p.battleDate(), catalog,
                 pet -> result.droppedPets.add(new TeamBuildResult.DroppedPet(member.id(), pet)));
         if (team == null) {
             error(result, TeamBuildResult.Error.Kind.UNKNOWN_CATALOG_ID, p);
@@ -515,8 +516,7 @@ public final class JournalTeamBuilderService {
 
     private static TitanTeam titanTeam(GuildMember member, int index, Proposal p, Composition c, Catalog catalog,
                                        Applied result) {
-        TitanTeam team = JournalTeams.titanTeam(member.id(), index, c == null ? List.of() : c.unitIds(),
-                c == null ? Set.of() : c.totems(), p.power(), p.battleDate(), catalog,
+        TitanTeam team = JournalTeams.titanTeam(member.id(), index, c.unitIds(), c.totems(), p.power(), p.battleDate(), catalog,
                 totem -> result.droppedTotems.add(new TeamBuildResult.DroppedTotem(member.id(), totem)));
         if (team == null) {
             error(result, TeamBuildResult.Error.Kind.UNKNOWN_CATALOG_ID, p);

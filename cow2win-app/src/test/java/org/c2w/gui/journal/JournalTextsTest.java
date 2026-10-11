@@ -56,10 +56,11 @@ class JournalTextsTest {
         GROUPS.put("players.memberHint", JournalPlayersModel.HintKind.values());
         // phase 6
         GROUPS.put("teamKind", TeamKind.values());
-        GROUPS.put("compositionSource", TeamBuildPlan.CompositionSource.values());
         GROUPS.put("skipReason", TeamBuildPlan.SkipReason.values());
         GROUPS.put("teams.target", TeamBuildPlan.Target.Kind.values());
         GROUPS.put("teams.error", TeamBuildResult.Error.Kind.values());
+        GROUPS.put("teams.errorShort", TeamBuildResult.Error.Kind.values());
+        GROUPS.put("teams.badge", TeamKind.values());
         // phase 7
         GROUPS.put("syncCertainty", SyncRow.Certainty.values());
         GROUPS.put("sync.empty", SyncPlan.EmptyReason.values());
@@ -112,6 +113,45 @@ class JournalTextsTest {
             }
         }
         assertEquals(List.of(), wrong);
+    }
+
+    @Test
+    @DisplayName("Team builder: the same texts in every language, the removed ones are gone")
+    void teamBuilderTexts() {
+        Set<String> german = teamBuilderKeys("deutsch");
+        for (String language : LanguageService.availableLanguages()) {
+            assertEquals(german, teamBuilderKeys(language), language);
+        }
+        for (String removed : List.of("journal.teams.hint", "journal.teams.onlyWithoutTeams", "journal.teams.member",
+                "journal.teams.existing", "journal.teams.none", "journal.teams.empty", "journal.teams.present",
+                "journal.teams.overLimit", "journal.teams.known", "journal.teams.knownNone", "journal.teams.knownHint",
+                "journal.teams.knownItem", "journal.teams.skipped", "journal.teams.withoutData",
+                "journal.teams.error.INVALID_COMPOSITION", "journal.compositionSource.DEFENSE_UNITS",
+                "journal.compositionSource.ATTACK_EXACT_POWER", "journal.compositionSource.POWER_ONLY")) {
+            assertFalse(german.contains(removed), removed);
+            assertNull(LanguageService.textIn("deutsch", removed), removed);
+        }
+        for (String kept : List.of("journal.teams.clear", "journal.teams.skippedLine", "journal.teams.where",
+                "journal.teams.title", "journal.teams.noDefenseLogs", "journal.teams.chip.newHero.one",
+                "journal.teams.chip.newHero.other", "journal.teams.chip.newTitan.one",
+                "journal.teams.chip.newTitan.other", "journal.teams.rules")) {
+            assertTrue(german.contains(kept), kept);
+        }
+    }
+
+    private static Set<String> teamBuilderKeys(String language) {
+        java.util.Properties props = new java.util.Properties();
+        try (var in = LanguageService.openLanguageResource(language, language + ".properties");
+             var reader = new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)) {
+            props.load(reader);
+        } catch (java.io.IOException e) {
+            throw new AssertionError(e);
+        }
+        Set<String> keys = new java.util.TreeSet<>();
+        props.stringPropertyNames().stream()
+                .filter(k -> k.startsWith("journal.teams.") || k.startsWith("journal.compositionSource."))
+                .forEach(keys::add);
+        return keys;
     }
 
     @Test

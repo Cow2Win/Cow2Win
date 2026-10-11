@@ -139,8 +139,32 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
     void teamBuilder() throws Exception {
         JournalTeamBuilderDialog dialog = onEdt(() -> JournalTeamBuilderDialog.create(null, context, guildService));
         waitFor(() -> dialog.model() != null);
-        assertFalse(dialog.model().plan().members().isEmpty());
+        assertFalse(dialog.model().members().isEmpty());
+        String apply = onEdt(() -> dialog.applyButton().getText());
+        assertEquals(JournalTexts.text("journal.teams.apply", String.valueOf(dialog.model().selectedCount())), apply);
+        assertTrue(onEdt(() -> dialog.getRootPane().getDefaultButton() == dialog.applyButton()));
+        List<String> checkBoxes = new ArrayList<>();
+        onEdt(() -> {
+            collectCheckBoxTexts(dialog.getContentPane(), checkBoxes);
+            return null;
+        });
+        String selected = JournalTexts.text("journal.teams.selected", String.valueOf(dialog.model().selectedCount()),
+                String.valueOf(dialog.model().selectableCount()));
+        assertTrue(checkBoxes.contains(selected), checkBoxes.toString());
+        assertTrue(checkBoxes.stream().allMatch(t -> t.isEmpty() || t.equals(selected)),
+                "no other checkbox with text (no filter 'only members without teams'): " + checkBoxes);
         paint(dialog);
+    }
+
+    private static void collectCheckBoxTexts(Component component, List<String> texts) {
+        if (component instanceof JCheckBox box) {
+            texts.add(box.getText());
+        }
+        if (component instanceof Container container) {
+            for (Component child : container.getComponents()) {
+                collectCheckBoxTexts(child, texts);
+            }
+        }
     }
 
     @Test
