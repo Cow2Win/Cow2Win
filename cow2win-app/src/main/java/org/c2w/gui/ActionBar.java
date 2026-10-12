@@ -4,7 +4,6 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.eval.LineupAlgorithm;
-import org.c2w.eval.ManualLineupAlgorithm;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
@@ -26,6 +25,7 @@ import org.c2w.service.LineupService;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
@@ -81,6 +81,9 @@ public class ActionBar extends JPanel {
     private final GuildService guildService;
     private final LineupService lineupService;
 
+    /** The algorithm per fortification type "Run assignment" uses - shared with the concept stage's combo box. */
+    private final AlgorithmSelection algorithmSelection;
+
     /** "Save guild" action - red icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
     private final AppAction saveGuildAction;
 
@@ -103,7 +106,7 @@ public class ActionBar extends JPanel {
      * Registers this bar's actions in {@code actions} - the process bar itself is only added
      * by {@link #buildBar}, once every action of the main window exists.
      */
-    public ActionBar(AppContext appContext, MainActions actions) {
+    public ActionBar(AppContext appContext, MainActions actions, AlgorithmSelection algorithmSelection) {
         super(new BorderLayout());
         // Transparent like the process bar inside it, so the background image shows through.
         setOpaque(false);
@@ -113,7 +116,11 @@ public class ActionBar extends JPanel {
         if (actions == null) {
             throw new IllegalArgumentException("ActionBar needs the main actions");
         }
+        if (algorithmSelection == null) {
+            throw new IllegalArgumentException("ActionBar needs the algorithm selection");
+        }
         this.appContext = appContext;
+        this.algorithmSelection = algorithmSelection;
         this.guildService = new GuildService(appContext);
         this.lineupService = new LineupService(appContext);
 
@@ -194,12 +201,12 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Runs the hero and the titan algorithm configured as defaults in the
-     * Settings dialog on a background thread, so the window stays responsive,
-     * and applies the result on the Swing event thread once done (see
-     * {@link LineupService#computeAlgorithms}/{@link LineupService#applyAlgorithmRun}).
-     * A fortification type configured as "Manual" (see {@link ManualLineupAlgorithm})
-     * is left untouched.
+     * Runs the algorithm chosen in {@link #algorithmSelection} for the selected
+     * fortification type only: removes that type's assignments from the lineup
+     * first (after asking, if there are any) and leaves the other type untouched.
+     * Computes on a background thread, so the window stays responsive, and
+     * applies the result on the Swing event thread once done (see
+     * {@link LineupService#computeAlgorithm}/{@link LineupService#applyAlgorithmRun}).
      */
     private void onRunAlgorithm() {
         if (lineupService.isOriginalOpen()) {
@@ -210,8 +217,12 @@ public class ActionBar extends JPanel {
         }
         Lineup lineup = appContext.lineup();
         Guild guild = appContext.guild();
-        LineupAlgorithm heroAlgorithm = LineupService.defaultHeroAlgorithm();
-        LineupAlgorithm titanAlgorithm = LineupService.defaultTitanAlgorithm();
+        Lineup.TeamType teamType = AlgorithmSelection.teamTypeOf(appContext.fortificationType());
+        LineupAlgorithm algorithm = algorithmSelection.get(teamType);
+        long existing = lineup.entries().stream().filter(entry -> entry.teamType() == teamType).count();
+        if (existing > 0 && !confirmClear(algorithm, existing, teamType)) {
+            return;
+        }
 
         Window window = SwingUtilities.getWindowAncestor(this);
         runAlgorithmAction.setEnabled(false);
@@ -219,7 +230,7 @@ public class ActionBar extends JPanel {
         new SwingWorker<LineupService.AlgorithmRun, Void>() {
             @Override
             protected LineupService.AlgorithmRun doInBackground() {
-                return LineupService.computeAlgorithms(lineup, guild, heroAlgorithm, titanAlgorithm);
+                return LineupService.computeAlgorithm(lineup, guild, algorithm);
             }
 
             @Override
@@ -235,6 +246,22 @@ public class ActionBar extends JPanel {
                 }
             }
         }.execute();
+    }
+
+    /**
+     * Asks whether to remove the {@code existing} assignments of {@code teamType}
+     * before running {@code algorithm} - true for "yes".
+     */
+    private boolean confirmClear(LineupAlgorithm algorithm, long existing, Lineup.TeamType teamType) {
+        String typeName = LineupService.teamTypeName(teamType);
+        // English writes the type in lower case inside a sentence ("all 3 heroes assignments").
+        if (Locale.ENGLISH.getLanguage().equals(LanguageService.locale().getLanguage())) {
+            typeName = typeName.toLowerCase(LanguageService.locale());
+        }
+        int answer = JOptionPane.showConfirmDialog(dialogParent(),
+                LanguageService.displayName("toolbar.runAlgorithm.confirmClear", algorithm.localizedName(), existing, typeName),
+                LanguageService.displayName("teamsOverview.runAlgorithm"), JOptionPane.YES_NO_OPTION);
+        return answer == JOptionPane.YES_OPTION;
     }
 
     /** Saves the current guild to disk as-is - see {@link GuildService#saveGuild()}. */

@@ -43,7 +43,7 @@ class FortificationTypeActionsTest {
         guildService.createGuild("Alpha", false);
         guildService.switchToGuild("Alpha");
         actions = new MainActions();
-        new ActionBar(context, actions);
+        new ActionBar(context, actions, new AlgorithmSelection());
     }
 
     @AfterEach

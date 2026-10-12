@@ -180,7 +180,8 @@ final class InfoSections {
         return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(LanguageService.locale()).format(date);
     }
 
-    private static String escape(String text) {
+    /** {@code text} with the HTML special characters escaped. */
+    static String escape(String text) {
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

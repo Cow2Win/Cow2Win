@@ -13,7 +13,9 @@ import java.util.Map;
  * {@link #HERO} only fills hero fortifications, {@link #TITAN}
  * only titan fortifications, so both parts of a lineup can use different
  * strategies - or one of them {@link ManualLineupAlgorithm manual picks}
- * only. {@link #runBoth} applies one algorithm per side to a lineup.
+ * only. {@link #runBoth} applies one algorithm per side to a lineup;
+ * {@link #forAssignment}/{@link #preselected} serve the "algorithm" combo box of
+ * the strategic concept, which never offers "Manual".
  *
  * <p>Also owns the format of the COMBINED {@link Lineup#algorithmName()}
  * ("Heroes: Best possible lineup; Titans: Balanced defense") - see {@link
@@ -48,6 +50,31 @@ public final class LineupAlgorithms {
     /** {@link #HERO} or {@link #TITAN}, whichever matches {@code teamType}. */
     public static List<LineupAlgorithm> forType(Lineup.TeamType teamType) {
         return teamType == Lineup.TeamType.HERO ? HERO : TITAN;
+    }
+
+    /**
+     * The algorithms of {@code teamType} that actually assign teams: {@link #forType}
+     * without {@link ManualLineupAlgorithm}, in the same order - the choices of the
+     * "algorithm" combo box in the strategic concept's action list.
+     */
+    public static List<LineupAlgorithm> forAssignment(Lineup.TeamType teamType) {
+        return forType(teamType).stream()
+                .filter(algorithm -> !(algorithm instanceof ManualLineupAlgorithm))
+                .toList();
+    }
+
+    /**
+     * The algorithm of {@link #forAssignment}({@code teamType}) whose {@link
+     * LineupAlgorithm#displayName()} equals {@code displayName}, falling back to
+     * the first one - e.g. for "Manual", nothing configured or an unknown name.
+     * Used to preselect the configured default algorithm at startup.
+     */
+    public static LineupAlgorithm preselected(Lineup.TeamType teamType, String displayName) {
+        List<LineupAlgorithm> candidates = forAssignment(teamType);
+        return candidates.stream()
+                .filter(algorithm -> algorithm.displayName().equals(displayName))
+                .findFirst()
+                .orElse(candidates.get(0));
     }
 
     /**

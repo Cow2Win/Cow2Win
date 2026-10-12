@@ -4,6 +4,10 @@ import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.model.Lineup;
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.eval.LineupAlgorithms;
+import org.c2w.gui.AlgorithmSelection;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
@@ -38,6 +42,8 @@ class ConceptStageViewTest {
     private AppContext context;
     private FortificationMapPanel map;
     private ConceptStageView view;
+    private MainActions actions;
+    private AlgorithmSelection selection;
 
     @BeforeEach
     void openWorkspace() throws Exception {
@@ -52,7 +58,9 @@ class ConceptStageViewTest {
             actions.register(new AppAction(id, () -> { }));
         }
         map = new FortificationMapPanel(context);
-        view = new ConceptStageView(context, actions, map);
+        this.actions = actions;
+        selection = new AlgorithmSelection();
+        view = new ConceptStageView(context, actions, selection, map);
     }
 
     @AfterEach
@@ -111,5 +119,55 @@ class ConceptStageViewTest {
                 list.rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
         java.awt.Component[] components = list.getComponents();
         assertSame(view.valueModeBox().getParent(), components[components.length - 1]);
+    }
+
+    @Test
+    @DisplayName("The \"algorithm\" combo box sits directly above \"Run assignment\" and offers no \"Manual\"")
+    void algorithmBoxAboveRunAssignment() {
+        context.setFortificationType(FortificationType.HERO);
+        java.util.List<java.awt.Component> components = java.util.List.of(view.actionList().getComponents());
+        int index = components.indexOf(view.algorithmBox().getParent());
+        assertTrue(index >= 0);
+        assertSame(actions.get(ActionId.RUN_ALGORITHM),
+                ((StageActionList.ActionRow) components.get(index + 1)).action());
+
+        assertEquals(LineupAlgorithms.forAssignment(Lineup.TeamType.HERO), items(view.algorithmBox()));
+        assertSame(selection.get(Lineup.TeamType.HERO), view.algorithmBox().getSelectedItem());
+        assertNotNull(view.algorithmBox().getToolTipText());
+    }
+
+    @Test
+    @DisplayName("The combo box follows the fortification type and keeps the choice per type in the selection")
+    void algorithmBoxPerType() {
+        context.setFortificationType(FortificationType.HERO);
+        LineupAlgorithm cowScoreHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(2);
+        view.algorithmBox().setSelectedItem(cowScoreHero);
+        assertSame(cowScoreHero, selection.get(Lineup.TeamType.HERO));
+        LineupAlgorithm titanBefore = selection.get(Lineup.TeamType.TITAN);
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(LineupAlgorithms.forAssignment(Lineup.TeamType.TITAN), items(view.algorithmBox()));
+        assertSame(titanBefore, view.algorithmBox().getSelectedItem());
+        assertSame(cowScoreHero, selection.get(Lineup.TeamType.HERO), "switching the type chooses nothing");
+
+        context.setFortificationType(FortificationType.HERO);
+        assertSame(cowScoreHero, view.algorithmBox().getSelectedItem());
+    }
+
+    @Test
+    @DisplayName("The combo box is disabled while \"Run assignment\" is")
+    void algorithmBoxFollowsRunAssignment() {
+        actions.get(ActionId.RUN_ALGORITHM).setEnabled(false);
+        assertFalse(view.algorithmBox().isEnabled());
+        actions.get(ActionId.RUN_ALGORITHM).setEnabled(true);
+        assertTrue(view.algorithmBox().isEnabled());
+    }
+
+    private static java.util.List<LineupAlgorithm> items(javax.swing.JComboBox<LineupAlgorithm> box) {
+        java.util.List<LineupAlgorithm> items = new java.util.ArrayList<>();
+        for (int i = 0; i < box.getItemCount(); i++) {
+            items.add(box.getItemAt(i));
+        }
+        return items;
     }
 }

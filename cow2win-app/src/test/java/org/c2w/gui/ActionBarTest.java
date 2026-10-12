@@ -55,7 +55,7 @@ class ActionBarTest {
     @DisplayName("The bar shows only the process bar - three stage tiles, no visible buttons")
     void barShowsTheProcessBar() {
         MainActions actions = new MainActions();
-        ActionBar bar = new ActionBar(context, actions);
+        ActionBar bar = new ActionBar(context, actions, new AlgorithmSelection());
         bar.buildBar();
 
         ProcessBar processBar = bar.processBar();
@@ -70,7 +70,7 @@ class ActionBarTest {
     @DisplayName("The save buttons sit in the context bar, each right after its combo box")
     void saveButtonsFollowTheirComboBoxes() {
         MainActions actions = new MainActions();
-        new ActionBar(context, actions);
+        new ActionBar(context, actions, new AlgorithmSelection());
         ContextBar contextBar = new ContextBar(context, actions);
 
         Container left = (Container) ((BorderLayout) contextBar.getLayout()).getLayoutComponent(BorderLayout.CENTER);

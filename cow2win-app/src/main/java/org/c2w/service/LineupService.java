@@ -7,9 +7,8 @@ import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.eval.LineupAlgorithm;
-import org.c2w.eval.LineupAlgorithms;
+import org.c2w.eval.ManualLineupAlgorithm;
 import org.c2w.i18n.LanguageService;
-import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 
 import java.io.IOException;
@@ -23,8 +22,9 @@ import java.util.List;
 
 /**
  * Use cases around the lineups of the currently open guild: creating,
- * selecting, deleting and saving ".lineup" files, running the lineup
- * algorithms and editing team assignments. Keeps {@link AppContext}
+ * selecting, deleting and saving ".lineup" files, running a lineup
+ * algorithm for one fortification type (replacing that type's assignments)
+ * and editing team assignments. Keeps {@link AppContext}
  * (including its dirty state), the files on disk and config.properties
  * consistent with each other, so the GUI only has to collect input and
  * report errors.
@@ -56,17 +56,15 @@ public class LineupService {
     }
 
     /**
-     * Outcome of {@link #computeAlgorithms}: the lineup the algorithms started
-     * from, the lineup they produced, and how many teams each side's algorithm
-     * newly assigned.
+     * Outcome of {@link #computeAlgorithm}: the lineup the run started from,
+     * the lineup it produced, the algorithm, how many assignments of the
+     * algorithm's type were removed first and how many teams it then assigned.
      */
-    public record AlgorithmRun(Lineup before, Lineup result,
-                               LineupAlgorithm heroAlgorithm, int heroesAssigned,
-                               LineupAlgorithm titanAlgorithm, int titansAssigned) {
+    public record AlgorithmRun(Lineup before, Lineup result, LineupAlgorithm algorithm, int removed, int assigned) {
 
-        /** True if the algorithms assigned at least one team. */
+        /** True if the run removed or assigned at least one team. */
         public boolean changedAnything() {
-            return heroesAssigned + titansAssigned > 0;
+            return removed > 0 || assigned > 0;
         }
     }
 
@@ -191,38 +189,30 @@ public class LineupService {
     }
 
     /**
-     * The hero algorithm configured as default in the settings (see {@link
-     * Config#getDefaultHeroAlgorithm()}), or the first hero algorithm if
-     * nothing (valid) is configured.
+     * Removes every assignment of {@code algorithm}'s type from {@code lineup}
+     * and then runs {@code algorithm} on it - the other type's assignments stay
+     * as they are. A pure computation that touches no shared state, so it may
+     * run on a background thread (see {@code ActionBar#onRunAlgorithm}). Apply
+     * the result with {@link #applyAlgorithmRun}.
+     *
+     * @throws IllegalArgumentException for a {@link ManualLineupAlgorithm}, which assigns nothing
      */
-    public static LineupAlgorithm defaultHeroAlgorithm() {
-        return LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
-    }
-
-    /** The titan counterpart of {@link #defaultHeroAlgorithm()}. */
-    public static LineupAlgorithm defaultTitanAlgorithm() {
-        return LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
-    }
-
-    /**
-     * Runs {@code heroAlgorithm}, then {@code titanAlgorithm} on {@code lineup}
-     * - a pure computation that touches no shared state, so it may run on a
-     * background thread (see {@code ActionBar#onRunAlgorithm}). Both
-     * algorithms only ever add assignments. Apply the result with
-     * {@link #applyAlgorithmRun}.
-     */
-    public static AlgorithmRun computeAlgorithms(Lineup lineup, Guild guild,
-                                                 LineupAlgorithm heroAlgorithm, LineupAlgorithm titanAlgorithm) {
-        Lineup afterHeroes = heroAlgorithm.run(lineup, guild);
-        Lineup result = titanAlgorithm.run(afterHeroes, guild);
-        int heroesAssigned = afterHeroes.entries().size() - lineup.entries().size();
-        int titansAssigned = result.entries().size() - afterHeroes.entries().size();
-        return new AlgorithmRun(lineup, result, heroAlgorithm, heroesAssigned, titanAlgorithm, titansAssigned);
+    public static AlgorithmRun computeAlgorithm(Lineup lineup, Guild guild, LineupAlgorithm algorithm) {
+        if (algorithm instanceof ManualLineupAlgorithm) {
+            throw new IllegalArgumentException("\"Manual\" cannot run an assignment");
+        }
+        Lineup.TeamType teamType = algorithm.teamType();
+        List<Lineup.Entry> kept = lineup.entries().stream().filter(entry -> entry.teamType() != teamType).toList();
+        Lineup cleared = withEntries(lineup, kept);
+        Lineup result = algorithm.run(cleared, guild);
+        int removed = lineup.entries().size() - kept.size();
+        int assigned = result.entries().size() - cleared.entries().size();
+        return new AlgorithmRun(lineup, result, algorithm, removed, assigned);
     }
 
     /**
      * Makes {@code run}'s result the open lineup (in memory only, until
-     * saved) - unless the open lineup changed while the algorithms were
+     * saved) - unless the open lineup changed while the algorithm was
      * running, in which case the run is discarded, so no edit made in the
      * meantime is lost. Must be called on the Swing event thread.
      *
@@ -236,22 +226,29 @@ public class LineupService {
         if (run.changedAnything()) {
             update(run.result());
         }
-        Logger.log("Heroes (" + run.heroAlgorithm().displayName() + "): " + run.heroesAssigned() + " team(s) newly assigned.");
-        Logger.log("Titans (" + run.titanAlgorithm().displayName() + "): " + run.titansAssigned() + " team(s) newly assigned.");
-        GuildLog.event(guildDirOrNull(), "guildLog.algorithmRun", run.heroAlgorithm().localizedName(), run.heroesAssigned(),
-                run.titanAlgorithm().localizedName(), run.titansAssigned());
+        Lineup.TeamType teamType = run.algorithm().teamType();
+        Logger.log(teamType + " (" + run.algorithm().displayName() + "): " + run.removed() + " assignment(s) removed, "
+                + run.assigned() + " team(s) assigned.");
+        GuildLog.event(guildDirOrNull(), "guildLog.algorithmRun", teamTypeName(teamType),
+                run.algorithm().localizedName(), run.removed(), run.assigned());
         return true;
     }
 
     /**
-     * Runs {@code heroAlgorithm}, then {@code titanAlgorithm} on the open
-     * lineup and applies the result right away, on the calling thread - see
-     * {@link #computeAlgorithms}/{@link #applyAlgorithmRun}.
+     * Runs {@code algorithm} on the open lineup (after removing its type's
+     * assignments) and applies the result right away, on the calling thread -
+     * see {@link #computeAlgorithm}/{@link #applyAlgorithmRun}.
      */
-    public AlgorithmRun runAlgorithms(LineupAlgorithm heroAlgorithm, LineupAlgorithm titanAlgorithm) {
-        AlgorithmRun run = computeAlgorithms(context.lineup(), context.guild(), heroAlgorithm, titanAlgorithm);
+    public AlgorithmRun runAlgorithm(LineupAlgorithm algorithm) {
+        AlgorithmRun run = computeAlgorithm(context.lineup(), context.guild(), algorithm);
         applyAlgorithmRun(run);
         return run;
+    }
+
+    /** The localized name of {@code teamType} ("Heroes"/"Titans"). */
+    public static String teamTypeName(Lineup.TeamType teamType) {
+        return LanguageService.displayName(teamType == Lineup.TeamType.HERO
+                ? "fortificationMap.showHeroes" : "fortificationMap.showTitans");
     }
 
     /**

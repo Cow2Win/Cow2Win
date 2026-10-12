@@ -148,7 +148,9 @@ public class Cow2Frame extends JFrame {
         // First every action (with its handler in its owner), then menu bar, context bar and action bar.
         this.actions = new MainActions();
         registerActions(actions);
-        this.actionBar = new ActionBar(appContext, actions);
+        // "Run assignment" (menu and concept action list) and the concept stage's combo box share one choice.
+        AlgorithmSelection algorithmSelection = new AlgorithmSelection();
+        this.actionBar = new ActionBar(appContext, actions, algorithmSelection);
         this.journalActions = new JournalActions(this, appContext, guildService, this::switchGuildFromJournal);
         journalActions.registerActions(actions);
         // The input view registers "add / delete member" - before the menu bar needs them.
@@ -168,7 +170,7 @@ public class Cow2Frame extends JFrame {
         this.stageViews = new JPanel(new CardLayout());
         stageViews.setOpaque(false);
         addStageView(inputView);
-        addStageView(new ConceptStageView(appContext, actions, fortificationMapPanel));
+        addStageView(new ConceptStageView(appContext, actions, algorithmSelection, fortificationMapPanel));
         this.outputView = new OutputStageView(appContext, actions);
         addStageView(outputView);
         // "Change plan" (menu, action lists) switches to the output stage.

@@ -19,7 +19,8 @@ import java.util.List;
  * maintain. An action becomes a clickable row (icon and text), a submenu a group (small
  * heading, its entries indented), a separator a small gap with a thin line. Rows follow their
  * action (enabled state, text, icon). A stage view can append rows of its own, see
- * {@link #addExtra}.
+ * {@link #addExtra}/{@link #addExtraAction}, or insert one directly before an action's
+ * row, see {@link #addExtraBefore}.
  */
 public class StageActionList extends JPanel {
 
@@ -61,6 +62,21 @@ public class StageActionList extends JPanel {
         addRow(new SeparatorRow());
         component.setBorder(BorderFactory.createEmptyBorder(4, INDENT - 4, 4, 8));
         addRow(component);
+    }
+
+    /**
+     * Inserts a stage specific row (e.g. a combo box the action uses) directly
+     * before the row of {@code action}, indented like {@link #addExtra} but
+     * without a separator.
+     *
+     * @throws IllegalArgumentException if no row of this list shows {@code action}
+     */
+    public void addExtraBefore(Action action, JComponent component) {
+        ActionRow row = rows.stream().filter(r -> r.action() == action).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No row for action " + action));
+        component.setBorder(BorderFactory.createEmptyBorder(4, INDENT - 4, 4, 8));
+        component.setAlignmentX(Component.LEFT_ALIGNMENT);
+        add(component, getComponentZOrder(row));
     }
 
     /** Appends a stage specific action below the menu's actions - a row like theirs, following the action. */

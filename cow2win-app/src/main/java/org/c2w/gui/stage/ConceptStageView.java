@@ -2,6 +2,11 @@ package org.c2w.gui.stage;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
+import org.c2w.data.model.Lineup;
+import org.c2w.eval.AlgorithmDescriptions;
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.gui.AlgorithmSelection;
+import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.gui.fort.FortificationInfoPanel;
@@ -21,8 +26,10 @@ import java.util.Optional;
 import static org.c2w.gui.stage.InfoSections.*;
 
 /**
- * The stage view "strategic concept": the fortification map as work area, the concept actions
- * plus the "fortification values" combo box on the left, and on the right the overview of the selected
+ * The stage view "strategic concept": the fortification map as work area, on the left the
+ * concept actions plus the "algorithm" combo box directly above "Run assignment" (the
+ * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection})
+ * and the "fortification values" combo box at the end, and on the right the overview of the selected
  * fortification type, the comparison with the "Original" lineup and the details of the
  * fortification selected on the map.
  */
@@ -38,26 +45,37 @@ public class ConceptStageView extends StageView {
     private static final String KEY_FORTIFICATION = "stageInfo.fortification";
     private static final String KEY_FORTIFICATION_NONE = "stageInfo.fortification.none";
     private static final String KEY_VALUE_MODE = "fortificationMap.valueMode";
+    private static final String KEY_ALGORITHM = "conceptStage.algorithm";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
 
     private final AppContext appContext;
+    private final MainActions actions;
+    private final AlgorithmSelection algorithmSelection;
     private final FortificationMapPanel map;
 
     private final JPanel overviewSection = sectionBody();
     private final JPanel comparisonSection = sectionBody();
     private final JPanel fortificationSection = sectionBody();
     private JComboBox<FortificationValueMode> valueModeBox;
+    private JComboBox<LineupAlgorithm> algorithmBox;
+
+    /** True while {@link #fillAlgorithmBox} replaces the entries - its selection events are no user choice. */
+    private boolean fillingAlgorithmBox;
 
     /** The fortification selected on the map, shown in {@link #fortificationSection}. */
     private Optional<Fortification> selectedFortification = Optional.empty();
 
-    public ConceptStageView(AppContext appContext, MainActions actions, FortificationMapPanel map) {
+    public ConceptStageView(AppContext appContext, MainActions actions, AlgorithmSelection algorithmSelection,
+                            FortificationMapPanel map) {
         super(actions);
-        if (appContext == null || map == null) {
-            throw new IllegalArgumentException("ConceptStageView needs the AppContext and the fortification map");
+        if (appContext == null || algorithmSelection == null || map == null) {
+            throw new IllegalArgumentException(
+                    "ConceptStageView needs the AppContext, the algorithm selection and the fortification map");
         }
         this.appContext = appContext;
+        this.actions = actions;
+        this.algorithmSelection = algorithmSelection;
         this.map = map;
         build();
 
@@ -85,6 +103,7 @@ public class ConceptStageView extends StageView {
             public void fortificationTypeChanged() {
                 refreshOverview();
                 refreshComparison();
+                fillAlgorithmBox();
             }
         });
     }
@@ -113,17 +132,25 @@ public class ConceptStageView extends StageView {
     }
 
     /**
-     * The "fortification values" combo box below the actions: switches the map between power,
+     * The "algorithm" combo box directly above "Run assignment" (see {@link #createAlgorithmBox}),
+     * and the "fortification values" combo box below the actions: switches the map between power,
      * the change since loading/saving and the change against live. Always starts with power.
      */
     @Override
     protected void addActionListExtras(StageActionList actionList) {
+        Action runAlgorithm = actions.get(ActionId.RUN_ALGORITHM);
+        actionList.addExtraBefore(runAlgorithm, labeledPanel(KEY_ALGORITHM, createAlgorithmBox(runAlgorithm)));
+
         valueModeBox = new JComboBox<>(FortificationValueMode.values());
         valueModeBox.setSelectedItem(FortificationValueMode.POWER);
         map.setValueMode(FortificationValueMode.POWER);
         valueModeBox.setOpaque(false);
         valueModeBox.addActionListener(e -> map.setValueMode((FortificationValueMode) valueModeBox.getSelectedItem()));
+        actionList.addExtra(labeledPanel(KEY_VALUE_MODE, valueModeBox));
+    }
 
+    /** A muted heading above {@code comboBox}, no higher than needed. */
+    private static JPanel labeledPanel(String headingKey, JComboBox<?> comboBox) {
         JPanel panel = new JPanel(new BorderLayout(0, 4)) {
             @Override
             public Dimension getMaximumSize() {
@@ -131,9 +158,73 @@ public class ConceptStageView extends StageView {
             }
         };
         panel.setOpaque(false);
-        panel.add(mutedLabel(LanguageService.displayName(KEY_VALUE_MODE)), BorderLayout.NORTH);
-        panel.add(valueModeBox, BorderLayout.CENTER);
-        actionList.addExtra(panel);
+        panel.add(mutedLabel(LanguageService.displayName(headingKey)), BorderLayout.NORTH);
+        panel.add(comboBox, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // --- algorithm ---
+
+    /**
+     * The "algorithm" combo box: the assigning algorithms of the selected fortification type
+     * ("Manual" is no choice here), showing that type's choice in {@link #algorithmSelection};
+     * a choice goes there, so "Run assignment" (menu and action list) uses it. The tooltips
+     * show the algorithms' descriptions. Disabled while {@code runAlgorithm} is, i.e. while
+     * an algorithm is running.
+     */
+    private JComboBox<LineupAlgorithm> createAlgorithmBox(Action runAlgorithm) {
+        algorithmBox = new JComboBox<>();
+        algorithmBox.setOpaque(false);
+        algorithmBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof LineupAlgorithm algorithm) {
+                    setText(algorithm.localizedName());
+                    setToolTipText(descriptionTooltip(algorithm));
+                }
+                return this;
+            }
+        });
+        algorithmBox.addActionListener(e -> {
+            if (!fillingAlgorithmBox && algorithmBox.getSelectedItem() instanceof LineupAlgorithm algorithm) {
+                algorithmSelection.set(algorithm);
+                algorithmBox.setToolTipText(descriptionTooltip(algorithm));
+            }
+        });
+        fillAlgorithmBox();
+        algorithmBox.setEnabled(runAlgorithm.isEnabled());
+        runAlgorithm.addPropertyChangeListener(e -> {
+            if ("enabled".equals(e.getPropertyName())) {
+                algorithmBox.setEnabled(runAlgorithm.isEnabled());
+            }
+        });
+        return algorithmBox;
+    }
+
+    /** Puts the choices and the chosen algorithm of the selected fortification type into the combo box. */
+    private void fillAlgorithmBox() {
+        if (algorithmBox == null) {
+            return;
+        }
+        Lineup.TeamType teamType = AlgorithmSelection.teamTypeOf(appContext.fortificationType());
+        LineupAlgorithm selected = algorithmSelection.get(teamType);
+        fillingAlgorithmBox = true;
+        try {
+            algorithmBox.setModel(new DefaultComboBoxModel<>(
+                    algorithmSelection.choices(teamType).toArray(LineupAlgorithm[]::new)));
+            algorithmBox.setSelectedItem(selected);
+        } finally {
+            fillingAlgorithmBox = false;
+        }
+        algorithmBox.setToolTipText(descriptionTooltip(selected));
+    }
+
+    /** The description of {@code algorithm}, wrapped - the descriptions are long. */
+    private static String descriptionTooltip(LineupAlgorithm algorithm) {
+        return "<html><div style='width:300px'>" + escape(AlgorithmDescriptions.forAlgorithm(algorithm))
+                + "</div></html>";
     }
 
     private void refreshAll() {
@@ -217,6 +308,11 @@ public class ConceptStageView extends StageView {
     /** The "fortification values" combo box in the action list - for tests. */
     JComboBox<FortificationValueMode> valueModeBox() {
         return valueModeBox;
+    }
+
+    /** The "algorithm" combo box in the action list - for tests. */
+    JComboBox<LineupAlgorithm> algorithmBox() {
+        return algorithmBox;
     }
 
 }

@@ -4,6 +4,8 @@ import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupBaseline;
+import org.c2w.eval.LineupAlgorithm;
+import org.c2w.eval.LineupAlgorithms;
 import org.c2w.eval.ManualLineupAlgorithm;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
@@ -162,22 +164,109 @@ class LineupServiceTest extends ServiceTestSupport {
         assertTrue(context.isLineupDirty());
     }
 
-    @Test
-    @DisplayName("an algorithm run that assigns nothing leaves the lineup clean")
-    void noOpAlgorithmRunStaysClean() {
-        LineupService.AlgorithmRun run = lineupService.runAlgorithms(
-                new ManualLineupAlgorithm(Lineup.TeamType.HERO), new ManualLineupAlgorithm(Lineup.TeamType.TITAN));
+    // --- running an algorithm for one fortification type ---
 
-        assertEquals(0, run.heroesAssigned());
-        assertEquals(0, run.titansAssigned());
+    /** Makes the open guild four members, each with one hero and one titan team. */
+    private void useGuildWithHeroAndTitanTeams() {
+        Guild current = context.guild();
+        List<GuildMember> members = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            String id = "m" + i;
+            int power = 1000 - i * 100;
+            members.add(new GuildMember(id, id,
+                    List.of(new HeroTeam(id, 0, List.of(new Hero(id + "-hero", List.of(Role.MAGE))), power)),
+                    List.of(new TitanTeam(id, 0, List.of(new Titan(id + "-titan", TitanElement.WATER)), power))));
+        }
+        context.setGuild(new Guild(current.id(), current.name(), members));
+    }
+
+    private static Fortification firstFortificationOf(FortificationType type) {
+        return FortificationRepository.findAll().stream().filter(f -> f.type() == type).findFirst().orElseThrow();
+    }
+
+    private static List<Lineup.Entry> entriesOf(Lineup lineup, Lineup.TeamType teamType) {
+        return lineup.entries().stream().filter(entry -> entry.teamType() == teamType).toList();
+    }
+
+    /** One hero and one titan team assigned by hand. */
+    private void assignOneHeroAndOneTitan() {
+        lineupService.assignTeam("m4", Lineup.TeamType.HERO, 0, firstFortificationOf(FortificationType.HERO));
+        lineupService.assignTeam("m4", Lineup.TeamType.TITAN, 0, firstFortificationOf(FortificationType.TITAN));
+    }
+
+    @Test
+    @DisplayName("computeAlgorithm replaces the hero assignments and leaves the titan assignments as they are")
+    void heroRunReplacesOnlyHeroes() {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        Lineup before = context.lineup();
+
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.HERO.get(0));
+
+        assertSame(before, run.before());
+        assertEquals(entriesOf(before, Lineup.TeamType.TITAN), entriesOf(run.result(), Lineup.TeamType.TITAN));
+        assertEquals(1, run.removed());
+        assertEquals(entriesOf(run.result(), Lineup.TeamType.HERO).size(), run.assigned());
+        assertEquals(4, run.assigned(), "every hero team is assigned anew");
+        assertTrue(run.changedAnything());
+    }
+
+    @Test
+    @DisplayName("computeAlgorithm for titans leaves the hero assignments as they are")
+    void titanRunReplacesOnlyTitans() {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        Lineup before = context.lineup();
+
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.TITAN.get(1));
+
+        assertEquals(entriesOf(before, Lineup.TeamType.HERO), entriesOf(run.result(), Lineup.TeamType.HERO));
+        assertEquals(1, run.removed());
+        assertEquals(entriesOf(run.result(), Lineup.TeamType.TITAN).size(), run.assigned());
+    }
+
+    @Test
+    @DisplayName("runAlgorithm applies the run, marks the lineup dirty and writes one guild log entry for the type")
+    void runAlgorithmMarksDirtyAndLogs() throws Exception {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        lineupService.saveLineup();
+        int logSize = guildLogTexts().size();
+        LineupAlgorithm algorithm = LineupAlgorithms.HERO.get(0);
+
+        LineupService.AlgorithmRun run = lineupService.runAlgorithm(algorithm);
+
+        assertSame(run.result(), context.lineup());
+        assertTrue(context.isLineupDirty());
+        List<String> texts = guildLogTexts();
+        assertEquals(logSize + 1, texts.size());
+        assertEquals(LanguageService.displayName("guildLog.algorithmRun", LanguageService.displayName("fortificationMap.showHeroes"),
+                algorithm.localizedName(), 1, run.assigned()), texts.get(logSize));
+    }
+
+    @Test
+    @DisplayName("a run that neither removes nor assigns anything leaves the lineup clean")
+    void noOpAlgorithmRunStaysClean() {
+        LineupService.AlgorithmRun run = lineupService.runAlgorithm(LineupAlgorithms.HERO.get(0));
+
+        assertEquals(0, run.removed());
+        assertEquals(0, run.assigned());
         assertFalse(context.isLineupDirty());
+    }
+
+    @Test
+    @DisplayName("\"Manual\" cannot run an assignment")
+    void manualAlgorithmIsRefused() {
+        assertThrows(IllegalArgumentException.class, () -> LineupService.computeAlgorithm(context.lineup(), context.guild(),
+                new ManualLineupAlgorithm(Lineup.TeamType.HERO)));
     }
 
     @Test
     @DisplayName("a background algorithm run is discarded if the lineup changed while it was computing")
     void staleAlgorithmRunIsDiscarded() {
-        LineupService.AlgorithmRun run = LineupService.computeAlgorithms(context.lineup(), context.guild(),
-                new ManualLineupAlgorithm(Lineup.TeamType.HERO), new ManualLineupAlgorithm(Lineup.TeamType.TITAN));
+        useGuildWithHeroAndTitanTeams();
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(context.lineup(), context.guild(),
+                LineupAlgorithms.HERO.get(0));
         lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, firstFortification());
         Lineup edited = context.lineup();
 

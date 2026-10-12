@@ -106,6 +106,24 @@ class StageActionListTest {
         assertSame(toggle, components[components.length - 1]);
     }
 
+    @Test
+    @DisplayName("A stage view can insert a row directly before an action's row - no separator; an unknown action is refused")
+    void extraRowBeforeAction() {
+        MainActions actions = allActions();
+        StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), actions);
+        JComboBox<String> combo = new JComboBox<>();
+
+        list.addExtraBefore(actions.get(ActionId.RUN_ALGORITHM), combo);
+
+        List<Component> components = List.of(list.getComponents());
+        int index = components.indexOf(combo);
+        assertTrue(components.get(index - 1) instanceof StageActionList.SeparatorRow, "the menu's separator stays above it");
+        assertSame(actions.get(ActionId.RUN_ALGORITHM), ((StageActionList.ActionRow) components.get(index + 1)).action());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> list.addExtraBefore(new AppAction(ActionId.RUN_ALGORITHM, () -> { }), new JLabel()));
+    }
+
     /** Headings as "#TITLE", separators as "---", rows as their action id. */
     private static List<String> describe(StageActionList list) {
         List<String> entries = new ArrayList<>();
