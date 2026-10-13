@@ -14,18 +14,17 @@ import java.util.*;
  * those three, this is not a fourth independent strategy for deciding which
  * team defends which fortification - it is a META-algorithm that runs all
  * three of them and only keeps a team's assignment when ALL THREE agree on
- * the same fortification for it. Named "Consensus picks" (Thorsten left the
- * naming to Claude): every included entry is a pick no reasonable strategy
- * among the three implemented ones disputes, so Thorsten can trust it
- * without second-guessing which algorithm's opinion to prefer.
+ * the same fortification for it: every included entry is a pick none of
+ * the three implemented strategies disputes, so it can be trusted without
+ * second-guessing which algorithm's opinion to prefer.
  *
  * <p>Every team the three sub-algorithms disagree on is deliberately left
- * WITHOUT an entry - a gap in the resulting {@link Lineup}, on purpose (see
- * Thorsten's own framing of this request): those are exactly the close
+ * WITHOUT an entry - a gap in the resulting {@link Lineup}, on purpose:
+ * those are exactly the close
  * calls where the three strategies' different priorities (raw power vs.
  * balanced defense vs. real CowScore fit) lead to different answers, so
  * this algorithm does not silently pick a "winner" between them - it hands
- * the decision back to Thorsten to make by hand in the GUI. A lineup this
+ * the decision back to the user to make by hand in the GUI. A lineup this
  * algorithm produces is therefore, by design, usually NOT a full lineup
  * (every fortification's every slot filled) - that is the expected,
  * intentional outcome, not a bug.
@@ -33,7 +32,7 @@ import java.util.*;
  * <p>Like the other three, this is additive: a team that already has an
  * entry in the {@link Lineup} handed to {@link #run} keeps that entry
  * completely untouched (it is never re-examined against the three
- * sub-algorithms' opinions - it was Thorsten's own decision, or an earlier
+ * sub-algorithms' opinions - it was the user's own decision, or an earlier
  * run's, already). Only teams WITHOUT an existing entry go through the
  * three-way agreement check below.
  *

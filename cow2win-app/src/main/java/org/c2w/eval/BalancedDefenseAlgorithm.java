@@ -52,7 +52,7 @@ public class BalancedDefenseAlgorithm<T> extends AbstractLineupAlgorithm<T> {
                                       Guild guild, Map<String, Integer> unlockDepth) {
         Lineup.TeamType teamType = side().teamType();
 
-        // Criterion 1 (unchanged from BestPossibleLineupAlgorithm): the bridge is the one
+        // Criterion 1 (same as in BestPossibleLineupAlgorithm): the bridge is the one
         // deliberate exception to "balanced" - it is the prerequisite almost everything else on
         // this side needs unlocked, so it still claims the strongest remaining teams up front.
         // It is not part of `others` and is never revisited.

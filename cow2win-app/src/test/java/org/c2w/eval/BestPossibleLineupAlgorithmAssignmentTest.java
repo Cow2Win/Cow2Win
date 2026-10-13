@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Second unit test class for this project (see {@link BestPossibleLineupAlgorithmTest}, the
- * first one, which covers {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} only).
+ * Complements {@link BestPossibleLineupAlgorithmTest}, which covers
+ * {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} only.
  * This class covers the actual team-to-fortification assignment logic: sorting criteria
  * (strongest-first for the bridge, best-buff-fit vs. lowest-sortScore for everything else),
  * buff-fit computation, and edge cases such as incomplete (fewer than 5 members) teams.
@@ -29,15 +29,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *     {@link AbstractLineupAlgorithm#assignStrongestFirst}/{@link AbstractLineupAlgorithm#assignOne}
  *     directly with a synthetic {@link Fortification} and a hand-built candidate pool - both
  *     methods take the fortification and pool as plain parameters, so (like
- *     {@code computeUnlockDepths} in the first test class) they were widened from {@code private}
- *     to package-private for exactly this purpose. This gives full control over totalPower,
+ *     {@code computeUnlockDepths}) they are package-private for exactly this purpose. This gives full control over totalPower,
  *     buff-fit and sortScore values without depending on the real fortification catalog.</li>
  *     <li>{@link FillFortificationsIntegrationTests} instead calls the public
- *     {@link BestPossibleLineupAlgorithm#run(Lineup, Guild)} entry point. This is necessary for
- *     {@code fillFortifications()} itself (the bridge/coverage/fill-remaining-capacity
- *     orchestration and its interaction with {@code computeUnlockDepths}), because that method -
- *     unlike {@code assignStrongestFirst}/{@code assignOne} - reads the fortification catalog
- *     directly from {@code FortificationRepository} and cannot be pointed at a synthetic one.
+ *     {@link BestPossibleLineupAlgorithm#run(Lineup, Guild)} entry point. This covers
+ *     {@code fillFortifications()} (the bridge/coverage/fill-remaining-capacity orchestration)
+ *     together with what {@code run()} prepares for it: the fortification catalog read from
+ *     {@code FortificationRepository}, the bridge split off from it and {@code computeUnlockDepths}.
  *     These tests therefore rely on the REAL {@code fortifications.json} catalog (the same one
  *     {@code BestPossibleLineupAlgorithmTest#realCatalogMatchesDocumentedDepths} pins to exactly
  *     20 entries) and use its known ids/capacities/strategicImportance/buffs, kept few and small

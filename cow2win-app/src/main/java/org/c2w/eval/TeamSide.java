@@ -22,8 +22,8 @@ import java.util.function.ToIntFunction;
  * strategies - or one of them left to manual picks entirely (see {@link
  * ManualLineupAlgorithm}).
  *
- * <p>Only the two constants {@link #HERO} and {@link #TITAN} are meant to
- * exist - hero teams can only ever defend HERO fortifications and titan teams
+ * <p>In production code, only the two constants {@link #HERO} and
+ * {@link #TITAN} are meant to exist - hero teams can only ever defend HERO fortifications and titan teams
  * only TITAN fortifications, so the two sides never compete for the same
  * slots.
  *

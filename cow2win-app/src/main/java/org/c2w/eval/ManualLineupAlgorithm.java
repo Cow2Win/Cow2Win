@@ -7,8 +7,10 @@ import java.util.Objects;
 
 /**
  * "No algorithm" for one side: {@link #run} returns the lineup unchanged.
- * Offered in every algorithm combo box (see {@link LineupAlgorithms#HERO}/
- * {@link LineupAlgorithms#TITAN}) so one side can be filled automatically
+ * Listed in {@link LineupAlgorithms#HERO}/{@link LineupAlgorithms#TITAN},
+ * and thus in the algorithm combo boxes built from them (but not in the
+ * strategic concept's, see {@link LineupAlgorithms#forAssignment}), so one
+ * side can be filled automatically
  * while the other is left entirely to manual picks - e.g. heroes by
  * {@link BestPossibleLineupAlgorithm}, titans by hand. Also leaves {@link
  * Lineup#algorithmName()} untouched, since nothing was assigned.

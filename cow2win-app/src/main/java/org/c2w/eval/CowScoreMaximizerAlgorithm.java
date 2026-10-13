@@ -20,8 +20,9 @@ import java.util.Map;
  * {@link TitanTeam#sortScore()} for an unbuffed fortification. This
  * algorithm instead uses exactly ONE metric for every single decision,
  * bridge included: {@link TeamScoreCalculator#scoreFor}'s {@code total()} -
- * the same CowScore-plus-power figure the report and {@code
- * LineupSummaryPanel} show.
+ * the CowScore-plus-power figure the value overview dialogs show (the
+ * report and {@code LineupSummaryPanel} sum only its bonus part,
+ * {@code scoreWithoutPower()}).
  *
  * <p>Same overall shape as {@link BestPossibleLineupAlgorithm} otherwise
  * (bridge first, breadth-first coverage before topping up remaining

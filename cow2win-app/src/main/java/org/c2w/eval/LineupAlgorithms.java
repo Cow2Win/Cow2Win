@@ -34,7 +34,6 @@ public final class LineupAlgorithms {
     private static final String PART_SEPARATOR = ";";
 
     private LineupAlgorithms() {
-        // Utility class, no instantiation
     }
 
     private static <T> List<LineupAlgorithm> forSide(TeamSide<T> side) {

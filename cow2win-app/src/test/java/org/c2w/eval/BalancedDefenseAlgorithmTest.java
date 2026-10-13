@@ -79,7 +79,7 @@ class BalancedDefenseAlgorithmTest {
         List<Lineup.Entry> entries = fill(List.of(small, big), guild, List.of());
 
         // Per slot: A gets 10 (5.0); B 9 (2.25), 8 (4.25), 7 (6.0); A 6 (8.0, full); B 5.
-        // (The former sum-based order would have produced A = {10, 7}, B = {9, 8, 6, 5}.)
+        // (A plain sum would produce A = {10, 7}, B = {9, 8, 6, 5}.)
         assertEquals(List.of(10, 6), powersOn(entries, "a-small"));
         assertEquals(List.of(9, 8, 7, 5), powersOn(entries, "b-big"));
     }

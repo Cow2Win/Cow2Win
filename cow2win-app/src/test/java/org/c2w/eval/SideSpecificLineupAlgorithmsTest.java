@@ -11,8 +11,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Covers the split of every lineup strategy into a HERO-only and a
- * TITAN-only variant (2026-09-24): each algorithm only ever adds entries for
+ * Covers the HERO-only and the TITAN-only variant of every lineup
+ * strategy: each algorithm only ever adds entries for
  * its own side, the two sides can be combined freely via {@link
  * LineupAlgorithms#runBoth} (including {@link ManualLineupAlgorithm} for a
  * side filled by hand), and {@link Lineup#algorithmName()} records both

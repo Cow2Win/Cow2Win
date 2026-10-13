@@ -12,14 +12,6 @@ import java.util.Map;
  * lives as {@code algorithm.<key>.description} in every
  * {@code language/<name>/<name>.properties} file, one entry per algorithm.
  *
- * <p>This originally lived in its own English-only sidecar JSON under
- * {@code src/main/resources/data}, on the assumption that the report (the
- * one place this text is meant for) is English-only throughout - that
- * assumption was wrong: {@code ReportGenerator} already looks up
- * fortification/hero/titan names via {@link LanguageService#displayName},
- * so a report generated in German already shows German names there. This
- * class follows that same per-language properties pattern.
- *
  * <p>{@link LineupAlgorithm#displayName()} (e.g. "Best possible lineup") is
  * not itself a usable properties key (spaces, not namespaced under
  * {@code algorithm.*}) - {@link #KEY_BY_DISPLAY_NAME} maps each known
@@ -67,7 +59,8 @@ public final class AlgorithmDescriptions {
 
     /**
      * Same as {@link #forAlgorithm}, keyed directly by {@link LineupAlgorithm#displayName()} -
-     * for callers that only have the name (e.g. a saved {@code Config} value), not a
+     * for callers that only have the name (e.g. one parsed from a stored
+     * {@link org.c2w.data.model.Lineup#algorithmName()}), not a
      * {@link LineupAlgorithm} instance.
      */
     public static String forDisplayName(String displayName) {
@@ -78,8 +71,8 @@ public final class AlgorithmDescriptions {
         String languageKey = "algorithm." + key + ".description";
         String value = LanguageService.displayName(languageKey);
         // LanguageService#displayName falls back to the raw id itself when a key is
-        // missing from the current language file - treat that the same way this
-        // class always has: an empty description, not the internal properties key.
+        // missing from the current language file - treat that as an empty description
+        // rather than showing the internal properties key.
         return value.equals(languageKey) ? "" : value;
     }
 }

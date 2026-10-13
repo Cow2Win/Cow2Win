@@ -24,6 +24,26 @@ import java.util.stream.Collectors;
  * below (pool building, bridge filling, per-fortification team selection,
  * free-slot counting, unlock depths) are shared by all strategies.
  *
+ * <p>The criteria the strategies and their comments refer to by number, as
+ * implemented by {@link BestPossibleLineupAlgorithm}:
+ * <ol>
+ *     <li>The bridge is filled first, with the strongest remaining teams
+ *     (highest totalPower, see {@link #assignStrongestFirst}).</li>
+ *     <li>Coverage before depth: every other fortification gets its first
+ *     team before any of them gets a second.</li>
+ *     <li>A buffed fortification gets the remaining team with the best buff
+ *     fit, ties broken by lowest totalPower (see {@link #assignOne}).</li>
+ *     <li>Fortifications are visited in the order of
+ *     {@link #byImportanceThenDepth}: strategicImportance descending, then
+ *     unlock depth ascending, then id.</li>
+ *     <li>An unbuffed fortification gets the remaining team with the lowest
+ *     sortScore (see {@link #assignOne}).</li>
+ * </ol>
+ * {@link BalancedDefenseAlgorithm} keeps 1, 3 and 5 but replaces 2 and 4 by
+ * always serving the currently weakest fortification (4 only breaks ties);
+ * {@link CowScoreMaximizerAlgorithm} keeps 1, 2 and 4 but picks every team
+ * (bridge included) by CowScore instead of 1, 3 and 5.
+ *
  * @param <T> {@link HeroTeam} or {@link TitanTeam}, matching {@link #side()}
  */
 public abstract class AbstractLineupAlgorithm<T> implements LineupAlgorithm {
@@ -107,8 +127,8 @@ public abstract class AbstractLineupAlgorithm<T> implements LineupAlgorithm {
     /**
      * The fixed fortification visitation order shared by {@link
      * BestPossibleLineupAlgorithm} and {@link CowScoreMaximizerAlgorithm}:
-     * strategicImportance descending (PRIMARY criterion, per the user's
-     * decision), then unlockDepth ascending (among equally important
+     * strategicImportance descending (PRIMARY criterion), then unlockDepth
+     * ascending (among equally important
      * fortifications prefer the one an opponent can reach sooner), then id
      * for a fully deterministic result. {@link BalancedDefenseAlgorithm} uses
      * the same comparator as its tiebreaker.

@@ -16,13 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * First unit test class for this project (added 2026-09-10, see
- * cow2win-verbesserungsvorschlaege.md). Covers
- * {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} - a pure,
- * self-contained piece of the algorithm's logic with an already-documented
- * expected result (see clash-of-worlds-event-recherche.md), and the one
- * place a previous reading of this code got the semantics wrong (OR vs AND
- * on {@link Fortification#prerequisites()} - see the class javadoc there).
+ * Covers {@link AbstractLineupAlgorithm#computeUnlockDepths(List)} - a pure,
+ * self-contained piece of the algorithm's logic, in particular the OR
+ * semantics of {@link Fortification#prerequisites()} (see the class javadoc
+ * there).
  *
  * Does NOT cover assignStrongestFirst/assignOne/the sorting criteria in
  * fillFortifications() or buffFitScore - see
@@ -54,8 +51,7 @@ class BestPossibleLineupAlgorithmTest {
         // fortification on the other (depth 0) - "target" needs only ONE of
         // them captured (see Fortification#prerequisites' javadoc), so its
         // depth must come from the SHORT path (0 -> 1), not the long one
-        // (3 -> 4). This is exactly the bug the research doc's first pass
-        // got wrong (documented there as "fälschlich alle drei").
+        // (3 -> 4).
         List<Fortification> catalog = List.of(
                 fort("start"),                       // depth 0
                 fort("shallow", "start"),             // depth 1
@@ -97,7 +93,7 @@ class BestPossibleLineupAlgorithmTest {
     }
 
     @Test
-    @DisplayName("Real catalog (fortifications.json) matches the depth table documented in clash-of-worlds-event-recherche.md")
+    @DisplayName("Real catalog (fortifications.json) matches the expected unlock depth table")
     void realCatalogMatchesDocumentedDepths() {
         List<Fortification> catalog = FortificationRepository.findAll();
         assertEquals(20, catalog.size(), "this test pins the depth table below to exactly 20 fortifications");
