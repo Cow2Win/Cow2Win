@@ -175,17 +175,17 @@ class InputStageViewTest {
     }
 
     @Test
-    @DisplayName("Traffic light per row: red per journal, orange too old, green without finding (also without teams)")
+    @DisplayName("Traffic light per row: gray per journal, orange too old, green without finding (also without teams)")
     void trafficLights() {
-        assertEquals(StageStatus.NONE, statusOf("Anna").light(), "no data status yet");
+        assertNull(statusOf("Anna").color(), "no data status yet");
         view.setDataStatus(statusWithFindings());
 
-        assertEquals(StageStatus.ACTION_NEEDED, statusOf("Anna").light());
+        assertEquals(MemberTableModel.STALE_JOURNAL_COLOR, statusOf("Anna").color());
         assertEquals(LanguageService.displayName("memberOverview.stale.journal",
                 InfoSections.shortDate(LocalDate.of(2026, 10, 1))), statusOf("Anna").tooltip());
-        assertEquals(StageStatus.ATTENTION, statusOf("Bert").light());
+        assertEquals(StageStatus.ATTENTION.color(), statusOf("Bert").color());
         assertEquals(LanguageService.displayName("memberOverview.stale.days", 40), statusOf("Bert").tooltip());
-        assertEquals(StageStatus.OK, statusOf("Carl").light());
+        assertEquals(StageStatus.OK.color(), statusOf("Carl").color());
         assertEquals(LanguageService.displayName("memberOverview.stale.none"), statusOf("Carl").tooltip());
         assertEquals("", view.table().getColumnName(MemberTableModel.COLUMN_STATUS));
     }

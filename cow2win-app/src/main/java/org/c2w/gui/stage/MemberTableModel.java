@@ -5,6 +5,7 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.service.DataStatus;
 
 import javax.swing.table.AbstractTableModel;
+import java.awt.Color;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,14 @@ final class MemberTableModel extends AbstractTableModel {
     static final int COLUMN_STRONGEST_TEAM = 4;
     static final int COLUMN_LAST_MODIFIED = 5;
 
-    private static final String KEY_STALE_JOURNAL = "memberOverview.stale.journal";
+    /**
+     * The traffic light and info line of a member outdated per journal: an opaque gray, so the dot
+     * stays clearly visible on the dark background instead of looking disabled like
+     * {@link InfoSections#MUTED_COLOR}.
+     */
+    static final Color STALE_JOURNAL_COLOR = new Color(150, 150, 150);
+
+    private static final String KEY_STALE_JOURNAL ="memberOverview.stale.journal";
     private static final String KEY_STALE_DAYS = "memberOverview.stale.days";
     private static final String KEY_STALE_UNKNOWN = "memberOverview.stale.unknown";
     private static final String KEY_STALE_NONE = "memberOverview.stale.none";
@@ -63,15 +71,19 @@ final class MemberTableModel extends AbstractTableModel {
      */
     record StatusValue(DataStatus.MemberFinding finding) implements Comparable<StatusValue> {
 
-        /** The traffic light: red outdated per journal, orange too old, green otherwise; none while unknown. */
-        StageStatus light() {
+        /**
+         * The color of the traffic light: gray ({@link #STALE_JOURNAL_COLOR}) outdated per journal,
+         * orange too old, green otherwise; {@code null} (no light) while unknown. Not simply the
+         * {@link StageStatus} color: the process bar stays red for members outdated per journal.
+         */
+        Color color() {
             if (finding == null) {
-                return StageStatus.NONE;
+                return null;
             }
             return switch (finding.state()) {
-                case STALE_JOURNAL -> StageStatus.ACTION_NEEDED;
-                case TOO_OLD -> StageStatus.ATTENTION;
-                case OK, NO_TEAMS -> StageStatus.OK;
+                case STALE_JOURNAL -> STALE_JOURNAL_COLOR;
+                case TOO_OLD -> StageStatus.ATTENTION.color();
+                case OK, NO_TEAMS -> StageStatus.OK.color();
             };
         }
 
@@ -89,7 +101,7 @@ final class MemberTableModel extends AbstractTableModel {
             };
         }
 
-        /** True for a red or orange member - see {@link DataStatus.MemberFinding#isStale()}. */
+        /** True for a gray or orange member - see {@link DataStatus.MemberFinding#isStale()}. */
         boolean isStale() {
             return finding != null && finding.isStale();
         }

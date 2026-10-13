@@ -8,7 +8,6 @@ import org.c2w.data.model.Hero;
 import org.c2w.data.model.HeroTeam;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanTeam;
-import org.c2w.gui.StageStatus;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
@@ -463,7 +462,7 @@ public class InputStageView extends StageView {
         return onlyStaleToggle != null && onlyStaleToggle.isSelected();
     }
 
-    /** Shows only red and orange members. */
+    /** Shows only gray (outdated per journal) and orange members. */
     private static final class StaleFilter extends RowFilter<TableModel, Integer> {
         @Override
         public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
@@ -504,17 +503,18 @@ public class InputStageView extends StageView {
     }
 
     /**
-     * For a member outdated per journal (red): the date of the defense log and every team the
-     * log shows differently - team number, stored vs. log power. Empty otherwise.
+     * For a member outdated per journal (gray, like its traffic light): the date of the defense
+     * log and every team the log shows differently - team number, stored vs. log power. Empty
+     * otherwise.
      */
     private List<JComponent> staleJournalLines(String memberId) {
         Optional<DataStatus.MemberFinding> finding = dataStatus == null ? Optional.empty() : dataStatus.member(memberId);
         if (finding.isEmpty() || finding.get().state() != DataStatus.MemberState.STALE_JOURNAL) {
             return List.of();
         }
-        Color red = StageStatus.ACTION_NEEDED.color();
         List<JComponent> lines = new ArrayList<>();
-        lines.add(coloredLabel(LanguageService.displayName(KEY_STALE_JOURNAL, shortDate(finding.get().logDate())), red));
+        lines.add(coloredLabel(LanguageService.displayName(KEY_STALE_JOURNAL, shortDate(finding.get().logDate())),
+                MemberTableModel.STALE_JOURNAL_COLOR));
         for (DataStatus.TeamDeviation deviation : finding.get().deviations()) {
             String text = deviation.index() < 0
                     ? JournalTexts.of("teamKind", deviation.kind()) + ": " + JournalTexts.number(deviation.logPower())
@@ -761,7 +761,7 @@ public class InputStageView extends StageView {
                                                        boolean hasFocus, int row, int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             MemberTableModel.StatusValue status = (MemberTableModel.StatusValue) value;
-            light = status == null ? null : status.light().color();
+            light = status == null ? null : status.color();
             setText("");
             setToolTipText(status == null ? null : status.tooltip());
             return this;
