@@ -46,7 +46,7 @@ class AlgorithmSelectionTextsTest {
             String name = language.getKey();
             assertNotNull(texts.getProperty("conceptStage.algorithm"), name);
 
-            String confirm = MessageFormat.format(texts.getProperty("toolbar.runAlgorithm.confirmClear"), "Algo", 3L, "Typ");
+            String confirm = MessageFormat.format(texts.getProperty("toolbar.runAlgorithm.confirmMode"), "Algo", 3L, "Typ");
             assertTrue(confirm.contains("Algo") && confirm.contains("3") && confirm.contains("Typ"), name + ": " + confirm);
             assertFalse(confirm.contains("{") || confirm.contains("''"), name + ": " + confirm);
 

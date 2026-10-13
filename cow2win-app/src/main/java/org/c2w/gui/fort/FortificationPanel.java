@@ -20,7 +20,8 @@ import java.util.function.Consumer;
  * One fortification on the {@link FortificationMapPanel}: a flat, self-painted tile with
  * the name at the top and "filled/capacity · power" plus the buff percentage at the
  * bottom. The stripe on the left shows the fill level (see {@link #fillLevel}). A click
- * reports the fortification to the map, which keeps track of the selection.
+ * reports the fortification to the map, which keeps track of the selection; a double-click
+ * reports it separately, so the map can open it for editing.
  */
 public class FortificationPanel extends JPanel {
 
@@ -77,11 +78,14 @@ public class FortificationPanel extends JPanel {
     private JLabel buffPercentLbl;
 
     /**
-     * @param onClick receives {@code fortification} whenever the tile is clicked
+     * @param onClick       receives {@code fortification} whenever the tile is clicked once
+     *                      (also for the first click of a double-click)
+     * @param onDoubleClick receives {@code fortification} whenever the tile is double-clicked
      */
     public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
                               FortificationValueMode valueMode, int buffPercent, int buffPercentDiff,
-                              int buffMemberCountDiff, boolean selected, Consumer<Fortification> onClick) {
+                              int buffMemberCountDiff, boolean selected, Consumer<Fortification> onClick,
+                              Consumer<Fortification> onDoubleClick) {
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
@@ -91,10 +95,10 @@ public class FortificationPanel extends JPanel {
         this.buffPercentDiff = buffPercentDiff;
         this.buffMemberCountDiff = buffMemberCountDiff;
         this.selected = selected;
-        init(onClick);
+        init(onClick, onDoubleClick);
     }
 
-    private void init(Consumer<Fortification> onClick) {
+    private void init(Consumer<Fortification> onClick, Consumer<Fortification> onDoubleClick) {
         setLayout(new BorderLayout(0, 4));
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(6, STRIPE_WIDTH + 8, 6, 8));
@@ -112,8 +116,13 @@ public class FortificationPanel extends JPanel {
         MouseAdapter clickListener = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e)) {
+                if (!SwingUtilities.isLeftMouseButton(e)) {
+                    return;
+                }
+                if (e.getClickCount() == 1) {
                     onClick.accept(fortification);
+                } else if (e.getClickCount() == 2) {
+                    onDoubleClick.accept(fortification);
                 }
             }
         };
@@ -213,7 +222,7 @@ public class FortificationPanel extends JPanel {
      * change, "filled/capacity · {@link #totalPowerDiff}", colored
      * green for a gain and red for a loss (see {@link #diffColor}).
      */
-    private JLabel getPowerLabel() {
+    JLabel getPowerLabel() {
         if (powerLbl == null) {
             String places = filledSlots + "/" + fortification.capacity() + " · ";
             String power = valueMode.showsChange() ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
@@ -248,8 +257,11 @@ public class FortificationPanel extends JPanel {
         return (percent > 0 ? "+" : "") + percent + " %";
     }
 
-    /** {@code power} in compact form for the configured language, see {@link #compactPower(int, Locale, String)}. */
-    private static String compactPower(int power) {
+    /**
+     * {@code power} in compact form for the configured language, see {@link #compactPower(int, Locale, String)} -
+     * also used wherever a team's power is shown next to the map (info panel, assignment dialog).
+     */
+    public static String compactPower(int power) {
         return compactPower(power, LanguageService.locale(), LanguageService.displayName(KEY_POWER_MILLIONS));
     }
 

@@ -128,9 +128,8 @@ public final class TeamEditorPanel<T> extends JPanel {
      * updates the draft - a slot selection or the power value (i.e. alongside
      * {@link #touchLastModified()} - NOT for the initial population from the
      * given draft, nor for merely reformatting the power field) - so a caller
-     * like {@code org.c2w.gui.fort.FortificationEntryDialog} can keep a label
-     * derived from this team (e.g. a buff-member count or score) in sync
-     * without polling. {@code onChanged} may be null (no-op), same as
+     * like {@link GuildTeamEntryDialog} can keep whatever it derives from this
+     * team in sync without polling. {@code onChanged} may be null (no-op), same as
      * {@code roleDescriber}.
      */
     public TeamEditorPanel(List<T> catalog, Function<T, String> label, Function<T, Icon> icon,
@@ -992,14 +991,12 @@ public final class TeamEditorPanel<T> extends JPanel {
      * Resets this team back to empty: every slot combo goes back to
      * "- none -" and the power field back to 0, exactly as if each slot had
      * been cleared out by hand one at a time. Used by
-     * {@code org.c2w.gui.fort.FortificationEntryDialog}, which calls this
-     * when its own member combo (a different combo - which guild member
-     * this row belongs to, not a team slot) is reset to "no selection", so
-     * the team built here is discarded along with that row's fortification
-     * assignment. Fires {@code onChanged} exactly like an ordinary slot
+     * {@link GuildTeamEntryDialog}, which calls this when a row's member
+     * combo (a different combo - which guild member the row belongs to, not
+     * a team slot) is reset to "no selection", so the team built here is
+     * discarded on save. Fires {@code onChanged} exactly like an ordinary slot
      * change (see the per-combo {@code addActionListener} above), so
-     * anything mirroring this team's state (e.g. a buff-member count label)
-     * stays in sync; a no-op {@code onChanged} (null) is fine, same as
+     * anything mirroring this team's state stays in sync; a no-op {@code onChanged} (null) is fine, same as
      * everywhere else it's used.
      */
     public void clear() {

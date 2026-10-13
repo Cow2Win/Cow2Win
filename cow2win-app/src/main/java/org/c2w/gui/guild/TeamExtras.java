@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * id in there is hidden from the dropdown (the team's own current selection
  * always stays selectable). Since which teams count as "other teams of the
  * same member" depends on the dialog (a per-row member combo in
- * {@code FortificationEntryDialog}/{@link GuildTeamEntryDialog}), every
+ * {@link GuildTeamEntryDialog}), every
  * dialog supplies its own - see {@link #forOtherDrafts}. This only guides the
  * user; {@link #confirmNoConflict} is the save-time safety net.
  */

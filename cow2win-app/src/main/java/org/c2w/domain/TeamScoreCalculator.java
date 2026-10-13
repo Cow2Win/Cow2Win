@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Computes a team's aggregate score (its "CowScore") against one specific
  * fortification - shared by every place that needs to rank/display a team's
- * fit for a fortification, e.g. {@code org.c2w.gui.fort.FortificationEntryDialog},
+ * fit for a fortification, e.g. {@code org.c2w.gui.fort.FortificationAssignmentDialog},
  * the value overview dialogs, the lineup algorithms (via {@code TeamSide})
  * and the report.
  *

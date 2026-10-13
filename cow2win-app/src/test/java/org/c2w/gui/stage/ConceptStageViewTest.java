@@ -2,6 +2,11 @@ package org.c2w.gui.stage;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
+import org.c2w.data.model.Guild;
+import org.c2w.data.model.GuildMember;
+import org.c2w.data.model.Hero;
+import org.c2w.data.model.HeroTeam;
+import org.c2w.data.model.Role;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.model.Lineup;
@@ -20,6 +25,7 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
+import org.c2w.service.LineupService;
 import org.c2w.service.RecentFiles;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,6 +91,27 @@ class ConceptStageViewTest {
 
         view.showFortification(Optional.empty());
         assertTrue(view.fortificationSectionTexts().stream().anyMatch(text -> text.contains(hint)));
+    }
+
+    @Test
+    @DisplayName("The selected fortification lists its assigned teams, \"no teams\" otherwise, and the double-click hint")
+    void selectedFortificationTeams() {
+        Guild current = context.guild();
+        context.setGuild(new Guild(current.id(), current.name(), List.of(
+                new GuildMember("m1", "Zora", List.of(new HeroTeam("m1", 0, List.of(new Hero("h1", List.of(Role.MAGE))), 1000)),
+                        List.of()))));
+        Fortification fort = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.HERO).findFirst().orElseThrow();
+        String noTeams = LanguageService.displayName("stageInfo.fortification.noTeams");
+        String hint = LanguageService.displayName("stageInfo.fortification.doubleClickHint");
+
+        view.showFortification(Optional.of(fort));
+        assertTrue(view.fortificationSectionTexts().stream().anyMatch(text -> text.contains(noTeams)));
+        assertTrue(view.fortificationSectionTexts().stream().anyMatch(text -> text.contains(hint)));
+
+        new LineupService(context).assignTeam("m1", Lineup.TeamType.HERO, 0, fort);
+        assertTrue(view.fortificationSectionTexts().contains("Zora"), view.fortificationSectionTexts().toString());
+        assertTrue(view.fortificationSectionTexts().stream().noneMatch(text -> text.contains(noTeams)));
     }
 
     @Test

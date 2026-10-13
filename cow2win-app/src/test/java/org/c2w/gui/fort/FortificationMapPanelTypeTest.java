@@ -139,6 +139,25 @@ class FortificationMapPanelTypeTest {
                 Optional.of(first), Optional.empty()), notified);
     }
 
+    @Test
+    @DisplayName("A double-click on the selected fortification keeps it selected and notifies the open listeners")
+    void doubleClickOpens() {
+        FortificationMapPanel map = new FortificationMapPanel(context);
+        List<Fortification> opened = new ArrayList<>();
+        map.addOpenListener(opened::add);
+        FortificationPanel panel = fortificationPanels(map).get(0);
+        Fortification fort = panel.fortification();
+        map.toggleSelection(fort);
+
+        // The first click of the double-click clears the selection, the second one opens.
+        FortificationPanelTest.click(panel, 1);
+        assertEquals(Optional.empty(), map.selectedFortification());
+        FortificationPanelTest.click(panel, 2);
+
+        assertEquals(Optional.of(fort), map.selectedFortification());
+        assertEquals(List.of(fort), opened);
+    }
+
     private static void assertCell(List<Fortification> catalog, String id, int row, int column) {
         Fortification fort = catalog.stream().filter(f -> f.id().equals(id)).findFirst().orElseThrow();
         assertEquals(row, fort.row(), id + " row");

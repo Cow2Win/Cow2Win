@@ -45,7 +45,7 @@ import java.util.List;
  * {@link GuildHeroEntryDialog}/{@link GuildTitanEntryDialog}, the only two
  * subclasses, and {@link TeamTypeSpec}): lets the player build/edit that
  * type's teams for the whole guild in one place, instead of one
- * fortification at a time like {@link org.c2w.gui.fort.FortificationEntryDialog}.
+ * fortification at a time.
  *
  * <p>Layout: every team is ONE line of a sortable/filterable {@link JTable}
  * (rendered only - no combo boxes per line, so it stays fast with many
@@ -874,7 +874,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             return;
         }
         currentRow.member = member;
-        // Same convention as FortificationEntryDialog: "- none -" as member clears the team,
+        // "- none -" as member clears the team,
         // so an unwanted line is dropped on save (power 0).
         if (member == null && teamEditor != null) {
             teamEditor.clear();

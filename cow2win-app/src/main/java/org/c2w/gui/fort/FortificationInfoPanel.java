@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 
 /**
  * Read-only information about one fortification (buff, prerequisites,
- * strategic importance and the marked heroes/titans), shown at the top of
- * {@link FortificationEntryDialog}. The fortification's values are fixed -
+ * strategic importance and the marked heroes/titans), shown in the "selected
+ * fortification" section of the concept stage view. The fortification's values are fixed -
  * nothing here can be edited (see {@code FortificationRepository}).
  */
 public class FortificationInfoPanel extends JPanel {
@@ -34,7 +34,7 @@ public class FortificationInfoPanel extends JPanel {
     /** Column count for the avatar grids built by {@link #buildGroupPanel} - keeps their width predictable regardless of how many entries fall into a group. */
     private static final int GROUP_COLUMNS = 12;
 
-    /** Fixed viewport size of each group's scroll pane (see {@link #buildGroupPanel}), so a large catalog grows scrollbars instead of blowing up this panel's (and thus {@link FortificationEntryDialog}'s) preferred size. */
+    /** Fixed viewport size of each group's scroll pane (see {@link #buildGroupPanel}), so a large catalog grows scrollbars instead of blowing up this panel's preferred size. */
     private static final Dimension GROUP_SCROLL_SIZE = new Dimension(260, 32);
 
     /** One catalog entry (hero or titan) as far as this panel is concerned: id (= language key), avatar and its mark for {@link #fortification}. */
@@ -48,19 +48,9 @@ public class FortificationInfoPanel extends JPanel {
     private final Fortification fortification;
 
     /**
-     * The layout of {@link FortificationEntryDialog}: facts and avatar groups side by side.
-     *
-     * @param heroes the hero catalog - shown for a {@link FortificationType#HERO} fortification
-     * @param titans the titan catalog - shown for a {@link FortificationType#TITAN} fortification
-     */
-    public FortificationInfoPanel(Fortification fortification, List<Hero> heroes, List<Titan> titans) {
-        this(fortification, heroes, titans, false);
-    }
-
-    /**
      * @param compact true for a narrow column (e.g. the info panel of a stage view): facts and
      *                avatar groups stacked, narrower avatar grids; false for the side-by-side
-     *                layout of {@link FortificationEntryDialog}
+     *                layout of a wide dialog
      */
     public FortificationInfoPanel(Fortification fortification, List<Hero> heroes, List<Titan> titans, boolean compact) {
         if (fortification == null) {

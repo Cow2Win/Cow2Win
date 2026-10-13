@@ -32,7 +32,9 @@ import java.util.function.Consumer;
  * the info panel of {@code org.c2w.gui.stage.ConceptStageView}).
  *
  * <p>A click on a fortification selects it, a second click clears the selection - see
- * {@link #selectedFortification()} and {@link #addSelectionListener}.
+ * {@link #selectedFortification()} and {@link #addSelectionListener}. A double-click selects
+ * it (always - its first click may just have cleared the selection) and asks the
+ * {@linkplain #addOpenListener open listeners} to open it for editing.
  */
 public class FortificationMapPanel extends GridPanel {
 
@@ -51,6 +53,8 @@ public class FortificationMapPanel extends GridPanel {
     private String selectedId;
 
     private final List<Consumer<Optional<Fortification>>> selectionListeners = new ArrayList<>();
+
+    private final List<Consumer<Fortification>> openListeners = new ArrayList<>();
 
     /**
      * Always shows {@code appContext}'s current guild/lineup and fortification type - rebuilt
@@ -145,7 +149,7 @@ public class FortificationMapPanel extends GridPanel {
             selectionVisible |= selected;
             setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower,
                     diff.totalPowerDiff(), valueMode, buffPercent, buffPercentDiff(fort, diff),
-                    diff.buffMemberCountDiff(), selected, this::toggleSelection));
+                    diff.buffMemberCountDiff(), selected, this::toggleSelection, this::open));
         }
         if (!selectionVisible) {
             setSelectedId(null);
@@ -202,6 +206,22 @@ public class FortificationMapPanel extends GridPanel {
      */
     void toggleSelection(Fortification fortification) {
         setSelectedId(fortification.id().equals(selectedId) ? null : fortification.id());
+    }
+
+    /** {@code listener} is told every fortification that is double-clicked, after it was selected. */
+    public void addOpenListener(Consumer<Fortification> listener) {
+        openListeners.add(listener);
+    }
+
+    /**
+     * What a double-click on a fortification does: selects {@code fortification} (no toggling)
+     * and then tells the open listeners.
+     */
+    void open(Fortification fortification) {
+        setSelectedId(fortification.id());
+        for (Consumer<Fortification> listener : List.copyOf(openListeners)) {
+            listener.accept(fortification);
+        }
     }
 
     private void setSelectedId(String id) {

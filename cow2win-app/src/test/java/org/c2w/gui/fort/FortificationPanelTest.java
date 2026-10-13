@@ -8,6 +8,10 @@ import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -68,7 +72,30 @@ class FortificationPanelTest {
     }
 
     private static FortificationPanel panel(Fortification fortification) {
-        return new FortificationPanel(fortification, 2, 1_000_000, 0, FortificationValueMode.POWER, 10, 0, 0, false, f -> { });
+        return new FortificationPanel(fortification, 2, 1_000_000, 0, FortificationValueMode.POWER, 10, 0, 0, false, f -> { }, f -> { });
+    }
+
+    @Test
+    @DisplayName("A click reports to onClick, a double-click to onDoubleClick - on the tile and on its labels")
+    void clickAndDoubleClick() {
+        Fortification foundry = new Fortification("foundry", FortificationType.HERO, 5, 0, 0, 0,
+                new RoleBuff(Role.TANK, BuffEffect.HEALTH_INCREASE, 10), List.of(), 0);
+        List<String> events = new ArrayList<>();
+        FortificationPanel panel = new FortificationPanel(foundry, 2, 1_000_000, 0, FortificationValueMode.POWER,
+                10, 0, 0, false, f -> events.add("click " + f.id()), f -> events.add("double " + f.id()));
+
+        click(panel, 1);
+        click(panel, 2);
+        click(panel.getNameLabel(), 1);
+        click(panel.getPowerLabel(), 2);
+
+        assertEquals(List.of("click foundry", "double foundry", "click foundry", "double foundry"), events);
+    }
+
+    /** Dispatches a left click with {@code clickCount} to {@code component}. */
+    static void click(Component component, int clickCount) {
+        component.dispatchEvent(new MouseEvent(component, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
+                InputEvent.BUTTON1_DOWN_MASK, 5, 5, clickCount, false, MouseEvent.BUTTON1));
     }
 
     @Test

@@ -61,7 +61,6 @@ public class GuildService {
         /** Adding or deleting a member in the member overview of the input stage. */
         MEMBER_OVERVIEW("guildLog.origin.memberOverview"),
         TEAM_ENTRY("guildLog.origin.teamEntry"),
-        FORTIFICATION_ENTRY("guildLog.origin.fortificationEntry"),
         HERO_OVERVIEW("guildLog.origin.heroOverview"),
         TITAN_OVERVIEW("guildLog.origin.titanOverview"),
         JOURNAL_IMPORT("guildLog.origin.journalImport"),

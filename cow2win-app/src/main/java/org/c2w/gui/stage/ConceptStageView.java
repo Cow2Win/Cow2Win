@@ -9,10 +9,13 @@ import org.c2w.gui.AlgorithmSelection;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.fort.FortificationAssignmentDialog;
 import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.fort.FortificationPanel;
 import org.c2w.gui.fort.FortificationValueMode;
 import org.c2w.gui.fort.HeroLineupSummaryPanel;
+import org.c2w.gui.fort.TeamAvatars;
 import org.c2w.gui.fort.TitanLineupSummaryPanel;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.AppContext;
@@ -31,7 +34,9 @@ import static org.c2w.gui.stage.InfoSections.*;
  * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection})
  * and the "fortification values" combo box at the end, and on the right the overview of the selected
  * fortification type, the comparison with the "Original" lineup and the details of the
- * fortification selected on the map.
+ * fortification selected on the map, including its assigned teams. A double-click on a
+ * fortification opens the {@link FortificationAssignmentDialog} to assign, move, swap and
+ * remove its teams by hand.
  */
 public class ConceptStageView extends StageView {
 
@@ -44,6 +49,10 @@ public class ConceptStageView extends StageView {
     private static final String KEY_CHANGES = "stageInfo.comparison.changes";
     private static final String KEY_FORTIFICATION = "stageInfo.fortification";
     private static final String KEY_FORTIFICATION_NONE = "stageInfo.fortification.none";
+    private static final String KEY_NO_TEAMS = "stageInfo.fortification.noTeams";
+    private static final String KEY_DOUBLE_CLICK_HINT = "stageInfo.fortification.doubleClickHint";
+    private static final int TEAM_AVATAR_SIZE = 20;
+    private static final int TEAM_NAME_WIDTH = 90;
     private static final String KEY_VALUE_MODE = "fortificationMap.valueMode";
     private static final String KEY_ALGORITHM = "conceptStage.algorithm";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
@@ -83,6 +92,7 @@ public class ConceptStageView extends StageView {
         refreshComparison();
         showFortification(map.selectedFortification());
         map.addSelectionListener(this::showFortification);
+        map.addOpenListener(this::openAssignmentDialog);
         appContext.addListener(new AppContext.Listener() {
             @Override
             public void guildChanged() {
@@ -290,12 +300,50 @@ public class ConceptStageView extends StageView {
                     + (facts.buffPercent() == null ? "" : "  ·  " + facts.buffPercent() + " %");
             addLine(fortificationSection, mutedLabel(factsText));
             addLine(fortificationSection, Box.createVerticalStrut(8));
+            addAssignedTeams(fort);
+            addLine(fortificationSection, Box.createVerticalStrut(4));
+            addLine(fortificationSection, mutedLabel(LanguageService.displayName(KEY_DOUBLE_CLICK_HINT)));
+            addLine(fortificationSection, Box.createVerticalStrut(8));
             FortificationInfoPanel infoPanel = new FortificationInfoPanel(fort,
                     appContext.catalog().heroes().findAll(), appContext.catalog().titans().findAll(), true);
             makeTransparent(infoPanel);
             addLine(fortificationSection, infoPanel);
         }
         relayout(fortificationSection);
+    }
+
+    /**
+     * One line per team assigned to {@code fort}, strongest first: member name, avatars and
+     * compact power - or a muted "no teams assigned yet".
+     */
+    private void addAssignedTeams(Fortification fort) {
+        List<ConceptInfoModel.AssignedTeam> teams = ConceptInfoModel.teamsOf(fort, appContext.lineup(), appContext.guild());
+        if (teams.isEmpty()) {
+            addLine(fortificationSection, mutedLabel(LanguageService.displayName(KEY_NO_TEAMS)));
+            return;
+        }
+        for (ConceptInfoModel.AssignedTeam team : teams) {
+            JPanel line = new JPanel(new BorderLayout(6, 0)) {
+                @Override
+                public Dimension getMaximumSize() {
+                    return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+                }
+            };
+            line.setOpaque(false);
+            JLabel name = new JLabel(team.memberName());
+            name.setPreferredSize(new Dimension(TEAM_NAME_WIDTH, name.getPreferredSize().height));
+            line.add(name, BorderLayout.WEST);
+            line.add(TeamAvatars.of(team.entry(), appContext.guild(), TEAM_AVATAR_SIZE), BorderLayout.CENTER);
+            JLabel power = new JLabel(FortificationPanel.compactPower(team.power()), JLabel.RIGHT);
+            power.setForeground(MUTED_COLOR);
+            line.add(power, BorderLayout.EAST);
+            addLine(fortificationSection, line);
+        }
+    }
+
+    /** Opens the dialog "fortification assignment" for {@code fortification} (double-click on the map). */
+    private void openAssignmentDialog(Fortification fortification) {
+        FortificationAssignmentDialog.open(SwingUtilities.getWindowAncestor(this), appContext, fortification);
     }
 
     /** The texts shown in the "selected fortification" section - for tests. */

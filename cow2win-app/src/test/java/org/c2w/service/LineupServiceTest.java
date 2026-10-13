@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.c2w.service.LineupService.AssignmentMode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** {@link LineupService}: files on disk, {@link AppContext} and its dirty state stay consistent. */
@@ -201,7 +202,7 @@ class LineupServiceTest extends ServiceTestSupport {
         assignOneHeroAndOneTitan();
         Lineup before = context.lineup();
 
-        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.HERO.get(0));
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.HERO.get(0), REPLACE);
 
         assertSame(before, run.before());
         assertEquals(entriesOf(before, Lineup.TeamType.TITAN), entriesOf(run.result(), Lineup.TeamType.TITAN));
@@ -218,7 +219,7 @@ class LineupServiceTest extends ServiceTestSupport {
         assignOneHeroAndOneTitan();
         Lineup before = context.lineup();
 
-        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.TITAN.get(1));
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(), LineupAlgorithms.TITAN.get(1), REPLACE);
 
         assertEquals(entriesOf(before, Lineup.TeamType.HERO), entriesOf(run.result(), Lineup.TeamType.HERO));
         assertEquals(1, run.removed());
@@ -234,7 +235,7 @@ class LineupServiceTest extends ServiceTestSupport {
         int logSize = guildLogTexts().size();
         LineupAlgorithm algorithm = LineupAlgorithms.HERO.get(0);
 
-        LineupService.AlgorithmRun run = lineupService.runAlgorithm(algorithm);
+        LineupService.AlgorithmRun run = lineupService.runAlgorithm(algorithm, REPLACE);
 
         assertSame(run.result(), context.lineup());
         assertTrue(context.isLineupDirty());
@@ -247,7 +248,7 @@ class LineupServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("a run that neither removes nor assigns anything leaves the lineup clean")
     void noOpAlgorithmRunStaysClean() {
-        LineupService.AlgorithmRun run = lineupService.runAlgorithm(LineupAlgorithms.HERO.get(0));
+        LineupService.AlgorithmRun run = lineupService.runAlgorithm(LineupAlgorithms.HERO.get(0), REPLACE);
 
         assertEquals(0, run.removed());
         assertEquals(0, run.assigned());
@@ -258,7 +259,7 @@ class LineupServiceTest extends ServiceTestSupport {
     @DisplayName("\"Manual\" cannot run an assignment")
     void manualAlgorithmIsRefused() {
         assertThrows(IllegalArgumentException.class, () -> LineupService.computeAlgorithm(context.lineup(), context.guild(),
-                new ManualLineupAlgorithm(Lineup.TeamType.HERO)));
+                new ManualLineupAlgorithm(Lineup.TeamType.HERO), REPLACE));
     }
 
     @Test
@@ -266,12 +267,76 @@ class LineupServiceTest extends ServiceTestSupport {
     void staleAlgorithmRunIsDiscarded() {
         useGuildWithHeroAndTitanTeams();
         LineupService.AlgorithmRun run = LineupService.computeAlgorithm(context.lineup(), context.guild(),
-                LineupAlgorithms.HERO.get(0));
+                LineupAlgorithms.HERO.get(0), REPLACE);
         lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, firstFortification());
         Lineup edited = context.lineup();
 
         assertFalse(lineupService.applyAlgorithmRun(run));
         assertSame(edited, context.lineup(), "the edit made in the meantime must survive");
+    }
+
+    @Test
+    @DisplayName("computeAlgorithm with COMPLETE keeps every existing assignment of both types and only adds new ones")
+    void completeKeepsExistingAssignments() {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        Lineup before = context.lineup();
+
+        LineupService.AlgorithmRun run = LineupService.computeAlgorithm(before, context.guild(),
+                LineupAlgorithms.HERO.get(0), COMPLETE);
+
+        assertTrue(run.result().entries().containsAll(before.entries()), run.result().entries().toString());
+        assertEquals(0, run.removed());
+        assertEquals(3, run.assigned(), "only the three free hero teams are distributed");
+        assertEquals(before.entries().size() + 3, run.result().entries().size());
+        assertEquals(entriesOf(before, Lineup.TeamType.TITAN), entriesOf(run.result(), Lineup.TeamType.TITAN));
+    }
+
+    @Test
+    @DisplayName("swapTeams swaps the fortifications of two teams in one change, marks the lineup dirty and changes nothing else")
+    void swapTeamsSwaps() {
+        List<Fortification> heroForts = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.HERO).toList();
+        Fortification first = heroForts.get(0);
+        Fortification second = heroForts.get(1);
+        lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, first);
+        lineupService.assignTeam("m2", Lineup.TeamType.HERO, 0, second);
+        lineupService.assignTeam("m3", Lineup.TeamType.HERO, 0, second);
+        context.setLineupDirty(false);
+        List<String> events = new ArrayList<>();
+        context.addListener(new AppContext.Listener() {
+            @Override
+            public void lineupChanged() {
+                events.add("lineup");
+            }
+        });
+
+        lineupService.swapTeams(new Lineup.Entry(first.id(), "m1", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry(second.id(), "m2", Lineup.TeamType.HERO, 0));
+
+        assertEquals(List.of(new Lineup.Entry(second.id(), "m1", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry(first.id(), "m2", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry(second.id(), "m3", Lineup.TeamType.HERO, 0)), context.lineup().entries());
+        assertTrue(context.isLineupDirty());
+        assertEquals(List.of("lineup"), events);
+    }
+
+    @Test
+    @DisplayName("swapTeams refuses an entry that is not in the open lineup and does nothing within one fortification")
+    void swapTeamsRefusesForeignEntriesAndIgnoresSameFortification() {
+        Fortification first = firstFortificationOf(FortificationType.HERO);
+        lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, first);
+        lineupService.assignTeam("m2", Lineup.TeamType.HERO, 0, first);
+        context.setLineupDirty(false);
+        Lineup before = context.lineup();
+        Lineup.Entry m1 = new Lineup.Entry(first.id(), "m1", Lineup.TeamType.HERO, 0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> lineupService.swapTeams(m1, new Lineup.Entry(first.id(), "x", Lineup.TeamType.HERO, 0)));
+        lineupService.swapTeams(m1, new Lineup.Entry(first.id(), "m2", Lineup.TeamType.HERO, 0));
+
+        assertSame(before, context.lineup());
+        assertFalse(context.isLineupDirty());
     }
 
     @Test
@@ -309,18 +374,6 @@ class LineupServiceTest extends ServiceTestSupport {
         for (Fortification fortification : FortificationRepository.findAll()) {
             assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded(fortification.id()));
         }
-    }
-
-    @Test
-    @DisplayName("saveWithGuild retakes the baseline too")
-    void saveWithGuildRetakesBaseline() throws Exception {
-        useGuildWithTeam();
-        assignToAlchemyTower();
-
-        lineupService.saveWithGuild(context.guild(), context.lineup());
-
-        assertFalse(context.hasUnsavedChanges());
-        assertEquals(new LineupBaseline.Diff(0, 0), context.fortificationDiffFromLoaded("alchemy-tower"));
     }
 
     @Test

@@ -3,18 +3,24 @@ package org.c2w.gui.stage;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
+import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.FortificationAssignment;
 import org.c2w.domain.LineupComparisonService;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * GUI-free values of the info panel of {@link ConceptStageView}: the comparison of the open
- * lineup with the guild's "Original" lineup (the one in the game), and the facts of a
- * selected fortification.
+ * lineup with the guild's "Original" lineup (the one in the game), and the facts and the
+ * assigned teams of a selected fortification (also used by
+ * {@link org.c2w.gui.fort.FortificationAssignmentDialog}).
  */
 public final class ConceptInfoModel {
 
@@ -101,5 +107,38 @@ public final class ConceptInfoModel {
         Integer buffPercent = fortification.buff() == null ? null
                 : BuffCalculationService.calculateBuffForFortification(fortification.id(), lineup, guild, fortification);
         return new FortificationFacts(Math.min(filled, fortification.capacity()), fortification.capacity(), power, buffPercent);
+    }
+
+    /**
+     * A team assigned to a fortification, as shown in the "selected fortification" section and
+     * in the fortification assignment dialog.
+     *
+     * @param memberName the member's display name - the member id if the member no longer exists
+     * @param power      the team's power - 0 if the team no longer exists
+     * @param cowScore   the team's CowScore for the fortification - 0 if the team no longer exists
+     */
+    public record AssignedTeam(Lineup.Entry entry, String memberName, int power, double cowScore) {
+    }
+
+    /**
+     * The teams {@code lineup} assigns to {@code fortification}, strongest first (equal power:
+     * by member name). An entry whose member or team no longer exists in {@code guild} is kept,
+     * with the member id as name and 0 power and CowScore.
+     */
+    public static List<AssignedTeam> teamsOf(Fortification fortification, Lineup lineup, Guild guild) {
+        List<AssignedTeam> teams = new ArrayList<>();
+        for (Lineup.Entry entry : lineup.entries()) {
+            if (entry.fortificationId().equals(fortification.id())) {
+                String memberName = guild.members().stream()
+                        .filter(member -> member.id().equals(entry.teamMemberId()))
+                        .map(GuildMember::displayName)
+                        .findFirst().orElse(entry.teamMemberId());
+                teams.add(new AssignedTeam(entry, memberName, BuffCalculationService.totalPowerOf(entry, guild),
+                        FortificationAssignment.cowScoreOf(entry, guild, fortification)));
+            }
+        }
+        teams.sort(Comparator.comparingInt(AssignedTeam::power).reversed()
+                .thenComparing(AssignedTeam::memberName, String.CASE_INSENSITIVE_ORDER));
+        return teams;
     }
 }

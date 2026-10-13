@@ -23,8 +23,9 @@ import java.util.List;
 /**
  * Use cases around the lineups of the currently open guild: creating,
  * selecting, deleting and saving ".lineup" files, running a lineup
- * algorithm for one fortification type (replacing that type's assignments)
- * and editing team assignments. Keeps {@link AppContext}
+ * algorithm for one fortification type (replacing that type's assignments
+ * or only adding to them, see {@link AssignmentMode}) and editing team
+ * assignments (assigning, moving, removing and swapping teams). Keeps {@link AppContext}
  * (including its dirty state), the files on disk and config.properties
  * consistent with each other, so the GUI only has to collect input and
  * report errors.
@@ -66,6 +67,14 @@ public class LineupService {
         public boolean changedAnything() {
             return removed > 0 || assigned > 0;
         }
+    }
+
+    /** How {@link #computeAlgorithm} treats the existing assignments of the algorithm's type. */
+    public enum AssignmentMode {
+        /** Removes them first - the algorithm assigns every team of the type anew. */
+        REPLACE,
+        /** Keeps them - the algorithm only distributes the teams that have no assignment yet. */
+        COMPLETE
     }
 
     /**
@@ -189,24 +198,31 @@ public class LineupService {
     }
 
     /**
-     * Removes every assignment of {@code algorithm}'s type from {@code lineup}
-     * and then runs {@code algorithm} on it - the other type's assignments stay
-     * as they are. A pure computation that touches no shared state, so it may
-     * run on a background thread (see {@code ActionBar#onRunAlgorithm}). Apply
-     * the result with {@link #applyAlgorithmRun}.
+     * Runs {@code algorithm} on {@code lineup}: with {@link AssignmentMode#REPLACE} after
+     * removing every assignment of the algorithm's type, with {@link AssignmentMode#COMPLETE}
+     * on the lineup as it is (the algorithms only add entries for teams without one, so the
+     * existing assignments stay). The other type's assignments always stay as they are. A pure
+     * computation that touches no shared state, so it may run on a background thread (see
+     * {@code ActionBar#onRunAlgorithm}). Apply the result with {@link #applyAlgorithmRun}.
      *
      * @throws IllegalArgumentException for a {@link ManualLineupAlgorithm}, which assigns nothing
      */
-    public static AlgorithmRun computeAlgorithm(Lineup lineup, Guild guild, LineupAlgorithm algorithm) {
+    public static AlgorithmRun computeAlgorithm(Lineup lineup, Guild guild, LineupAlgorithm algorithm,
+                                                AssignmentMode mode) {
         if (algorithm instanceof ManualLineupAlgorithm) {
             throw new IllegalArgumentException("\"Manual\" cannot run an assignment");
         }
-        Lineup.TeamType teamType = algorithm.teamType();
-        List<Lineup.Entry> kept = lineup.entries().stream().filter(entry -> entry.teamType() != teamType).toList();
-        Lineup cleared = withEntries(lineup, kept);
-        Lineup result = algorithm.run(cleared, guild);
-        int removed = lineup.entries().size() - kept.size();
-        int assigned = result.entries().size() - cleared.entries().size();
+        if (mode == null) {
+            throw new IllegalArgumentException("mode must not be null");
+        }
+        Lineup start = lineup;
+        if (mode == AssignmentMode.REPLACE) {
+            Lineup.TeamType teamType = algorithm.teamType();
+            start = withEntries(lineup, lineup.entries().stream().filter(entry -> entry.teamType() != teamType).toList());
+        }
+        Lineup result = algorithm.run(start, guild);
+        int removed = lineup.entries().size() - start.entries().size();
+        int assigned = result.entries().size() - start.entries().size();
         return new AlgorithmRun(lineup, result, algorithm, removed, assigned);
     }
 
@@ -235,12 +251,12 @@ public class LineupService {
     }
 
     /**
-     * Runs {@code algorithm} on the open lineup (after removing its type's
-     * assignments) and applies the result right away, on the calling thread -
-     * see {@link #computeAlgorithm}/{@link #applyAlgorithmRun}.
+     * Runs {@code algorithm} on the open lineup in {@code mode} and applies the
+     * result right away, on the calling thread - see
+     * {@link #computeAlgorithm}/{@link #applyAlgorithmRun}.
      */
-    public AlgorithmRun runAlgorithm(LineupAlgorithm algorithm) {
-        AlgorithmRun run = computeAlgorithm(context.lineup(), context.guild(), algorithm);
+    public AlgorithmRun runAlgorithm(LineupAlgorithm algorithm, AssignmentMode mode) {
+        AlgorithmRun run = computeAlgorithm(context.lineup(), context.guild(), algorithm, mode);
         applyAlgorithmRun(run);
         return run;
     }
@@ -284,19 +300,33 @@ public class LineupService {
     }
 
     /**
-     * Saves {@code guild} and {@code lineup} to the current guild/lineup
-     * files and makes them the open ones - e.g. after editing one
-     * fortification's teams, which can change both. The saved lineup becomes the new
-     * baseline of the "Changes" view (see {@link AppContext#markLineupSaved()}).
+     * Swaps the fortifications of two teams in the open lineup (in memory
+     * only, until saved): {@code a} goes to {@code b}'s fortification and vice
+     * versa, as one single change. No capacity check is needed - both
+     * fortifications keep their number of teams. Nothing happens if both are
+     * in the same fortification.
+     *
+     * @throws IllegalArgumentException if {@code a} or {@code b} is not an entry of the open lineup
      */
-    public void saveWithGuild(Guild guild, Lineup lineup) throws IOException {
-        GuildRepository.save(guild, context.guildFilePath());
-        LineupRepository.save(lineup, context.lineupFilePath());
-        context.setGuild(guild);
-        context.setLineup(lineup);
-        context.setGuildDirty(false);
-        context.markLineupSaved();
-        logGuildAndLineupSaved(context.lineupFilePath(), GuildService.SaveOrigin.FORTIFICATION_ENTRY);
+    public void swapTeams(Lineup.Entry a, Lineup.Entry b) {
+        Lineup current = context.lineup();
+        if (!current.entries().contains(a) || !current.entries().contains(b)) {
+            throw new IllegalArgumentException("Both entries must be in the open lineup: " + a + ", " + b);
+        }
+        if (a.fortificationId().equals(b.fortificationId())) {
+            return;
+        }
+        List<Lineup.Entry> entries = new ArrayList<>();
+        for (Lineup.Entry entry : current.entries()) {
+            if (entry.equals(a)) {
+                entries.add(new Lineup.Entry(b.fortificationId(), a.teamMemberId(), a.teamType(), a.teamIndex()));
+            } else if (entry.equals(b)) {
+                entries.add(new Lineup.Entry(a.fortificationId(), b.teamMemberId(), b.teamType(), b.teamIndex()));
+            } else {
+                entries.add(entry);
+            }
+        }
+        update(withEntries(current, entries));
     }
 
     /**

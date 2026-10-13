@@ -202,8 +202,11 @@ public class ActionBar extends JPanel {
 
     /**
      * Runs the algorithm chosen in {@link #algorithmSelection} for the selected
-     * fortification type only: removes that type's assignments from the lineup
-     * first (after asking, if there are any) and leaves the other type untouched.
+     * fortification type only and leaves the other type untouched. If that type
+     * already has assignments, asks first whether to clear them and assign anew
+     * ({@link LineupService.AssignmentMode#REPLACE}), to keep them and only
+     * distribute the remaining teams ({@link LineupService.AssignmentMode#COMPLETE})
+     * or to cancel; without assignments it runs right away.
      * Computes on a background thread, so the window stays responsive, and
      * applies the result on the Swing event thread once done (see
      * {@link LineupService#computeAlgorithm}/{@link LineupService#applyAlgorithmRun}).
@@ -220,7 +223,10 @@ public class ActionBar extends JPanel {
         Lineup.TeamType teamType = AlgorithmSelection.teamTypeOf(appContext.fortificationType());
         LineupAlgorithm algorithm = algorithmSelection.get(teamType);
         long existing = lineup.entries().stream().filter(entry -> entry.teamType() == teamType).count();
-        if (existing > 0 && !confirmClear(algorithm, existing, teamType)) {
+        LineupService.AssignmentMode mode = existing > 0
+                ? askAssignmentMode(algorithm, existing, teamType)
+                : LineupService.AssignmentMode.REPLACE;
+        if (mode == null) {
             return;
         }
 
@@ -230,7 +236,7 @@ public class ActionBar extends JPanel {
         new SwingWorker<LineupService.AlgorithmRun, Void>() {
             @Override
             protected LineupService.AlgorithmRun doInBackground() {
-                return LineupService.computeAlgorithm(lineup, guild, algorithm);
+                return LineupService.computeAlgorithm(lineup, guild, algorithm, mode);
             }
 
             @Override
@@ -249,19 +255,29 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Asks whether to remove the {@code existing} assignments of {@code teamType}
-     * before running {@code algorithm} - true for "yes".
+     * Asks what to do with the {@code existing} assignments of {@code teamType}
+     * before running {@code algorithm}: "Clear and reassign" (preselected),
+     * "Only add" or "Cancel" - null for cancel or a closed window.
      */
-    private boolean confirmClear(LineupAlgorithm algorithm, long existing, Lineup.TeamType teamType) {
+    private LineupService.AssignmentMode askAssignmentMode(LineupAlgorithm algorithm, long existing,
+                                                           Lineup.TeamType teamType) {
         String typeName = LineupService.teamTypeName(teamType);
-        // English writes the type in lower case inside a sentence ("all 3 heroes assignments").
+        // English writes the type in lower case inside a sentence ("The heroes already have ...").
         if (Locale.ENGLISH.getLanguage().equals(LanguageService.locale().getLanguage())) {
             typeName = typeName.toLowerCase(LanguageService.locale());
         }
-        int answer = JOptionPane.showConfirmDialog(dialogParent(),
-                LanguageService.displayName("toolbar.runAlgorithm.confirmClear", algorithm.localizedName(), existing, typeName),
-                LanguageService.displayName("teamsOverview.runAlgorithm"), JOptionPane.YES_NO_OPTION);
-        return answer == JOptionPane.YES_OPTION;
+        String replace = LanguageService.displayName("toolbar.runAlgorithm.replace");
+        String[] options = {replace, LanguageService.displayName("toolbar.runAlgorithm.complete"),
+                LanguageService.displayName("common.cancel")};
+        int answer = JOptionPane.showOptionDialog(dialogParent(),
+                LanguageService.displayName("toolbar.runAlgorithm.confirmMode", algorithm.localizedName(), existing, typeName),
+                LanguageService.displayName("teamsOverview.runAlgorithm"), JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, options, replace);
+        return switch (answer) {
+            case 0 -> LineupService.AssignmentMode.REPLACE;
+            case 1 -> LineupService.AssignmentMode.COMPLETE;
+            default -> null;
+        };
     }
 
     /** Saves the current guild to disk as-is - see {@link GuildService#saveGuild()}. */
@@ -347,7 +363,7 @@ public class ActionBar extends JPanel {
     /**
      * Opens the guild-wide team assignment of the selected fortification type:
      * {@link GuildHeroEntryDialog} or {@link GuildTitanEntryDialog} - the guild-wide
-     * counterpart of {@code FortificationPanel#openEntryDialog}'s {@code FortificationEntryDialog}.
+     * counterpart of the per-fortification {@code FortificationAssignmentDialog} of the concept stage.
      * Its save opens the guild's "Original" lineup, which the context bar
      * and the map pick up by themselves (see {@link AppContext.Listener}).
      */
