@@ -1,5 +1,6 @@
 package org.c2w.gui.stage;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.ChangePlanCheckRepository;
@@ -9,6 +10,7 @@ import org.c2w.domain.ChangePlanOutline;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
@@ -59,6 +61,8 @@ public class ChangePlanPanel extends JPanel {
     private static final int INDENT = 18;
     /** Client property of an entry's checkbox: its plain text. */
     private static final String ITEM_TEXT = "c2w.changePlan.itemText";
+    /** Client property of an entry's checkbox: the {@link FortificationType} it belongs to. */
+    private static final String ITEM_TYPE = "c2w.changePlan.itemType";
 
     private final AppContext appContext;
 
@@ -300,16 +304,19 @@ public class ChangePlanPanel extends JPanel {
         summaryLabel.setForeground(InfoSections.MUTED_COLOR);
         updateSummary();
         for (ChangePlanOutline.TypeGroup type : outline.types()) {
-            addRow(styled(new JLabel(ChangePlanRenderer.typeHeading(type.type())), Font.BOLD, 3f), 0, 12);
+            Color typeColor = itemColor(type.type(), false);
+            addRow(colored(styled(new JLabel(ChangePlanRenderer.typeHeading(type.type())), Font.BOLD, 3f), typeColor), 0, 12);
             for (ChangePlanOutline.Section section : type.sections()) {
-                addRow(styled(new JLabel(ChangePlanRenderer.sectionHeading(section)), Font.BOLD, 1f), INDENT, 8);
+                addRow(colored(styled(new JLabel(ChangePlanRenderer.sectionHeading(section)), Font.BOLD, 1f), typeColor),
+                        INDENT, 8);
                 for (ChangePlanOutline.FortificationGroup group : section.fortifications()) {
-                    addRow(styled(new JLabel(ChangePlanRenderer.fortificationName(group.fortificationId())), Font.BOLD, 0f),
-                            2 * INDENT, 4);
+                    addRow(colored(styled(new JLabel(ChangePlanRenderer.fortificationName(group.fortificationId())),
+                            Font.BOLD, 0f), typeColor), 2 * INDENT, 4);
                     for (ChangePlanOutline.Item item : group.items()) {
                         JCheckBox checkBox = new JCheckBox();
                         checkBox.setOpaque(false);
                         checkBox.putClientProperty(ITEM_TEXT, ChangePlanRenderer.itemText(item, guild));
+                        checkBox.putClientProperty(ITEM_TYPE, type.type());
                         checkBox.setSelected(checks.isChecked(item.id()));
                         checkBox.addActionListener(e -> setChecked(item.id(), checkBox.isSelected()));
                         styleCheckBox(checkBox);
@@ -337,17 +344,33 @@ public class ChangePlanPanel extends JPanel {
         return label;
     }
 
-    /** A checked entry is muted and struck through. */
+    private static JLabel colored(JLabel label, Color color) {
+        label.setForeground(color);
+        return label;
+    }
+
+    /** A checked entry is muted and struck through; its color comes from {@link #itemColor}. */
     private static void styleCheckBox(JCheckBox checkBox) {
         String text = ((String) checkBox.getClientProperty(ITEM_TEXT))
                 .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-        if (checkBox.isSelected()) {
-            checkBox.setText("<html><s>" + text + "</s></html>");
-            checkBox.setForeground(InfoSections.MUTED_COLOR);
-        } else {
-            checkBox.setText("<html>" + text + "</html>");
-            checkBox.setForeground(UIManager.getColor("Label.foreground"));
+        FortificationType type = (FortificationType) checkBox.getClientProperty(ITEM_TYPE);
+        checkBox.setText(checkBox.isSelected() ? "<html><s>" + text + "</s></html>" : "<html>" + text + "</html>");
+        checkBox.setForeground(itemColor(type, checkBox.isSelected()));
+    }
+
+    /**
+     * The color of a checklist entry (and, unchecked, of its headings): titans in their
+     * {@link FortificationTypeStyle#color titan color}, heroes in the normal label color; a
+     * checked entry in the muted variant of that ({@link InfoSections#MUTED_COLOR} for heroes).
+     * Heroes deliberately do not use {@code FortificationTypeStyle}'s white, so they keep
+     * whatever text color the look and feel provides.
+     */
+    static Color itemColor(FortificationType type, boolean checked) {
+        if (type == FortificationType.TITAN) {
+            Color titan = FortificationTypeStyle.color(type);
+            return checked ? InfoSections.muted(titan) : titan;
         }
+        return checked ? InfoSections.MUTED_COLOR : UIManager.getColor("Label.foreground");
     }
 
     private void updateSummary() {

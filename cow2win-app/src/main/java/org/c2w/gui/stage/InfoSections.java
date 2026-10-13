@@ -21,6 +21,11 @@ final class InfoSections {
     static final Color HEADING_COLOR = new Color(255, 255, 255, 150);
     static final Color MUTED_COLOR = new Color(255, 255, 255, 130);
 
+    /** {@code color} muted like {@link #MUTED_COLOR}: the same RGB value with its alpha. */
+    static Color muted(Color color) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), MUTED_COLOR.getAlpha());
+    }
+
     /** Width a muted text wraps at - fits the info panel (see {@link StageView#INFO_PANEL_WIDTH}). */
     private static final int WRAP_WIDTH = StageView.INFO_PANEL_WIDTH - 50;
 
