@@ -40,7 +40,6 @@ class DataStatusControllerTest {
     private AppContext context;
     private ProcessBar processBar;
     private StatusBar statusBar;
-    private final List<Stage> switched = new ArrayList<>();
     private DataStatusController controller;
 
     @BeforeEach
@@ -48,8 +47,7 @@ class DataStatusControllerTest {
         context = new AppContext(new Catalog(workspace));
         processBar = new ProcessBar();
         statusBar = new StatusBar();
-        controller = new DataStatusController(context, new GuildService(context, RecentFiles.NONE), processBar,
-                statusBar, switched::add);
+        controller = new DataStatusController(context, new GuildService(context, RecentFiles.NONE), processBar, statusBar);
     }
 
     @AfterEach
@@ -80,22 +78,6 @@ class DataStatusControllerTest {
                 + LanguageService.displayName("status.concept.unsaved"), processBar.tile(Stage.CONCEPT).shownSubtitle());
         assertEquals(processBar.tile(Stage.OUTPUT).subtitle(), processBar.tile(Stage.OUTPUT).shownSubtitle());
         assertSame(status, controller.current());
-    }
-
-    @Test
-    @DisplayName("\"Next step → {stage}\" goes to the first red stage; hidden when nothing is to be done")
-    void nextStep() {
-        controller.show(new DataStatus(result(Level.ATTENTION), result(Level.OK), result(Level.ACTION_NEEDED),
-                null, 0, 0, 0, null, Map.of()));
-        assertTrue(processBar.isNextStepVisible());
-        assertEquals(LanguageService.displayName("processBar.nextStepTo",
-                LanguageService.displayName(Stage.OUTPUT.stageTextKey())), processBar.nextStepText().replace("->", "→"));
-        controller.nextStepAction().actionPerformed(null);
-        assertEquals(List.of(Stage.OUTPUT), switched);
-
-        controller.show(new DataStatus(result(Level.OK), result(Level.NONE), result(Level.OK),
-                null, 0, 0, 0, null, Map.of()));
-        assertFalse(processBar.isNextStepVisible());
     }
 
     @Test

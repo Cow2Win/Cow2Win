@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** {@link ProcessBar}: tiles, highlight, display only, traffic light, "next step" - headless, never shown. */
+/** {@link ProcessBar}: tiles, highlight, display only, traffic light - headless, never shown. */
 class ProcessBarTest {
 
     @Test
@@ -108,20 +108,15 @@ class ProcessBarTest {
     }
 
     @Test
-    @DisplayName("\"Next step\" is hidden by default and shown once it gets an action")
-    void nextStep() {
+    @DisplayName("The bar holds only the tiles and the arrows between them - no button")
+    void onlyTilesAndArrows() {
         ProcessBar bar = new ProcessBar();
-        assertFalse(bar.isNextStepVisible());
 
-        bar.setNextStepAction(new AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-            }
-        });
-        assertTrue(bar.isNextStepVisible());
-
-        bar.setNextStepAction(null);
-        assertFalse(bar.isNextStepVisible());
+        List<Component> components = List.of(bar.getComponents());
+        assertEquals(5, components.size(), "three tiles, two arrows");
+        assertEquals(bar.tiles(), components.stream()
+                .filter(c -> c instanceof ProcessBar.StageTile).map(c -> (ProcessBar.StageTile) c).toList());
+        assertTrue(components.stream().noneMatch(c -> c instanceof AbstractButton));
     }
 
     @Test
@@ -153,20 +148,5 @@ class ProcessBarTest {
         bar.setSubtitle(Stage.INPUT, null);
         assertEquals(staticSubtitle, tile.shownSubtitle());
         assertEquals(staticSubtitle, tile.getToolTipText());
-    }
-
-    @Test
-    @DisplayName("\"Next step\" shows the name of its action")
-    void nextStepText() {
-        ProcessBar bar = new ProcessBar();
-        AbstractAction action = new AbstractAction("Next step → Output") {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-            }
-        };
-        bar.setNextStepAction(action);
-        assertEquals("Next step → Output", bar.nextStepText().replace("->", "→"));
-        action.putValue(Action.NAME, "Next step → Input");
-        assertEquals("Next step → Input", bar.nextStepText().replace("->", "→"));
     }
 }

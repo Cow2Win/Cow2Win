@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -293,24 +292,5 @@ class DataStatusServiceTest {
                     TODAY, null, target, FileTimes.NONE);
             assertEquals(Level.NONE, DataStatusService.evaluate(originalOpen).output().level());
         }
-    }
-
-    @Test
-    @DisplayName("nextStep: red before orange, in the order input, concept, output; empty if all OK/NONE")
-    void nextStep() {
-        DataStatus.StageResult red = new DataStatus.StageResult(Level.ACTION_NEEDED, List.of());
-        DataStatus.StageResult orange = new DataStatus.StageResult(Level.ATTENTION, List.of());
-        DataStatus.StageResult green = new DataStatus.StageResult(Level.OK, List.of());
-        DataStatus.StageResult none = new DataStatus.StageResult(Level.NONE, List.of());
-
-        assertEquals(Optional.of(Area.OUTPUT), status(orange, green, red).nextStep(), "red wins over an earlier orange");
-        assertEquals(Optional.of(Area.INPUT), status(red, red, green).nextStep(), "the first red");
-        assertEquals(Optional.of(Area.CONCEPT), status(green, orange, orange).nextStep(), "the first orange");
-        assertEquals(Optional.empty(), status(green, none, green).nextStep());
-    }
-
-    private static DataStatus status(DataStatus.StageResult input, DataStatus.StageResult concept,
-                                     DataStatus.StageResult output) {
-        return new DataStatus(input, concept, output, null, 0, 0, 0, null, java.util.Map.of());
     }
 }

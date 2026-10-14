@@ -94,7 +94,7 @@ public class Cow2Frame extends JFrame {
     private JDialog logDialog;
     /** The "Weltenschlacht Journal" actions and windows. */
     private final JournalActions journalActions;
-    /** Traffic lights, short texts, status bar and "next step" from the data status of the open guild. */
+    /** Traffic lights, short texts and status bar from the data status of the open guild. */
     private final DataStatusController dataStatusController;
     /** The output stage view - "apply to live" runs there. */
     private OutputStageView outputView;
@@ -181,8 +181,7 @@ public class Cow2Frame extends JFrame {
 
         // The data status: evaluated again after every change, journal event and stage switch.
         StatusBar statusBar = new StatusBar();
-        this.dataStatusController = new DataStatusController(appContext, guildService, processBar, statusBar,
-                this::showStage);
+        this.dataStatusController = new DataStatusController(appContext, guildService, processBar, statusBar);
         journalActions.addJournalListener(dataStatusController::requestUpdate);
         dataStatusController.addListener(inputView::setDataStatus);
         outputView.setLiveChangedListener(() -> {

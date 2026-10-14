@@ -63,7 +63,7 @@ class ActionBarTest {
         assertEquals(List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT),
                 processBar.tiles().stream().map(ProcessBar.StageTile::stage).toList());
         assertTrue(CowScoreTestSupport.findAll(bar, AbstractButton.class).stream().noneMatch(Component::isVisible),
-                "no visible buttons (\"next step\" is hidden)");
+                "no visible buttons");
     }
 
     @Test

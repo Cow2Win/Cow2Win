@@ -122,22 +122,6 @@ public record DataStatus(StageResult input, StageResult concept, StageResult out
         };
     }
 
-    /**
-     * Where to go next: the first stage (input → concept → output) with
-     * {@link Level#ACTION_NEEDED}, otherwise the first with {@link Level#ATTENTION}; empty if
-     * every stage is {@link Level#OK} or {@link Level#NONE}.
-     */
-    public Optional<Area> nextStep() {
-        for (Level level : List.of(Level.ACTION_NEEDED, Level.ATTENTION)) {
-            for (Area area : Area.values()) {
-                if (result(area).level() == level) {
-                    return Optional.of(area);
-                }
-            }
-        }
-        return Optional.empty();
-    }
-
     /** The finding of the member with {@code memberId}, empty if unknown. */
     public Optional<MemberFinding> member(String memberId) {
         return Optional.ofNullable(members.get(memberId));

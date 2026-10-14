@@ -23,7 +23,6 @@ import org.c2w.service.JournalSyncService;
 import org.c2w.service.journal.SyncPlan;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,15 +32,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 /**
  * Evaluates the {@link DataStatus} of the open guild ({@link DataStatusService}) and hands it
- * out: traffic light and short text of every {@link ProcessBar} tile, the {@link StatusBar},
- * the "next step → {stage}" button, and the {@linkplain #addListener listeners} (e.g. the
- * member table of the input stage).
+ * out: traffic light and short text of every {@link ProcessBar} tile, the {@link StatusBar}
+ * and the {@linkplain #addListener listeners} (e.g. the member table of the input stage).
  *
  * <p>Every trigger ({@link #requestUpdate()}: guild, lineup, dirty state, fortification type,
  * stage switch, settings, journal, CowScores) restarts a 200 ms timer, so several events in a
@@ -50,7 +47,6 @@ import java.util.function.Consumer;
  */
 public final class DataStatusController {
 
-    private static final String KEY_NEXT_STEP_TO = "processBar.nextStepTo";
     private static final String KEY_NEWEST_DEFENSE = "statusBar.newestDefense";
     private static final String KEY_STALE_JOURNAL = "statusBar.staleJournal";
     private static final String KEY_STALE_AGE = "statusBar.staleAge";
@@ -63,25 +59,19 @@ public final class DataStatusController {
     private final GuildService guildService;
     private final ProcessBar processBar;
     private final StatusBar statusBar;
-    private final Consumer<Stage> stageSwitcher;
     private final Timer timer;
     private final List<Consumer<DataStatus>> listeners = new ArrayList<>();
-    private final NextStepAction nextStepAction = new NextStepAction();
 
     /** Counts the started evaluations; a worker whose number is no longer the latest is dropped. */
     private int generation;
     private DataStatus current;
 
-    /**
-     * @param stageSwitcher switches the main window to a stage (like a click on its tile)
-     */
     public DataStatusController(AppContext context, GuildService guildService, ProcessBar processBar,
-                                StatusBar statusBar, Consumer<Stage> stageSwitcher) {
+                                StatusBar statusBar) {
         this.context = context;
         this.guildService = guildService;
         this.processBar = processBar;
         this.statusBar = statusBar;
-        this.stageSwitcher = stageSwitcher;
         this.timer = new Timer(DEBOUNCE_MILLIS, e -> evaluate());
         timer.setRepeats(false);
         context.addListener(new AppContext.Listener() {
@@ -115,11 +105,6 @@ public final class DataStatusController {
     /** {@code listener} gets every new data status (on the Swing thread). */
     public void addListener(Consumer<DataStatus> listener) {
         listeners.add(listener);
-    }
-
-    /** The "next step" action - for tests. */
-    NextStepAction nextStepAction() {
-        return nextStepAction;
     }
 
     /** The last evaluated data status, null before the first evaluation. */
@@ -233,13 +218,6 @@ public final class DataStatusController {
             processBar.setStatus(stage, statusOf(result.level()));
             processBar.setSubtitle(stage, shortText(result));
         }
-        Optional<Area> next = status.nextStep();
-        if (next.isPresent()) {
-            nextStepAction.setTarget(stageOf(next.get()));
-            processBar.setNextStepAction(nextStepAction);
-        } else {
-            processBar.setNextStepAction(null);
-        }
         statusBar.setParts(statusBarParts(status));
         List.copyOf(listeners).forEach(listener -> listener.accept(status));
     }
@@ -293,29 +271,6 @@ public final class DataStatusController {
             parts.add(LanguageService.displayName(KEY_LINEUP, concept));
         }
         return parts;
-    }
-
-    /** The "next step → {stage}" action - only shown while there is a next step. */
-    final class NextStepAction extends AbstractAction {
-
-        private Stage target;
-
-        void setTarget(Stage target) {
-            this.target = target;
-            putValue(NAME, LanguageService.displayName(KEY_NEXT_STEP_TO,
-                    LanguageService.displayName(target.stageTextKey())));
-        }
-
-        Stage target() {
-            return target;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (target != null) {
-                stageSwitcher.accept(target);
-            }
-        }
     }
 
     /** The state of the open guild and lineup when an evaluation starts (read on the Swing thread). */

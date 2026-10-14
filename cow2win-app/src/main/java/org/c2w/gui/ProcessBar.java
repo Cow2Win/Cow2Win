@@ -6,7 +6,6 @@ import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
-import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,7 +16,7 @@ import java.util.function.Consumer;
 /**
  * The process bar below the {@link ContextBar}: one tile per process stage - input, strategic
  * concept, output (see {@link #STAGES}) - with number, title and subtitle, connected by small
- * arrows, plus a "next step" button on the right (only while there is a next step).
+ * arrows.
  *
  * <p>The {@linkplain #setActiveStage active stage} is highlighted in teal. Only the tiles of
  * {@linkplain #setStageAvailable available} stages - those with a stage view - can be clicked
@@ -31,16 +30,13 @@ public class ProcessBar extends JPanel {
     /** The process stages, in display order (numbered 1 to 3). */
     static final List<Stage> STAGES = List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT);
 
-    private static final String KEY_NEXT_STEP = "processBar.nextStep";
-
-    /** Teal accent of the active tile and the "next step" button. */
+    /** Teal accent of the active tile. */
     private static final Color ACCENT = IconLoader.BLUE;
 
     /** Line color of the tile borders, the arrows and the line under the bar - the same as under the context bar. */
     private static final Color LINE_COLOR = new Color(255, 255, 255, 40);
 
     private final List<StageTile> tiles = new ArrayList<>();
-    private final NextStepButton nextStepButton = new NextStepButton();
     private final List<Consumer<Stage>> stageSelectionListeners = new ArrayList<>();
 
     public ProcessBar() {
@@ -67,9 +63,6 @@ public class ProcessBar extends JPanel {
             c.insets = new Insets(0, 0, 0, 0);
             add(tile, c);
         }
-        c.weightx = 0;
-        c.insets = new Insets(0, 12, 0, 0);
-        add(nextStepButton, c);
 
         setActiveStage(Stage.CONCEPT);
     }
@@ -119,32 +112,6 @@ public class ProcessBar extends JPanel {
      */
     public void setSubtitle(Stage stage, String shortText) {
         tile(stage).setShortText(shortText);
-    }
-
-    /**
-     * Binds the "next step" button to {@code action} (its name is the button text, "next step"
-     * if it has none) and shows it - or hides it for {@code null}; without the button the tiles use the full width.
-     */
-    public void setNextStepAction(Action action) {
-        nextStepButton.setAction(action);
-        if (action == null || action.getValue(Action.NAME) == null) {
-            nextStepButton.setText(LanguageService.displayName(KEY_NEXT_STEP));
-        }
-        setNextStepVisible(action != null);
-    }
-
-    public void setNextStepVisible(boolean visible) {
-        nextStepButton.setVisible(visible);
-        revalidate();
-    }
-
-    public boolean isNextStepVisible() {
-        return nextStepButton.isVisible();
-    }
-
-    /** The text of the "next step" button - for tests. */
-    String nextStepText() {
-        return nextStepButton.getText();
     }
 
     /** The tiles, in display order. */
@@ -412,44 +379,6 @@ public class ProcessBar extends JPanel {
             } finally {
                 g2.dispose();
             }
-        }
-    }
-
-    /** The "next step →" button: teal, white bold text, rounded corners. Hidden until it gets an action. */
-    private static final class NextStepButton extends JButton {
-
-        NextStepButton() {
-            super(LanguageService.displayName(KEY_NEXT_STEP));
-            setUI(new BasicButtonUI());
-            setContentAreaFilled(false);
-            setBorderPainted(false);
-            setFocusPainted(false);
-            setOpaque(false);
-            setForeground(Color.WHITE);
-            setFont(getFont().deriveFont(Font.BOLD, getFont().getSize2D() + 1f));
-            setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 18));
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setVisible(false);
-        }
-
-        /** Shows "->" instead of "→" if the button font cannot display the arrow. */
-        @Override
-        public void setText(String text) {
-            Font font = getFont();
-            super.setText(text != null && font != null && !font.canDisplay('→') ? text.replace("→", "->") : text);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            try {
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isRollover() ? ACCENT.brighter() : ACCENT);
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
-            } finally {
-                g2.dispose();
-            }
-            super.paintComponent(g);
         }
     }
 }
