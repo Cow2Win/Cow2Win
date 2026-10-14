@@ -55,6 +55,58 @@ class ReportGeneratorTest {
     }
 
     @Test
+    @DisplayName("the entries table shows pet and war flag of a hero team after the team composition, empty otherwise")
+    void entriesShowPetAndWarFlag() {
+        HeroTeam withExtras = new HeroTeam("m1", 0, List.of(new Hero("galahad", List.of(Role.TANK))),
+                new Pet("albus"), new WarFlag("flag-bastion"), 1_000_000, null);
+        HeroTeam plain = new HeroTeam("m2", 0, List.of(new Hero("galahad", List.of(Role.TANK))), 900_000);
+        TitanTeam titans = new TitanTeam("m3", 0, List.of(new Titan("ignis", TitanElement.FIRE)), 800_000);
+        Guild guild = new Guild("g1", "Guild", List.of(
+                new GuildMember("m1", "Pet Owner", List.of(withExtras), List.of()),
+                new GuildMember("m2", "No Extras", List.of(plain), List.of()),
+                new GuildMember("m3", "Titan Owner", List.of(), List.of(titans))));
+        String heroFort = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.HERO).findFirst().orElseThrow().id();
+        String titanFort = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.TITAN).findFirst().orElseThrow().id();
+        Lineup lineup = new Lineup("g1", "Guild", "", LocalDateTime.of(2026, 1, 1, 12, 0), List.of(
+                new Lineup.Entry(heroFort, "m1", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry(heroFort, "m2", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry(titanFort, "m3", Lineup.TeamType.TITAN, 0)));
+
+        String html = ReportGenerator.buildReportHtml(lineup, guild, "r.html");
+
+        String galahad = LanguageService.displayName("galahad");
+        assertEquals(List.of(galahad, LanguageService.displayName("albus"), LanguageService.displayName("flag-bastion")),
+                entryCells(html, "Pet Owner").subList(2, 5));
+        assertEquals(List.of(galahad, "", ""), entryCells(html, "No Extras").subList(2, 5));
+        assertEquals(List.of(LanguageService.displayName("ignis"), "", ""), entryCells(html, "Titan Owner").subList(2, 5));
+        assertFalse(html.contains("null"));
+
+        String header = html.substring(html.indexOf(LanguageService.displayName("report.columnFortification")));
+        int composition = header.indexOf(LanguageService.displayName("report.columnTeamComposition"));
+        int pet = header.indexOf(LanguageService.displayName("report.columnPet"));
+        int warFlag = header.indexOf(LanguageService.displayName("report.columnWarFlag"));
+        int power = header.indexOf(LanguageService.displayName("report.columnPower"));
+        assertTrue(composition < pet && pet < warFlag && warFlag < power, "column order");
+    }
+
+    /** The cells of the entries table row of {@code memberName}: fortification, member, composition, pet, war flag, power. */
+    private static List<String> entryCells(String html, String memberName) {
+        for (String row : html.split("<tr>")) {
+            List<String> cells = new java.util.ArrayList<>();
+            java.util.regex.Matcher cell = java.util.regex.Pattern.compile("<td[^>]*>(.*?)</td>").matcher(row);
+            while (cell.find()) {
+                cells.add(cell.group(1));
+            }
+            if (cells.size() == 6 && cells.get(1).equals(memberName)) {
+                return cells;
+            }
+        }
+        throw new AssertionError("no entries row for " + memberName);
+    }
+
+    @Test
     @DisplayName("blank file names and missing data are rejected")
     void rejectsInvalidInput() {
         Lineup lineup = lineupWithOneHeroTeam("Guild");

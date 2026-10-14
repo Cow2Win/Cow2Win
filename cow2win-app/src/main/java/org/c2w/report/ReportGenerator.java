@@ -237,7 +237,10 @@ public final class ReportGenerator {
     /**
      * One row per {@link Lineup.Entry}, sorted by fortification display name
      * then team member name so related assignments are easy to scan - see
-     * class Javadoc for exactly which fields/extras are shown.
+     * class Javadoc for exactly which fields/extras are shown. Columns:
+     * fortification, team member, team composition, pet, war flag, power.
+     * Pet and war flag are only filled for a hero team that has one; they
+     * stay empty for a titan team and a team that can no longer be resolved.
      */
     private static String entriesTableHtml(Lineup lineup, Guild guild) {
         List<Lineup.Entry> entries = new ArrayList<>(lineup.entries());
@@ -255,6 +258,8 @@ public final class ReportGenerator {
                 .append(thOpen(false)).append(headerText("report.columnFortification"))
                 .append(thOpen(false)).append(headerText("report.columnTeamMember"))
                 .append(thOpen(false)).append(headerText("report.columnTeamComposition"))
+                .append(thOpen(false)).append(headerText("report.columnPet"))
+                .append(thOpen(false)).append(headerText("report.columnWarFlag"))
                 .append(thOpen(true)).append(headerText("report.columnPower"))
                 .append("</tr>\n");
 
@@ -265,6 +270,11 @@ public final class ReportGenerator {
             sb.append(tdOpen(false, pos)).append(escape(fortificationDisplayName(entry.fortificationId()))).append("</td>");
             sb.append(tdOpen(false, pos)).append(escape(memberName(guild, entry.teamMemberId()))).append("</td>");
             sb.append(tdOpen(false, pos)).append(escape(teamCompositionOf(guild, entry))).append("</td>");
+            Optional<HeroTeam> heroTeam = heroTeamOf(guild, entry);
+            String pet = heroTeam.map(HeroTeam::pet).map(p -> LanguageService.displayName(p.id())).orElse("");
+            String warFlag = heroTeam.map(HeroTeam::warFlag).map(f -> LanguageService.displayName(f.id())).orElse("");
+            sb.append(tdOpen(false, pos)).append(escape(pet)).append("</td>");
+            sb.append(tdOpen(false, pos)).append(escape(warFlag)).append("</td>");
             sb.append(tdOpen(true, pos)).append(BuffCalculationService.totalPowerOf(entry, guild)).append("</td>");
             sb.append("</tr>\n");
         }
@@ -522,6 +532,20 @@ public final class ReportGenerator {
     }
 
     /**
+     * The hero team this entry points at - empty for a titan entry, or if the
+     * member or team can no longer be resolved - shared by the entries table
+     * (pet, war flag) and {@link #teamCompositionOf(Guild, Lineup.Entry)}.
+     */
+    private static Optional<HeroTeam> heroTeamOf(Guild guild, Lineup.Entry entry) {
+        if (entry.teamType() != Lineup.TeamType.HERO) {
+            return Optional.empty();
+        }
+        return findMember(guild, entry.teamMemberId())
+                .filter(member -> entry.teamIndex() >= 0 && entry.teamIndex() < member.heroTeams().size())
+                .map(member -> member.heroTeams().get(entry.teamIndex()));
+    }
+
+    /**
      * Comma-separated display names of the heroes/titans in the team this
      * entry points at, or "?" if the member/team can no longer be resolved
      * (e.g. the member or team was removed from the guild after this entry
@@ -534,12 +558,10 @@ public final class ReportGenerator {
             return "?";
         }
         if (entry.teamType() == Lineup.TeamType.HERO) {
-            if (entry.teamIndex() >= member.get().heroTeams().size()) {
-                return "?";
-            }
-            HeroTeam team = member.get().heroTeams().get(entry.teamIndex());
-            return team.heroes().stream().map(h -> LanguageService.displayName(h.id()))
-                    .collect(java.util.stream.Collectors.joining(", "));
+            return heroTeamOf(guild, entry)
+                    .map(team -> team.heroes().stream().map(h -> LanguageService.displayName(h.id()))
+                            .collect(java.util.stream.Collectors.joining(", ")))
+                    .orElse("?");
         } else {
             if (entry.teamIndex() >= member.get().titanTeams().size()) {
                 return "?";
