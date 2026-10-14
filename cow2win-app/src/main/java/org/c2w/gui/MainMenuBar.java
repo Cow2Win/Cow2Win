@@ -67,7 +67,7 @@ public final class MainMenuBar extends JMenuBar {
                     ADD_MEMBER, REMOVE_MEMBER,
                     SEPARATOR, OPEN_GUILD_TEAM_ENTRY),
             menu(Stage.CONCEPT.menuTextKey(),
-                    menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP),
+                    menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP),
                     SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
                     SEPARATOR, SHOW_TEAMS),
             menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE),

@@ -43,7 +43,7 @@ class MainMenuBarTest {
             "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD",
             "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
-            "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP}, ---, "
+            "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "
                     + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
             "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE",
             "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS");

@@ -29,13 +29,13 @@ class StageActionListTest {
     }
 
     @Test
-    @DisplayName("For the concept stage: the lineup group with three entries, then the other actions, separators as lines")
+    @DisplayName("For the concept stage: the lineup group with four entries, then the other actions, separators as lines")
     void rowsFollowTheMenu() {
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), allActions());
 
         String lineupHeading = LanguageService.displayName("menu.lineup").toUpperCase(LanguageService.locale());
         assertEquals(List.of(
-                "#" + lineupHeading, "NEW_LINEUP", "REMOVE_LINEUP", "CLEAR_LINEUP",
+                "#" + lineupHeading, "NEW_LINEUP", "REMOVE_LINEUP", "CLEAR_LINEUP", "COPY_LINEUP",
                 "---", "RUN_ALGORITHM", "COMPARE_LINEUPS",
                 "---", "SHOW_TEAMS"), describe(list));
         assertEquals(MainMenuBar.menuFor(Stage.CONCEPT).allActionIds(),

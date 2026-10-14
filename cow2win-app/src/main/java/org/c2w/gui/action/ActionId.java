@@ -35,6 +35,7 @@ public enum ActionId {
     NEW_LINEUP("toolbar.newLineup", Stage.CONCEPT, Opens.WINDOW),
     REMOVE_LINEUP("toolbar.removeLineup", Stage.CONCEPT),
     CLEAR_LINEUP("toolbar.clearLineup", Stage.CONCEPT),
+    COPY_LINEUP("toolbar.copyLineup", Stage.CONCEPT),
     SAVE_LINEUP("toolbar.saveLineup", Stage.CONCEPT),
     RUN_ALGORITHM("teamsOverview.runAlgorithm", Stage.CONCEPT),
     COMPARE_LINEUPS("toolbar.compareLineups", Stage.CONCEPT, Opens.WINDOW),

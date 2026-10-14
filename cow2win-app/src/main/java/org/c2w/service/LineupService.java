@@ -17,12 +17,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Use cases around the lineups of the currently open guild: creating,
- * selecting, deleting and saving ".lineup" files, running a lineup
+ * copying, selecting, deleting and saving ".lineup" files, running a lineup
  * algorithm for one fortification type (replacing that type's assignments
  * or only adding to them, see {@link AssignmentMode}) and editing team
  * assignments (assigning, moving, removing and swapping teams). Keeps {@link AppContext}
@@ -37,6 +43,9 @@ public class LineupService {
 
     /** Glob pattern matching lineup files in a guild folder. */
     private static final String LINEUP_FILE_GLOB = "*" + LineupFiles.SUFFIX;
+
+    /** A lineup name ending in " (n)" - the number of an earlier copy, see {@link #copyFileName}. */
+    private static final Pattern COPY_NUMBER = Pattern.compile("(.+) \\(\\d+\\)");
 
     private final AppContext context;
     private final RecentFiles recentFiles;
@@ -139,6 +148,52 @@ public class LineupService {
         open(lineup, lineupPath);
         Logger.log("Created: " + lineupPath);
         GuildLog.event(guildDirOrNull(), "guildLog.lineupCreated", LineupFiles.displayName(fileName));
+    }
+
+    /**
+     * Copies the saved state of the open lineup - read fresh from its file, so unsaved changes
+     * are NOT copied (ask first) - into a new file of the same guild named by
+     * {@link #copyFileName}, and opens the copy. Every entry (heroes and titans) and the
+     * algorithm name are kept; the copy of the Original ("Live") is a normal, editable lineup.
+     *
+     * @return the file name of the copy
+     */
+    public String copyLineup() throws IOException {
+        Path sourcePath = context.lineupFilePath();
+        Lineup saved = LineupRepository.load(sourcePath);
+        String sourceFileName = sourcePath.getFileName().toString();
+        String fileName = copyFileName(sourceFileName, listLineupFileNames());
+        Path lineupPath = guildDir().resolve(fileName);
+        Lineup copy = new Lineup(saved.guildId(), saved.guildName(), saved.algorithmName(), LocalDateTime.now(),
+                saved.entries());
+        LineupRepository.save(copy, lineupPath);
+        open(copy, lineupPath);
+        Logger.log("Copied: " + sourcePath + " -> " + lineupPath);
+        GuildLog.event(guildDirOrNull(), "guildLog.lineupCopied",
+                LineupFiles.displayName(sourceFileName), LineupFiles.displayName(fileName));
+        return fileName;
+    }
+
+    /**
+     * File name of a copy of {@code sourceFileName}: "&lt;name&gt; (n).lineup" with the smallest
+     * n from 1 that is not taken in {@code existingFileNames} (compared ignoring case, like the
+     * Windows file system). The name is the display name of the source ("Live" for the
+     * Original); a trailing " (n)" of it is cut off first, so a copy of "Test (1)" is "Test (2)".
+     */
+    public static String copyFileName(String sourceFileName, Collection<String> existingFileNames) {
+        String base = LineupFiles.displayName(sourceFileName);
+        Matcher numbered = COPY_NUMBER.matcher(base);
+        if (numbered.matches()) {
+            base = numbered.group(1);
+        }
+        Set<String> taken = new HashSet<>();
+        existingFileNames.forEach(name -> taken.add(name.toLowerCase(Locale.ROOT)));
+        for (int n = 1; ; n++) {
+            String candidate = base + " (" + n + ")" + LineupFiles.SUFFIX;
+            if (!taken.contains(candidate.toLowerCase(Locale.ROOT))) {
+                return candidate;
+            }
+        }
     }
 
     /**

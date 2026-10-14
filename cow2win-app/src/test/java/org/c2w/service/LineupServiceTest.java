@@ -2,6 +2,7 @@ package org.c2w.service;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupBaseline;
 import org.c2w.eval.LineupAlgorithm;
@@ -389,5 +390,72 @@ class LineupServiceTest extends ServiceTestSupport {
 
         assertTrue(context.isLineupDirty());
         assertEquals(new LineupBaseline.Diff(1000, 1), context.fortificationDiffFromLoaded("alchemy-tower"));
+    }
+
+    // --- copying a lineup ---
+
+    @Test
+    @DisplayName("copyFileName: smallest free number from 1, gaps are filled, an existing number is replaced")
+    void copyFileNameNumbers() {
+        assertEquals("Test (1).lineup", LineupService.copyFileName("Test.lineup", List.of("Test.lineup")));
+        assertEquals("Test (2).lineup", LineupService.copyFileName("Test.lineup",
+                List.of("Test.lineup", "Test (1).lineup", "Test (3).lineup")));
+        assertEquals("Test (2).lineup", LineupService.copyFileName("Test (1).lineup",
+                List.of("Test.lineup", "Test (1).lineup")));
+    }
+
+    @Test
+    @DisplayName("copyFileName: Live becomes \"Live (1)\", and existing names are compared ignoring case")
+    void copyFileNameLiveAndCase() {
+        assertEquals(LanguageService.displayName("lineup.live") + " (1).lineup",
+                LineupService.copyFileName(LineupFiles.ORIGINAL_FILE_NAME, List.of(LineupFiles.ORIGINAL_FILE_NAME)));
+        assertEquals("Test (2).lineup", LineupService.copyFileName("Test.lineup", List.of("Test.lineup", "test (1).lineup")));
+    }
+
+    @Test
+    @DisplayName("copyLineup copies the saved state (heroes, titans, algorithm name) and opens the copy clean")
+    void copyLineupCopiesSavedState() throws Exception {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        Lineup open = context.lineup();
+        Lineup saved = new Lineup(open.guildId(), open.guildName(), "Greedy", open.createdAt(), open.entries());
+        LineupRepository.save(saved, context.lineupFilePath());
+        lineupService.selectLineup(LineupService.DEFAULT_LINEUP_FILE_NAME);
+        // An unsaved change - it must not end up in the copy.
+        lineupService.assignTeam("m3", Lineup.TeamType.HERO, 0, firstFortificationOf(FortificationType.HERO));
+        int logLines = guildLogTexts().size();
+
+        String fileName = lineupService.copyLineup();
+
+        assertEquals("default (1).lineup", fileName);
+        Path copyPath = lineupService.guildDir().resolve(fileName);
+        Lineup copy = LineupRepository.load(copyPath);
+        assertEquals(saved.entries(), copy.entries());
+        assertEquals(1, entriesOf(copy, Lineup.TeamType.HERO).size());
+        assertEquals(1, entriesOf(copy, Lineup.TeamType.TITAN).size());
+        assertEquals("Greedy", copy.algorithmName());
+        assertEquals(copyPath, context.lineupFilePath());
+        assertEquals(saved.entries(), context.lineup().entries());
+        assertFalse(context.isLineupDirty());
+        assertEquals(LanguageService.displayName("guildLog.lineupCopied", "default", "default (1)"),
+                guildLogTexts().get(logLines));
+    }
+
+    @Test
+    @DisplayName("copyLineup of Live gives a normal, editable lineup")
+    void copyLineupOfLive() throws Exception {
+        useGuildWithHeroAndTitanTeams();
+        assignOneHeroAndOneTitan();
+        Path originalPath = lineupService.guildDir().resolve(LineupFiles.ORIGINAL_FILE_NAME);
+        LineupRepository.save(context.lineup(), originalPath);
+        lineupService.selectLineup(LineupFiles.ORIGINAL_FILE_NAME);
+        assertTrue(lineupService.isOriginalOpen());
+
+        String fileName = lineupService.copyLineup();
+
+        assertEquals(LanguageService.displayName("lineup.live") + " (1).lineup", fileName);
+        assertFalse(lineupService.isOriginalOpen());
+        assertFalse(LineupFiles.isReservedFileName(fileName));
+        assertEquals(2, context.lineup().entries().size());
     }
 }

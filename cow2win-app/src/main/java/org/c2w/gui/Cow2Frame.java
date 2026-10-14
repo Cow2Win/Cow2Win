@@ -282,6 +282,10 @@ public class Cow2Frame extends JFrame {
                 .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
         actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup)
                 .withSmallIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP)));
+        // No icon yet - an empty placeholder of icon size keeps the text in line with its neighbors.
+        actions.register(new AppAction(ActionId.COPY_LINEUP, this::onCopyLineup)
+                .withSmallIcon(new ImageIcon(new java.awt.image.BufferedImage(ActionBar.TOOLBAR_ICON_SIZE,
+                        ActionBar.TOOLBAR_ICON_SIZE, java.awt.image.BufferedImage.TYPE_INT_ARGB))));
     }
 
     /** The actions of menu bar and toolbar - package-visible for tests. */
@@ -485,6 +489,24 @@ public class Cow2Frame extends JFrame {
             return;
         }
         lineupService.clearLineup();
+    }
+
+    /**
+     * Copies the saved state of the open lineup into "&lt;name&gt; (n)" and opens the copy - see
+     * {@link LineupService#copyLineup()}. Unsaved changes of the lineup would be lost by opening
+     * the copy, so the usual "switch lineup" prompt comes first; on failure the open lineup stays.
+     */
+    private void onCopyLineup() {
+        if (appContext.isLineupDirty() && !contextBar.confirmDiscardUnsavedChanges()) {
+            return;
+        }
+        try {
+            lineupService.copyLineup();
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not copy the lineup " + appContext.lineupFilePath(), e);
+            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.copyLineup.error") + "\n" + e.getMessage(),
+                    LanguageService.displayName("mainFrame.copyLineup.errorTitle"), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /** Opens {@link SettingsDialog}; a saved change (e.g. the stale check) is evaluated right away. */
