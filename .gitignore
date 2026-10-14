@@ -45,3 +45,6 @@ build/
 
 ### Claude ###
 Claude outputs/
+
+### plugin agentbridge ###
+.agentbridge
