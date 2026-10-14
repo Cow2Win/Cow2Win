@@ -280,8 +280,8 @@ public abstract class AbstractLineupAlgorithm<T> implements LineupAlgorithm {
     /**
      * Computes, for every fortification in {@code catalog}, its "unlock
      * depth": the minimum number of captures needed before it can be
-     * attacked, with an {@link Fortification#isInitiallyAttackable()}
-     * fortification (no prerequisites) at depth 0. Per
+     * attacked, with a fortification without prerequisites (attackable from
+     * the start) at depth 0. Per
      * {@link Fortification#prerequisites()}'s javadoc, prerequisites are an
      * OR-relation - capturing ANY ONE of them unlocks the fortification - so
      * a fortification's depth is 1 + the SHALLOWEST of its prerequisites'

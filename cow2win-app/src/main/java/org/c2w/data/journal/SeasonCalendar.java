@@ -7,14 +7,13 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
  * The Weltenschlacht seasons of the game - the same for every guild. A season
  * lasts {@link Season#LENGTH 12 weeks} and starts on a Monday; normally a
- * 1-week break follows, so a new season starts every {@link #CYCLE 13 weeks}.
+ * 1-week break follows, so a new season starts every 13 weeks.
  *
  * <p>The known season starts are shipped in {@link #RESOURCE} (exceptions of
  * the game such as a longer break are added there with the next release).
@@ -30,9 +29,7 @@ public final class SeasonCalendar {
     /** Classpath resource with the known season starts, one line {@code number=yyyy-MM-dd} per season. */
     public static final String RESOURCE = "/journal/season-calendar.properties";
 
-    /** Season plus the normal break: the distance between two starts after the last known one. */
-    public static final Period CYCLE = Period.ofWeeks(13);
-
+    /** Season plus the normal break, in days: the distance between two starts after the last known one. */
     private static final long CYCLE_DAYS = 13 * 7;
 
     private static SeasonCalendar standard;

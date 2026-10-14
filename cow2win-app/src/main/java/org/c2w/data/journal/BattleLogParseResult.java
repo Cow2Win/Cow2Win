@@ -14,9 +14,4 @@ public record BattleLogParseResult(BattleLog log, List<ParseProblem> problems) {
         }
         problems = problems == null ? List.of() : List.copyOf(problems);
     }
-
-    /** True if the file was understood completely. */
-    public boolean isClean() {
-        return problems.isEmpty();
-    }
 }

@@ -347,18 +347,9 @@ public class AppContext {
     }
 
     /**
-     * {@link #loadedFortificationBaselines()} for one fortification, or null
-     * if that fortification had no team assigned when the lineup was loaded
-     * or last saved.
-     */
-    public LineupBaseline loadedFortificationBaseline(String fortificationId) {
-        return loadedFortificationBaselines.get(fortificationId);
-    }
-
-    /**
      * How far the CURRENT in-memory lineup ({@link #lineup()}) has drifted,
      * for ONE fortification, from what was loaded or last saved (see
-     * {@link #loadedFortificationBaseline(String)}) - positive values mean
+     * {@link #loadedFortificationBaselines()}) - positive values mean
      * the current lineup is now stronger / has more buff members at this
      * fortification than what is saved on disk. Used by the fortification
      * map's "Changes" view and tooltips. A fortification without a baseline
@@ -388,9 +379,5 @@ public class AppContext {
                     result.put(fortificationId, LineupBaseline.forFortification(fortification, lineup, guild)));
         }
         return Map.copyOf(result);
-    }
-
-    public Lineup copyLineup() {
-        return new Lineup(lineup.guildId(), lineup.guildName(), lineup.algorithmName(), lineup.createdAt(), lineup.entries());
     }
 }

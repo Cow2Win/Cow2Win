@@ -66,9 +66,4 @@ public record Fortification(
         }
         prerequisites = prerequisites == null ? List.of() : List.copyOf(prerequisites);
     }
-
-    /** True if this fortification is attackable from the start (no prerequisite). */
-    public boolean isInitiallyAttackable() {
-        return prerequisites.isEmpty();
-    }
 }

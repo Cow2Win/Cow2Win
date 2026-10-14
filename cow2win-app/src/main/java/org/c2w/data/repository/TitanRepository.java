@@ -90,16 +90,6 @@ public class TitanRepository {
     }
 
     /**
-     * Returns the titans of a given element (sorted by id).
-     */
-    public List<Titan> findByElement(TitanElement element) {
-        return titansById.values().stream()
-                .filter(t -> t.element().equals(element))
-                .sorted(Comparator.comparing(Titan::id))
-                .collect(Collectors.toList());
-    }
-
-    /**
      * Returns the number of known titans.
      */
     public int count() {

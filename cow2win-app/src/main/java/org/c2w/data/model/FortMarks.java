@@ -33,11 +33,6 @@ public record FortMarks(Map<String, FortMark> marks) {
         return marks.get(fortificationId) == FortMark.POSITIVE;
     }
 
-    /** True if this entity carries {@link FortMark#NEGATIVE} for the given fortification. */
-    public boolean isNegative(String fortificationId) {
-        return marks.get(fortificationId) == FortMark.NEGATIVE;
-    }
-
     /** True if there is no mark at all. */
     public boolean isEmpty() {
         return marks.isEmpty();

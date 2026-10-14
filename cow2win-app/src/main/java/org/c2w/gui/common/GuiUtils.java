@@ -11,32 +11,6 @@ public class GuiUtils {
     public static final Color VALUE_HIGHLIGHT_BACKGROUND = IconLoader.GREEN;
 
     /**
-     * Custom UIManager key - not a built-in Swing/L&amp;F key, namespaced with
-     * "Cow2Win." so it can never collide with one - for the background color
-     * of the hero/titan team table cells in {@code HeroValueOverviewDialog}/
-     * {@code TitanValueOverviewDialog} (see their cell renderers). Registered once below in {@link #setGUIConstants()},
-     * the same way "TabbedPane.selected" already is, instead of hardcoding the
-     * color into each of those renderers.
-     */
-    public static final String KEY_TEAM_TABLE_CELL_BACKGROUND = "Cow2Win.teamTableCellBackground";
-
-    public static final void setGUIConstants(){
-        //UIManager.put("TabbedPane.selected", Color.GRAY.darker());
-        //UIManager.put(KEY_TEAM_TABLE_CELL_BACKGROUND, Color.GRAY.darker());
-        //UIManager.put("TabbedPane.focus", Color.BLACK);
-        //UIManager.put("TabbedPane.selectHighlight", Color.GRAY);
-        //UIManager.put("Table.background",Color.GRAY.darker());
-       // UIManager.put("Table.selectionBackground",Color.BLACK);
-        //UIManager.put("TextArea.background",Color.GRAY.darker());
-        //UIManager.put("TextArea.foreground",Color.WHITE);
-        //UIManager.put("List.background",Color.GRAY.darker());
-        //UIManager.put("List.foreground",Color.WHITE);
-        //UIManager.put("List.selectionBackground",Color.BLACK);
-        //UIManager.put("List.selectionForeground",Color.WHITE);
-
-    }
-
-    /**
      * Sizes {@code window} to {@code height} and to at least {@code minWidth},
      * but wide enough that its content's preferred width fits - plus room for
      * a vertical scroll bar, since the entry dialogs keep their rows in a
@@ -50,20 +24,6 @@ public class GuiUtils {
         Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         int width = Math.max(minWidth, window.getWidth() + scrollBarWidth);
         window.setSize(Math.min(width, screen.width), Math.min(height, screen.height));
-    }
-
-    /**
-     * Widens {@code window} (never narrows it) after {@code content} - a
-     * component inside it without its own scroll pane - was replaced, so that
-     * {@code content}'s preferred width fits. Never wider than the usable
-     * screen area.
-     */
-    public static void widenToFit(Window window, Component content) {
-        int needed = window.getWidth() - content.getWidth() + content.getPreferredSize().width;
-        if (needed > window.getWidth()) {
-            Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-            window.setSize(Math.min(needed, screen.width), window.getHeight());
-        }
     }
 
     /**

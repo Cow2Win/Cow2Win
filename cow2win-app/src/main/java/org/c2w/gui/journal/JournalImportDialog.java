@@ -17,10 +17,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -452,21 +449,5 @@ public final class JournalImportDialog extends JDialog {
 
     static String escape(String text) {
         return text == null ? "" : text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    static JSpinner dateSpinner(LocalDate value) {
-        JSpinner spinner = new JSpinner(new SpinnerDateModel(toDate(value), null, null, java.util.Calendar.DAY_OF_MONTH));
-        DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM, JournalTexts.locale());
-        String pattern = format instanceof SimpleDateFormat sdf ? sdf.toPattern() : "dd.MM.yyyy";
-        spinner.setEditor(new JSpinner.DateEditor(spinner, pattern));
-        return spinner;
-    }
-
-    static Date toDate(LocalDate date) {
-        return Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    }
-
-    static LocalDate toLocalDate(Date date) {
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }

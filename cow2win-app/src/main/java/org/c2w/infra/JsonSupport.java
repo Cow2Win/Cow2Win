@@ -196,21 +196,6 @@ public final class JsonSupport {
         }
     }
 
-    /**
-     * Adds a numeric property, writing it without a decimal point when it is
-     * a whole number (e.g. "4" instead of "4.0") - matches the style of the
-     * previous hand-written writers, so values like a RoleBuff's
-     * bonusPercent don't grow a spurious ".0" the next time the file is
-     * saved.
-     */
-    public static void addNumber(JsonObject obj, String key, double value) {
-        if (value == Math.rint(value) && !Double.isInfinite(value)) {
-            obj.addProperty(key, (long) value);
-        } else {
-            obj.addProperty(key, value);
-        }
-    }
-
     public static JsonArray toStringArray(List<String> values) {
         JsonArray array = new JsonArray();
         for (String value : values) {

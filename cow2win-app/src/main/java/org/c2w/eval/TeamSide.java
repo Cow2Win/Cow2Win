@@ -61,9 +61,4 @@ public record TeamSide<T>(
             Lineup.TeamType.TITAN, FortificationType.TITAN, "bridge",
             GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::buffFitScore, TitanTeam::sortScore,
             (team, fortification) -> TeamScoreCalculator.scoreFor(team, fortification).total());
-
-    /** {@link #HERO} or {@link #TITAN}, whichever matches {@code teamType}. */
-    public static TeamSide<?> of(Lineup.TeamType teamType) {
-        return teamType == Lineup.TeamType.HERO ? HERO : TITAN;
-    }
 }

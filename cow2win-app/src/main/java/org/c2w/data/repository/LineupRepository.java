@@ -12,14 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class LineupRepository {
-    private static final String JSON_DIRECTORY = "/data/lineups/";
-    private static volatile Map<String, Lineup> lineupsById;
-
 
     public static Lineup load(Path path) throws IOException {
         String json = Files.readString(path, StandardCharsets.UTF_8).trim();
@@ -64,33 +61,6 @@ public class LineupRepository {
     }
 
     /**
-     * Returns the lineup with the given id, or Optional.empty() if no
-     * lineup with this id exists.
-     */
-    public static Optional<Lineup> findById(String lineupId) {
-        ensureLoaded();
-        return Optional.ofNullable(lineupsById.get(lineupId));
-    }
-
-    /**
-     * Returns all known lineups as a list sorted by creation time (newest first).
-     */
-    public static List<Lineup> findAll() {
-        ensureLoaded();
-        return lineupsById.values().stream()
-                .sorted((a, b) -> b.createdAt().compareTo(a.createdAt()))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the number of known lineups.
-     */
-    public static int count() {
-        ensureLoaded();
-        return lineupsById.size();
-    }
-
-    /**
      * Creates an empty dummy lineup for initial use when no lineups exist yet.
      * The lineup has no entries (empty team assignments) and serves as a
      * starting point for the application.
@@ -105,45 +75,6 @@ public class LineupRepository {
                 LocalDateTime.now(),
                 List.of()
         );
-    }
-
-    /**
-     * Resets the catalog (for tests). The JSON files are reloaded on the next access.
-     */
-    public static void resetCache() {
-        synchronized (LineupRepository.class) {
-            lineupsById = null;
-        }
-    }
-
-    // --- private ---
-
-    private static void ensureLoaded() {
-        if (lineupsById == null) {
-            synchronized (LineupRepository.class) {
-                if (lineupsById == null) {
-                    lineupsById = loadLineups();
-                }
-            }
-        }
-    }
-
-    /**
-     * Loads all lineups from the JSON directory.
-     * If the directory does not exist or is empty, returns an empty map.
-     */
-    private static Map<String, Lineup> loadLineups() {
-        Map<String, Lineup> result = new LinkedHashMap<>();
-
-        try {
-            // Try to load lineups from resources
-            // For now, return empty map as lineups don't exist initially
-            // This can be extended to load from actual JSON files later
-            return result;
-        } catch (Exception e) {
-            // If loading fails, return empty map and let the application create empty lineups
-            return result;
-        }
     }
 
     /**

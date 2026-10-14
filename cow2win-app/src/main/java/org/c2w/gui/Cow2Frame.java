@@ -111,7 +111,6 @@ public class Cow2Frame extends JFrame {
         // to the WindowAdapter below (see #onWindowClosing), which performs
         // the exit itself once it is safe to do so.
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        GuiUtils.setGUIConstants();
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {

@@ -44,9 +44,4 @@ public record ImportPlan(
     public boolean isImportable() {
         return errors.isEmpty() && files.stream().anyMatch(f -> f.status() == PlannedFile.Status.READY);
     }
-
-    /** The files that will be imported. */
-    public List<PlannedFile> readyFiles() {
-        return files.stream().filter(f -> f.status() == PlannedFile.Status.READY).toList();
-    }
 }
