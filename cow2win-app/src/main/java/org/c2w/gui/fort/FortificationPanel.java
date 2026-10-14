@@ -253,7 +253,7 @@ public class FortificationPanel extends JPanel {
     }
 
     /** "+8 %"/"-5 %"/"0 %". */
-    static String formatPercent(int percent) {
+    public static String formatPercent(int percent) {
         return (percent > 0 ? "+" : "") + percent + " %";
     }
 

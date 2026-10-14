@@ -335,13 +335,12 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Opens {@link LineupComparisonDialog} - purely a
-     * read-only preview/comparison (nothing here ever changes
-     * {@link #appContext}'s lineup).
+     * Opens {@link LineupComparisonDialog} or brings the open one to front - purely a
+     * read-only comparison (nothing there ever changes {@link #appContext}'s lineup).
      */
     private void onOpenLineupComparison() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        new LineupComparisonDialog(owner, appContext).setVisible(true);
+        LineupComparisonDialog.open(owner, appContext);
     }
 
     /**

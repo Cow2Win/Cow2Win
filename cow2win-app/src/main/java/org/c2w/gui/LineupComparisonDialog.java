@@ -1,563 +1,516 @@
 package org.c2w.gui;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
-import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
-import org.c2w.domain.LineupComparisonService.FortificationDiff;
-import org.c2w.domain.LineupComparisonService.LineupComparison;
-import org.c2w.domain.LineupComparisonService.TeamDiff;
 import org.c2w.domain.LineupComparisonService;
-import org.c2w.eval.LineupAlgorithm;
-import org.c2w.eval.LineupAlgorithms;
-import org.c2w.gui.common.GuiUtils;
-import org.c2w.gui.common.IconLoader;
-import org.c2w.gui.hero.HeroValueOverviewDialog;
-import org.c2w.gui.titan.TitanValueOverviewDialog;
+import org.c2w.domain.LineupComparisonService.FortificationValues;
+import org.c2w.gui.common.FortificationTypeStyle;
+import org.c2w.gui.compare.ComparableLineups;
+import org.c2w.gui.compare.ComparableLineups.Choice;
+import org.c2w.gui.compare.TornadoChart;
+import org.c2w.gui.fort.FortificationPanel;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
+import org.c2w.service.GuildService;
+import org.c2w.service.RecentFiles;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.IntFunction;
 
 /**
- * Compares two {@link Lineup}s of the currently open guild - either two
- * saved ".lineup" files, or the currently open lineup against a candidate a
- * {@link LineupAlgorithm} produces on the fly. Purely read-only/preview: the
- * algorithm candidate is never saved and never applied to {@link AppContext}
- * from here - see {@link #onCompare()}. The actual diff computation lives in
- * {@link LineupComparisonService}; this class is purely the Swing wiring
- * around it, following the same non-modal, disposable-on-close pattern as
- * {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}.
+ * Compares the open lineup (left, with its unsaved changes) with any other lineup of the
+ * workspace (right) - also one of another guild: power and buff per fortification of the
+ * selected type, as two {@link TornadoChart}s. Each side is calculated with its own guild
+ * (see {@link LineupComparisonService#compareFortifications}), since a lineup only references
+ * members by id. Purely read-only, non-modal, and only one instance exists at a time (see
+ * {@link #open}). The left side follows the open lineup and guild (see {@link #contextListener}).
  */
 public class LineupComparisonDialog extends JDialog {
 
-    /** Language file key for this dialog's title, shown via {@link LanguageService#displayName(String)}. */
     private static final String KEY_TITLE = "lineupComparison.title";
+    private static final String KEY_CURRENT = "lineupComparison.current";
+    private static final String KEY_COMPARE_WITH = "lineupComparison.compareWith";
+    private static final String KEY_OTHER_GUILD_HINT = "lineupComparison.otherGuildHint";
+    private static final String KEY_UNSAVED = "lineupComparison.unsaved";
+    private static final String KEY_CHART_POWER = "lineupComparison.chartPower";
+    private static final String KEY_CHART_BUFF = "lineupComparison.chartBuff";
+    private static final String KEY_NO_BUFF = "lineupComparison.noBuff";
+    private static final String KEY_TOTAL = "lineupComparison.total";
+    private static final String KEY_NO_OTHER_LINEUP = "lineupComparison.noOtherLineup";
+    private static final String KEY_LOAD_GUILD_ERROR = "lineupComparison.loadGuildError";
+    private static final String KEY_ROW_TOOLTIP = "lineupComparison.rowTooltip";
+    private static final String KEY_LOAD_LINEUP_ERROR = "common.loadLineupError";
+    private static final String KEY_LOAD_LINEUP_ERROR_TITLE = "common.loadLineupErrorTitle";
+    private static final Map<FortificationType, String> TYPE_KEYS = Map.of(
+            FortificationType.HERO, "fortificationMap.showHeroes",
+            FortificationType.TITAN, "fortificationMap.showTitans");
 
-    private static final String KEY_MODE_SAVED_LINEUPS = "lineupComparison.modeSavedLineups";
-    private static final String KEY_MODE_ALGORITHM = "lineupComparison.modeCurrentVsAlgorithm";
-    private static final String KEY_LINEUP_BEFORE = "lineupComparison.lineupBefore";
-    private static final String KEY_LINEUP_AFTER = "lineupComparison.lineupAfter";
-    private static final String KEY_ALGORITHM_LABEL = "teamsOverview.algorithm";
-    private static final String KEY_HERO_ALGORITHM_LABEL = "teamsOverview.heroAlgorithm";
-    private static final String KEY_TITAN_ALGORITHM_LABEL = "teamsOverview.titanAlgorithm";
-    private static final String KEY_COMPARE = "lineupComparison.compare";
-    private static final String KEY_ONLY_CHANGES = "lineupComparison.onlyChanges";
-    private static final String KEY_TAB_TEAMS = "lineupComparison.tabTeams";
-    private static final String KEY_TAB_FORTIFICATIONS = "lineupComparison.tabFortifications";
-    private static final String KEY_SUMMARY_TOTAL_POWER = "lineupComparison.summaryTotalPower";
-    private static final String KEY_SUMMARY_HERO_POWER = "lineupSummary.heroPower";
-    private static final String KEY_SUMMARY_TITAN_POWER = "lineupSummary.titanPower";
-    private static final String KEY_SUMMARY_CHANGES = "lineupComparison.summaryChanges";
-    private static final String KEY_NONE = "common.none";
+    private static final String SEPARATOR = " · ";
+    private static final int WIDTH = 900;
+    private static final int HEIGHT = 720;
 
-    /**
-     * Glob pattern for lineup files - same suffix as {@code LineupFiles.SUFFIX},
-     * deliberately duplicated here rather than exposing
-     * it (see class Javadoc / {@link HeroValueOverviewDialog}/{@link TitanValueOverviewDialog}'s own
-     * "redundant copy" convention). {@link LineupRepository#findAll()} is
-     * NOT used for this - it always returns an empty map (its backing
-     * loader is a stub), so listing a guild's lineup files has to go
-     * through the file system directly, exactly like {@code ContextBar}
-     * already does for its own lineup combo box.
-     */
-    private static final String LINEUP_FILE_GLOB = "*.lineup";
+    /** The open dialog, or null - see {@link #open}. */
+    private static LineupComparisonDialog instance;
 
     private final AppContext appContext;
-    private final Guild guild;
+    private final Map<FortificationType, JRadioButton> typeButtons = new EnumMap<>(FortificationType.class);
+    private final JLabel currentLabel = new JLabel(" ");
+    private final JComboBox<Choice> choiceCombo = new JComboBox<>();
+    private final JLabel hintLabel = new JLabel(" ");
+    private final TornadoChart powerChart = new TornadoChart(LanguageService.displayName(KEY_CHART_POWER),
+            FortificationPanel::compactPower, LineupComparisonDialog::signedCompactPower);
+    private final TornadoChart buffChart = new TornadoChart(LanguageService.displayName(KEY_CHART_BUFF),
+            FortificationPanel::formatPercent, FortificationPanel::formatPercent);
 
-    private final JRadioButton savedLineupsRadio = new JRadioButton(LanguageService.displayName(KEY_MODE_SAVED_LINEUPS));
-    private final JRadioButton algorithmRadio = new JRadioButton(LanguageService.displayName(KEY_MODE_ALGORITHM));
+    /** Guilds of other folders, loaded once per folder - see {@link #guildOf}. */
+    private final Map<String, Guild> guildCache = new HashMap<>();
 
-    private final JComboBox<String> lineupBeforeCombo = new JComboBox<>();
-    private final JComboBox<String> lineupAfterCombo = new JComboBox<>();
-    /** One algorithm per side - see {@link LineupAlgorithms#runBoth}. */
-    private final JComboBox<LineupAlgorithm> heroAlgorithmCombo = new JComboBox<>();
-    private final JComboBox<LineupAlgorithm> titanAlgorithmCombo = new JComboBox<>();
+    private FortificationType type;
+    /** Folder of the open guild when the choices were last built - see {@link #onGuildChanged}. */
+    private String currentFolder;
+    /** The selected choice and its loaded lineup - null if nothing is selected or it could not be loaded. */
+    private Choice selectedChoice;
+    private Lineup rightLineup;
+    /** The lineup file that failed to load last, so a rebuild does not repeat the same error message. */
+    private Path lastFailedPath;
+    /** True while {@link #rebuildChoices} fills the combo box - its selection events are ignored then. */
+    private boolean rebuilding;
 
-    private final JPanel savedLineupsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-    private final JPanel algorithmPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+    private final AppContext.Listener contextListener = new AppContext.Listener() {
+        @Override
+        public void guildChanged() {
+            onGuildChanged();
+        }
 
-    private final JCheckBox onlyChangesCheckbox = new JCheckBox(LanguageService.displayName(KEY_ONLY_CHANGES), true);
+        @Override
+        public void lineupChanged() {
+            rebuildChoices();
+            refreshLeft();
+        }
 
-    private final TeamDiffTableModel teamModel = new TeamDiffTableModel();
-    private final FortificationDiffTableModel fortificationModel = new FortificationDiffTableModel();
-    private final JTable teamTable = new JTable(teamModel);
-    private final JTable fortificationTable = new JTable(fortificationModel);
+        @Override
+        public void dirtyStateChanged() {
+            refreshLeft();
+        }
+    };
 
-    private final JLabel summaryLabel = new JLabel(" ");
+    /** Brings the open dialog to front, or creates and shows it if none is open. */
+    public static LineupComparisonDialog open(Frame owner, AppContext appContext) {
+        if (instance == null) {
+            instance = new LineupComparisonDialog(owner, appContext);
+        }
+        instance.setVisible(true);
+        instance.toFront();
+        return instance;
+    }
 
-    /**
-     * Result of the last {@link #onCompare()} run - null before the first
-     * comparison. {@link #onlyChangesCheckbox} re-filters this into the
-     * tables (see {@link #refreshTables()}) without recomputing it.
-     */
-    private LineupComparison currentResult;
+    /** The open dialog, if any. */
+    public static LineupComparisonDialog openInstance() {
+        return instance;
+    }
 
-    public LineupComparisonDialog(Frame owner, AppContext appContext) {
+    private LineupComparisonDialog(Frame owner, AppContext appContext) {
         super(owner, LanguageService.displayName(KEY_TITLE), false);
         if (appContext == null) {
             throw new IllegalArgumentException("LineupComparisonDialog needs an appContext");
         }
         this.appContext = appContext;
-        this.guild = appContext.guild();
+        this.type = appContext.fortificationType();
+        this.currentFolder = currentGuildFolder();
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        ButtonGroup modeGroup = new ButtonGroup();
-        modeGroup.add(savedLineupsRadio);
-        modeGroup.add(algorithmRadio);
-        algorithmRadio.setSelected(true);
-        savedLineupsRadio.addActionListener(e -> updateModeVisibility());
-        algorithmRadio.addActionListener(e -> updateModeVisibility());
+        powerChart.setTotalLabel(LanguageService.displayName(KEY_TOTAL));
+        buffChart.setDisabledText(LanguageService.displayName(KEY_NO_BUFF));
+        choiceCombo.setRenderer(new ChoiceRenderer());
+        choiceCombo.addActionListener(e -> {
+            if (!rebuilding) {
+                selectChoice((Choice) choiceCombo.getSelectedItem());
+            }
+        });
+        hintLabel.setForeground(dimmedColor());
 
-        populateLineupCombos();
-        populateAlgorithmCombo();
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(buildHeader(), BorderLayout.NORTH);
+        content.add(buildCharts(), BorderLayout.CENTER);
+        setContentPane(content);
 
-        savedLineupsPanel.add(new JLabel(LanguageService.displayName(KEY_LINEUP_BEFORE)));
-        savedLineupsPanel.add(lineupBeforeCombo);
-        savedLineupsPanel.add(new JLabel(LanguageService.displayName(KEY_LINEUP_AFTER)));
-        savedLineupsPanel.add(lineupAfterCombo);
+        rebuildChoices();
+        refreshLeft();
+        appContext.addListener(contextListener);
 
-        algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_ALGORITHM_LABEL)));
-        algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_HERO_ALGORITHM_LABEL)));
-        algorithmPanel.add(heroAlgorithmCombo);
-        algorithmPanel.add(new JLabel(LanguageService.displayName(KEY_TITAN_ALGORITHM_LABEL)));
-        algorithmPanel.add(titanAlgorithmCombo);
-
-        JButton compareButton = new JButton(LanguageService.displayName(KEY_COMPARE));
-        compareButton.addActionListener(e -> onCompare());
-
-        JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        modePanel.add(savedLineupsRadio);
-        modePanel.add(algorithmRadio);
-
-        JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-        modePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        savedLineupsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        algorithmPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        controlPanel.add(modePanel);
-        controlPanel.add(savedLineupsPanel);
-        controlPanel.add(algorithmPanel);
-
-        JPanel topPanel = new JPanel(new BorderLayout(8, 4));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
-        topPanel.add(controlPanel, BorderLayout.CENTER);
-        topPanel.add(compareButton, BorderLayout.EAST);
-
-        configureTable(teamTable);
-        configureTable(fortificationTable);
-        teamTable.getColumnModel().getColumn(0).setCellRenderer(new StatusCellRenderer());
-        teamTable.getColumnModel().getColumn(6).setCellRenderer(new DiffCellRenderer());
-        teamTable.getColumnModel().getColumn(7).setCellRenderer(new DiffCellRenderer());
-        fortificationTable.getColumnModel().getColumn(3).setCellRenderer(new DiffCellRenderer());
-        fortificationTable.getColumnModel().getColumn(5).setCellRenderer(new DiffCellRenderer());
-
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab(LanguageService.displayName(KEY_TAB_TEAMS), new JScrollPane(teamTable));
-        tabs.addTab(LanguageService.displayName(KEY_TAB_FORTIFICATIONS), new JScrollPane(fortificationTable));
-
-        onlyChangesCheckbox.addActionListener(e -> refreshTables());
-
-        JPanel bottomPanel = new JPanel(new BorderLayout(8, 4));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
-        bottomPanel.add(summaryLabel, BorderLayout.CENTER);
-        bottomPanel.add(onlyChangesCheckbox, BorderLayout.EAST);
-
-        setLayout(new BorderLayout());
-        add(topPanel, BorderLayout.NORTH);
-        add(tabs, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
-
-        updateModeVisibility();
-        setSize(950, 560);
+        setSize(WIDTH, HEIGHT);
         setLocationRelativeTo(owner);
     }
 
-    private void updateModeVisibility() {
-        boolean savedMode = savedLineupsRadio.isSelected();
-        savedLineupsPanel.setVisible(savedMode);
-        algorithmPanel.setVisible(!savedMode);
+    @Override
+    public void dispose() {
+        appContext.removeListener(contextListener);
+        if (instance == this) {
+            instance = null;
+        }
+        super.dispose();
+    }
+
+    // --- layout ---
+
+    private JComponent buildHeader() {
+        JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        ButtonGroup group = new ButtonGroup();
+        for (FortificationType fortificationType : FortificationType.values()) {
+            JRadioButton button = new JRadioButton(LanguageService.displayName(TYPE_KEYS.get(fortificationType)));
+            button.setSelected(fortificationType == type);
+            button.addActionListener(e -> selectType(fortificationType));
+            group.add(button);
+            typePanel.add(button);
+            typeButtons.put(fortificationType, button);
+        }
+
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        JLabel currentCaption = new JLabel(LanguageService.displayName(KEY_CURRENT));
+        currentCaption.setForeground(dimmedColor());
+        currentLabel.setFont(currentLabel.getFont().deriveFont(Font.BOLD));
+        left.add(currentCaption);
+        left.add(Box.createVerticalStrut(4));
+        left.add(currentLabel);
+
+        JPanel comboRow = new JPanel(new BorderLayout(8, 0));
+        comboRow.add(new JLabel(LanguageService.displayName(KEY_COMPARE_WITH)), BorderLayout.WEST);
+        comboRow.add(choiceCombo, BorderLayout.CENTER);
+        comboRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        hintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel right = new JPanel();
+        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
+        right.add(comboRow);
+        right.add(Box.createVerticalStrut(4));
+        right.add(hintLabel);
+
+        JPanel sides = new JPanel(new GridLayout(1, 2, 24, 0));
+        sides.add(left);
+        sides.add(right);
+
+        JPanel header = new JPanel(new BorderLayout(0, 8));
+        header.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, dimmedColor()),
+                BorderFactory.createEmptyBorder(8, 12, 10, 12)));
+        header.add(typePanel, BorderLayout.NORTH);
+        header.add(sides, BorderLayout.CENTER);
+        return header;
+    }
+
+    private JComponent buildCharts() {
+        JPanel charts = new JPanel();
+        charts.setLayout(new BoxLayout(charts, BoxLayout.Y_AXIS));
+        charts.add(powerChart);
+        charts.add(Box.createVerticalStrut(8));
+        charts.add(buffChart);
+        charts.add(Box.createVerticalGlue());
+        JScrollPane scrollPane = new JScrollPane(charts);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        return scrollPane;
+    }
+
+    // --- events ---
+
+    private void selectType(FortificationType fortificationType) {
+        type = fortificationType;
+        refreshCharts();
+    }
+
+    private void onGuildChanged() {
+        String folder = currentGuildFolder();
+        if (!Objects.equals(folder, currentFolder)) {
+            // The guild that was open may have been edited and saved, the newly opened one is used in memory.
+            guildCache.remove(currentFolder);
+            guildCache.remove(folder);
+            currentFolder = folder;
+        }
+        rebuildChoices();
+        refreshLeft();
     }
 
     /**
-     * Fills both algorithm combo boxes with their side's algorithms and
-     * preselects the defaults configured in the Settings dialog (see {@link
-     * Config#getDefaultHeroAlgorithm()}/{@link Config#getDefaultTitanAlgorithm()}).
+     * Lists the comparable lineups again and keeps the selected one if it is still there,
+     * otherwise selects the default one (see {@link ComparableLineups#reselect}).
      */
-    private void populateAlgorithmCombo() {
-        populateAlgorithmCombo(heroAlgorithmCombo, Lineup.TeamType.HERO, Config.getDefaultHeroAlgorithm());
-        populateAlgorithmCombo(titanAlgorithmCombo, Lineup.TeamType.TITAN, Config.getDefaultTitanAlgorithm());
+    private void rebuildChoices() {
+        currentFolder = currentGuildFolder();
+        GuildService guildService = new GuildService(appContext, RecentFiles.NONE);
+        List<Choice> choices = ComparableLineups.list(Config.getWorkspaceDir(), guildService.listGuildFolderNames(),
+                currentFolder, appContext.lineupFilePath());
+        Choice selection = ComparableLineups.reselect(choices, selectedChoice, currentFolder);
+
+        rebuilding = true;
+        try {
+            choiceCombo.removeAllItems();
+            choices.forEach(choiceCombo::addItem);
+            choiceCombo.setSelectedItem(selection);
+            choiceCombo.setEnabled(!choices.isEmpty());
+        } finally {
+            rebuilding = false;
+        }
+        selectChoice(selection);
     }
 
-    private static void populateAlgorithmCombo(JComboBox<LineupAlgorithm> combo, Lineup.TeamType teamType,
-                                               String configuredAlgorithm) {
-        combo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof LineupAlgorithm algorithm) {
-                    setText(algorithm.localizedName());
-                }
-                return this;
+    /** Loads the lineup of {@code choice} (null: nothing to compare with) and redraws everything. */
+    private void selectChoice(Choice choice) {
+        selectedChoice = choice;
+        rightLineup = null;
+        if (choice != null) {
+            rightLineup = loadLineup(choice);
+            if (rightLineup != null && guildOf(choice) == null) {
+                rightLineup = null;
             }
-        });
-        for (LineupAlgorithm algorithm : LineupAlgorithms.forType(teamType)) {
-            combo.addItem(algorithm);
+            if (rightLineup != null) {
+                lastFailedPath = null;
+            }
         }
-        combo.setSelectedItem(LineupAlgorithms.findOrDefault(teamType, configuredAlgorithm));
+        updateHint();
+        refreshCharts();
     }
 
-    private void populateLineupCombos() {
-        DefaultListCellRenderer suffixStrippingRenderer = new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof String fileName) {
-                    setText(LineupFiles.displayName(fileName));
-                }
-                return this;
-            }
-        };
-        lineupBeforeCombo.setRenderer(suffixStrippingRenderer);
-        lineupAfterCombo.setRenderer(suffixStrippingRenderer);
-
-        List<String> fileNames = listLineupFileNames();
-        for (String fileName : fileNames) {
-            lineupBeforeCombo.addItem(fileName);
-            lineupAfterCombo.addItem(fileName);
-        }
-
-        // Preselect the currently open lineup file as "before" when it is one of this guild's own lineup files - the most common starting point for a two-saved-lineups comparison.
-        String currentFileName = appContext.lineupFilePath() == null ? null : appContext.lineupFilePath().getFileName().toString();
-        if (currentFileName != null && fileNames.contains(currentFileName)) {
-            lineupBeforeCombo.setSelectedItem(currentFileName);
+    private Lineup loadLineup(Choice choice) {
+        try {
+            Lineup lineup = LineupRepository.load(choice.lineupPath());
+            return lineup;
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not load the lineup to compare with: " + choice.lineupPath(), e);
+            showLoadError(choice.lineupPath(), LanguageService.displayName(KEY_LOAD_LINEUP_ERROR), e);
+            return null;
         }
     }
 
-    /** Every ".lineup" file directly inside the current guild's folder, sorted alphabetically - see class Javadoc on {@link #LINEUP_FILE_GLOB}. */
-    private List<String> listLineupFileNames() {
-        List<String> result = new ArrayList<>();
-        Path guildDir = appContext.guildFilePath() == null ? null : appContext.guildFilePath().getParent();
-        if (guildDir == null || !Files.isDirectory(guildDir)) {
-            return result;
+    /**
+     * The guild {@code choice} belongs to: the open guild (in memory, with its unsaved changes)
+     * for the current folder, otherwise the guild file of its folder, loaded once. Null if it
+     * cannot be loaded (an error message is shown).
+     */
+    private Guild guildOf(Choice choice) {
+        if (choice.guildFolder().equals(currentFolder)) {
+            return appContext.guild();
         }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(guildDir, LINEUP_FILE_GLOB)) {
-            for (Path path : stream) {
-                result.add(path.getFileName().toString());
-            }
-        } catch (IOException e) {
-            Logger.logException("Could not list lineup files in " + guildDir, e);
+        Guild cached = guildCache.get(choice.guildFolder());
+        if (cached != null) {
+            return cached;
         }
-        result.sort(Comparator.naturalOrder());
-        return result;
+        Path guildFile = choice.lineupPath().resolveSibling(GuildService.GUILD_FILE_NAME);
+        try {
+            Guild guild = GuildRepository.load(guildFile, appContext.catalog());
+            guildCache.put(choice.guildFolder(), guild);
+            return guild;
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not load the guild to compare with: " + guildFile, e);
+            showLoadError(choice.lineupPath(), LanguageService.displayName(KEY_LOAD_GUILD_ERROR, choice.guildName()), e);
+            return null;
+        }
     }
 
-    private void configureTable(JTable table) {
-        table.setAutoCreateRowSorter(true);
-        table.setFillsViewportHeight(true);
-        table.setRowHeight(22);
-    }
-
-    private void onCompare() {
-        Lineup before;
-        Lineup after;
-
-        if (savedLineupsRadio.isSelected()) {
-            String beforeFileName = (String) lineupBeforeCombo.getSelectedItem();
-            String afterFileName = (String) lineupAfterCombo.getSelectedItem();
-            if (beforeFileName == null || afterFileName == null) {
-                JOptionPane.showMessageDialog(this, LanguageService.displayName("lineupComparison.selectTwo"),
-                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            Path guildDir = appContext.guildFilePath().getParent();
-            try {
-                before = LineupRepository.load(guildDir.resolve(beforeFileName));
-                after = LineupRepository.load(guildDir.resolve(afterFileName));
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, LanguageService.displayName("common.loadLineupError") + "\n" + e.getMessage(),
-                        LanguageService.displayName("common.loadLineupErrorTitle"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (!before.guildId().equals(after.guildId())) {
-                JOptionPane.showMessageDialog(this,
-                        LanguageService.displayName("lineupComparison.differentGuilds"),
-                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-        } else {
-            LineupAlgorithm heroAlgorithm = (LineupAlgorithm) heroAlgorithmCombo.getSelectedItem();
-            LineupAlgorithm titanAlgorithm = (LineupAlgorithm) titanAlgorithmCombo.getSelectedItem();
-            if (heroAlgorithm == null || titanAlgorithm == null) {
-                JOptionPane.showMessageDialog(this, LanguageService.displayName("lineupComparison.noAlgorithm"),
-                        LanguageService.displayName("toolbar.compareLineups"), JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            before = appContext.lineup();
-            after = LineupAlgorithms.runBoth(heroAlgorithm, titanAlgorithm, before, guild);
-        }
-
-        currentResult = LineupComparisonService.compare(before, after, guild);
-        refreshTables();
-    }
-
-    private void refreshTables() {
-        if (currentResult == null) {
-            teamModel.setRows(List.of());
-            fortificationModel.setRows(List.of());
-            summaryLabel.setText(" ");
+    private void showLoadError(Path lineupPath, String message, Exception e) {
+        if (lineupPath.equals(lastFailedPath)) {
             return;
         }
-        boolean onlyChanges = onlyChangesCheckbox.isSelected();
-
-        List<TeamDiff> teamRows = onlyChanges
-                ? currentResult.teamDiffs().stream().filter(d -> d.status() != TeamDiff.Status.UNCHANGED).toList()
-                : currentResult.teamDiffs();
-        teamModel.setRows(teamRows);
-
-        List<FortificationDiff> fortificationRows = onlyChanges
-                ? currentResult.fortificationDiffs().stream().filter(d -> !d.isUnchanged()).toList()
-                : currentResult.fortificationDiffs();
-        fortificationModel.setRows(fortificationRows);
-
-        summaryLabel.setText(buildSummaryText(currentResult.summary()));
+        lastFailedPath = lineupPath;
+        JOptionPane.showMessageDialog(this, message + "\n" + e.getMessage(),
+                LanguageService.displayName(KEY_LOAD_LINEUP_ERROR_TITLE), JOptionPane.ERROR_MESSAGE);
     }
 
-    private String buildSummaryText(LineupComparisonService.Summary summary) {
-        String totalPower = powerRangeText(summary.totalPowerBefore(), summary.totalPowerAfter());
-        String heroPower = powerRangeText(summary.heroPowerBefore(), summary.heroPowerAfter());
-        String titanPower = powerRangeText(summary.titanPowerBefore(), summary.titanPowerAfter());
-        String changes = summary.addedCount() + " +, " + summary.removedCount() + " -, " + summary.movedCount() + " ~";
-        return "<html>"
-                + LanguageService.displayName(KEY_SUMMARY_TOTAL_POWER) + ": " + totalPower
-                + "&nbsp;&nbsp; (" + LanguageService.displayName(KEY_SUMMARY_HERO_POWER) + " " + heroPower
-                + ", " + LanguageService.displayName(KEY_SUMMARY_TITAN_POWER) + " " + titanPower + ")"
-                + "&nbsp;&nbsp; " + LanguageService.displayName(KEY_SUMMARY_CHANGES) + ": " + changes
-                + "</html>";
+    // --- refresh ---
+
+    /** Header of the left side and both charts - after the open lineup, guild or dirty state changed. */
+    private void refreshLeft() {
+        String text = currentGuildName() + SEPARATOR + currentLineupName();
+        boolean dirty = appContext.isLineupDirty();
+        currentLabel.setText(dirty ? text + " *" : text);
+        currentLabel.setToolTipText(dirty ? LanguageService.displayName(KEY_UNSAVED) : null);
+        refreshCharts();
     }
 
-    private static String powerRangeText(int before, int after) {
-        return GuiUtils.NUMBER_FORMAT.format(before) + "→" + GuiUtils.NUMBER_FORMAT.format(after)
-                + " (" + signed(after - before) + ")";
+    private void updateHint() {
+        if (choiceCombo.getItemCount() == 0) {
+            hintLabel.setText(LanguageService.displayName(KEY_NO_OTHER_LINEUP));
+        } else if (selectedChoice != null && !selectedChoice.guildFolder().equals(currentFolder)) {
+            hintLabel.setText(LanguageService.displayName(KEY_OTHER_GUILD_HINT));
+        } else {
+            hintLabel.setText(" ");
+        }
     }
 
-    private static String signed(int diff) {
-        String formatted = GuiUtils.NUMBER_FORMAT.format(diff);
+    private void refreshCharts() {
+        Lineup left = appContext.lineup() != null ? appContext.lineup() : LineupRepository.createEmptyLineup();
+        Guild leftGuild = appContext.guild() != null ? appContext.guild() : new Guild("-", "", List.of(), null);
+        Guild rightGuild = selectedChoice != null && rightLineup != null ? guildOf(selectedChoice) : null;
+        boolean rightAvailable = rightGuild != null;
+
+        List<FortificationValues> values = LineupComparisonService.compareFortifications(
+                left, leftGuild, rightAvailable ? rightLineup : null, rightGuild, type);
+
+        String leftName = LanguageService.displayName(KEY_CURRENT);
+        String rightName = selectedChoice == null ? "" : selectedChoice.guildName() + SEPARATOR + selectedChoice.lineupDisplayName();
+        List<TornadoChart.Row> powerRows = new ArrayList<>();
+        List<TornadoChart.Row> buffRows = new ArrayList<>();
+        for (FortificationValues value : values) {
+            String name = fortificationName(value.fortificationId());
+            powerRows.add(new TornadoChart.Row(name, value.powerLeft(), value.powerRight(),
+                    tooltip(name, leftName, rightName, value, value.powerLeft(), value.powerRight(),
+                            FortificationPanel::compactPower, LineupComparisonDialog::signedCompactPower, rightAvailable),
+                    true));
+            String buffTooltip = value.hasBuff()
+                    ? tooltip(name, leftName, rightName, value, value.buffPercentLeft(), value.buffPercentRight(),
+                    FortificationPanel::formatPercent, FortificationPanel::formatPercent, rightAvailable)
+                    : null;
+            buffRows.add(new TornadoChart.Row(name, value.buffPercentLeft(), value.buffPercentRight(),
+                    buffTooltip, value.hasBuff()));
+        }
+        Color leftColor = FortificationTypeStyle.color(type);
+        powerChart.setLeftColor(leftColor);
+        buffChart.setLeftColor(leftColor);
+        powerChart.setRows(powerRows, rightAvailable);
+        buffChart.setRows(buffRows, rightAvailable);
+    }
+
+    private static String tooltip(String name, String leftName, String rightName, FortificationValues value,
+                                  int left, int right, IntFunction<String> format, IntFunction<String> diffFormat,
+                                  boolean rightAvailable) {
+        StringBuilder html = new StringBuilder("<html><b>").append(escape(name)).append("</b><br>")
+                .append(escape(LanguageService.displayName(KEY_ROW_TOOLTIP, leftName, format.apply(left),
+                        value.filledLeft(), value.capacity())));
+        if (rightAvailable) {
+            html.append("<br>").append(escape(LanguageService.displayName(KEY_ROW_TOOLTIP, rightName,
+                    format.apply(right), value.filledRight(), value.capacity())));
+            html.append("<br>Δ ").append(escape(diffFormat.apply(right - left)));
+        }
+        return html.append("</html>").toString();
+    }
+
+    // --- lookups ---
+
+    private String currentGuildFolder() {
+        Path guildFile = appContext.guildFilePath();
+        Path guildDir = guildFile == null ? null : guildFile.getParent();
+        return guildDir == null || guildDir.getFileName() == null ? null : guildDir.getFileName().toString();
+    }
+
+    private String currentGuildName() {
+        Guild guild = appContext.guild();
+        if (guild != null && guild.name() != null && !guild.name().isBlank()) {
+            return guild.name();
+        }
+        return currentFolder == null ? "" : currentFolder;
+    }
+
+    private String currentLineupName() {
+        Path lineupFile = appContext.lineupFilePath();
+        return lineupFile == null || lineupFile.getFileName() == null ? ""
+                : LineupFiles.displayName(lineupFile.getFileName().toString());
+    }
+
+    private static String fortificationName(String fortificationId) {
+        return FortificationRepository.findById(fortificationId)
+                .map(f -> LanguageService.displayName(f.id()))
+                .orElse(fortificationId);
+    }
+
+    /** "+1,05 Mio", "-230.000" or "0" - compact like the fortification map, with sign. */
+    static String signedCompactPower(int diff) {
+        String formatted = FortificationPanel.compactPower(diff);
         return diff > 0 ? "+" + formatted : formatted;
     }
 
-    // --- shared lookups ---
-
-    private String fortificationName(String fortificationId) {
-        return fortificationId == null
-                ? LanguageService.displayName(KEY_NONE)
-                : FortificationRepository.findById(fortificationId)
-                        .map(f -> LanguageService.displayName(f.id()))
-                        .orElse(fortificationId);
+    private static String escape(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    private String memberName(String memberId) {
-        return guild.members().stream()
-                .filter(m -> m.id().equals(memberId))
-                .findFirst()
-                .map(GuildMember::name)
-                .orElse(memberId);
+    /** Muted text color: the label color 40 % of the way to the background - readable on a dark and a light theme. */
+    private static Color dimmedColor() {
+        return mix(uiColor("Label.foreground", Color.DARK_GRAY), uiColor("Panel.background", Color.WHITE), 0.4);
     }
 
-    private static String statusText(TeamDiff.Status status) {
-        return switch (status) {
-            case ADDED -> LanguageService.displayName("lineupComparison.statusAdded");
-            case REMOVED -> LanguageService.displayName("lineupComparison.statusRemoved");
-            case MOVED -> LanguageService.displayName("lineupComparison.statusMoved");
-            case UPDATED -> LanguageService.displayName("lineupComparison.statusUpdated");
-            case UNCHANGED -> LanguageService.displayName("lineupComparison.statusUnchanged");
-        };
+    private static Color uiColor(String key, Color fallback) {
+        Color color = UIManager.getColor(key);
+        return color != null ? color : fallback;
     }
 
-    private static Color statusColor(TeamDiff.Status status) {
-        return switch (status) {
-            case ADDED -> IconLoader.GREEN;
-            case REMOVED -> IconLoader.RED;
-            case MOVED, UPDATED -> IconLoader.BLUE;
-            case UNCHANGED -> Color.GRAY;
-        };
+    private static Color mix(Color from, Color to, double share) {
+        return new Color(
+                (int) Math.round(from.getRed() + (to.getRed() - from.getRed()) * share),
+                (int) Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * share),
+                (int) Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * share));
     }
 
-    // --- cell renderers ---
+    private static String hex(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
 
-    /** Colors the "Status" column's text per {@link TeamDiff.Status} (see {@link #statusColor}) - looks up the row's status via the table's {@link TeamDiffTableModel}, translated through the row sorter (see {@link #configureTable}). */
-    private static final class StatusCellRenderer extends DefaultTableCellRenderer {
+    // --- for tests ---
+
+    /** The selectable lineups, in combo box order. */
+    List<Choice> choices() {
+        List<Choice> result = new ArrayList<>();
+        for (int i = 0; i < choiceCombo.getItemCount(); i++) {
+            result.add(choiceCombo.getItemAt(i));
+        }
+        return result;
+    }
+
+    Choice selectedChoice() {
+        return selectedChoice;
+    }
+
+    void selectChoiceForTest(Choice choice) {
+        choiceCombo.setSelectedItem(choice);
+    }
+
+    void selectTypeForTest(FortificationType fortificationType) {
+        typeButtons.get(fortificationType).doClick();
+    }
+
+    String currentLabelText() {
+        return currentLabel.getText();
+    }
+
+    String hintText() {
+        return hintLabel.getText();
+    }
+
+    TornadoChart powerChart() {
+        return powerChart;
+    }
+
+    TornadoChart buffChart() {
+        return buffChart;
+    }
+
+    /** "Guild · Lineup", the guild name dimmed. */
+    private static final class ChoiceRenderer extends DefaultListCellRenderer {
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                        boolean hasFocus, int row, int column) {
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (!isSelected && table.getModel() instanceof TeamDiffTableModel model) {
-                int modelRow = table.convertRowIndexToModel(row);
-                setForeground(statusColor(model.statusAt(modelRow)));
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof Choice choice) {
+                Color muted = mix(getForeground(), getBackground(), 0.4);
+                setText("<html><font color='" + hex(muted) + "'>" + escape(choice.guildName()) + SEPARATOR
+                        + "</font>" + escape(choice.lineupDisplayName()) + "</html>");
+            } else if (value == null) {
+                setText(" ");
             }
-            return component;
-        }
-    }
-
-    /**
-     * Right-aligned, signed, colored rendering for a numeric diff column
-     * (green for a gain, red for a loss, black for no change) - same
-     * gain/loss color convention {@code FortificationPanel} already uses for
-     * its own power/buff-percent diffs. Handles both {@link Integer} (power)
-     * and {@link Double} (weighted score) cell values.
-     */
-    private static final class DiffCellRenderer extends DefaultTableCellRenderer {
-        DiffCellRenderer() {
-            setHorizontalAlignment(SwingConstants.RIGHT);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                        boolean hasFocus, int row, int column) {
-            double diff = value instanceof Number number ? number.doubleValue() : 0;
-            String text = value instanceof Double
-                    ? String.format(Locale.GERMANY, "%.2f", diff)
-                    : GuiUtils.NUMBER_FORMAT.format(Math.round(diff));
-            if (diff > 0 && !text.startsWith("+")) {
-                text = "+" + text;
-            }
-            Component component = super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
-            if (!isSelected) {
-                setForeground(diff > 0 ? IconLoader.GREEN : diff < 0 ? IconLoader.RED : Color.BLACK);
-            }
-            return component;
-        }
-    }
-
-    // --- table models ---
-
-    /** One row per team that is assigned in EITHER lineup (see {@link LineupComparisonService.TeamDiff}). */
-    private final class TeamDiffTableModel extends AbstractTableModel {
-        private final String[] columnKeys = {
-                "lineupComparison.columnStatus", "teamsOverview.member", "lineupComparison.columnTeam",
-                "lineupComparison.columnFortificationBefore", "lineupComparison.columnFortificationAfter",
-                "lineupComparison.columnPowerRange", "lineupComparison.columnPowerDiff"
-        };
-        private List<TeamDiff> rows = List.of();
-
-        void setRows(List<TeamDiff> rows) {
-            this.rows = rows;
-            fireTableDataChanged();
-        }
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnKeys.length;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return LanguageService.displayName(columnKeys[column]);
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == 6) {
-                return Integer.class;
-            }
-            return String.class;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TeamDiff diff = rows.get(rowIndex);
-            return switch (columnIndex) {
-                case 0 -> statusText(diff.status());
-                case 1 -> memberName(diff.teamKey().teamMemberId());
-                case 2 -> GuildMember.teamLabel(diff.teamKey().teamIndex())
-                        + " (" + LanguageService.displayName("teamType." + diff.teamKey().teamType().name()) + ")";
-                case 3 -> fortificationName(diff.fortificationIdBefore());
-                case 4 -> fortificationName(diff.fortificationIdAfter());
-                case 5 -> GuiUtils.NUMBER_FORMAT.format(diff.powerBefore()) + " → "
-                        + GuiUtils.NUMBER_FORMAT.format(diff.powerAfter());
-                case 6 -> diff.powerDiff();
-                default -> "";
-            };
-        }
-
-        TeamDiff.Status statusAt(int rowIndex) {
-            return rows.get(rowIndex).status();
-        }
-    }
-
-    /** One row per fortification assigned in EITHER lineup (see {@link LineupComparisonService.FortificationDiff}). */
-    private final class FortificationDiffTableModel extends AbstractTableModel {
-        private final String[] columnKeys = {
-                "teamsOverview.fortification", "lineupComparison.columnSlots",
-                "lineupComparison.columnPowerRange", "lineupComparison.columnPowerDiff",
-                "lineupComparison.columnBuffPercent", "lineupComparison.columnBuffPercentDiff"
-        };
-        private List<FortificationDiff> rows = List.of();
-
-        void setRows(List<FortificationDiff> rows) {
-            this.rows = rows;
-            fireTableDataChanged();
-        }
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnKeys.length;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return LanguageService.displayName(columnKeys[column]);
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == 3 || columnIndex == 5) {
-                return Integer.class;
-            }
-            return String.class;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            FortificationDiff diff = rows.get(rowIndex);
-            return switch (columnIndex) {
-                case 0 -> fortificationName(diff.fortificationId());
-                case 1 -> diff.filledSlotsBefore() + " → " + diff.filledSlotsAfter();
-                case 2 -> GuiUtils.NUMBER_FORMAT.format(diff.powerBefore()) + " → "
-                        + GuiUtils.NUMBER_FORMAT.format(diff.powerAfter());
-                case 3 -> diff.powerDiff();
-                case 4 -> diff.buffPercentBefore() + "% → " + diff.buffPercentAfter() + "%";
-                case 5 -> diff.buffPercentDiff();
-                default -> "";
-            };
+            return this;
         }
     }
 }

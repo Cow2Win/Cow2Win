@@ -1,6 +1,7 @@
 package org.c2w.domain;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
@@ -14,8 +15,7 @@ import java.util.*;
  * Compares two {@link Lineup}s of the SAME guild - either two lineups loaded
  * from different ".lineup" files, or the currently open lineup against a
  * candidate a {@code org.c2w.eval.LineupAlgorithm} produced but that was
- * never saved (see {@code org.c2w.gui.LineupComparisonDialog}, the only
- * caller). Purely read-only: never mutates either {@link Lineup}, the
+ * never saved (e.g. the change plan and the data status). Purely read-only: never mutates either {@link Lineup}, the
  * {@link Guild}, or {@link AppContext} - both lineups are only ever read.
  *
  * <p>Comparison granularity is per TEAM, not per lineup entry: a team is
@@ -32,6 +32,11 @@ import java.util.*;
  * the SAME file" and only cover totalPower/buffMemberCount per fortification,
  * not which team moved where - a genuinely different, narrower question than
  * what this class answers for two arbitrary {@link Lineup} instances.
+ *
+ * <p>{@link #compareFortifications} is the one exception to "SAME guild": it
+ * compares the per-fortification totals of two lineups that may belong to
+ * different guilds, each side resolved against its own guild (see
+ * {@code org.c2w.gui.LineupComparisonDialog}).
  */
 public final class LineupComparisonService {
 
@@ -91,6 +96,40 @@ public final class LineupComparisonService {
         return result;
     }
 
+    /**
+     * Power, buff percent and filled slots of every fortification of {@code type}, for
+     * {@code left} resolved against {@code leftGuild} and {@code right} against
+     * {@code rightGuild} - the two lineups may belong to different guilds, since an
+     * {@link Lineup.Entry} is only a member/team reference. Every fortification of the type
+     * is listed, also empty ones, in map order (row, then column). {@code right} and
+     * {@code rightGuild} may be null: the right values are 0 then. An entry whose team does
+     * not exist in its side's guild counts 0 (see {@link BuffCalculationService#totalPowerOf}).
+     */
+    public static List<FortificationValues> compareFortifications(Lineup left, Guild leftGuild,
+                                                                  Lineup right, Guild rightGuild,
+                                                                  FortificationType type) {
+        if (left == null || leftGuild == null) {
+            throw new IllegalArgumentException("left and leftGuild must not be null");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("type must not be null");
+        }
+        boolean hasRight = right != null && rightGuild != null;
+        return FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == type)
+                .sorted(Comparator.comparingInt(Fortification::row).thenComparingInt(Fortification::column))
+                .map(f -> {
+                    SideValues leftValues = SideValues.of(left, leftGuild, f.id(), f);
+                    SideValues rightValues = hasRight ? SideValues.of(right, rightGuild, f.id(), f) : SideValues.EMPTY;
+                    return new FortificationValues(f.id(),
+                            leftValues.power(), rightValues.power(),
+                            leftValues.buffPercent(), rightValues.buffPercent(),
+                            leftValues.filled(), rightValues.filled(),
+                            f.capacity(), f.buff() != null);
+                })
+                .toList();
+    }
+
     /** One row per fortification assigned in EITHER lineup, sorted by display name. */
     private static List<FortificationDiff> buildFortificationDiffs(Lineup before, Lineup after, Guild guild) {
         Set<String> fortificationIds = new LinkedHashSet<>();
@@ -100,19 +139,27 @@ public final class LineupComparisonService {
         List<FortificationDiff> result = new ArrayList<>();
         for (String fortificationId : fortificationIds) {
             Fortification fortification = FortificationRepository.findById(fortificationId).orElse(null);
-            int powerBefore = totalPower(before, guild, fortificationId);
-            int powerAfter = totalPower(after, guild, fortificationId);
-            int slotsBefore = countEntries(before, fortificationId);
-            int slotsAfter = countEntries(after, fortificationId);
-            int buffPercentBefore = fortification == null ? 0
-                    : BuffCalculationService.calculateBuffForFortification(fortificationId, before, guild, fortification);
-            int buffPercentAfter = fortification == null ? 0
-                    : BuffCalculationService.calculateBuffForFortification(fortificationId, after, guild, fortification);
-            result.add(new FortificationDiff(fortificationId, powerBefore, powerAfter,
-                    slotsBefore, slotsAfter, buffPercentBefore, buffPercentAfter));
+            SideValues valuesBefore = SideValues.of(before, guild, fortificationId, fortification);
+            SideValues valuesAfter = SideValues.of(after, guild, fortificationId, fortification);
+            result.add(new FortificationDiff(fortificationId, valuesBefore.power(), valuesAfter.power(),
+                    valuesBefore.filled(), valuesAfter.filled(),
+                    valuesBefore.buffPercent(), valuesAfter.buffPercent()));
         }
         result.sort(Comparator.comparing(d -> fortificationDisplayName(d.fortificationId())));
         return result;
+    }
+
+    /** One lineup's totals at one fortification, resolved against that lineup's own guild. */
+    private record SideValues(int power, int filled, int buffPercent) {
+        static final SideValues EMPTY = new SideValues(0, 0, 0);
+
+        /** {@code fortification} may be null (unknown id): buff percent 0 then. */
+        static SideValues of(Lineup lineup, Guild guild, String fortificationId, Fortification fortification) {
+            int buffPercent = fortification == null ? 0
+                    : BuffCalculationService.calculateBuffForFortification(fortificationId, lineup, guild, fortification);
+            return new SideValues(totalPower(lineup, guild, fortificationId),
+                    countEntries(lineup, fortificationId), buffPercent);
+        }
     }
 
     private static int totalPower(Lineup lineup, Guild guild, String fortificationId) {
@@ -232,6 +279,17 @@ public final class LineupComparisonService {
             return powerBefore == powerAfter && filledSlotsBefore == filledSlotsAfter
                     && buffPercentBefore == buffPercentAfter;
         }
+    }
+
+    /**
+     * One fortification's values in two lineups that may belong to different guilds - see
+     * {@link #compareFortifications}. {@code hasBuff} is false for a fortification without a
+     * buff; its buff percents are 0 then.
+     */
+    public record FortificationValues(
+            String fortificationId, int powerLeft, int powerRight,
+            int buffPercentLeft, int buffPercentRight,
+            int filledLeft, int filledRight, int capacity, boolean hasBuff) {
     }
 
     /** Aggregate totals over every {@link TeamDiff}, for a one-line summary in the GUI. */
