@@ -17,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +71,7 @@ class JournalActionsTest {
 
     @Test
     @DisplayName("The import chooser: same size as the settings' directory chooser, several files, the CSV filter preselected")
-    void importChooser() {
+    void importChooser() throws IOException {
         JFileChooser chooser = JournalActions.createImportChooser(workspace.toFile());
 
         assertEquals(SettingsDialogAccess.directoryChooserSize(), chooser.getPreferredSize());
@@ -78,7 +79,9 @@ class JournalActionsTest {
         FileNameExtensionFilter filter = assertInstanceOf(FileNameExtensionFilter.class, chooser.getFileFilter());
         assertArrayEquals(new String[]{"csv"}, filter.getExtensions());
         assertTrue(chooser.isAcceptAllFileFilterUsed());
-        assertEquals(workspace.toFile().getAbsoluteFile(), chooser.getCurrentDirectory().getAbsoluteFile());
+        // Real paths: on Windows the temp dir may come as an 8.3 short name (RUNNER~1),
+        // which JFileChooser expands to the long form.
+        assertEquals(workspace.toRealPath(), chooser.getCurrentDirectory().toPath().toRealPath());
     }
 
     @Test

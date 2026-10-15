@@ -27,7 +27,7 @@ class FileChoosersTest {
 
     @Test
     @DisplayName("A chooser is SIZE_FACTOR times as wide and high as the default and opens in the start directory")
-    void uniformSize() {
+    void uniformSize() throws IOException {
         Dimension standard = new JFileChooser().getPreferredSize();
 
         JFileChooser chooser = FileChoosers.create(folder.toFile());
@@ -35,7 +35,9 @@ class FileChoosersTest {
         assertEquals(1.5, FileChoosers.SIZE_FACTOR);
         assertEquals(Math.round(standard.width * FileChoosers.SIZE_FACTOR), chooser.getPreferredSize().width);
         assertEquals(Math.round(standard.height * FileChoosers.SIZE_FACTOR), chooser.getPreferredSize().height);
-        assertEquals(folder.toFile().getAbsoluteFile(), chooser.getCurrentDirectory().getAbsoluteFile());
+        // Real paths: on Windows the temp dir may come as an 8.3 short name (RUNNER~1),
+        // which JFileChooser expands to the long form.
+        assertEquals(folder.toRealPath(), chooser.getCurrentDirectory().toPath().toRealPath());
         assertEquals(chooser.getPreferredSize(), FileChoosers.create(null).getPreferredSize());
     }
 
