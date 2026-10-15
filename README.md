@@ -37,3 +37,11 @@ Get the latest Windows version from
 `Cow2Win.exe`. No separate Java installation is needed. On the first start a
 demo guild shows how everything works.
 
+### Windows SmartScreen warning
+
+Cow2Win is not code-signed, so on the first start Windows may show
+"Windows protected your PC" (Microsoft Defender SmartScreen). Click
+**More info** and then **Run anyway**.
+
+To avoid the warning altogether: before unzipping, right-click the downloaded
+zip, choose **Properties**, tick **Unblock** and click **OK**, then unzip it.

@@ -27,7 +27,7 @@
         <jpackage.maven.plugin.version>1.8.0</jpackage.maven.plugin.version>
         <app.mainClass>org.c2w.C2WApp</app.mainClass>
         <app.name>Cow2Win</app.name>
-        <app.version>1.0.7</app.version>
+        <app.version>1.0.8</app.version>
         <app.vendor>org.c2w</app.vendor>
         <dist.skip>false</dist.skip>
     </properties>
