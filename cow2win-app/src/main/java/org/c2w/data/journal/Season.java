@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 
 /**
- * A Weltenschlacht season of the game, as computed by {@link SeasonCalendar}.
+ * A Clash of Worlds season of the game, as computed by {@link SeasonCalendar}.
  * Covers {@code start <= day < end}: {@code end} is the first day AFTER the
  * season (a Monday, the day after the last Sunday).
  *

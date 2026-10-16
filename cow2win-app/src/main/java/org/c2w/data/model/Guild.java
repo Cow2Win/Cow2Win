@@ -9,7 +9,7 @@ import java.util.List;
  *
  * <p>{@code gameGuildId} is the guild's id in the game (the number in
  * parentheses in an exported battle log's file name), {@code null} while it is
- * not known yet - set by the Weltenschlacht journal import, which uses it to
+ * not known yet - set by the Clash of Worlds journal import, which uses it to
  * make sure a battle log goes into the journal of the right guild.
  *
  * <p>{@code guildMaster} says whether the user is the guild master of this

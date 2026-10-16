@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * Reads an exported Clash of Worlds battle log (CSV) into a {@link BattleLog}.
  *
- * <p>Format (see the Weltenschlacht journal concept): UTF-8, optionally with a
+ * <p>Format (see the Clash of Worlds journal concept): UTF-8, optionally with a
  * BOM, CRLF or LF, comma-separated without quotes, varying column count per
  * row. The first row is the column header row and tells the game language.
  * Then, in file order:

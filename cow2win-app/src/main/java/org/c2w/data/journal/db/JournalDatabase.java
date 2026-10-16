@@ -11,7 +11,7 @@ import java.sql.Statement;
 import java.util.Optional;
 
 /**
- * The Weltenschlacht journal database of ONE Cow2Win guild: an embedded H2
+ * The Clash of Worlds journal database of ONE Cow2Win guild: an embedded H2
  * file {@code <guildDir>/journal.mv.db} (no server mode, no auto-server).
  * Created only when the first battle log is saved - a guild without a journal
  * has no database file at all.

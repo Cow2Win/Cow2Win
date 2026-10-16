@@ -24,7 +24,7 @@ import java.util.Optional;
  * the guild are saved with them.
  *
  * <p>Deleting cleans up: the member's entries disappear from every lineup of the guild (the files
- * and the open lineup), and its players in the Weltenschlacht journal become "former member".
+ * and the open lineup), and its players in the Clash of Worlds journal become "former member".
  * A failure there does not stop the rest - it is collected in the {@link RemovalResult}.
  */
 public final class GuildMemberService {

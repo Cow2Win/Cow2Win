@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * Imports exported Clash of Worlds battle logs into the Weltenschlacht journal
+ * Imports exported Clash of Worlds battle logs into the Clash of Worlds journal
  * of the open guild - the logic behind the import dialog, without any GUI.
  * Two steps:
  * <ol>

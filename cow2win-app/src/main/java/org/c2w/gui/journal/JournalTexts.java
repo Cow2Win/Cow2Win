@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Display texts of the Weltenschlacht journal GUI: every enum of the import
+ * Display texts of the Clash of Worlds journal GUI: every enum of the import
  * service and the journal is shown through a language file key
  * {@code journal.<group>.<ENUM_NAME>} (see {@link #enumKey}), never through
  * text assembled in code. Swing-free, so it can be tested.

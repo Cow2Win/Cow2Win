@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Acceptance table of the parser requirement (Weltenschlacht journal, phase 1):
+ * Acceptance table of the parser requirement (Clash of Worlds journal, phase 1):
  * per sample file the number of single fights (hero / titan), undefended rows
  * and positions, captured rows, points, units and fights with a defender buff.
  * Identical for DE, EN and FR - except the running battle of 01.10.2026, whose

@@ -51,7 +51,7 @@ public enum ActionId {
     APPLY_TO_LIVE("action.applyToLive", Stage.OUTPUT),
 
     /**
-     * The Weltenschlacht journal - for a guild master only, see {@link Stage#JOURNAL}. Importing
+     * The Clash of Worlds journal - for a guild master only, see {@link Stage#JOURNAL}. Importing
      * happens in the battle list, the name mappings open from the players window.
      */
     JOURNAL_BATTLES("menu.journal.battles", Stage.JOURNAL, Opens.WINDOW),

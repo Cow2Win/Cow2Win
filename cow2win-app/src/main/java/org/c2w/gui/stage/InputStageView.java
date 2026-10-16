@@ -54,7 +54,7 @@ import static org.c2w.gui.stage.InfoSections.*;
  * only; the actions "add member" / "delete member" (action list and input menu, also the table's
  * context menu and Del) add and delete members (saved right away, see {@link GuildMemberService}).
  * The info panel shows the selected member's teams and - for a guild master's guild only - the
- * state of the guild's Weltenschlacht journal; the action list is the input menu.
+ * state of the guild's Clash of Worlds journal; the action list is the input menu.
  */
 public class InputStageView extends StageView {
 

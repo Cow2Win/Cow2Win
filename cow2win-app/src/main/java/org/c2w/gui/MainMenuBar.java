@@ -53,7 +53,7 @@ public final class MainMenuBar extends JMenuBar {
 
     /**
      * The menus in display order: "File", "Guild", one menu per process stage and last the
-     * "Weltenschlacht Journal" ({@link Stage#JOURNAL}, shown for a guild master only) - its first
+     * "Journal" ({@link Stage#JOURNAL}, shown for a guild master only) - its first
      * entry is the battle list, where battle logs are also imported; the name mappings are opened
      * from the players window. Every action in a menu titled with a {@link Stage#menuTextKey()},
      * submenus included, is of that stage. "File" also holds the master data entries for now (no
@@ -79,7 +79,7 @@ public final class MainMenuBar extends JMenuBar {
     /** The actions deliberately offered in the toolbar only, not in any menu. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);
 
-    /** The "Weltenschlacht Journal" menu - visible only while {@link AppContext#isJournalAvailable()}. */
+    /** The "Journal" menu - visible only while {@link AppContext#isJournalAvailable()}. */
     private final JMenu journalMenu;
 
     /**
@@ -106,7 +106,7 @@ public final class MainMenuBar extends JMenuBar {
         });
     }
 
-    /** The "Weltenschlacht Journal" menu - package-visible for tests. */
+    /** The "Journal" menu - package-visible for tests. */
     JMenu journalMenu() {
         return journalMenu;
     }

@@ -72,7 +72,7 @@ public final class Config {
     private static final String KEY_DEFAULT_TITAN_ALGORITHM = "defaultTitanAlgorithm";
     private static final String KEY_BACKUP_DIR = "backupDir";
     private static final String KEY_WORKSPACE_PATH = "workspacePath";
-    /** Folder the last battle logs were imported from (Weltenschlacht journal). */
+    /** Folder the last battle logs were imported from (Clash of Worlds journal). */
     private static final String KEY_LAST_JOURNAL_IMPORT_DIR = "lastJournalImportDir";
     /** Fortification type (HERO/TITAN) selected last in the context bar, restored on the next start. */
     private static final String KEY_LAST_FORTIFICATION_TYPE = "lastFortificationType";

@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * The "Weltenschlacht Journal" actions and their windows - kept out of
+ * The "Journal" actions and their windows - kept out of
  * {@code Cow2Frame} and {@code MainMenuBar}: the (single) battle list - where
  * battle logs are chosen and the import assistant runs -, battle details
  * (several), "build teams from logs", "update teams (sync)", and the maintenance
@@ -303,7 +303,7 @@ public final class JournalActions {
 
     /**
      * The addition to the "delete guild" confirmation for the guild in {@code folderName}:
-     * mentions the Weltenschlacht journal (with its number of battles, if it can be read)
+     * mentions the Clash of Worlds journal (with its number of battles, if it can be read)
      * only if the guild has one. Never creates a journal file.
      */
     public String removeGuildJournalNote(String folderName) {

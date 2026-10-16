@@ -93,7 +93,7 @@ public class AppContext {
     }
 
     /**
-     * The Weltenschlacht journal of the open guild (opened lazily, closed when
+     * The Clash of Worlds journal of the open guild (opened lazily, closed when
      * another guild is opened - see {@link JournalService}).
      */
     public JournalService journal() {
@@ -114,7 +114,7 @@ public class AppContext {
     }
 
     /**
-     * True if the Weltenschlacht journal's functions are offered for the open guild: a guild
+     * True if the Clash of Worlds journal's functions are offered for the open guild: a guild
      * master's guild ({@link #isGuildMaster()}) loaded from a file - only a guild master can
      * export battle logs. Otherwise every trace of the journal is hidden; its database stays
      * untouched in the guild folder.

@@ -117,7 +117,7 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
 
 The display names in the language files are the **in-game names** exactly as
 they appear in an exported Clash of Worlds battle log (`.csv`) - the
-Weltenschlacht journal maps log names back to catalog ids through them, and
+Clash of Worlds journal maps log names back to catalog ids through them, and
 only through them (there are no aliases).
 
 - [ ] New or renamed hero/titan/pet/fortification: take the name for each

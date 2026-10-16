@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** The optional game guild id of a guild (Weltenschlacht journal) in the guild file. */
+/** The optional game guild id of a guild (Clash of Worlds journal) in the guild file. */
 class GuildRepositoryGameGuildIdTest {
 
     @TempDir

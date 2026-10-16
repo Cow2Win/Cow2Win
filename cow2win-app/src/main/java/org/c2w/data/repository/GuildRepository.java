@@ -115,7 +115,7 @@ public class GuildRepository {
      * Reads the guild itself. Guild files saved by older versions may still
      * contain the removed "season"/"seasonStart" fields - they are simply
      * ignored and disappear from the file on its next save.
-     * The optional "gameGuildId" (Weltenschlacht journal) is null when missing,
+     * The optional "gameGuildId" (Clash of Worlds journal) is null when missing,
      * the optional "guildMaster" false when missing.
      */
     private static Guild guildFromJson(JsonObject obj, Catalog catalog) {

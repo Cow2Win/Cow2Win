@@ -6,7 +6,7 @@ import org.c2w.data.journal.db.JournalRepository;
 import java.util.Optional;
 
 /**
- * Access to the Weltenschlacht journal of the open guild - implemented by
+ * Access to the Clash of Worlds journal of the open guild - implemented by
  * {@link JournalService}; tests can supply their own (e.g. one that fails).
  */
 @FunctionalInterface

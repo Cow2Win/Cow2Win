@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * GUI-free reading of the Weltenschlacht journal of the open guild for the info panel of
+ * GUI-free reading of the Clash of Worlds journal of the open guild for the info panel of
  * {@link InputStageView}: counts, the day of the newest defense log and the latest battles.
  * Never creates a journal.
  */

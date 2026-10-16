@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
- * The import assistant of the Weltenschlacht journal (modal): reads the chosen
+ * The import assistant of the Clash of Worlds journal (modal): reads the chosen
  * battle logs in the background ({@link JournalImportService#prepare}), shows
  * the steps of an {@link ImportWizardModel} - overview, guild, players,
  * unknown names, summary; only those with content - and imports in the

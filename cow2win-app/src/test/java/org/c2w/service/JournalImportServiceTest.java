@@ -29,7 +29,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Scenarios of the journal import (Weltenschlacht journal, phase 3) with a temp
+ * Scenarios of the journal import (Clash of Worlds journal, phase 3) with a temp
  * workspace, a real H2 journal and the sample logs. Cow2Win is about defense:
  * players are only asked for from the DEFENSE log, and the attack log never
  * changes the guild.

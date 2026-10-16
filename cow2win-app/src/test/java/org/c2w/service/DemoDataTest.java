@@ -2,16 +2,21 @@ package org.c2w.service;
 
 import org.c2w.data.journal.Fight;
 import org.c2w.data.journal.parse.BattleLogParser;
+import org.c2w.data.model.Fortification;
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
+import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.infra.Config;
 import org.c2w.infra.JsonSupport;
 import org.c2w.service.journal.ImportPlan;
 import org.c2w.service.journal.PlayerAutoAssignment;
+import org.c2w.service.journal.PlayerQuestion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,14 +36,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * The bundled demo data ({@code data/guild.json}, {@code data/default.lineup},
- * {@code data/demo-journal}) fits together: the lineup only uses members of the guild,
+ * {@code data/Original.lineup}, {@code data/demo-journal}) fits together: the lineups only
+ * use (existing teams of) members of the guild, there are more titan teams than titan slots,
  * and the battle logs can be imported into it without errors, unknown names or
- * questions about players.
+ * questions about members.
  */
 class DemoDataTest {
 
     private static final Path GUILD = JsonSupport.resolveDataFile("data", "guild.json");
     private static final Path LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
+    private static final Path LIVE_LINEUP = JsonSupport.resolveDataFile("data", LineupFiles.ORIGINAL_FILE_NAME);
     private static final Path JOURNAL = JsonSupport.resolveDataFile("data", "demo-journal");
 
     @TempDir
@@ -65,6 +72,13 @@ class DemoDataTest {
         }
     }
 
+    /** The number of slots of all fortifications for {@code teamType}. */
+    private static int slots(Lineup.TeamType teamType) {
+        FortificationType type = teamType == Lineup.TeamType.HERO ? FortificationType.HERO : FortificationType.TITAN;
+        return FortificationRepository.findAll().stream().filter(f -> f.type() == type)
+                .mapToInt(Fortification::capacity).sum();
+    }
+
     @Test
     @DisplayName("every team of the demo lineup belongs to a member of the demo guild")
     void lineupUsesGuildMembers() throws Exception {
@@ -81,7 +95,38 @@ class DemoDataTest {
     }
 
     @Test
-    @DisplayName("the demo battle logs make an importable plan without errors, unknown names or player questions")
+    @DisplayName("every entry of the demo live lineup is an existing team of a member of the demo guild")
+    void liveLineupUsesGuildTeams() throws Exception {
+        Guild guild = GuildRepository.load(GUILD, catalog);
+        Lineup live = LineupRepository.load(LIVE_LINEUP);
+        Map<String, GuildMember> members = guild.members().stream()
+                .collect(Collectors.toMap(GuildMember::id, m -> m));
+
+        assertEquals("demo", live.guildId());
+        assertEquals("Demo", live.guildName());
+        assertFalse(live.entries().isEmpty());
+        for (Lineup.Entry entry : live.entries()) {
+            GuildMember member = members.get(entry.teamMemberId());
+            assertNotNull(member, "not a member: " + entry.teamMemberId());
+            int teams = entry.teamType() == Lineup.TeamType.HERO ? member.heroTeams().size() : member.titanTeams().size();
+            assertTrue(entry.teamIndex() >= 0 && entry.teamIndex() < teams,
+                    "no such team: " + entry.teamMemberId() + " " + entry.teamType() + " " + entry.teamIndex());
+        }
+    }
+
+    @Test
+    @DisplayName("the demo guild has more titan teams than titan slots and at least as many hero teams as hero slots")
+    void demoGuildHasEnoughTeams() throws Exception {
+        Guild guild = GuildRepository.load(GUILD, catalog);
+        int heroTeams = guild.members().stream().mapToInt(m -> m.heroTeams().size()).sum();
+        int titanTeams = guild.members().stream().mapToInt(m -> m.titanTeams().size()).sum();
+
+        assertTrue(titanTeams > slots(Lineup.TeamType.TITAN), "titan teams: " + titanTeams);
+        assertTrue(heroTeams >= slots(Lineup.TeamType.HERO), "hero teams: " + heroTeams);
+    }
+
+    @Test
+    @DisplayName("the demo battle logs make an importable plan without errors, unknown names or questions about members")
     void demoLogsAreImportable() throws Exception {
         Guild guild = GuildRepository.load(GUILD, catalog);
         Path guildDir = workspace.resolve("Demo");
@@ -101,7 +146,11 @@ class DemoDataTest {
         assertEquals(1L, plan.ownGameGuildId());
         assertNull(plan.guildLink(), "the demo guild is linked already");
         assertTrue(plan.unknownNames().isEmpty(), plan.unknownNames().toString());
-        assertTrue(plan.playerQuestions().isEmpty(), plan.playerQuestions().toString());
+        // questions only about players who fought for the guild then but are no longer members
+        Set<String> memberNames = guild.members().stream().map(m -> m.name().strip()).collect(Collectors.toSet());
+        for (PlayerQuestion question : plan.playerQuestions()) {
+            assertFalse(memberNames.contains(question.rawName().strip()), "asked about a member: " + question);
+        }
         assertFalse(Files.exists(guildDir.resolve("journal.mv.db")), "prepare writes nothing");
 
         // every defender whose (trimmed) name is a member's is assigned to that member

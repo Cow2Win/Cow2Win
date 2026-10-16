@@ -3,7 +3,7 @@ package org.c2w.gui.action;
 /**
  * Where an {@link ActionId} belongs in the process-oriented user interface: the three
  * process stages input, strategic concept and output, plus the guild, master data and
- * general functions and the Weltenschlacht journal. Each process stage has a menu of its own,
+ * general functions and the Clash of Worlds journal. Each process stage has a menu of its own,
  * see {@code MainMenuBar}, and so have the guild (next to "File") and the journal (last, for a
  * guild master only); master data and general functions are in the "File" menu.
  */
@@ -30,7 +30,7 @@ public enum Stage {
     CONCEPT("menu.concept", "stage.concept"),
     OUTPUT("menu.output", "stage.output"),
     /**
-     * The Weltenschlacht journal (battle logs - only a guild master can export them from the
+     * The Clash of Worlds journal (battle logs - only a guild master can export them from the
      * game): not a process stage - no tile in the process bar, no action list. A menu of its
      * own, shown only while a guild master's guild is open (see {@code AppContext#isJournalAvailable()}).
      */

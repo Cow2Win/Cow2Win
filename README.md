@@ -35,7 +35,9 @@ The app guides you through three steps: **Input** (guild and teams) →
 Get the latest Windows version from
 [Releases](https://github.com/Cow2Win/Cow2Win/releases): unzip it and start
 `Cow2Win.exe`. No separate Java installation is needed. On the first start a
-demo guild shows how everything works.
+demo guild shows how everything works: an anonymized real guild with its live
+lineup, an optimized lineup to compare it with, and a Clash of Worlds Journal
+with one example battle.
 
 ### Windows SmartScreen warning
 

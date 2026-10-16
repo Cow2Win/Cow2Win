@@ -1,4 +1,4 @@
--- Weltenschlacht journal, schema version 1 (one H2 database per Cow2Win guild).
+-- Clash of Worlds journal, schema version 1 (one H2 database per Cow2Win guild).
 -- Enums are stored as VARCHAR with the Java enum name. Statements are separated
 -- by ";" at the end of a line; no ";" inside string literals (see SchemaMigrator).
 

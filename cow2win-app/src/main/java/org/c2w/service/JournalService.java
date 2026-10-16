@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Owns the Weltenschlacht journal database of the OPEN guild: at most one
+ * Owns the Clash of Worlds journal database of the OPEN guild: at most one
  * {@link JournalDatabase} at a time, opened lazily when the journal is first
  * needed and closed
  * <ul>

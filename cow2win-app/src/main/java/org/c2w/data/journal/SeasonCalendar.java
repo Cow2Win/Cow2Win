@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * The Weltenschlacht seasons of the game - the same for every guild. A season
+ * The Clash of Worlds seasons of the game - the same for every guild. A season
  * lasts {@link Season#LENGTH 12 weeks} and starts on a Monday; normally a
  * 1-week break follows, so a new season starts every 13 weeks.
  *

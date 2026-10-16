@@ -93,7 +93,7 @@ public class Cow2Frame extends JFrame {
     private final ContextBar contextBar;
     private final LogPanel logPanel;
     private JDialog logDialog;
-    /** The "Weltenschlacht Journal" actions and windows. */
+    /** The "Journal" actions and windows. */
     private final JournalActions journalActions;
     /** Traffic lights, short texts and status bar from the data status of the open guild. */
     private final DataStatusController dataStatusController;

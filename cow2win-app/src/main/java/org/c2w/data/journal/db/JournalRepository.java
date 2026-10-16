@@ -22,7 +22,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * All reads and writes of one guild's Weltenschlacht journal (see
+ * All reads and writes of one guild's Clash of Worlds journal (see
  * {@link JournalDatabase}). Every writing method runs in exactly one
  * transaction. Pure JDBC.
  *

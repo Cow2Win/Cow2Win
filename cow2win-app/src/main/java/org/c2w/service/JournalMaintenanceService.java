@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * Maintenance of the open guild's Weltenschlacht journal, without any GUI:
+ * Maintenance of the open guild's Clash of Worlds journal, without any GUI:
  * deleting battles and correcting player assignments and name mappings.
  * Seasons are not maintained here: the season of a battle is computed from its
  * date ({@link org.c2w.data.journal.SeasonCalendar}); a whole season is deleted

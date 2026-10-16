@@ -2,7 +2,12 @@ package org.c2w.service;
 
 import org.c2w.data.journal.db.JournalRepository;
 import org.c2w.data.model.Guild;
+import org.c2w.data.model.Lineup;
+import org.c2w.data.repository.GuildRepository;
+import org.c2w.data.repository.LineupFiles;
+import org.c2w.data.repository.LineupRepository;
 import org.c2w.infra.Config;
+import org.c2w.infra.JsonSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link WorkspaceBootstrap#start} on the very first start (no config file yet) in a temp
- * workspace: the "Demo" guild is created from the bundled demo data, including its
- * Weltenschlacht journal with one battle, and has no unsaved changes.
+ * workspace: the "Demo" guild is created from the bundled demo data, including its live
+ * lineup and its Clash of Worlds journal with one battle, and has no unsaved changes.
  */
 class WorkspaceBootstrapTest {
 
@@ -46,20 +51,37 @@ class WorkspaceBootstrapTest {
     }
 
     @Test
-    @DisplayName("first start opens the demo guild: guild master, 27 members, game guild id 1, saved")
-    void firstStartOpensDemoGuild() {
+    @DisplayName("first start opens the demo guild: guild master, all bundled members, game guild id 1, saved")
+    void firstStartOpensDemoGuild() throws Exception {
         context = WorkspaceBootstrap.start(step -> {
         });
 
         Guild guild = context.guild();
+        Guild bundled = GuildRepository.load(JsonSupport.resolveDataFile("data", "guild.json"), context.catalog());
         assertEquals("Demo", guild.name());
         assertTrue(guild.guildMaster());
-        assertEquals(27, guild.members().size());
+        assertEquals(bundled.members().size(), guild.members().size());
         assertEquals(1L, guild.gameGuildId());
         assertTrue(context.isJournalAvailable());
         assertFalse(context.isGuildDirty(), "demo guild must have no unsaved changes");
         assertFalse(context.isLineupDirty(), "demo lineup must have no unsaved changes");
         assertFalse(context.lineup().entries().isEmpty());
+    }
+
+    @Test
+    @DisplayName("first start saves the demo live lineup as the Original lineup, default.lineup stays open")
+    void firstStartSavesDemoLiveLineup() throws Exception {
+        context = WorkspaceBootstrap.start(step -> {
+        });
+
+        Path guildDir = temp.resolve("workspace").resolve("Demo");
+        Path original = LineupFiles.originalPathFor(guildDir);
+        assertTrue(Files.isRegularFile(original));
+        Lineup live = LineupRepository.load(original);
+        assertEquals("demo", live.guildId());
+        assertFalse(live.entries().isEmpty());
+        assertFalse(LineupFiles.isOriginal(context.lineupFilePath()), "default.lineup stays the open lineup");
+        assertFalse(context.isGuildDirty());
     }
 
     @Test
@@ -74,6 +96,7 @@ class WorkspaceBootstrapTest {
 
         JournalRepository repo = context.journal().repository(false).orElseThrow();
         assertEquals(1, repo.listBattles().size());
+        assertFalse(context.isGuildDirty(), "demo guild must have no unsaved changes");
         assertEquals(1L, repo.ownGameGuildId().orElseThrow());
     }
 

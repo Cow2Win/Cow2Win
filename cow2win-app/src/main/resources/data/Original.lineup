@@ -1,0 +1,578 @@
+{
+  "guildId": "demo",
+  "guildName": "Demo",
+  "algorithmName": "",
+  "createdAt": "2026-10-16T13:51:55.282366200",
+  "entries": [
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Ellen Ripley",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Ellen Ripley",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Sarah Connor",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Maverick",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bridge",
+      "teamMemberId": "John Wick",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Marty McFly",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Neo",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Team 17041985",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "spring-of-elements",
+      "teamMemberId": "Team 03112011",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Furiosa",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "John Wick",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion-of-fire",
+      "teamMemberId": "Sarah Connor",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Marty McFly",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Team 22092302",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Ethan Hunt",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "gates-of-nature",
+      "teamMemberId": "Hannah",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Mathilda",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Lena",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Furiosa",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Team 17041985",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion-of-ice",
+      "teamMemberId": "Max",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Sophie",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Jack Sparrow",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Mathilda",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "altar-of-life",
+      "teamMemberId": "Forrest",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Paul",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Team 28021990",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Neo",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Mia",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Team 22092302",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Team 28021990",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Felix",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "sun-temple",
+      "teamMemberId": "Jonas",
+      "teamType": "TITAN",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Mia",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Felix",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Team 03112011",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "moon-temple",
+      "teamMemberId": "Lena",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "ether-prism",
+      "teamMemberId": "Forrest",
+      "teamType": "TITAN",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Sophie",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Team 22092302",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Team 03112011",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Шурик",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Paul",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Felix",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Jack Sparrow",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "citadel",
+      "teamMemberId": "Sophie",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Greta",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Team 28021990",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Team 17041985",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Paul",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "city-hall",
+      "teamMemberId": "Mia",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Sarah Connor",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Sarah Connor",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Ellen Ripley",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Forrest",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "alchemy-tower",
+      "teamMemberId": "Maverick",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Furiosa",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Sarah Connor",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Furiosa",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Marty McFly",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Team 22092302",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "Mathilda",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Lena",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Team 17041985",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "John Wick",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Jack Sparrow",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "bastion",
+      "teamMemberId": "Lena",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Team 22092302",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Hannah",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Forrest",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "shooting-range",
+      "teamMemberId": "Mathilda",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "heros-bridge",
+      "teamMemberId": "John Wick",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Max",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Neo",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "Maverick",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "foundry",
+      "teamMemberId": "John Wick",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Marty McFly",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Ellen Ripley",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Team 03112011",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Team 17041985",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "engineerium",
+      "teamMemberId": "Maverick",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "Ellen Ripley",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "barracks",
+      "teamMemberId": "Neo",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "Indiana Jones",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "Felix",
+      "teamType": "HERO",
+      "teamIndex": 1
+    },
+    {
+      "fortificationId": "mage-academy",
+      "teamMemberId": "Trinity",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Ethan Hunt",
+      "teamType": "HERO",
+      "teamIndex": 0
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Neo",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Furiosa",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Jack Sparrow",
+      "teamType": "HERO",
+      "teamIndex": 2
+    },
+    {
+      "fortificationId": "lighthouse",
+      "teamMemberId": "Ethan Hunt",
+      "teamType": "HERO",
+      "teamIndex": 1
+    }
+  ]
+}

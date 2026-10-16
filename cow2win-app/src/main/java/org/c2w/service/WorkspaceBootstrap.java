@@ -5,6 +5,7 @@ import org.c2w.data.model.GuildMember;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.GuildRepository;
+import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.infra.BackupService;
@@ -48,6 +49,8 @@ public final class WorkspaceBootstrap {
     // See JsonSupport#resolveDataFile for how these resolve in the IDE vs. the packaged app.
     private static final Path DEMO_GUILD_PATH = JsonSupport.resolveDataFile("data", "guild.json");
     private static final Path DEMO_GUILD_LINEUP = JsonSupport.resolveDataFile("data", "default.lineup");
+    /** The demo guild's live lineup, saved as its Original lineup on the first start. */
+    private static final Path DEMO_LIVE_LINEUP = JsonSupport.resolveDataFile("data", LineupFiles.ORIGINAL_FILE_NAME);
     /** Battle logs imported into the demo guild's journal on the first start. */
     private static final Path DEMO_JOURNAL_DIR = JsonSupport.resolveDataFile("data", "demo-journal");
 
@@ -194,9 +197,12 @@ public final class WorkspaceBootstrap {
      * Overwrites the freshly-created (still empty) first-run guild/lineup
      * files with the bundled demo data from {@code src/main/resources/data}
      * (guild.json / default.lineup), so the "Demo" guild created by
-     * {@link #runInitialSetup()} shows up pre-filled instead of empty.
+     * {@link #runInitialSetup()} shows up pre-filled instead of empty. If the demo
+     * guild was saved, the bundled live lineup ({@code data/Original.lineup}) is saved
+     * as the guild's Original lineup ({@link LineupFiles#originalPathFor}), so "Live" can
+     * be compared with default.lineup right away; default.lineup stays the open lineup.
      *
-     * <p>Guild and lineup are loaded/saved independently and any failure is
+     * <p>Guild, lineup and live lineup are loaded/saved independently and any failure is
      * logged rather than thrown - a problem with the bundled demo data
      * (missing file, malformed JSON, ...) must not prevent the application
      * from starting up (same pattern as {@link #loadGuildContext} /
@@ -204,7 +210,7 @@ public final class WorkspaceBootstrap {
      * remain in place as a safe fallback for whichever half failed.
      *
      * <p>If the demo guild was loaded, {@link #start} then imports the battle logs in
-     * {@code data/demo-journal} into its Weltenschlacht journal (after the guild log's
+     * {@code data/demo-journal} into its Clash of Worlds journal (after the guild log's
      * "created"/"opened" entries) - see {@link #importDemoJournal}.
      *
      * @return true if the demo guild was loaded
@@ -218,6 +224,15 @@ public final class WorkspaceBootstrap {
             guildLoaded = true;
         } catch (IOException e) {
             Logger.logException("Could not load demo guild from " + DEMO_GUILD_PATH, e);
+        }
+
+        if (guildLoaded) {
+            try {
+                Lineup liveLineup = LineupRepository.load(DEMO_LIVE_LINEUP);
+                LineupRepository.save(liveLineup, LineupFiles.originalPathFor(context.guildFilePath().getParent()));
+            } catch (IOException | RuntimeException e) {
+                Logger.logException("Could not load demo live lineup from " + DEMO_LIVE_LINEUP, e);
+            }
         }
 
         try {
@@ -236,8 +251,9 @@ public final class WorkspaceBootstrap {
      * journal of the open (demo) guild - without a dialog, but with the same logic as the
      * import dialog ({@link JournalImportService#prepare}/{@link JournalImportService#execute}),
      * so the journal database always has the schema of this app version. The questions get
-     * the answers a user would give: link the guild, assign a defender to the member of the
-     * same name (never create members), leave unknown names unknown. If the import changed
+     * the answers a user would give: link the guild, assign a player to the member of the
+     * same name, mark a player who is no longer a member as former member (never create
+     * members), leave unknown names unknown. If the import changed
      * the guild, it is saved, so the demo guild has no unsaved changes after the first start.
      *
      * <p>Failures are only logged - the start goes on, guild and lineup stay as they are. The
@@ -275,7 +291,9 @@ public final class WorkspaceBootstrap {
                 if (member.isPresent()) {
                     answers = answers.withPlayer(question.id(), PlayerAnswer.assign(member.get().id()));
                 } else {
-                    Logger.log("Demo journal: player \"" + question.rawName() + "\" left open");
+                    // fought for the guild in the bundled battle, but is no longer a member
+                    answers = answers.withPlayer(question.id(), PlayerAnswer.of(PlayerAnswer.Kind.FORMER));
+                    Logger.log("Demo journal: player \"" + question.rawName() + "\" marked as former member");
                 }
             }
             for (UnknownNameQuestion unknown : plan.unknownNames()) {
