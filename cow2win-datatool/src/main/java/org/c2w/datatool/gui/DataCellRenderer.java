@@ -3,6 +3,7 @@ package org.c2w.datatool.gui;
 import org.c2w.datatool.data.ColumnSpec;
 import org.c2w.datatool.data.ColumnType;
 import org.c2w.datatool.data.DataSet;
+import org.c2w.gui.common.AppColors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JTable;
@@ -18,12 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Renders every cell type: id lists with display names, avatars with a small preview, marks in colour. */
+/** Renders every cell type: id lists with display names, avatars with a small preview, marks in their status text colors. */
 final class DataCellRenderer extends DefaultTableCellRenderer {
 
     static final int ICON_SIZE = 32;
-    private static final Color POSITIVE = new Color(0x4CAF50);
-    private static final Color NEGATIVE = new Color(0xE57373);
 
     private final DataSet data;
     private final Map<Path, ImageIcon> icons = new HashMap<>();
@@ -44,7 +43,7 @@ final class DataCellRenderer extends DefaultTableCellRenderer {
         }
         if (!isSelected) {
             if (spec.type() == ColumnType.MARK && value != null) {
-                setForeground("POSITIVE".equals(value) ? POSITIVE : NEGATIVE);
+                setForeground("POSITIVE".equals(value) ? AppColors.SUCCESS_TEXT : AppColors.ERROR_TEXT);
             } else if (!spec.isEditable(model.row(table.convertRowIndexToModel(row)))) {
                 setForeground(UIManager.getColor("Label.disabledForeground"));
             } else {

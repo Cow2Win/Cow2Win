@@ -5,6 +5,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.cowscore.CowScoreDialog;
@@ -272,14 +273,14 @@ public class Cow2Frame extends JFrame {
                 .withSmallIcon(IconLoader.iconFor(ICON_HERO_WARS, ActionBar.TOOLBAR_ICON_SIZE)));
 
         actions.register(new AppAction(ActionId.NEW_GUILD, this::onNewGuild)
-                .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_GUILD, ActionBar.TOOLBAR_ICON_SIZE, AppColors.SUCCESS)));
         actions.register(new AppAction(ActionId.REMOVE_GUILD, this::onRemoveGuild)
-                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_GUILD, ActionBar.TOOLBAR_ICON_SIZE, AppColors.ERROR)));
 
         actions.register(new AppAction(ActionId.NEW_LINEUP, this::onNewLineup)
-                .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.GREEN)));
+                .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, AppColors.SUCCESS)));
         actions.register(new AppAction(ActionId.REMOVE_LINEUP, this::onRemoveLineup)
-                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, IconLoader.RED)));
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, AppColors.ERROR)));
         actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup)
                 .withSmallIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP)));
         // No icon yet - an empty placeholder of icon size keeps the text in line with its neighbors.

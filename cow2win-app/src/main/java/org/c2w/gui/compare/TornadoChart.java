@@ -1,6 +1,6 @@
 package org.c2w.gui.compare;
 
-import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.AppColors;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,10 +11,10 @@ import java.util.function.IntFunction;
 /**
  * A tornado chart drawn with Java2D: one row per item, the label in a centered column, the
  * left value's bar growing from the center to the left, the right value's bar growing to the
- * right, and the difference (right - left) at the far right - green if the right side has
- * more, red if less. Both sides share one scale, the maximum over all enabled values (see
- * {@link #scaleMax}). A disabled row is shown dimmed with {@link #setDisabledText its text}
- * instead of values, without bars and without difference. Optionally a total row follows.
+ * right, and the difference (right - left) at the far right - in the success text color if
+ * the right side has more, in the error text color if less. Both sides share one scale, the
+ * maximum over all enabled values (see {@link #scaleMax}). A disabled row is shown dimmed with
+ * {@link #setDisabledText its text} instead of values, without bars and without difference. Optionally a total row follows.
  *
  * <p>Without a right side (see {@link #setRows}) only the left values and bars are drawn.
  */
@@ -32,8 +32,6 @@ public final class TornadoChart extends JComponent {
     private static final int MIN_BAR_WIDTH = 80;
     private static final int TITLE_GAP = 8;
     private static final int TOTAL_GAP = 6;
-    /** Neutral color of the right bars - distinguishable from the white hero and the gold titan color. */
-    private static final Color RIGHT_COLOR = new Color(96, 152, 204);
 
     private final String title;
     private final IntFunction<String> valueFormat;
@@ -79,7 +77,7 @@ public final class TornadoChart extends JComponent {
         repaint();
     }
 
-    /** Color of the left bars, e.g. the color of the fortification type; the right bars keep a neutral color. */
+    /** Color of the left bars, e.g. the color of the fortification type; the right bars are {@link AppColors#INFO}. */
     public void setLeftColor(Color left) {
         this.leftColor = left;
         repaint();
@@ -128,13 +126,13 @@ public final class TornadoChart extends JComponent {
         return (int) Math.round(available * Math.min(value, max) / (double) max);
     }
 
-    /** {@link IconLoader#GREEN} if the right side has more, {@link IconLoader#RED} if less, {@code neutral} otherwise. */
+    /** {@link AppColors#SUCCESS_TEXT} if the right side has more, {@link AppColors#ERROR_TEXT} if less, {@code neutral} otherwise. */
     static Color diffColor(int diff, Color neutral) {
         if (diff > 0) {
-            return IconLoader.GREEN;
+            return AppColors.SUCCESS_TEXT;
         }
         if (diff < 0) {
-            return IconLoader.RED;
+            return AppColors.ERROR_TEXT;
         }
         return neutral;
     }
@@ -225,7 +223,7 @@ public final class TornadoChart extends JComponent {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             Color foreground = foreground();
-            Color dimmed = dimmed();
+            Color dimmed = AppColors.TEXT_MUTED;
 
             Insets insets = getInsets();
             g2.setFont(titleFont());
@@ -244,7 +242,7 @@ public final class TornadoChart extends JComponent {
             }
 
             // The center column's borders across all rows.
-            g2.setColor(withAlpha(foreground, 60));
+            g2.setColor(AppColors.LINE_STRONG);
             g2.drawLine(geometry.nameStart(), geometry.top(), geometry.nameStart(), y);
             g2.drawLine(geometry.nameEnd(), geometry.top(), geometry.nameEnd(), y);
 
@@ -276,13 +274,13 @@ public final class TornadoChart extends JComponent {
         int barHeight = ROW_HEIGHT - 2 * BAR_INSET;
 
         int leftLength = barLength(row.left(), max, geometry.barSpace());
-        paintBar(g2, geometry.nameStart() - leftLength, barTop, leftLength, barHeight, leftColor, foreground);
+        paintBar(g2, geometry.nameStart() - leftLength, barTop, leftLength, barHeight, leftColor);
         g2.setColor(foreground);
         drawRightAligned(g2, valueFormat.apply(row.left()), geometry.nameStart() - leftLength - VALUE_GAP, baseline);
 
         if (rightAvailable) {
             int rightLength = barLength(row.right(), max, geometry.barSpace());
-            paintBar(g2, geometry.nameEnd(), barTop, rightLength, barHeight, RIGHT_COLOR, foreground);
+            paintBar(g2, geometry.nameEnd(), barTop, rightLength, barHeight, AppColors.INFO);
             g2.setColor(foreground);
             g2.drawString(valueFormat.apply(row.right()), geometry.nameEnd() + rightLength + VALUE_GAP, baseline);
 
@@ -309,14 +307,14 @@ public final class TornadoChart extends JComponent {
         g2.setFont(getFont());
     }
 
-    /** A filled bar with a faint outline, so a white bar stays visible on a light theme too. */
-    private static void paintBar(Graphics2D g2, int x, int y, int width, int height, Color fill, Color foreground) {
+    /** A filled bar with a faint outline ({@link AppColors#LINE_STRONG}). */
+    private static void paintBar(Graphics2D g2, int x, int y, int width, int height, Color fill) {
         if (width <= 0) {
             return;
         }
         g2.setColor(fill);
         g2.fillRect(x, y, width, height);
-        g2.setColor(withAlpha(foreground, 90));
+        g2.setColor(AppColors.LINE_STRONG);
         g2.drawRect(x, y, width - 1, height - 1);
     }
 
@@ -331,16 +329,7 @@ public final class TornadoChart extends JComponent {
 
     private static Color foreground() {
         Color color = UIManager.getColor("Label.foreground");
-        return color != null ? color : Color.DARK_GRAY;
-    }
-
-    private static Color dimmed() {
-        Color color = UIManager.getColor("Label.disabledForeground");
-        return color != null ? color : Color.GRAY;
-    }
-
-    private static Color withAlpha(Color color, int alpha) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+        return color != null ? color : Color.WHITE;
     }
 
     // --- tooltip ---

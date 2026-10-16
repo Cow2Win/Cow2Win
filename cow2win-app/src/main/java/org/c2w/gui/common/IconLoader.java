@@ -13,11 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class IconLoader {
 
-    public static final Color GREEN = new Color(78, 133, 66);
-    public static final Color BLUE = new Color(0, 150, 136);
-    public static final Color RED = new Color(159, 41, 54);
-
-
     static final int TOOLBAR_ICON_SIZE = 20;
 
     private static final String BACKGROUND_IMAGE = "/images/app/background.png";
@@ -82,10 +77,10 @@ public final class IconLoader {
     public static ImageIcon iconForWithDayColor(String imagePath, int size) {
         Color tmp = new JLabel("").getForeground();
         if (LocalDate.now().getDayOfWeek() == DayOfWeek.SATURDAY) {
-            tmp = GREEN;
+            tmp = AppColors.SUCCESS;
         }
         if (LocalDate.now().getDayOfWeek() == DayOfWeek.SUNDAY) {
-            tmp = RED;
+            tmp = AppColors.ERROR;
         }
         return iconFor(imagePath, size, tmp);
     }

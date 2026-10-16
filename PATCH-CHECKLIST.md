@@ -160,3 +160,9 @@ only through them (there are no aliases).
       `cow2win-app/src/main/resources/data/catalog-version.json` to today's date - it's
       logged at app startup so it's visible at a glance which patch state
       the catalog data was last checked against.
+
+## 8. GUI changes
+
+- [ ] New colors only via `AppColors` (`org.c2w.gui.common`) - a role, not a hue;
+      text in a status color always uses the `..._TEXT` variant. `NoLocalColorsTest`
+      fails on `new Color(` or a colorful `Color.XXX` constant anywhere else.

@@ -3,6 +3,7 @@ package org.c2w.gui.journal;
 import org.c2w.data.journal.LogDirection;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
+import org.c2w.gui.common.AppColors;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,21 +20,12 @@ import java.util.Map;
  * The simplified map of the visual replay: all fortifications of the catalog
  * (heroes and titans together) on their grid ({@code row}/{@code column}, 8 x 5),
  * lines to their prerequisites, and per fortification a tile with one dot per
- * position - defended, beaten (green), attacked in vain (red), captured without
- * a fight. Captured and locked
+ * position - defended, beaten, attacked in vain, captured without a fight; colored
+ * from the attacker's point of view (see {@link #fightColor}, {@link #capturedColor}). Captured and locked
  * fortifications and the current one are marked. Only for the replay - the
  * map of the strategic concept is a different thing.
  */
 final class BattleReplayMapPanel extends JComponent {
-
-    // status colors with good contrast on the dark theme
-    static final Color GREEN = new Color(102, 187, 106);
-    static final Color RED = new Color(239, 83, 80);
-    static final Color GOLD = new Color(255, 193, 7);
-    static final Color BLUE = new Color(66, 165, 245);
-    static final Color GREY = new Color(144, 154, 164);
-    private static final Color HERO = new Color(179, 157, 219);
-    private static final Color TITAN = new Color(77, 208, 225);
 
     static final int ROWS = 8;
     static final int COLUMNS = 5;
@@ -97,7 +89,7 @@ final class BattleReplayMapPanel extends JComponent {
 
     static Color background() {
         Color c = UIManager.getColor("Panel.background");
-        return c != null ? c : new Color(38, 50, 56);
+        return c != null ? c : Color.BLACK;
     }
 
     static Color foreground() {
@@ -105,8 +97,21 @@ final class BattleReplayMapPanel extends JComponent {
         return c != null ? c : Color.WHITE;
     }
 
-    static Color alpha(Color c, int alpha) {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
+    /**
+     * The color of a single fight, from the attacker's point of view in both directions (like the
+     * log's result column): {@link AppColors#SUCCESS_TEXT} if the attacker won, {@link AppColors#ERROR_TEXT}
+     * if the attacker lost.
+     */
+    static Color fightColor(boolean attackerWins) {
+        return attackerWins ? AppColors.SUCCESS_TEXT : AppColors.ERROR_TEXT;
+    }
+
+    /**
+     * The color of a captured fortification: the attacker won it, so {@link AppColors#SUCCESS} in both
+     * directions - the base color, so it stays apart from a single fight won.
+     */
+    static Color capturedColor() {
+        return AppColors.SUCCESS;
     }
 
     @Override
@@ -148,7 +153,7 @@ final class BattleReplayMapPanel extends JComponent {
                     continue;
                 }
                 Point2D to = center(pre.fort());
-                g.setColor(pre.captured() ? alpha(fg, 170) : alpha(fg, 45));
+                g.setColor(pre.captured() ? AppColors.tint(fg, 170) : AppColors.LINE);
                 g.setStroke(new BasicStroke((float) ((pre.captured() ? 2.4 : 1.2) * s)));
                 g.drawLine((int) from.getX(), (int) from.getY(), (int) to.getX(), (int) to.getY());
             }
@@ -161,31 +166,31 @@ final class BattleReplayMapPanel extends JComponent {
         Color bg = background();
         Color fg = foreground();
         // captured = the attacker won the fortification - the same color in both directions
-        Color own = GREEN;
+        Color own = capturedColor();
         Composite composite = g.getComposite();
         if (f.locked()) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
         }
         // fill: opaque base so lines stay below, then the tint
-        g.setColor(JournalSwing.blend(bg, alpha(fg, 22)));
+        g.setColor(AppColors.mix(bg, fg, AppColors.SURFACE.getAlpha() / 255.0));
         g.fill(tile);
         if (f.captured()) {
-            g.setColor(alpha(own, 70));
+            g.setColor(AppColors.tint(own, AppColors.TINT_STRONG));
             g.fill(tile);
         }
         // border
         if (f.current()) {
-            g.setColor(BLUE);
+            g.setColor(AppColors.INFO);
             g.setStroke(new BasicStroke((float) (3 * s)));
         } else if (f.locked()) {
-            g.setColor(alpha(fg, 140));
+            g.setColor(AppColors.TEXT_MUTED);
             g.setStroke(new BasicStroke((float) (1.2 * s), BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10,
                     new float[]{(float) (4 * s), (float) (3 * s)}, 0));
         } else if (f.captured()) {
             g.setColor(own);
             g.setStroke(new BasicStroke((float) (1.6 * s)));
         } else {
-            g.setColor(alpha(fg, 90));
+            g.setColor(AppColors.LINE_STRONG);
             g.setStroke(new BasicStroke((float) (1.2 * s)));
         }
         g.draw(tile);
@@ -204,8 +209,8 @@ final class BattleReplayMapPanel extends JComponent {
         double markH = mm.getAscent() + 2 * s;
         double markX = x + w - pad - markW;
         double markY = y + pad - 1 * s;
-        Color markColor = hero ? HERO : TITAN;
-        g.setColor(alpha(markColor, 60));
+        Color markColor = hero ? AppColors.HERO : AppColors.TITAN;
+        g.setColor(AppColors.tint(markColor, AppColors.TINT));
         g.fill(new RoundRectangle2D.Double(markX, markY, markW, markH, 5 * s, 5 * s));
         g.setColor(markColor);
         g.drawString(mark, (float) (markX + 3 * s), (float) (markY + mm.getAscent() - 0.5 * s));
@@ -241,7 +246,7 @@ final class BattleReplayMapPanel extends JComponent {
             paintDot(g, dot, direction, px, dy, d);
             if (f.current() && step != null && step.kind() == BattleDetailModel.ReplayStep.Kind.FIGHT
                     && step.position() == p) {
-                g.setColor(step.attackerWins() ? GREEN : RED);
+                g.setColor(fightColor(step.attackerWins()));
                 g.setStroke(new BasicStroke((float) (2.2 * s)));
                 double r = 4 * s;
                 g.draw(new Ellipse2D.Double(px - r, dy - r, d + 2 * r, d + 2 * r));
@@ -256,19 +261,19 @@ final class BattleReplayMapPanel extends JComponent {
         Color fg = foreground();
         switch (dot) {
             case HELD -> {
-                g.setColor(GREY);
+                g.setColor(AppColors.MUTED);
                 g.fill(circle);
             }
             case TAKEN -> {
-                g.setColor(GREEN);
+                g.setColor(fightColor(true));
                 g.fill(circle);
             }
             case REPELLED -> {
-                g.setColor(RED);
+                g.setColor(fightColor(false));
                 g.fill(circle);
             }
             case FREE -> {
-                g.setColor(alpha(fg, 200));
+                g.setColor(AppColors.tint(fg, 200));
                 g.setStroke(new BasicStroke((float) Math.max(1, d / 8), BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
                         10, new float[]{(float) (d / 5), (float) (d / 6)}, 0));
                 g.draw(circle);
@@ -276,7 +281,7 @@ final class BattleReplayMapPanel extends JComponent {
             case LOCKED -> {
                 Composite c = g.getComposite();
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
-                g.setColor(GREY);
+                g.setColor(AppColors.MUTED);
                 g.fill(circle);
                 g.setComposite(c);
             }

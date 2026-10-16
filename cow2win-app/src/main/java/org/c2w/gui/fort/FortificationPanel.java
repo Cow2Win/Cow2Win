@@ -1,9 +1,9 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
-import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
 
@@ -49,12 +49,7 @@ public class FortificationPanel extends JPanel {
 
     private static final int ARC = 10;
     private static final int STRIPE_WIDTH = 4;
-    private static final Color SURFACE = new Color(255, 255, 255, 22);
-    private static final Color OUTLINE = new Color(255, 255, 255, 40);
-    private static final Color SELECTED_SURFACE = new Color(
-            IconLoader.BLUE.getRed(), IconLoader.BLUE.getGreen(), IconLoader.BLUE.getBlue(), 60);
-    /** Orange of a partly filled fortification - deliberately different from the titan gold of the name. */
-    static final Color PARTIAL_COLOR = new Color(217, 130, 43);
+    private static final Color SELECTED_SURFACE = AppColors.tint(AppColors.ACCENT, AppColors.TINT_STRONG);
 
     private final Fortification fortification;
     private final int filledSlots;
@@ -166,7 +161,7 @@ public class FortificationPanel extends JPanel {
             int height = getHeight();
             RoundRectangle2D.Float shape = new RoundRectangle2D.Float(0, 0, width - 1f, height - 1f, ARC, ARC);
 
-            g2.setColor(selected ? SELECTED_SURFACE : SURFACE);
+            g2.setColor(selected ? SELECTED_SURFACE : AppColors.SURFACE);
             g2.fill(shape);
 
             // Stripe on the left, clipped to the rounded outline.
@@ -176,7 +171,7 @@ public class FortificationPanel extends JPanel {
             g2.fillRect(0, 0, STRIPE_WIDTH, height);
             g2.setClip(oldClip);
 
-            g2.setColor(selected ? IconLoader.BLUE : OUTLINE);
+            g2.setColor(selected ? AppColors.ACCENT : AppColors.LINE);
             g2.draw(shape);
         } finally {
             g2.dispose();
@@ -193,9 +188,9 @@ public class FortificationPanel extends JPanel {
 
     static Color fillLevelColor(FillLevel level) {
         return switch (level) {
-            case EMPTY -> IconLoader.RED;
-            case PARTIAL -> PARTIAL_COLOR;
-            case FULL -> IconLoader.GREEN;
+            case EMPTY -> AppColors.ERROR;
+            case PARTIAL -> AppColors.WARNING;
+            case FULL -> AppColors.SUCCESS;
         };
     }
 
@@ -220,14 +215,14 @@ public class FortificationPanel extends JPanel {
     /**
      * "filled/capacity · power", e.g. "5/5 · 1,05 Mio" - or, while {@link #valueMode} shows a
      * change, "filled/capacity · {@link #totalPowerDiff}", colored
-     * green for a gain and red for a loss (see {@link #diffColor}).
+     * {@link AppColors#SUCCESS_TEXT} for a gain and {@link AppColors#ERROR_TEXT} for a loss (see {@link #diffColor}).
      */
     JLabel getPowerLabel() {
         if (powerLbl == null) {
             String places = filledSlots + "/" + fortification.capacity() + " · ";
             String power = valueMode.showsChange() ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
             powerLbl = new JLabel(places + power, JLabel.LEFT);
-            powerLbl.setForeground(valueMode.showsChange() ? diffColor(totalPowerDiff, mutedForeground()) : mutedForeground());
+            powerLbl.setForeground(valueMode.showsChange() ? diffColor(totalPowerDiff, AppColors.TEXT_MUTED) : AppColors.TEXT_MUTED);
             powerLbl.setToolTipText(powerTooltip());
             powerLbl.setMinimumSize(new Dimension(0, powerLbl.getPreferredSize().height));
         }
@@ -327,13 +322,13 @@ public class FortificationPanel extends JPanel {
         return diff > 0 ? "+" + formatted : formatted;
     }
 
-    /** {@link IconLoader#GREEN} for a gain, {@link IconLoader#RED} for a loss, {@code unchanged} otherwise. */
+    /** {@link AppColors#SUCCESS_TEXT} for a gain, {@link AppColors#ERROR_TEXT} for a loss, {@code unchanged} otherwise. */
     private static Color diffColor(int diff, Color unchanged) {
         if (diff > 0) {
-            return IconLoader.GREEN;
+            return AppColors.SUCCESS_TEXT;
         }
         if (diff < 0) {
-            return IconLoader.RED;
+            return AppColors.ERROR_TEXT;
         }
         return unchanged;
     }
@@ -341,11 +336,5 @@ public class FortificationPanel extends JPanel {
     private static Color foreground() {
         Color color = UIManager.getColor("Label.foreground");
         return color != null ? color : Color.WHITE;
-    }
-
-    /** {@link #foreground()}, dimmed - for the secondary "filled/capacity · power" text. */
-    private static Color mutedForeground() {
-        Color color = foreground();
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), 150);
     }
 }

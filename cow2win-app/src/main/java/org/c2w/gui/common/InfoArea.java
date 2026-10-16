@@ -5,7 +5,7 @@ import java.awt.*;
 
 /**
  * An information area at the top of a dialog or tab: wrapped, read-only white text in a
- * teal-tinted frame with rounded corners, like the "Live" label of the context bar (see
+ * accent-tinted frame with rounded corners, like the "Live" label of the context bar (see
  * {@link HintStyle}). Its preferred width is tiny, so the text never decides the window's width,
  * and it is always a fixed number of lines high (plus padding), so changing the text does not
  * move the content below. Put it into {@link #framed(InfoArea)} for the usual space around it.
@@ -41,7 +41,7 @@ public final class InfoArea extends JTextArea {
 
     @Override
     protected void paintComponent(Graphics g) {
-        HintStyle.paintHintBackground(g, this, HintStyle.TEAL, ARC);
+        HintStyle.paintHintBackground(g, this, AppColors.ACCENT_TEXT, ARC);
         super.paintComponent(g);
     }
 

@@ -9,11 +9,8 @@ import java.awt.*;
  */
 public final class HintStyle {
 
-    /** Teal of the "Live" lineup status and of the CowScore information area. */
-    public static final Color TEAL = new Color(0x4D, 0xC0, 0xA8);
-
     /** Opacity (0-255) of the tinted background. */
-    public static final int BACKGROUND_ALPHA = 45;
+    public static final int BACKGROUND_ALPHA = AppColors.TINT;
 
     private HintStyle() {
     }
@@ -29,7 +26,7 @@ public final class HintStyle {
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), BACKGROUND_ALPHA));
+            g2.setColor(AppColors.tint(color, BACKGROUND_ALPHA));
             g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, arc, arc);
             g2.setColor(color);
             g2.drawRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, arc, arc);

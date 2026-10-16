@@ -1,6 +1,7 @@
 package org.c2w.gui.journal;
 
 import org.c2w.data.model.Guild;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
 import org.c2w.gui.journal.ImportWizardModel.MemberChoice;
 import org.c2w.service.journal.PlayerAnswer;
@@ -87,7 +88,7 @@ final class PlayersStepPanel extends JPanel {
             ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();
             hint.setText(result.skippedByLimit() == 0 ? " " : JournalTexts.text("journal.players.createAllLimit",
                     String.valueOf(result.skippedByLimit()), String.valueOf(Guild.MAX_MEMBERS)));
-            hint.setForeground(new Color(200, 120, 0));
+            hint.setForeground(AppColors.WARNING_TEXT);
             refresh();
         });
         resetAll.addActionListener(e -> {
@@ -138,7 +139,7 @@ final class PlayersStepPanel extends JPanel {
             rows.forEach(r -> r.update(duplicates));
             memberCount.setText(JournalTexts.text("journal.players.members",
                     String.valueOf(model.memberCountAfterImport()), String.valueOf(Guild.MAX_MEMBERS)));
-            memberCount.setForeground(model.isMemberLimitExceeded() ? Color.RED : UIManager.getColor("Label.foreground"));
+            memberCount.setForeground(model.isMemberLimitExceeded() ? AppColors.ERROR_TEXT : UIManager.getColor("Label.foreground"));
         } finally {
             updating = false;
         }
@@ -231,7 +232,8 @@ final class PlayersStepPanel extends JPanel {
 
         private String infoText(PlayerAnswer answer, boolean duplicate) {
             if (duplicate) {
-                return "<html><font color='red'>" + escape(JournalTexts.text("journal.players.duplicateRename")) + "</font></html>";
+                String color = AppColors.hex(AppColors.ERROR_TEXT);
+                return "<html><font color='" + color + "'>" + escape(JournalTexts.text("journal.players.duplicateRename")) + "</font></html>";
             }
             return switch (answer.kind()) {
                 case ASSIGN -> question.nameSuggestions().stream()

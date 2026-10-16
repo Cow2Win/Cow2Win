@@ -8,8 +8,6 @@ import java.util.Locale;
 public class GuiUtils {
     public static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.GERMANY);
 
-    public static final Color VALUE_HIGHLIGHT_BACKGROUND = IconLoader.GREEN;
-
     /**
      * Sizes {@code window} to {@code height} and to at least {@code minWidth},
      * but wide enough that its content's preferred width fits - plus room for

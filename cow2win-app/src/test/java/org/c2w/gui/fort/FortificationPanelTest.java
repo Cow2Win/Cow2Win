@@ -1,9 +1,9 @@
 package org.c2w.gui.fort;
 
 import org.c2w.data.model.*;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
-import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,17 +22,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class FortificationPanelTest {
 
     @Test
-    @DisplayName("The stripe is red for an empty, orange for a partly and green for a fully filled fortification")
+    @DisplayName("The stripe is ERROR for an empty, WARNING for a partly and SUCCESS for a fully filled fortification")
     void fillLevel() {
         assertEquals(EMPTY, FortificationPanel.fillLevel(0, 5));
         assertEquals(PARTIAL, FortificationPanel.fillLevel(1, 5));
         assertEquals(PARTIAL, FortificationPanel.fillLevel(4, 5));
         assertEquals(FULL, FortificationPanel.fillLevel(5, 5));
 
-        assertEquals(IconLoader.RED, FortificationPanel.fillLevelColor(EMPTY));
-        assertEquals(FortificationPanel.PARTIAL_COLOR, FortificationPanel.fillLevelColor(PARTIAL));
+        assertEquals(AppColors.ERROR, FortificationPanel.fillLevelColor(EMPTY));
+        assertEquals(AppColors.WARNING, FortificationPanel.fillLevelColor(PARTIAL));
         assertNotEquals(FortificationTypeStyle.color(FortificationType.TITAN), FortificationPanel.fillLevelColor(PARTIAL));
-        assertEquals(IconLoader.GREEN, FortificationPanel.fillLevelColor(FULL));
+        assertEquals(AppColors.SUCCESS, FortificationPanel.fillLevelColor(FULL));
     }
 
     @Test

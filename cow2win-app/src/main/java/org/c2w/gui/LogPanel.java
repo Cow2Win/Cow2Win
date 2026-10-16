@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -49,8 +50,7 @@ public class LogPanel extends JPanel {
         scrollPane.setPreferredSize(new Dimension(0, PREFERRED_HEIGHT));
         add(scrollPane, CARD_TEXT);
 
-        Color muted = UIManager.getColor("Label.disabledForeground");
-        emptyLabel.setForeground(muted == null ? Color.GRAY : muted);
+        emptyLabel.setForeground(AppColors.TEXT_MUTED);
         JPanel emptyPanel = new JPanel(new BorderLayout());
         emptyPanel.add(emptyLabel, BorderLayout.CENTER);
         add(emptyPanel, CARD_EMPTY);

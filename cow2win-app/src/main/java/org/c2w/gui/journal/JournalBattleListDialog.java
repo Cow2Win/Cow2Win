@@ -4,6 +4,7 @@ import org.c2w.data.journal.BattleResult;
 import org.c2w.data.journal.Season;
 import org.c2w.data.journal.db.BattleStatus;
 import org.c2w.data.journal.db.BattleSummary;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.common.InfoArea;
@@ -81,9 +82,9 @@ public final class JournalBattleListDialog extends JDialog {
     private final JLabel ownPointsTotal = new JLabel(" ");
     private final JLabel opponentPointsTotal = new JLabel(" ");
     private final FlatButton detailsButton =
-            new FlatButton(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+            new FlatButton(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
     private final FlatButton deleteButton =
-            new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, IconLoader.RED));
+            new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, AppColors.ERROR));
     private final JPanel center = new JPanel(new CardLayout());
     private final JLabel message = new JLabel("", SwingConstants.CENTER);
     private final AppContext.Listener listener = new AppContext.Listener() {
@@ -183,12 +184,12 @@ public final class JournalBattleListDialog extends JDialog {
     private JComponent buildToolbar() {
         detailsButton.setToolTipText(JournalTexts.text("journal.button.details"));
         // The look and feel does not gray out a recolored icon by itself.
-        detailsButton.setDisabledIcon(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, Color.GRAY));
+        detailsButton.setDisabledIcon(IconLoader.iconFor(ICON_DETAILS, TOOLBAR_ICON_SIZE, AppColors.MUTED));
         detailsButton.addActionListener(e -> openDetails());
         deleteButton.setToolTipText(JournalTexts.text("journal.action.delete"));
-        deleteButton.setDisabledIcon(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, Color.GRAY));
+        deleteButton.setDisabledIcon(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, AppColors.MUTED));
         deleteButton.addActionListener(e -> deleteSelected());
-        FlatButton importButton = new FlatButton(IconLoader.iconFor(ICON_IMPORT, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        FlatButton importButton = new FlatButton(IconLoader.iconFor(ICON_IMPORT, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
         importButton.setToolTipText(JournalTexts.text("journal.battles.import"));
         importButton.addActionListener(e -> host.importFiles(List.of()));
 

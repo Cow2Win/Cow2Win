@@ -2,6 +2,7 @@ package org.c2w.gui.stage;
 
 import org.c2w.gui.MainMenuBar;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -26,10 +27,6 @@ public class StageActionList extends JPanel {
 
     /** Left padding of a row, plus this much per group level. */
     private static final int INDENT = 14;
-
-    private static final Color HEADING_COLOR = new Color(255, 255, 255, 120);
-    private static final Color LINE_COLOR = new Color(255, 255, 255, 40);
-    private static final Color HOVER_FILL = new Color(255, 255, 255, 30);
 
     private final List<ActionRow> rows = new ArrayList<>();
 
@@ -160,7 +157,7 @@ public class StageActionList extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             if (hover && isEnabled()) {
-                g.setColor(HOVER_FILL);
+                g.setColor(AppColors.SURFACE_HOVER);
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
             super.paintComponent(g);
@@ -172,7 +169,7 @@ public class StageActionList extends JPanel {
 
         GroupHeading(String title, int level) {
             super(title.toUpperCase(LanguageService.locale()));
-            setForeground(HEADING_COLOR);
+            setForeground(AppColors.TEXT_MUTED);
             setFont(getFont().deriveFont(Font.BOLD, getFont().getSize2D() - 2f));
             setBorder(BorderFactory.createEmptyBorder(8, INDENT + level * INDENT, 2, 8));
         }
@@ -204,7 +201,7 @@ public class StageActionList extends JPanel {
 
         @Override
         protected void paintComponent(Graphics g) {
-            g.setColor(LINE_COLOR);
+            g.setColor(AppColors.LINE);
             g.drawLine(INDENT, HEIGHT / 2, getWidth() - INDENT, HEIGHT / 2);
         }
     }

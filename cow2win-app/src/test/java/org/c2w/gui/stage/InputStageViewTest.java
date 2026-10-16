@@ -11,6 +11,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.journal.JournalTexts;
@@ -180,7 +181,7 @@ class InputStageViewTest {
         assertNull(statusOf("Anna").color(), "no data status yet");
         view.setDataStatus(statusWithFindings());
 
-        assertEquals(MemberTableModel.STALE_JOURNAL_COLOR, statusOf("Anna").color());
+        assertEquals(AppColors.MUTED, statusOf("Anna").color());
         assertEquals(LanguageService.displayName("memberOverview.stale.journal",
                 InfoSections.shortDate(LocalDate.of(2026, 10, 1))), statusOf("Anna").tooltip());
         assertEquals(StageStatus.ATTENTION.color(), statusOf("Bert").color());

@@ -5,6 +5,7 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.ReportViewerDialog;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
@@ -153,7 +154,7 @@ public class TitanValueOverviewDialog extends JDialog {
      * tooltip key/icon since it does the same thing.
      */
     private FlatButton buildSaveButton() {
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, SAVE_ICON_SIZE, IconLoader.BLUE));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_GUILD, SAVE_ICON_SIZE, AppColors.ACCENT));
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_GUILD));
         saveButton.addActionListener(e -> saveGuild());
         return saveButton;
@@ -222,7 +223,7 @@ public class TitanValueOverviewDialog extends JDialog {
         table.setRowHeight(ROW_HEIGHT);
         table.setForeground(FortificationTypeStyle.color(FortificationType.TITAN));
         table.setSelectionForeground(table.getForeground());
-        table.setGridColor(Color.BLACK);
+        table.setGridColor(AppColors.LINE);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(0).setCellRenderer(new PowerCellRenderer());
@@ -717,14 +718,12 @@ public class TitanValueOverviewDialog extends JDialog {
     /**
      * Renders one value cell - "12.5" in {@link ValueMode#COW_SCORE}, "3" in
      * {@link ValueMode#ROLE_MATCH_COUNT} (see {@link TitanValueTableModel#mode()}) -
-     * same light-green highlight for a row's currently assigned
+     * same highlight (see {@link #highlight}) for a row's currently assigned
      * fortification's own column regardless of mode (for the shared "no
      * buff" column, see {@link ValueColumn}, that means ANY buff-less
      * assignment, not one specific fortification).
      */
     static final class ValueCellRenderer implements TableCellRenderer {
-
-        private static final Color VALUE_HIGHLIGHT_BACKGROUND = new Color(224, 247, 224);
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -750,7 +749,12 @@ public class TitanValueOverviewDialog extends JDialog {
             int modelColumn = table.convertColumnIndexToModel(column);
             ValueColumn valueColumn = model.valueColumns().get(modelColumn - TitanValueTableModel.FIXED_COLUMN_COUNT);
             Fortification assignedFortification = model.rows().get(modelRow).assignedFortification;
-            return valueColumn.matchesAssignment(assignedFortification) ? GuiUtils.VALUE_HIGHLIGHT_BACKGROUND : table.getBackground();
+            return valueColumn.matchesAssignment(assignedFortification) ? highlight(table.getBackground()) : table.getBackground();
+        }
+
+        /** {@link AppColors#SUCCESS} tinted ({@link AppColors#TINT}) over {@code background} - opaque, so the cell paints cleanly. */
+        static Color highlight(Color background) {
+            return AppColors.mix(background, AppColors.SUCCESS, AppColors.TINT / 255.0);
         }
     }
 

@@ -1,6 +1,6 @@
 package org.c2w.gui.compare;
 
-import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.AppColors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -63,10 +63,10 @@ class TornadoChartTest {
     }
 
     @Test
-    @DisplayName("The difference is green if the right side has more, red if less, neutral otherwise")
+    @DisplayName("The difference is in the success text color if the right side has more, in the error text color if less, neutral otherwise")
     void diffColor() {
-        assertEquals(IconLoader.GREEN, TornadoChart.diffColor(5, Color.GRAY));
-        assertEquals(IconLoader.RED, TornadoChart.diffColor(-5, Color.GRAY));
+        assertEquals(AppColors.SUCCESS_TEXT, TornadoChart.diffColor(5, Color.GRAY));
+        assertEquals(AppColors.ERROR_TEXT, TornadoChart.diffColor(-5, Color.GRAY));
         assertEquals(Color.GRAY, TornadoChart.diffColor(0, Color.GRAY));
     }
 

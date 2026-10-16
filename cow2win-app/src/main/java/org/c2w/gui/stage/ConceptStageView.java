@@ -9,6 +9,7 @@ import org.c2w.gui.AlgorithmSelection;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.fort.FortificationAssignmentDialog;
 import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
@@ -335,7 +336,7 @@ public class ConceptStageView extends StageView {
             line.add(name, BorderLayout.WEST);
             line.add(TeamAvatars.of(team.entry(), appContext.guild(), TEAM_AVATAR_SIZE), BorderLayout.CENTER);
             JLabel power = new JLabel(FortificationPanel.compactPower(team.power()), JLabel.RIGHT);
-            power.setForeground(MUTED_COLOR);
+            power.setForeground(AppColors.TEXT_MUTED);
             line.add(power, BorderLayout.EAST);
             addLine(fortificationSection, line);
         }

@@ -1,6 +1,6 @@
 package org.c2w.gui.stage;
 
-import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -17,14 +17,6 @@ import java.util.List;
  * configured language.
  */
 final class InfoSections {
-
-    static final Color HEADING_COLOR = new Color(255, 255, 255, 150);
-    static final Color MUTED_COLOR = new Color(255, 255, 255, 130);
-
-    /** {@code color} muted like {@link #MUTED_COLOR}: the same RGB value with its alpha. */
-    static Color muted(Color color) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), MUTED_COLOR.getAlpha());
-    }
 
     /** Width a muted text wraps at - fits the info panel (see {@link StageView#INFO_PANEL_WIDTH}). */
     private static final int WRAP_WIDTH = StageView.INFO_PANEL_WIDTH - 50;
@@ -52,7 +44,7 @@ final class InfoSections {
     /** Adds a section to {@code panel}: the heading (capitals, muted, bold) and its {@code body}. */
     static void addSection(JPanel panel, String headingKey, JPanel body) {
         JLabel heading = new JLabel(LanguageService.displayName(headingKey).toUpperCase(LanguageService.locale()));
-        heading.setForeground(HEADING_COLOR);
+        heading.setForeground(AppColors.TEXT_MUTED);
         heading.setFont(heading.getFont().deriveFont(Font.BOLD, heading.getFont().getSize2D() - 1f));
         heading.setBorder(BorderFactory.createEmptyBorder(panel.getComponentCount() == 0 ? 0 : 14, 0, 6, 0));
         heading.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -73,8 +65,8 @@ final class InfoSections {
     static JLabel mutedLabel(String text) {
         // An HTML label ignores the foreground color - the color goes into a font tag instead
         // (a color in the body style would stop the width from wrapping the text).
-        JLabel label = wrappingLabel(colored(escape(text), MUTED_COLOR));
-        label.setForeground(MUTED_COLOR);
+        JLabel label = wrappingLabel(colored(escape(text), AppColors.TEXT_MUTED));
+        label.setForeground(AppColors.TEXT_MUTED);
         return label;
     }
 
@@ -134,19 +126,18 @@ final class InfoSections {
     private static String cssColor(Color color) {
         Color background = UIManager.getColor("Panel.background");
         if (background == null) {
-            background = Color.DARK_GRAY;
+            background = Color.BLACK;
         }
-        float alpha = color.getAlpha() / 255f;
-        int red = Math.round(color.getRed() * alpha + background.getRed() * (1 - alpha));
-        int green = Math.round(color.getGreen() * alpha + background.getGreen() * (1 - alpha));
-        int blue = Math.round(color.getBlue() * alpha + background.getBlue() * (1 - alpha));
-        return String.format("#%02x%02x%02x", red, green, blue);
+        return AppColors.hex(AppColors.mix(background, AppColors.tint(color, 255), color.getAlpha() / 255.0));
     }
 
-    /** {@code text} followed by the colored difference: green for a gain, red for a loss (the colors of the "changes" view). */
+    /**
+     * {@code text} followed by the colored difference: {@link AppColors#SUCCESS_TEXT} for a gain,
+     * {@link AppColors#ERROR_TEXT} for a loss (the colors of the "changes" view).
+     */
     static JComponent valueLine(String text, int diff) {
         // One wrapping HTML label: the difference moves to the next line if the column is too narrow.
-        Color diffColor = diff > 0 ? IconLoader.GREEN : diff < 0 ? IconLoader.RED : MUTED_COLOR;
+        Color diffColor = diff > 0 ? AppColors.SUCCESS_TEXT : diff < 0 ? AppColors.ERROR_TEXT : AppColors.TEXT_MUTED;
         return wrappingLabel(escape(text) + " &nbsp; " + colored((diff > 0 ? "+" : "") + number(diff), diffColor));
     }
 

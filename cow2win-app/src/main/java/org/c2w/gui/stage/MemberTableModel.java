@@ -1,6 +1,7 @@
 package org.c2w.gui.stage;
 
 import org.c2w.gui.StageStatus;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.DataStatus;
 
@@ -25,13 +26,6 @@ final class MemberTableModel extends AbstractTableModel {
     static final int COLUMN_TOTAL_POWER = 3;
     static final int COLUMN_STRONGEST_TEAM = 4;
     static final int COLUMN_LAST_MODIFIED = 5;
-
-    /**
-     * The traffic light and info line of a member outdated per journal: an opaque gray, so the dot
-     * stays clearly visible on the dark background instead of looking disabled like
-     * {@link InfoSections#MUTED_COLOR}.
-     */
-    static final Color STALE_JOURNAL_COLOR = new Color(150, 150, 150);
 
     private static final String KEY_STALE_JOURNAL ="memberOverview.stale.journal";
     private static final String KEY_STALE_DAYS = "memberOverview.stale.days";
@@ -72,7 +66,7 @@ final class MemberTableModel extends AbstractTableModel {
     record StatusValue(DataStatus.MemberFinding finding) implements Comparable<StatusValue> {
 
         /**
-         * The color of the traffic light: gray ({@link #STALE_JOURNAL_COLOR}) outdated per journal,
+         * The color of the traffic light: {@link AppColors#MUTED} outdated per journal,
          * orange too old, green otherwise; {@code null} (no light) while unknown. Not simply the
          * {@link StageStatus} color: the process bar stays red for members outdated per journal.
          */
@@ -81,7 +75,7 @@ final class MemberTableModel extends AbstractTableModel {
                 return null;
             }
             return switch (finding.state()) {
-                case STALE_JOURNAL -> STALE_JOURNAL_COLOR;
+                case STALE_JOURNAL -> AppColors.MUTED;
                 case TOO_OLD -> StageStatus.ATTENTION.color();
                 case OK, NO_TEAMS -> StageStatus.OK.color();
             };

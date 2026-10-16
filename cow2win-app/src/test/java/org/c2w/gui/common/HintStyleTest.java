@@ -9,18 +9,13 @@ import java.awt.image.BufferedImage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** {@link HintStyle}: color and background painting - on an image, no display needed. */
+/** {@link HintStyle}: background painting - on an image, no display needed. */
 class HintStyleTest {
 
     @Test
-    @DisplayName("The hint color is #4DC0A8")
-    void teal() {
-        assertEquals(new Color(0x4D, 0xC0, 0xA8), HintStyle.TEAL);
-    }
-
-    @Test
-    @DisplayName("Tinted background (alpha 45 over the background) inside, the full color on the border")
+    @DisplayName("Tinted background (alpha TINT over the background) inside, the full color on the border")
     void paintsTintAndBorder() {
+        assertEquals(AppColors.TINT, HintStyle.BACKGROUND_ALPHA);
         int width = 200;
         int height = 60;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -30,13 +25,13 @@ class HintStyleTest {
         JPanel component = new JPanel();
         component.setSize(width, height);
 
-        HintStyle.paintHintBackground(g, component, HintStyle.TEAL, 28);
+        HintStyle.paintHintBackground(g, component, AppColors.ACCENT_TEXT, 28);
         g.dispose();
 
         Color inside = new Color(image.getRGB(width / 2, height / 2));
-        assertColor(tinted(HintStyle.TEAL), inside, 2);
+        assertColor(tinted(AppColors.ACCENT_TEXT), inside, 2);
         Color border = new Color(image.getRGB(width / 2, 0));
-        assertColor(HintStyle.TEAL, border, 2);
+        assertColor(AppColors.ACCENT_TEXT, border, 2);
     }
 
     /** {@code color} with {@link HintStyle#BACKGROUND_ALPHA} over black. */

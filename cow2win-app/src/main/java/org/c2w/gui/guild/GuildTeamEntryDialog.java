@@ -5,6 +5,7 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.FortificationTypeStyle;
@@ -645,7 +646,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             }
             // No setBackground here: DefaultTableCellRenderer would keep it as the default for every later cell.
             if (problem) {
-                setForeground(isSelected ? t.getSelectionForeground() : IconLoader.RED);
+                setForeground(isSelected ? t.getSelectionForeground() : AppColors.ERROR_TEXT);
                 setFont(getFont().deriveFont(Font.BOLD));
             } else {
                 setForeground(isSelected ? t.getSelectionForeground() : t.getForeground());
@@ -668,7 +669,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             Row<T> row = rows.get(t.convertRowIndexToModel(viewRow));
             // No setBackground here - see ValidatingRenderer.
             if (lacksPower(row)) {
-                setForeground(isSelected ? t.getSelectionForeground() : IconLoader.RED);
+                setForeground(isSelected ? t.getSelectionForeground() : AppColors.ERROR_TEXT);
                 setFont(getFont().deriveFont(Font.BOLD));
                 setToolTipText(LanguageService.displayName(KEY_POWER_MISSING));
             } else {
@@ -1055,14 +1056,14 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     // ------------------------------------------------------- toolbar/actions
 
     private JComponent buildToolbar() {
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
         saveButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_SAVE_TEAMS), SHORTCUT_SAVE));
         saveButton.addActionListener(e -> performSave());
 
         addButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_ADD_ROW), SHORTCUT_ADD));
         addButton.addActionListener(e -> addRow());
 
-        FlatButton deleteButton = new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, IconLoader.RED));
+        FlatButton deleteButton = new FlatButton(IconLoader.iconFor(ICON_DELETE, TOOLBAR_ICON_SIZE, AppColors.ERROR));
         deleteButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_DELETE_ROW), SHORTCUT_DELETE));
         deleteButton.addActionListener(e -> deleteCurrentRow());
 
@@ -1079,7 +1080,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                     long used = occupancy(f);
                     setText(LanguageService.displayName(f.id()) + " (" + used + "/" + f.capacity() + ")");
                     if (!isSelected && used > f.capacity()) {
-                        setForeground(IconLoader.RED);
+                        setForeground(AppColors.ERROR_TEXT);
                     }
                 }
                 return this;

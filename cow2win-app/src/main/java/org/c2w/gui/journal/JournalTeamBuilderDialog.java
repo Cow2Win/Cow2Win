@@ -3,6 +3,7 @@ package org.c2w.gui.journal;
 import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.TeamKind;
 import org.c2w.data.model.GuildMember;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
@@ -43,13 +44,6 @@ public final class JournalTeamBuilderDialog extends JDialog {
 
     private static final int ICON_SIZE = 22;
     private static final int UNITS_WIDTH = 300;
-    private static final Color WARNING = new Color(200, 120, 0);
-    private static final Color WARNING_FILL = new Color(255, 152, 0, 40);
-    private static final Color ERROR = new Color(211, 47, 47);
-    private static final Color ERROR_FILL = new Color(229, 57, 53, 40);
-    private static final Color HERO_FILL = new Color(66, 133, 244, 70);
-    private static final Color TITAN_FILL = new Color(255, 152, 0, 80);
-    private static final Color LINK = new Color(30, 110, 220);
 
     private final AppContext context;
     private final GuildService guildService;
@@ -97,7 +91,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
         subline.add(new JLabel(JournalTexts.text("journal.teams.subline") + "  "));
         subline.add(link(JournalTexts.text("journal.teams.rulesLink"), this::showRules));
         top.add(subline);
-        dirtyHint.setForeground(WARNING);
+        dirtyHint.setForeground(AppColors.WARNING_TEXT);
         dirtyHint.setAlignmentX(LEFT_ALIGNMENT);
         dirtyHint.setVisible(guildDirtyAtOpen);
         top.add(dirtyHint);
@@ -118,7 +112,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
         unassigned.setVisible(false);
         south.add(unassigned);
         south.add(Box.createVerticalStrut(4));
-        problems.setForeground(ERROR);
+        problems.setForeground(AppColors.ERROR_TEXT);
         problems.setAlignmentX(LEFT_ALIGNMENT);
         south.add(problems);
         JPanel buttonRow = new JPanel(new BorderLayout());
@@ -206,8 +200,8 @@ public final class JournalTeamBuilderDialog extends JDialog {
             int nothingToDo = model.membersWithoutNewTeams();
             if (nothingToDo > 0) {
                 JLabel label = new JLabel(JournalTexts.text("journal.teams.nothingToDo", String.valueOf(nothingToDo)),
-                        new SymbolIcon(Symbol.CHECK, gray()), SwingConstants.LEFT);
-                label.setForeground(gray());
+                        new SymbolIcon(Symbol.CHECK, AppColors.TEXT_MUTED), SwingConstants.LEFT);
+                label.setForeground(AppColors.TEXT_MUTED);
                 label.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 0));
                 label.setAlignmentX(LEFT_ALIGNMENT);
                 list.add(label);
@@ -235,9 +229,9 @@ public final class JournalTeamBuilderDialog extends JDialog {
             return;
         }
         HighlightPanel bar = new HighlightPanel(new BorderLayout(8, 0));
-        bar.setHighlight(WARNING_FILL, WARNING);
+        bar.setHighlight(AppColors.tint(AppColors.WARNING, AppColors.TINT), AppColors.WARNING);
         JLabel text = new JLabel(JournalTexts.text("journal.teams.unassigned", String.valueOf(names.size())),
-                new SymbolIcon(Symbol.WARNING, WARNING), SwingConstants.LEFT);
+                new SymbolIcon(Symbol.WARNING, AppColors.WARNING), SwingConstants.LEFT);
         bar.setToolTipText(names.stream().map(JournalTexts::visibleSpaces).collect(Collectors.joining(", ")));
         text.setToolTipText(bar.getToolTipText());
         bar.add(text, BorderLayout.CENTER);
@@ -326,7 +320,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
                     olderRows.add(row.panel);
                 }
                 olderToggle = new JLabel();
-                olderToggle.setForeground(gray());
+                olderToggle.setForeground(AppColors.TEXT_MUTED);
                 olderToggle.setBorder(BorderFactory.createEmptyBorder(4, 4, 2, 0));
                 olderToggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 olderToggle.setAlignmentX(LEFT_ALIGNMENT);
@@ -367,14 +361,14 @@ public final class JournalTeamBuilderDialog extends JDialog {
                 int present = model.presentCount(member);
                 state.setIcon(null);
                 state.setText(present > 0 ? JournalTexts.text("journal.teams.presentCount", String.valueOf(present)) : "");
-                state.setForeground(gray());
+                state.setForeground(AppColors.TEXT_MUTED);
                 head.setHighlight(null, null);
             } else {
-                state.setIcon(new SymbolIcon(Symbol.ERROR, ERROR));
+                state.setIcon(new SymbolIcon(Symbol.ERROR, AppColors.ERROR));
                 state.setText(errors.stream().map(e -> JournalTexts.of("teams.errorShort", e.kind())).distinct()
                         .collect(Collectors.joining("  ")));
-                state.setForeground(ERROR);
-                head.setHighlight(ERROR_FILL, null);
+                state.setForeground(AppColors.ERROR_TEXT);
+                head.setHighlight(AppColors.tint(AppColors.ERROR, AppColors.TINT), null);
                 boolean olderError = rows.stream().anyMatch(r -> r.older && !model.problemsOfProposal(r.proposal.id()).isEmpty());
                 if (!expanded.get(member.memberId()) || olderError && !olderExpanded.get(member.memberId())) {
                     expanded.put(member.memberId(), true);
@@ -392,7 +386,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
             TeamBuilderModel.Summary summary = model.summary(member.memberId());
             if (summary.isEmpty()) {
                 JLabel none = new JLabel(JournalTexts.text("journal.teams.chip.none"));
-                none.setForeground(gray());
+                none.setForeground(AppColors.TEXT_MUTED);
                 chips.add(none);
             }
             if (summary.newHeroTeams() > 0) {
@@ -435,13 +429,14 @@ public final class JournalTeamBuilderDialog extends JDialog {
 
             check.setOpaque(false);
             panel.add(check, c);
-            JLabel badge = chip(badgeText(p.kind()), p.kind() == TeamKind.HERO ? HERO_FILL : TITAN_FILL);
+            Color typeColor = p.kind() == TeamKind.HERO ? AppColors.HERO : AppColors.TITAN;
+            JLabel badge = chip(badgeText(p.kind()), AppColors.tint(typeColor, AppColors.TINT));
             badge.setHorizontalAlignment(SwingConstants.CENTER);
             panel.add(fixed(badge, badgeWidth), c);
             JLabel power = new JLabel(JournalTexts.number(p.power()), SwingConstants.RIGHT);
             panel.add(fixed(power, powerWidth), c);
             JLabel date = new JLabel(older ? JournalTexts.date(p.battleDate()) : "");
-            date.setForeground(gray());
+            date.setForeground(AppColors.TEXT_MUTED);
             panel.add(fixed(date, dateWidth), c);
             panel.add(fixed(units(p.composition()), UNITS_WIDTH), c);
 
@@ -485,7 +480,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
                 panel.setHighlight(null, null);
                 setTooltip(where);
             } else {
-                panel.setHighlight(ERROR_FILL, ERROR);
+                panel.setHighlight(AppColors.tint(AppColors.ERROR, AppColors.TINT), AppColors.ERROR);
                 setTooltip(errors.stream().map(e -> JournalTexts.of("teams.errorShort", e.kind())).distinct()
                         .collect(Collectors.joining("  ")));
             }
@@ -630,7 +625,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
         if (!saved && context.isGuildDirty()) {
             panel.add(Box.createVerticalStrut(10));
             JLabel warning = JournalImportDialog.boldLabel(JournalTexts.text("journal.summary.guildChanged"));
-            warning.setForeground(WARNING);
+            warning.setForeground(AppColors.WARNING_TEXT);
             panel.add(warning);
             JButton save = new JButton(JournalTexts.text("journal.result.saveGuild"));
             save.addActionListener(e -> {
@@ -661,11 +656,6 @@ public final class JournalTeamBuilderDialog extends JDialog {
 
     // --- small components ---
 
-    private static Color gray() {
-        Color color = UIManager.getColor("Label.disabledForeground");
-        return color != null ? color : Color.GRAY;
-    }
-
     private static <T extends JComponent> T fixed(T component, int width) {
         Dimension size = new Dimension(width, component.getPreferredSize().height);
         component.setPreferredSize(size);
@@ -680,22 +670,20 @@ public final class JournalTeamBuilderDialog extends JDialog {
         button.setContentAreaFilled(false);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-        Color color = UIManager.getColor("Component.linkColor");
-        button.setForeground(color != null ? color : LINK);
+        button.setForeground(AppColors.INFO_TEXT);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.addActionListener(e -> action.run());
         return button;
     }
 
-    /** A small label with a rounded background ({@code null} = a light tint of the text color). */
+    /** A small label with a rounded background ({@code null} = {@link AppColors#SURFACE_HOVER}). */
     private static JLabel chip(String text, Color fill) {
         JLabel label = new JLabel(text) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                Color fg = getForeground();
-                g2.setColor(fill != null ? fill : new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 30));
+                g2.setColor(fill != null ? fill : AppColors.SURFACE_HOVER);
                 g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
                 g2.dispose();
                 super.paintComponent(g);

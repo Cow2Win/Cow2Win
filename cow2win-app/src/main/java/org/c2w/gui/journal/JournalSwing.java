@@ -1,5 +1,6 @@
 package org.c2w.gui.journal;
 
+import org.c2w.gui.common.AppColors;
 import org.c2w.infra.Logger;
 
 import javax.swing.*;
@@ -12,9 +13,9 @@ import java.util.function.Consumer;
 final class JournalSwing {
 
     /** Tints (alpha-blended over the table background) for good/bad outcomes and running battles. */
-    static final Color GOOD = new Color(78, 133, 66, 60);
-    static final Color BAD = new Color(159, 41, 54, 60);
-    static final Color RUNNING = new Color(0, 150, 136, 50);
+    static final Color GOOD = AppColors.tint(AppColors.SUCCESS, AppColors.TINT);
+    static final Color BAD = AppColors.tint(AppColors.ERROR, AppColors.TINT);
+    static final Color RUNNING = AppColors.tint(AppColors.ACCENT, AppColors.TINT);
 
     private JournalSwing() {
     }
@@ -69,11 +70,7 @@ final class JournalSwing {
         if (tint == null) {
             return base;
         }
-        float a = tint.getAlpha() / 255f;
-        return new Color(
-                Math.round(base.getRed() * (1 - a) + tint.getRed() * a),
-                Math.round(base.getGreen() * (1 - a) + tint.getGreen() * a),
-                Math.round(base.getBlue() * (1 - a) + tint.getBlue() * a));
+        return AppColors.mix(base, AppColors.tint(tint, base.getAlpha()), tint.getAlpha() / 255.0);
     }
 
     /** Renders numbers with grouping (right-aligned) and dates in the display language. */

@@ -8,6 +8,7 @@ import org.c2w.data.journal.db.BattleSummary;
 import org.c2w.data.journal.db.JournalRepository;
 import org.c2w.data.journal.db.LogInfo;
 import org.c2w.data.repository.Catalog;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
 import org.c2w.service.AppContext;
 
@@ -395,7 +396,7 @@ public final class JournalBattleDetailDialog extends JDialog {
                 setBackground(JournalSwing.blend(table.getBackground(),
                         f.outcome().good() ? JournalSwing.GOOD : JournalSwing.BAD));
             }
-            setForeground(!selected && column == 1 && f.ourPlayer().memberMissing() ? new Color(200, 120, 0)
+            setForeground(!selected && column == 1 && f.ourPlayer().memberMissing() ? AppColors.WARNING_TEXT
                     : selected ? table.getSelectionForeground() : table.getForeground());
             return this;
         }

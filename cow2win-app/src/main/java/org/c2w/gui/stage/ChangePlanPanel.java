@@ -10,8 +10,8 @@ import org.c2w.domain.ChangePlanOutline;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
-import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
@@ -301,7 +301,7 @@ public class ChangePlanPanel extends JPanel {
         }
         summaryLabel.setBorder(null);
         addRow(summaryLabel, 0, 4);
-        summaryLabel.setForeground(InfoSections.MUTED_COLOR);
+        summaryLabel.setForeground(AppColors.TEXT_MUTED);
         updateSummary();
         for (ChangePlanOutline.TypeGroup type : outline.types()) {
             Color typeColor = itemColor(type.type(), false);
@@ -361,16 +361,16 @@ public class ChangePlanPanel extends JPanel {
     /**
      * The color of a checklist entry (and, unchecked, of its headings): titans in their
      * {@link FortificationTypeStyle#color titan color}, heroes in the normal label color; a
-     * checked entry in the muted variant of that ({@link InfoSections#MUTED_COLOR} for heroes).
+     * checked entry in the muted variant of that ({@link AppColors#TEXT_MUTED} for heroes).
      * Heroes deliberately do not use {@code FortificationTypeStyle}'s white, so they keep
      * whatever text color the look and feel provides.
      */
     static Color itemColor(FortificationType type, boolean checked) {
         if (type == FortificationType.TITAN) {
             Color titan = FortificationTypeStyle.color(type);
-            return checked ? InfoSections.muted(titan) : titan;
+            return checked ? AppColors.tint(titan, AppColors.TEXT_MUTED.getAlpha()) : titan;
         }
-        return checked ? InfoSections.MUTED_COLOR : UIManager.getColor("Label.foreground");
+        return checked ? AppColors.TEXT_MUTED : UIManager.getColor("Label.foreground");
     }
 
     private void updateSummary() {
@@ -450,7 +450,7 @@ public class ChangePlanPanel extends JPanel {
                 + (failed.state() == ChangePlanModel.State.LOAD_ERROR && failed.detail() != null ? " " + failed.detail() : "");
         boolean error = failed.state() == ChangePlanModel.State.LOAD_ERROR;
         messageLabel.setText("<html>" + text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</html>");
-        messageLabel.setForeground(error ? IconLoader.RED : InfoSections.MUTED_COLOR);
+        messageLabel.setForeground(error ? AppColors.ERROR_TEXT : AppColors.TEXT_MUTED);
         messageLabel.setVisible(true);
     }
 

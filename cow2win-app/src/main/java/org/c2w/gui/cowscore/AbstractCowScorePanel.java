@@ -5,6 +5,7 @@ import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
@@ -273,20 +274,21 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
     }
 
     /**
-     * The role/element label of a hero/titan row, green when the entry matches the fortification's buff -
-     * the locked "Positive (buff)" combo box next to it says the rest.
+     * The role/element label of a hero/titan row, in the success text color when the entry matches the
+     * fortification's buff - the locked "Positive (buff)" combo box next to it says the rest.
      */
     protected static void addBuffLabel(JPanel row, String buffText, boolean matches) {
         JLabel label = new JLabel(buffText == null ? "" : buffText);
-        label.setForeground(matches ? IconLoader.GREEN : Color.WHITE);
+        label.setForeground(matches ? AppColors.SUCCESS_TEXT : Color.WHITE);
         label.setPreferredSize(new Dimension(BUFF_LABEL_WIDTH, label.getPreferredSize().height));
         row.add(label);
     }
 
     /**
      * A combo box neutral/positive/negative, pre-selected to {@code marks}' current entry and
-     * wired into it - or, if {@code buffMatch}, a locked combo box showing "Positive (buff)" in
-     * green with the tooltip {@code lockedTooltipKey} (the buff already counts, no mark is kept).
+     * wired into it - or, if {@code buffMatch}, a locked combo box showing "Positive (buff)" in the
+     * success text color with the tooltip {@code lockedTooltipKey} (the buff already counts, no mark
+     * is kept).
      * Named {@code "mark:<fortification id>"}.
      */
     protected final void addFortMarkCombo(JPanel row, Fortification fortification, Map<String, FortMark> marks,
@@ -311,8 +313,8 @@ public abstract class AbstractCowScorePanel<T> extends JPanel implements CowScor
             locked.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public void setForeground(Color color) {
-                    // Always green like the buff label - also while the combo box is disabled.
-                    super.setForeground(IconLoader.GREEN);
+                    // Always the success text color like the buff label - also while the combo box is disabled.
+                    super.setForeground(AppColors.SUCCESS_TEXT);
                 }
             });
             locked.setEnabled(false);

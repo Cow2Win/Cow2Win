@@ -1,7 +1,7 @@
 package org.c2w.gui;
 
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -102,9 +102,9 @@ class ProcessBarTest {
         assertEquals(StageStatus.ACTION_NEEDED, bar.tile(Stage.OUTPUT).status());
 
         assertNull(StageStatus.NONE.color());
-        assertEquals(IconLoader.GREEN, StageStatus.OK.color());
-        assertEquals(ContextBar.UNSAVED_COLOR, StageStatus.ATTENTION.color());
-        assertEquals(IconLoader.RED, StageStatus.ACTION_NEEDED.color());
+        assertEquals(AppColors.SUCCESS, StageStatus.OK.color());
+        assertEquals(AppColors.WARNING, StageStatus.ATTENTION.color());
+        assertEquals(AppColors.ERROR, StageStatus.ACTION_NEEDED.color());
     }
 
     @Test

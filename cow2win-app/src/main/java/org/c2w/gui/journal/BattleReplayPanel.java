@@ -4,6 +4,7 @@ import org.c2w.data.journal.LogDirection;
 import org.c2w.data.model.Fortification;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.gui.common.AppColors;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,8 +25,10 @@ import java.util.function.IntConsumer;
  * below a timeline with one bar per step and the buttons start / back / next / end
  * (also on the keys Home, Left, Right, End). Starts at step 0 unless a step is given.
  *
- * <p>Colors follow the log's result column in both directions - the attacker's view:
- * green = the attacker won, red = the attacker lost, gold = fortification captured.
+ * <p>Colors follow the log's result column in both directions - the attacker's view: a single fight
+ * the attacker won in the success text color, one the attacker lost in the error text color, a
+ * captured fortification in the success base color (see {@link BattleReplayMapPanel#fightColor},
+ * {@link BattleReplayMapPanel#capturedColor}).
  */
 final class BattleReplayPanel extends JPanel {
 
@@ -157,10 +160,10 @@ final class BattleReplayPanel extends JPanel {
         // running score
         JPanel score = new JPanel(new GridLayout(2, 4, 6, 0));
         String[] keys = {"points", "good", "bad", "forts"};
-        // colored by the attacker's result, like everything else: attacker wins = green
+        // colored by the attacker's result, like everything else: attacker wins = success (text colors)
         boolean attack = direction == LogDirection.ATTACK;
-        Color[] colors = {null, attack ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED,
-                attack ? BattleReplayMapPanel.RED : BattleReplayMapPanel.GREEN, BattleReplayMapPanel.GOLD};
+        Color[] colors = {null, BattleReplayMapPanel.fightColor(attack), BattleReplayMapPanel.fightColor(!attack),
+                AppColors.SUCCESS_TEXT};
         for (int i = 0; i < 4; i++) {
             scoreValues[i] = new JLabel("0", SwingConstants.CENTER);
             scoreValues[i].setFont(scoreValues[i].getFont().deriveFont(Font.BOLD, scoreValues[i].getFont().getSize2D() + 3));
@@ -229,12 +232,12 @@ final class BattleReplayPanel extends JPanel {
         buttons.add(next);
         buttons.add(last);
         JPanel legend = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        legend.add(barLegend(BattleReplayMapPanel.GREEN, "journal.replay.label." + (direction == LogDirection.ATTACK
+        legend.add(barLegend(BattleReplayMapPanel.fightColor(true), "journal.replay.label." + (direction == LogDirection.ATTACK
                 ? "win" : "fell")));
-        legend.add(barLegend(BattleReplayMapPanel.RED, "journal.replay.label." + (direction == LogDirection.ATTACK
+        legend.add(barLegend(BattleReplayMapPanel.fightColor(false), "journal.replay.label." + (direction == LogDirection.ATTACK
                 ? "loss" : "held")));
-        legend.add(barLegend(BattleReplayMapPanel.GREY, "journal.replay.label.undefended"));
-        legend.add(barLegend(BattleReplayMapPanel.GOLD, "journal.replay.label." + (direction == LogDirection.ATTACK
+        legend.add(barLegend(AppColors.MUTED, "journal.replay.label.undefended"));
+        legend.add(barLegend(BattleReplayMapPanel.capturedColor(), "journal.replay.label." + (direction == LogDirection.ATTACK
                 ? "captured" : "lost")));
         JPanel row = new JPanel(new BorderLayout());
         row.add(buttons, BorderLayout.WEST);
@@ -267,7 +270,7 @@ final class BattleReplayPanel extends JPanel {
         box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
         box.setAlignmentX(LEFT_ALIGNMENT);
         box.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BattleReplayMapPanel.alpha(BattleReplayMapPanel.foreground(), 60)),
+                BorderFactory.createLineBorder(AppColors.LINE_STRONG),
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)));
         return box;
     }
@@ -277,7 +280,7 @@ final class BattleReplayPanel extends JPanel {
     }
 
     private static JLabel grey(JLabel label) {
-        label.setForeground(BattleReplayMapPanel.GREY);
+        label.setForeground(AppColors.TEXT_MUTED);
         return label;
     }
 
@@ -348,7 +351,7 @@ final class BattleReplayPanel extends JPanel {
         BattleDetailModel.ReplayStep s = state.current();
         if (s == null) {
             stepLabel.setText(JournalTexts.text("journal.replay.start"));
-            stepBadge.set(JournalTexts.text("journal.replay.start"), BattleReplayMapPanel.BLUE);
+            stepBadge.set(JournalTexts.text("journal.replay.start"), AppColors.INFO_TEXT);
             stepTitle.setText(JournalTexts.text("journal.replay.ready"));
             stepSubtitle.setText(" ");
             stepBody.add(wrap(JournalTexts.text("journal.replay.readyText")), bodyConstraints(0, 0, 2));
@@ -476,20 +479,21 @@ final class BattleReplayPanel extends JPanel {
         });
     }
 
+    /** The text color of a step's result label - a captured fortification too, so it stays readable. */
     private Color labelColor(BattleDetailModel.ReplayStep s) {
         return switch (s.kind()) {
-            case FIGHT -> s.attackerWins() ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
-            case UNDEFENDED -> BattleReplayMapPanel.GREY;
-            case CAPTURED -> BattleReplayMapPanel.GOLD;
+            case FIGHT -> BattleReplayMapPanel.fightColor(s.attackerWins());
+            case UNDEFENDED -> AppColors.MUTED;
+            case CAPTURED -> AppColors.SUCCESS_TEXT;
         };
     }
 
     /** The color of a step's bar on the timeline. */
     private Color barColor(BattleDetailModel.ReplayStep s) {
         return switch (s.kind()) {
-            case FIGHT -> s.attackerWins() ? BattleReplayMapPanel.GREEN : BattleReplayMapPanel.RED;
-            case UNDEFENDED -> BattleReplayMapPanel.GREY;
-            case CAPTURED -> BattleReplayMapPanel.GOLD;
+            case FIGHT -> BattleReplayMapPanel.fightColor(s.attackerWins());
+            case UNDEFENDED -> AppColors.MUTED;
+            case CAPTURED -> BattleReplayMapPanel.capturedColor();
         };
     }
 
@@ -497,7 +501,7 @@ final class BattleReplayPanel extends JPanel {
 
     /** A colored result label with a rounded, tinted background. */
     private static final class Badge extends JLabel {
-        private Color color = BattleReplayMapPanel.GREY;
+        private Color color = AppColors.MUTED;
 
         Badge() {
             setBorder(BorderFactory.createEmptyBorder(1, 7, 1, 7));
@@ -514,7 +518,7 @@ final class BattleReplayPanel extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(BattleReplayMapPanel.alpha(color, 50));
+            g2.setColor(AppColors.tint(color, AppColors.TINT));
             g2.fill(new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 10, 10));
             g2.dispose();
             super.paintComponent(g);
@@ -573,10 +577,10 @@ final class BattleReplayPanel extends JPanel {
                 double x = i * pitch;
                 double y = h - barH - (current ? 2 : 0);
                 Color color = barColor(s);
-                g2.setColor(i + 1 > step ? BattleReplayMapPanel.alpha(color, 60) : color);
+                g2.setColor(i + 1 > step ? AppColors.tint(color, AppColors.TINT) : color);
                 g2.fill(new RoundRectangle2D.Double(x, y, width, barH, 2, 2));
                 if (current) {
-                    g2.setColor(BattleReplayMapPanel.BLUE);
+                    g2.setColor(AppColors.INFO);
                     g2.setStroke(new BasicStroke(2f));
                     g2.draw(new RoundRectangle2D.Double(x - 1, y - 1, width + 2, barH + 2, 3, 3));
                 }
@@ -609,7 +613,7 @@ final class BattleReplayPanel extends JPanel {
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(c.isEnabled() ? c.getForeground() : BattleReplayMapPanel.GREY);
+            g2.setColor(c.isEnabled() ? c.getForeground() : AppColors.MUTED);
             double tx = bar ? (right ? x : x + 3) : x;
             Path2D triangle = new Path2D.Double();
             if (right) {
@@ -646,7 +650,7 @@ final class BattleReplayPanel extends JPanel {
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(BattleReplayMapPanel.GREY);
+            g2.setColor(AppColors.MUTED);
             g2.setStroke(new BasicStroke(1.2f));
             g2.drawOval(x, y, 12, 12);
             g2.fillRect(x + 5, y + 5, 2, 5);

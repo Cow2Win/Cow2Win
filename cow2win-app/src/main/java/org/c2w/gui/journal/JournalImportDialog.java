@@ -4,6 +4,7 @@ import org.c2w.data.journal.LogDirection;
 import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalLockedException;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -94,7 +95,7 @@ public final class JournalImportDialog extends JDialog {
         root.add(center, BorderLayout.CENTER);
 
         JPanel south = new JPanel(new BorderLayout(0, 4));
-        blockLabel.setForeground(Color.RED);
+        blockLabel.setForeground(AppColors.ERROR_TEXT);
         south.add(blockLabel, BorderLayout.NORTH);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(backButton);
@@ -278,7 +279,7 @@ public final class JournalImportDialog extends JDialog {
         if (s.guildChanges()) {
             panel.add(Box.createVerticalStrut(10));
             JLabel warning = boldLabel(JournalTexts.text("journal.summary.guildChanged"));
-            warning.setForeground(new Color(200, 120, 0));
+            warning.setForeground(AppColors.WARNING_TEXT);
             panel.add(warning);
         }
         return panel;
@@ -308,7 +309,7 @@ public final class JournalImportDialog extends JDialog {
             if (guildChanged && context.isGuildDirty()) {
                 panel.add(Box.createVerticalStrut(10));
                 JLabel warning = boldLabel(JournalTexts.text("journal.summary.guildChanged"));
-                warning.setForeground(new Color(200, 120, 0));
+                warning.setForeground(AppColors.WARNING_TEXT);
                 panel.add(warning);
                 JButton save = new JButton(JournalTexts.text("journal.result.saveGuild"));
                 save.addActionListener(e -> saveGuild(save, warning));

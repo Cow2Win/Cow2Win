@@ -8,6 +8,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
@@ -84,10 +85,10 @@ public class ActionBar extends JPanel {
     /** The algorithm per fortification type "Run assignment" uses - shared with the concept stage's combo box. */
     private final AlgorithmSelection algorithmSelection;
 
-    /** "Save guild" action - red icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
+    /** "Save guild" action - error-colored icon and extended tooltip while the guild is dirty, see {@link #updateSaveButtons()}. */
     private final AppAction saveGuildAction;
 
-    /** "Save lineup" action - red icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
+    /** "Save lineup" action - error-colored icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
     private final AppAction saveLineupAction;
 
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
@@ -181,9 +182,9 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Colors the "save guild"/"save lineup" icons {@link IconLoader#RED}
+     * Colors the "save guild"/"save lineup" icons {@link AppColors#ERROR}
      * while {@link AppContext#isGuildDirty()}/{@link AppContext#isLineupDirty()}
-     * respectively (otherwise {@link IconLoader#BLUE}) and appends
+     * respectively (otherwise {@link AppColors#ACCENT}) and appends
      * "unsaved changes" to their tooltips - set on the actions, which pass
      * them on to the bound buttons.
      */
@@ -194,7 +195,7 @@ public class ActionBar extends JPanel {
 
     private static void updateSaveButton(AppAction action, String iconPath, String tooltipKey, boolean dirty) {
         action.putValue(Action.LARGE_ICON_KEY,
-                IconLoader.iconFor(iconPath, TOOLBAR_ICON_SIZE, dirty ? IconLoader.RED : IconLoader.BLUE));
+                IconLoader.iconFor(iconPath, TOOLBAR_ICON_SIZE, dirty ? AppColors.ERROR : AppColors.ACCENT));
         String tooltip = LanguageService.displayName(tooltipKey);
         action.putValue(Action.SHORT_DESCRIPTION,
                 dirty ? tooltip + " – " + LanguageService.displayName(KEY_UNSAVED_SUFFIX) : tooltip);

@@ -3,6 +3,7 @@ package org.c2w.gui.stage;
 import org.c2w.gui.MainMenuBar;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -26,12 +27,6 @@ public abstract class StageView extends JPanel {
 
     /** Fixed width of the info panel on the right. */
     static final int INFO_PANEL_WIDTH = 300;
-
-    /** Translucent dark fill of the side columns - the same darkening as the context bar. */
-    private static final Color COLUMN_FILL = new Color(0, 0, 0, 70);
-
-    /** Line between a side column and the work area - the same as under the context bar. */
-    private static final Color LINE_COLOR = new Color(255, 255, 255, 40);
 
     private final MainActions actions;
     private StageActionList actionList;
@@ -62,7 +57,7 @@ public abstract class StageView extends JPanel {
     protected final void build() {
         actionList = new StageActionList(MainMenuBar.menuFor(stage()), actions);
         addActionListExtras(actionList);
-        JPanel actionColumn = new SideColumn(ACTION_LIST_WIDTH, new MatteBorder(0, 0, 0, 1, LINE_COLOR));
+        JPanel actionColumn = new SideColumn(ACTION_LIST_WIDTH, new MatteBorder(0, 0, 0, 1, AppColors.LINE));
         actionColumn.add(actionList, BorderLayout.NORTH);
         add(actionColumn, BorderLayout.WEST);
 
@@ -76,7 +71,7 @@ public abstract class StageView extends JPanel {
         infoScrollPane.getViewport().setOpaque(false);
         infoScrollPane.setBorder(BorderFactory.createEmptyBorder());
         infoScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        JPanel infoColumn = new SideColumn(INFO_PANEL_WIDTH, new MatteBorder(0, 1, 0, 0, LINE_COLOR));
+        JPanel infoColumn = new SideColumn(INFO_PANEL_WIDTH, new MatteBorder(0, 1, 0, 0, AppColors.LINE));
         infoColumn.add(infoScrollPane, BorderLayout.CENTER);
         add(infoColumn, BorderLayout.EAST);
     }
@@ -98,7 +93,7 @@ public abstract class StageView extends JPanel {
         JPanel panel = new JPanel(layout) {
             @Override
             protected void paintComponent(Graphics g) {
-                g.setColor(COLUMN_FILL);
+                g.setColor(AppColors.SHADE);
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
@@ -137,7 +132,7 @@ public abstract class StageView extends JPanel {
 
         @Override
         protected void paintComponent(Graphics g) {
-            g.setColor(COLUMN_FILL);
+            g.setColor(AppColors.SHADE);
             g.fillRect(0, 0, getWidth(), getHeight());
         }
     }

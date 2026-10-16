@@ -5,6 +5,7 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.domain.FortificationAssignment;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
@@ -130,7 +131,7 @@ class FortificationAssignmentPanel extends JPanel {
         nameLabel.setForeground(FortificationTypeStyle.color(fortification.type()));
         header.add(nameLabel);
         header.add(Box.createVerticalStrut(2));
-        factsLabel.setForeground(mutedColor());
+        factsLabel.setForeground(AppColors.TEXT_MUTED);
         header.add(factsLabel);
         if (readOnly) {
             header.add(Box.createVerticalStrut(8));
@@ -217,7 +218,7 @@ class FortificationAssignmentPanel extends JPanel {
         List<JButton> buttons = new ArrayList<>();
         if (!readOnly) {
             JButton assign = new JButton(LanguageService.displayName(KEY_ASSIGN),
-                    IconLoader.iconFor(ICON_ASSIGN, BUTTON_ICON_SIZE, IconLoader.BLUE));
+                    IconLoader.iconFor(ICON_ASSIGN, BUTTON_ICON_SIZE, AppColors.ACCENT));
             assign.addActionListener(e -> assignTeam());
             buttons.add(assign);
         }
@@ -225,7 +226,7 @@ class FortificationAssignmentPanel extends JPanel {
         JPanel row = row();
         row.add(cell(new JLabel(LanguageService.displayName(KEY_SLOT, slot)), SLOT_WIDTH));
         JLabel free = new JLabel(LanguageService.displayName(KEY_FREE));
-        free.setForeground(mutedColor());
+        free.setForeground(AppColors.TEXT_MUTED);
         row.add(free);
         row.add(Box.createHorizontalGlue());
         buttons.forEach(row::add);
@@ -315,14 +316,9 @@ class FortificationAssignmentPanel extends JPanel {
     }
 
     private static JButton iconButton(String iconPath, String tooltipKey, Runnable action) {
-        FlatButton button = new FlatButton(IconLoader.iconFor(iconPath, BUTTON_ICON_SIZE, IconLoader.BLUE));
+        FlatButton button = new FlatButton(IconLoader.iconFor(iconPath, BUTTON_ICON_SIZE, AppColors.ACCENT));
         button.setToolTipText(LanguageService.displayName(tooltipKey));
         button.addActionListener(e -> action.run());
         return button;
-    }
-
-    static Color mutedColor() {
-        Color color = UIManager.getColor("Label.disabledForeground");
-        return color != null ? color : Color.GRAY;
     }
 }

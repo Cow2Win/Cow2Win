@@ -9,6 +9,7 @@ import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupComparisonService;
 import org.c2w.domain.LineupComparisonService.FortificationValues;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.compare.ComparableLineups;
 import org.c2w.gui.compare.ComparableLineups.Choice;
@@ -439,23 +440,12 @@ public class LineupComparisonDialog extends JDialog {
 
     /** Muted text color: the label color 40 % of the way to the background - readable on a dark and a light theme. */
     private static Color dimmedColor() {
-        return mix(uiColor("Label.foreground", Color.DARK_GRAY), uiColor("Panel.background", Color.WHITE), 0.4);
+        return AppColors.mix(uiColor("Label.foreground", Color.WHITE), uiColor("Panel.background", Color.BLACK), 0.4);
     }
 
     private static Color uiColor(String key, Color fallback) {
         Color color = UIManager.getColor(key);
         return color != null ? color : fallback;
-    }
-
-    private static Color mix(Color from, Color to, double share) {
-        return new Color(
-                (int) Math.round(from.getRed() + (to.getRed() - from.getRed()) * share),
-                (int) Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * share),
-                (int) Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * share));
-    }
-
-    private static String hex(Color color) {
-        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
     }
 
     // --- for tests ---
@@ -504,8 +494,8 @@ public class LineupComparisonDialog extends JDialog {
                                                       boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof Choice choice) {
-                Color muted = mix(getForeground(), getBackground(), 0.4);
-                setText("<html><font color='" + hex(muted) + "'>" + escape(choice.guildName()) + SEPARATOR
+                Color muted = AppColors.mix(getForeground(), getBackground(), 0.4);
+                setText("<html><font color='" + AppColors.hex(muted) + "'>" + escape(choice.guildName()) + SEPARATOR
                         + "</font>" + escape(choice.lineupDisplayName()) + "</html>");
             } else if (value == null) {
                 setText(" ");

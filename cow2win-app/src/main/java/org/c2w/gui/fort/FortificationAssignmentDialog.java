@@ -2,6 +2,7 @@ package org.c2w.gui.fort;
 
 import org.c2w.data.model.Fortification;
 import org.c2w.domain.FortificationAssignment;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.stage.ConceptInfoModel;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.AppContext;
@@ -137,7 +138,7 @@ public class FortificationAssignmentDialog extends JDialog {
                 labels.add(currentlyIn);
                 row.add(currentlyIn);
                 // Assigned elsewhere: muted, the free teams come first.
-                labels.forEach(label -> label.setForeground(FortificationAssignmentPanel.mutedColor()));
+                labels.forEach(label -> label.setForeground(AppColors.TEXT_MUTED));
             }
             return row;
         }
@@ -149,7 +150,7 @@ public class FortificationAssignmentDialog extends JDialog {
             JLabel filled = FortificationAssignmentPanel.rightAligned(
                     target.filledSlots() + "/" + target.fortification().capacity());
             if (target.isFull()) {
-                filled.setForeground(FortificationAssignmentPanel.mutedColor());
+                filled.setForeground(AppColors.TEXT_MUTED);
             }
             row.add(FortificationAssignmentPanel.cell(filled, 50));
             return row;
@@ -193,7 +194,7 @@ public class FortificationAssignmentDialog extends JDialog {
             if (value instanceof Heading h) {
                 JLabel label = new JLabel(h.text());
                 label.setFont(label.getFont().deriveFont(Font.BOLD));
-                label.setForeground(FortificationAssignmentPanel.mutedColor());
+                label.setForeground(AppColors.TEXT_MUTED);
                 label.setBorder(BorderFactory.createEmptyBorder(10, 4, 4, 4));
                 component = label;
             } else {

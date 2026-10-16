@@ -9,6 +9,7 @@ import org.c2w.data.repository.HeroRepository;
 import org.c2w.data.repository.TeamComboRepository;
 import org.c2w.data.repository.TitanRepository;
 import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.ComboTexts;
@@ -63,8 +64,6 @@ public final class TeamComboPanel extends JPanel implements CowScorePanel {
     private static final int BUTTON_ICON_SIZE = 16;
     private static final int MEMBER_ICON_SIZE = 20;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    /** Text color of an invalid combo in the list - readable on the dark background. */
-    private static final Color INVALID_COLOR = new Color(229, 115, 115);
 
     /** A combo being edited - unlike {@link TeamCombo} it may be invalid for a while. */
     static final class Draft {
@@ -117,8 +116,8 @@ public final class TeamComboPanel extends JPanel implements CowScorePanel {
     private final JPanel detailContainer = new JPanel(new BorderLayout());
     private final JScrollPane detailScrollPane = new JScrollPane(detailContainer);
     private final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    private final FlatButton newButton = new FlatButton(IconLoader.iconFor(ICON_NEW, BUTTON_ICON_SIZE, IconLoader.GREEN));
-    private final FlatButton deleteButton = new FlatButton(IconLoader.iconFor(ICON_DELETE, BUTTON_ICON_SIZE, IconLoader.RED));
+    private final FlatButton newButton = new FlatButton(IconLoader.iconFor(ICON_NEW, BUTTON_ICON_SIZE, AppColors.SUCCESS));
+    private final FlatButton deleteButton = new FlatButton(IconLoader.iconFor(ICON_DELETE, BUTTON_ICON_SIZE, AppColors.ERROR));
     private final List<ChangeListener> changeListeners = new ArrayList<>();
     private boolean unsaved;
 
@@ -554,7 +553,7 @@ public final class TeamComboPanel extends JPanel implements CowScorePanel {
         addFormRow(panel, gbc, row++, text("source"), sourceLabel);
         shippedHintLabel.setText(LanguageService.displayName(text("shippedHint")));
         addFormRow(panel, gbc, row++, null, shippedHintLabel);
-        problemLabel.setForeground(INVALID_COLOR);
+        problemLabel.setForeground(AppColors.ERROR_TEXT);
         addFormRow(panel, gbc, row++, null, problemLabel);
 
         // Takes the remaining height, so the form stays at the top.
@@ -598,9 +597,9 @@ public final class TeamComboPanel extends JPanel implements CowScorePanel {
             if (value instanceof Draft draft) {
                 setText(displayName(draft));
                 if (problemKey(draft) != null) {
-                    setForeground(INVALID_COLOR);
+                    setForeground(AppColors.ERROR_TEXT);
                 } else if (draft.deactivated != null) {
-                    setForeground(Color.GRAY);
+                    setForeground(AppColors.TEXT_MUTED);
                 }
             }
             return this;

@@ -12,6 +12,7 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
@@ -77,9 +78,8 @@ public class InputStageView extends StageView {
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
 
-    /** Selected table row: the teal accent with low opacity. */
-    private static final Color SELECTION_FILL = new Color(IconLoader.BLUE.getRed(), IconLoader.BLUE.getGreen(),
-            IconLoader.BLUE.getBlue(), 70);
+    /** Selected table row: the accent, strongly tinted. */
+    private static final Color SELECTION_FILL = AppColors.tint(AppColors.ACCENT, AppColors.TINT_STRONG);
 
     private static final int ROW_HEIGHT = 28;
     private static final int STATUS_COLUMN_WIDTH = 30;
@@ -179,7 +179,7 @@ public class InputStageView extends StageView {
     @Override
     protected JComponent createWorkArea() {
         JPanel area = translucentPanel(new BorderLayout());
-        countLabel.setForeground(MUTED_COLOR);
+        countLabel.setForeground(AppColors.TEXT_MUTED);
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 12));
@@ -257,9 +257,9 @@ public class InputStageView extends StageView {
      */
     private void registerMemberActions(MainActions actions) {
         addMemberAction = actions.register(new AppAction(ActionId.ADD_MEMBER, this::onAddMember)
-                .withSmallIcon(IconLoader.iconFor(ICON_ADD_MEMBER, MEMBER_ICON_SIZE, IconLoader.GREEN)));
+                .withSmallIcon(IconLoader.iconFor(ICON_ADD_MEMBER, MEMBER_ICON_SIZE, AppColors.SUCCESS)));
         removeMemberAction = actions.register(new AppAction(ActionId.REMOVE_MEMBER, this::onRemoveMember)
-                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_MEMBER, MEMBER_ICON_SIZE, IconLoader.RED)));
+                .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_MEMBER, MEMBER_ICON_SIZE, AppColors.ERROR)));
     }
 
     /** The table's context menu, Del and Enter in the table - the same actions as in the action list. */
@@ -514,7 +514,7 @@ public class InputStageView extends StageView {
         }
         List<JComponent> lines = new ArrayList<>();
         lines.add(coloredLabel(LanguageService.displayName(KEY_STALE_JOURNAL, shortDate(finding.get().logDate())),
-                MemberTableModel.STALE_JOURNAL_COLOR));
+                AppColors.MUTED));
         for (DataStatus.TeamDeviation deviation : finding.get().deviations()) {
             String text = deviation.index() < 0
                     ? JournalTexts.of("teamKind", deviation.kind()) + ": " + JournalTexts.number(deviation.logPower())

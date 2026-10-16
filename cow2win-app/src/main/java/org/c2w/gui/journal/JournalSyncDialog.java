@@ -1,5 +1,6 @@
 package org.c2w.gui.journal;
 
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
@@ -85,7 +86,7 @@ public final class JournalSyncDialog extends JDialog {
         buttons.add(applyButton);
         buttons.add(cancelButton);
         JPanel south = new JPanel(new BorderLayout(0, 4));
-        problems.setForeground(Color.RED);
+        problems.setForeground(AppColors.ERROR_TEXT);
         south.add(problems, BorderLayout.NORTH);
         south.add(extraButtons, BorderLayout.WEST);
         south.add(buttons, BorderLayout.EAST);
@@ -347,7 +348,7 @@ public final class JournalSyncDialog extends JDialog {
         if (context.isGuildDirty()) {
             panel.add(Box.createVerticalStrut(10));
             JLabel warning = JournalImportDialog.boldLabel(JournalTexts.text("journal.summary.guildChanged"));
-            warning.setForeground(new Color(200, 120, 0));
+            warning.setForeground(AppColors.WARNING_TEXT);
             panel.add(warning);
             JButton save = new JButton(JournalTexts.text("journal.result.saveGuild"));
             save.addActionListener(e -> {

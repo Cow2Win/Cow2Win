@@ -3,6 +3,7 @@ package org.c2w.gui.cowscore;
 import org.c2w.data.repository.Catalog;
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.common.InfoArea;
@@ -78,8 +79,8 @@ public final class CowScoreDialog extends JDialog {
     private final JTabbedPane tabs = new JTabbedPane();
     /** Per tab, what its controls do - shown at the top of the tab, see {@link #infoText(CowScoreTab)}. */
     private final Map<CowScoreTab, InfoArea> infoAreas = new EnumMap<>(CowScoreTab.class);
-    private final FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
-    private final FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+    private final FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
+    private final FlatButton restoreDefaultsButton = new FlatButton(IconLoader.iconFor(ICON_RESTORE_DEFAULTS, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
     /** The explanation in the "Info" tab - see {@link #refreshInfoHtml()}. */
     private final JEditorPane infoPane = new JEditorPane();
     /** The HTML currently shown in {@link #infoPane}, as built (before Swing's own parsing). */
@@ -271,15 +272,17 @@ public final class CowScoreDialog extends JDialog {
         HTMLDocument document = (HTMLDocument) infoPane.getEditorKit().createDefaultDocument();
         int size = infoPane.getFont().getSize();
         StyleSheet styles = document.getStyleSheet();
-        styles.addRule("body { color: #ffffff; margin: 0; }");
-        styles.addRule("h2 { color: #ffffff; font-size: " + (size + 3) + "pt; font-weight: bold;"
+        Color foreground = UIManager.getColor("Label.foreground");
+        String text = AppColors.hex(foreground != null ? foreground : Color.WHITE);
+        styles.addRule("body { color: " + text + "; margin: 0; }");
+        styles.addRule("h2 { color: " + text + "; font-size: " + (size + 3) + "pt; font-weight: bold;"
                 + " margin-top: 10px; margin-bottom: 2px; }");
         styles.addRule("p { margin-top: 4px; margin-bottom: 4px; }");
         styles.addRule("ul { margin-top: 2px; margin-bottom: 4px; margin-left: 18px; }");
         styles.addRule(".formula { font-family: Monospaced; font-size: " + (size + 1) + "pt;"
                 + " margin-left: 14px; margin-top: 6px; margin-bottom: 6px; }");
         // The two examples side by side - some space between the columns.
-        styles.addRule(".examples td { color: #ffffff; padding-right: 16px; }");
+        styles.addRule(".examples td { color: " + text + "; padding-right: 16px; }");
         infoPane.setDocument(document);
         infoPane.setText(infoHtml);
         infoPane.setCaretPosition(0);
@@ -377,7 +380,7 @@ public final class CowScoreDialog extends JDialog {
             String title = LanguageService.displayName(entry.getKey().textKey());
             tabs.setTitleAt(tabIndex(entry.getKey()), unsaved ? "*" + title : title);
         }
-        saveButton.setIcon(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, anyUnsaved ? IconLoader.RED : IconLoader.BLUE));
+        saveButton.setIcon(IconLoader.iconFor(ICON_SAVE_SCORES, TOOLBAR_ICON_SIZE, anyUnsaved ? AppColors.ERROR : AppColors.ACCENT));
         String tooltip = LanguageService.displayName(KEY_SAVE_SCORES);
         saveButton.setToolTipText(anyUnsaved ? tooltip + " – " + LanguageService.displayName(KEY_UNSAVED_SUFFIX) : tooltip);
     }

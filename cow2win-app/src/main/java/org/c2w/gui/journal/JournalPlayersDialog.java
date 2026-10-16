@@ -2,6 +2,7 @@ package org.c2w.gui.journal;
 
 import org.c2w.data.journal.db.AssignmentStatus;
 import org.c2w.data.model.GuildMember;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.service.AppContext;
@@ -74,7 +75,7 @@ public final class JournalPlayersDialog extends JDialog {
         });
 
         FlatButton nameMappings = new FlatButton(
-                IconLoader.iconFor(ICON_NAME_MAPPINGS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+                IconLoader.iconFor(ICON_NAME_MAPPINGS, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
         nameMappings.setToolTipText(JournalTexts.text("journal.action.nameMappings"));
         nameMappings.addActionListener(e -> openNameMappings.run());
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));

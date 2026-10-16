@@ -4,6 +4,7 @@ import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.HintStyle;
@@ -57,19 +58,6 @@ public class ContextBar extends JPanel {
             FortificationType.HERO, "fortificationMap.showHeroes",
             FortificationType.TITAN, "fortificationMap.showTitans");
 
-    /** Orange of the "unsaved changes" hint - package-visible, also the "attention" light of {@link StageStatus}. */
-    static final Color UNSAVED_COLOR = new Color(0xF0, 0xA0, 0x30);
-
-    /** Teal of the "Original" lineup status - shared with other hints, see {@link HintStyle#TEAL}. */
-    private static final Color ORIGINAL_COLOR = HintStyle.TEAL;
-
-    /** Background of the selected fortification type segment, and the line around the switch. */
-    private static final Color SWITCH_SELECTED_BACKGROUND = new Color(0x5A, 0x6A, 0x72);
-    private static final Color SWITCH_BORDER_COLOR = new Color(255, 255, 255, 70);
-
-    /** Darkens the panel background a little (see {@link #barBackground()}), so the bar stands apart from the action bar below it. */
-    private static final Color BAR_BACKGROUND = new Color(0, 0, 0, 70);
-
     private final AppContext appContext;
     private final GuildService guildService;
     private final LineupService lineupService;
@@ -77,8 +65,8 @@ public class ContextBar extends JPanel {
     private final JComboBox<String> guildCombo = new JComboBox<>();
     private final JComboBox<String> lineupCombo = new JComboBox<>();
     private final Map<FortificationType, JToggleButton> fortificationTypeButtons = new EnumMap<>(FortificationType.class);
-    private final PillLabel unsavedLabel = new PillLabel(UNSAVED_COLOR);
-    private final PillLabel originalLabel = new PillLabel(ORIGINAL_COLOR);
+    private final PillLabel unsavedLabel = new PillLabel(AppColors.WARNING_TEXT);
+    private final PillLabel originalLabel = new PillLabel(AppColors.ACCENT_TEXT);
 
     /** Guild file {@link #guildCombo} was last populated for - it is only rebuilt when {@link AppContext#guildFilePath()} moves away from this. */
     private Path shownGuildFilePath;
@@ -119,7 +107,7 @@ public class ContextBar extends JPanel {
         // with a line underneath, so the two rows stand apart.
         setOpaque(true);
         setBackground(barBackground());
-        setBorder(new MatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 40)));
+        setBorder(new MatteBorder(0, 0, 1, 0, AppColors.LINE));
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
         left.setOpaque(false);
@@ -200,17 +188,17 @@ public class ContextBar extends JPanel {
         });
     }
 
-    /** The look and feel's panel background, mixed with {@link #BAR_BACKGROUND} - a little darker. */
+    /**
+     * The look and feel's panel background with {@link AppColors#SHADE} laid over it - a little darker,
+     * so the bar stands apart from the action bar below it.
+     */
     static Color barBackground() {
         Color panel = UIManager.getColor("Panel.background");
         if (panel == null) {
-            panel = Color.DARK_GRAY;
+            panel = Color.BLACK;
         }
-        float alpha = BAR_BACKGROUND.getAlpha() / 255f;
-        return new Color(
-                Math.round(panel.getRed() * (1 - alpha) + BAR_BACKGROUND.getRed() * alpha),
-                Math.round(panel.getGreen() * (1 - alpha) + BAR_BACKGROUND.getGreen() * alpha),
-                Math.round(panel.getBlue() * (1 - alpha) + BAR_BACKGROUND.getBlue() * alpha));
+        Color shade = AppColors.SHADE;
+        return AppColors.mix(panel, AppColors.tint(shade, 255), shade.getAlpha() / 255.0);
     }
 
     // --- fortification type ---
@@ -223,7 +211,7 @@ public class ContextBar extends JPanel {
     private JComponent buildFortificationTypeSwitch() {
         JPanel panel = new JPanel(new GridLayout(1, 2, 0, 0));
         panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createLineBorder(SWITCH_BORDER_COLOR));
+        panel.setBorder(BorderFactory.createLineBorder(AppColors.LINE_STRONG));
         ButtonGroup group = new ButtonGroup();
         for (FortificationType type : FortificationType.values()) {
             JToggleButton button = new JToggleButton(LanguageService.displayName(FORTIFICATION_TYPE_KEYS.get(type)));
@@ -249,7 +237,7 @@ public class ContextBar extends JPanel {
             boolean selected = type == appContext.fortificationType();
             button.setSelected(selected);
             button.setFont(button.getFont().deriveFont(selected ? Font.BOLD : Font.PLAIN));
-            button.setBackground(selected ? SWITCH_SELECTED_BACKGROUND : getBackground());
+            button.setBackground(selected ? AppColors.SURFACE_SELECTED : getBackground());
         });
     }
 

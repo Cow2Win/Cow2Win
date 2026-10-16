@@ -5,6 +5,7 @@ import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
@@ -105,9 +106,9 @@ public class SettingsDialog extends JDialog {
     private final JTextField workspaceDirField = new JTextField(20);
     private final JButton browseWorkspaceDirButton = new JButton("...");
     private final FlatButton restoreWorkspaceButton = new FlatButton(
-            IconLoader.iconFor(ICON_RESTORE_WORKSPACE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+            IconLoader.iconFor(ICON_RESTORE_WORKSPACE, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
     private final FlatButton moveWorkspaceButton = new FlatButton(
-            IconLoader.iconFor(ICON_MOVE_WORKSPACE, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+            IconLoader.iconFor(ICON_MOVE_WORKSPACE, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
     private final AppExit appExit;
     /** Width of the dialog after {@code pack()}, before it is widened by {@link #DIALOG_WIDTH_FACTOR}. */
     private final int packedWidth;
@@ -159,7 +160,7 @@ public class SettingsDialog extends JDialog {
     private JPanel buildToolbarPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 0));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SETTINGS, TOOLBAR_ICON_SIZE, IconLoader.BLUE));
+        FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE_SETTINGS, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
         saveButton.setToolTipText(LanguageService.displayName(KEY_SAVE_SETTINGS));
         saveButton.addActionListener(e -> onOk());
         buttons.add(saveButton);

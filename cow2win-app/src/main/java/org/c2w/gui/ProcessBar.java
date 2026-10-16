@@ -1,7 +1,7 @@
 package org.c2w.gui;
 
 import org.c2w.gui.action.Stage;
-import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  * concept, output (see {@link #STAGES}) - with number, title and subtitle, connected by small
  * arrows.
  *
- * <p>The {@linkplain #setActiveStage active stage} is highlighted in teal. Only the tiles of
+ * <p>The {@linkplain #setActiveStage active stage} is highlighted in the accent color. Only the tiles of
  * {@linkplain #setStageAvailable available} stages - those with a stage view - can be clicked
  * (hand cursor, hover highlight): a click makes the stage active and reports it to the
  * {@linkplain #addStageSelectionListener stage selection listeners}, which switch the view.
@@ -30,12 +30,6 @@ public class ProcessBar extends JPanel {
     /** The process stages, in display order (numbered 1 to 3). */
     static final List<Stage> STAGES = List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT);
 
-    /** Teal accent of the active tile. */
-    private static final Color ACCENT = IconLoader.BLUE;
-
-    /** Line color of the tile borders, the arrows and the line under the bar - the same as under the context bar. */
-    private static final Color LINE_COLOR = new Color(255, 255, 255, 40);
-
     private final List<StageTile> tiles = new ArrayList<>();
     private final List<Consumer<Stage>> stageSelectionListeners = new ArrayList<>();
 
@@ -44,7 +38,7 @@ public class ProcessBar extends JPanel {
         // No fill of its own, so the background image shows through (see Cow2Frame).
         setOpaque(false);
         setBorder(BorderFactory.createCompoundBorder(
-                new MatteBorder(0, 0, 1, 0, LINE_COLOR),
+                new MatteBorder(0, 0, 1, 0, AppColors.LINE),
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)));
 
         GridBagConstraints c = new GridBagConstraints();
@@ -156,12 +150,9 @@ public class ProcessBar extends JPanel {
         private static final int LIGHT = 10;
         private static final int MIN_WIDTH = 120;
 
-        private static final Color FILL = new Color(255, 255, 255, 18);
-        private static final Color FILL_HOVER = new Color(255, 255, 255, 34);
-        private static final Color ACTIVE_FILL = new Color(ACCENT.getRed(), ACCENT.getGreen(), ACCENT.getBlue(), 48);
-        private static final Color ACTIVE_FILL_HOVER = new Color(ACCENT.getRed(), ACCENT.getGreen(), ACCENT.getBlue(), 72);
-        private static final Color CIRCLE_FILL = new Color(255, 255, 255, 30);
-        private static final Color SUBTITLE_COLOR = new Color(255, 255, 255, 140);
+        /** Fill of the active tile, and under the mouse. */
+        private static final Color ACTIVE_FILL = AppColors.tint(AppColors.ACCENT, AppColors.TINT);
+        private static final Color ACTIVE_FILL_HOVER = AppColors.tint(AppColors.ACCENT, AppColors.TINT_STRONG);
 
         private final Stage stage;
         private final int number;
@@ -308,14 +299,14 @@ public class ProcessBar extends JPanel {
                 int w = getWidth() - 1;
                 int h = getHeight() - 1;
 
-                g2.setColor(active ? (hover ? ACTIVE_FILL_HOVER : ACTIVE_FILL) : (hover ? FILL_HOVER : FILL));
+                g2.setColor(active ? (hover ? ACTIVE_FILL_HOVER : ACTIVE_FILL) : (hover ? AppColors.SURFACE_HOVER : AppColors.SURFACE));
                 g2.fillRoundRect(0, 0, w, h, ARC, ARC);
-                g2.setColor(active ? ACCENT : LINE_COLOR);
+                g2.setColor(active ? AppColors.ACCENT : AppColors.LINE);
                 g2.drawRoundRect(0, 0, w, h, ARC, ARC);
 
                 // Number in a circle.
                 int circleY = (getHeight() - CIRCLE) / 2;
-                g2.setColor(active ? ACCENT : CIRCLE_FILL);
+                g2.setColor(active ? AppColors.ACCENT : AppColors.SURFACE_HOVER);
                 g2.fillOval(PADDING, circleY, CIRCLE, CIRCLE);
                 g2.setFont(titleFont().deriveFont(Font.BOLD, getFont().getSize2D()));
                 FontMetrics numberMetrics = g2.getFontMetrics();
@@ -344,7 +335,7 @@ public class ProcessBar extends JPanel {
                 g2.setColor(foreground());
                 g2.drawString(ellipsize(title, titleMetrics, textWidth), textX, top + titleMetrics.getAscent());
                 g2.setFont(subtitleFont());
-                g2.setColor(SUBTITLE_COLOR);
+                g2.setColor(AppColors.TEXT_MUTED);
                 g2.drawString(ellipsize(shownSubtitle(), subtitleMetrics, textWidth), textX,
                         top + titleMetrics.getHeight() + subtitleMetrics.getAscent());
             } finally {
@@ -361,8 +352,6 @@ public class ProcessBar extends JPanel {
     /** The small arrow (►) between two tiles, in line color. */
     private static final class Arrow extends JComponent {
 
-        private static final Color COLOR = new Color(255, 255, 255, 70);
-
         Arrow() {
             setOpaque(false);
             setPreferredSize(new Dimension(8, StageTile.HEIGHT));
@@ -373,7 +362,7 @@ public class ProcessBar extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             try {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COLOR);
+                g2.setColor(AppColors.LINE_STRONG);
                 int midY = getHeight() / 2;
                 g2.fillPolygon(new int[]{0, getWidth(), 0}, new int[]{midY - 6, midY, midY + 6}, 3);
             } finally {

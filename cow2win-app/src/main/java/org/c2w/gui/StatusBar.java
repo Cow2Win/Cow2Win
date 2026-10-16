@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.gui.common.AppColors;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
@@ -17,7 +18,6 @@ public class StatusBar extends JPanel {
 
     private static final String KEY_LABEL = "statusBar.label";
     private static final String SEPARATOR = "  ·  ";
-    private static final Color MUTED = new Color(255, 255, 255, 150);
 
     private final JLabel title = new JLabel(LanguageService.displayName(KEY_LABEL));
     private final JLabel text = new JLabel();
@@ -26,13 +26,13 @@ public class StatusBar extends JPanel {
         super(new FlowLayout(FlowLayout.LEFT, 8, 3));
         setOpaque(true);
         setBackground(ContextBar.barBackground());
-        setBorder(new MatteBorder(1, 0, 0, 0, new Color(255, 255, 255, 40)));
+        setBorder(new MatteBorder(1, 0, 0, 0, AppColors.LINE));
         Font base = title.getFont();
         Font small = base.deriveFont(Font.PLAIN, base.getSize2D() - 1f);
         title.setFont(small.deriveFont(Font.BOLD));
-        title.setForeground(MUTED);
+        title.setForeground(AppColors.TEXT_MUTED);
         text.setFont(small);
-        text.setForeground(MUTED);
+        text.setForeground(AppColors.TEXT_MUTED);
         add(title);
         add(text);
     }
