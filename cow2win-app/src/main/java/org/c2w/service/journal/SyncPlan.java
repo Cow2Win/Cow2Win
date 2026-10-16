@@ -83,9 +83,11 @@ public record SyncPlan(EmptyReason emptyReason, Source source, List<SyncRow> row
      * @param fortificationId    catalog id of the fortification ({@code null} if unknown)
      * @param fortificationName  raw fortification name
      * @param position           position in the fortification
+     * @param editedSinceBattle  true if the member has stored teams of this kind and all of them were
+     *                           changed after the battle day
      */
     public record UnmatchedTeam(String memberId, String logName, TeamKind kind, int power, String fortificationId,
-                                String fortificationName, int position) {
+                                String fortificationName, int position, boolean editedSinceBattle) {
     }
 
     /**

@@ -173,7 +173,8 @@ public final class JournalSyncService {
                     Match m = matches.get(t);
                     if (m == null) {
                         unmatched.add(new UnmatchedTeam(member.id(), t.logName(), kind, t.lastPower(),
-                                t.fortificationId(), t.fortificationName(), t.position()));
+                                t.fortificationId(), t.fortificationName(), t.position(),
+                                allEditedSince(stored, source.date())));
                     } else {
                         rows.add(row(member, t, m, source.date(), ownLineup));
                     }
@@ -334,6 +335,14 @@ public final class JournalSyncService {
 
     private static boolean editedSince(LocalDate lastModified, LocalDate battleDay) {
         return lastModified != null && battleDay != null && lastModified.isAfter(battleDay);
+    }
+
+    /**
+     * True if {@code stored} is not empty and every team in it was changed after {@code battleDay}
+     * (see {@link #editedSince}) - then an unmatched log team says nothing about the current state.
+     */
+    static boolean allEditedSince(List<Team> stored, LocalDate battleDay) {
+        return !stored.isEmpty() && stored.stream().allMatch(team -> editedSince(team.lastModified(), battleDay));
     }
 
     private static UnitsChange heroChange(HeroTeam team, Composition units) {

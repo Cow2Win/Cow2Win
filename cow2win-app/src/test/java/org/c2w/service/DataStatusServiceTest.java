@@ -124,11 +124,23 @@ class DataStatusServiceTest {
         void unchangedAndUnmatched() {
             Guild guild = guild(member("anna", team("anna", 0, TODAY)), member("bert", team("bert", 0, TODAY)));
             SyncPlan plan = planWith(List.of(row("anna", 1_000_000, false)),
-                    List.of(new SyncPlan.UnmatchedTeam("bert", "bert", TeamKind.HERO, 900_000, "bastion", "Bastion", 2)));
+                    List.of(new SyncPlan.UnmatchedTeam("bert", "bert", TeamKind.HERO, 900_000, "bastion", "Bastion", 2, false)));
             DataStatus status = DataStatusService.evaluate(input(guild, StaleCheck.OFF, plan));
             assertEquals(MemberState.OK, status.member("anna").orElseThrow().state());
             assertEquals(MemberState.STALE_JOURNAL, status.member("bert").orElseThrow().state());
             assertEquals(1, status.staleJournal());
+        }
+
+        @Test
+        @DisplayName("An unmatched log team of a member whose teams of that kind were all edited since the battle: no evidence")
+        void unmatchedEditedSinceBattle() {
+            Guild guild = guild(member("bert", team("bert", 0, TODAY)));
+            SyncPlan plan = planWith(List.of(),
+                    List.of(new SyncPlan.UnmatchedTeam("bert", "bert", TeamKind.HERO, 900_000, "bastion", "Bastion", 2, true)));
+            DataStatus status = DataStatusService.evaluate(input(guild, StaleCheck.OFF, plan));
+            assertEquals(MemberState.OK, status.member("bert").orElseThrow().state());
+            assertEquals(0, status.staleJournal());
+            assertNotEquals(Level.ACTION_NEEDED, status.input().level());
         }
 
         @Test

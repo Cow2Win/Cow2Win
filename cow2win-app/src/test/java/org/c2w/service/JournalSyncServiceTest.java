@@ -348,8 +348,8 @@ class JournalSyncServiceTest {
         assertEquals(Certainty.UNSURE, c.certainty());
         assertFalse(c.preselectPower());
         assertEquals(List.of(), plan.rowsOf("d"));
-        assertEquals(List.of(new SyncPlan.UnmatchedTeam("d", "D", TeamKind.HERO, 1_000_000, "citadel", "citadel", 4)),
-                plan.unmatched());
+        assertEquals(List.of(new SyncPlan.UnmatchedTeam("d", "D", TeamKind.HERO, 1_000_000, "citadel", "citadel", 4,
+                        false)), plan.unmatched(), "d's team has no lastModified");
         assertEquals(List.of(new SyncPlan.TeamRef("d", TeamKind.HERO, 0), new SyncPlan.TeamRef("e", TeamKind.HERO, 0)),
                 plan.teamsNotInLog(), "d: too far away; e: the other of the two close teams");
         SyncRow e = plan.rowsOf("e").get(0);
@@ -595,6 +595,35 @@ class JournalSyncServiceTest {
     private SyncPlan plan(BattleLog log, Guild guild, Map<String, PlayerAssignment> assignments, Lineup lineup) {
         return JournalSyncService.plan(SOURCE, log, assignments, guild, lineup, context.catalog(),
                 context.guildFilePath());
+    }
+
+    @Test
+    @DisplayName("Unmatched log team: editedSinceBattle only if the member has teams of that kind and all were edited after the battle")
+    void unmatchedEditedSinceBattle() {
+        LocalDate after = DAY.plusDays(5);
+        GuildMember allEdited = new GuildMember("a", "A", List.of(
+                new HeroTeam("a", 0, heroes(HEROES), null, null, 1_000_000, after),
+                new HeroTeam("a", 1, heroes(HEROES_2), null, null, 1_100_000, after)), List.of());
+        GuildMember oneOnBattleDay = new GuildMember("b", "B", List.of(
+                new HeroTeam("b", 0, heroes(HEROES), null, null, 1_000_000, after),
+                new HeroTeam("b", 1, heroes(HEROES_2), null, null, 1_100_000, DAY)), List.of());
+        GuildMember oneUnknown = new GuildMember("c", "C", List.of(
+                new HeroTeam("c", 0, heroes(HEROES), null, null, 1_000_000, after),
+                new HeroTeam("c", 1, heroes(HEROES_2), null, null, 1_100_000, null)), List.of());
+        GuildMember noTeams = new GuildMember("d", "D", List.of(), List.of());
+        Guild guild = new Guild("g", "G", List.of(allEdited, oneOnBattleDay, oneUnknown, noTeams));
+        // 1 000 000 matches team 0 exactly; 750 000 is far from every remaining team.
+        BattleLog log = log(defense("A", "citadel", 1, 1_000_000), defense("A", "bastion", 1, 750_000),
+                defense("B", "citadel", 2, 1_000_000), defense("B", "bastion", 2, 750_000),
+                defense("C", "citadel", 3, 1_000_000), defense("C", "bastion", 3, 750_000),
+                defense("D", "bastion", 4, 750_000));
+
+        SyncPlan plan = plan(log, guild, assignedByLowerCase("A", "B", "C", "D"), null);
+
+        Map<String, Boolean> edited = new HashMap<>();
+        plan.unmatched().forEach(u -> edited.put(u.memberId(), u.editedSinceBattle()));
+        assertEquals(Map.of("a", true, "b", false, "c", false, "d", false), edited, plan.unmatched().toString());
+        assertEquals(4, plan.unmatched().size());
     }
 
     private Guild setGuild(GuildMember... members) {

@@ -43,7 +43,8 @@ import java.util.stream.Collectors;
  *   <li><b>Input:</b> a member is outdated only with evidence from the journal - the newest
  *       defense log shows a team differently than stored (a {@link SyncRow} that is not
  *       unchanged and whose target team was not edited since the battle, or an unmatched log
- *       team of the member). Without a journal there is no statement. Optionally (stale check
+ *       team of the member, unless all its stored teams of that kind were edited since the
+ *       battle). Without a journal there is no statement. Optionally (stale check
  *       on) a member is "too old" if the newest change of its teams of the selected type is
  *       older than the check's days or unknown. Members without teams are never marked.</li>
  *   <li><b>Strategic concept:</b> red if free slots could be filled with unassigned teams,
@@ -184,7 +185,8 @@ public final class DataStatusService {
     /**
      * Per member id the teams the newest defense log shows differently than stored: rows that
      * are not unchanged and whose target team was not edited since the battle, and unmatched
-     * log teams of the member.
+     * log teams of the member, unless all its stored teams of that kind were edited since the
+     * battle.
      */
     static Map<String, List<TeamDeviation>> journalEvidence(SyncPlan syncPlan) {
         Map<String, List<TeamDeviation>> evidence = new HashMap<>();
@@ -203,7 +205,7 @@ public final class DataStatusService {
                     .add(new TeamDeviation(row.kind(), target.index(), target.storedPower(), row.logPower()));
         }
         for (SyncPlan.UnmatchedTeam unmatched : syncPlan.unmatched()) {
-            if (unmatched.memberId() != null) {
+            if (unmatched.memberId() != null && !unmatched.editedSinceBattle()) {
                 evidence.computeIfAbsent(unmatched.memberId(), id -> new ArrayList<>())
                         .add(new TeamDeviation(unmatched.kind(), -1, 0, unmatched.power()));
             }
