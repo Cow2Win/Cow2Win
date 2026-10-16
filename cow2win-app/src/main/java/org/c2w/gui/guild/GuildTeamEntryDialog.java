@@ -65,6 +65,12 @@ import java.util.List;
  *     <li>Problems that would make the save fail (no member, no power, too many teams
  *     per member) and overfull fortifications are highlighted in the table
  *     right away; a failed save selects the offending line.</li>
+ *     <li>Fortification filter and search: a change hides the selected line if it no longer
+ *     matches and selects the first shown line instead (none for an empty list - the editor's
+ *     fortification combo then shows the filtered fortification, where a new team goes). A line
+ *     edited in the editor area so that it no longer matches stays shown and selected until the
+ *     next filter change or until another line is selected - see {@link FilterSelectionModel}.
+ *     Hidden lines stay loaded and are saved as usual.</li>
  * </ul>
  *
  * <p>On save, every line is resolved to a (member, teamIndex) slot and the
@@ -191,6 +197,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     /** The row shown in the editor area, or null. */
     private Row<T> currentRow;
+
+    /** Which line the filter shows/selects - also the line kept visible while edited, see {@link #matchesFilter}. */
+    private final FilterSelectionModel<Row<T>> filterSelection = new FilterSelectionModel<>();
 
     /** True while the editor area is (re)bound to a row - suppresses the combos' listeners. */
     private boolean binding;
@@ -546,14 +555,20 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         return scrollPane;
     }
 
+    /**
+     * Whether {@code row} is shown: it matches the fortification filter and the search - or it
+     * was edited in the editor area since the last filter change (see {@link FilterSelectionModel}),
+     * so it does not vanish in the middle of the editing.
+     */
     private boolean matchesFilter(Row<T> row) {
         if (fixedMember != null) {
             // Fixed: only this member's lines - every other line stays loaded (saved unchanged) but hidden.
             return row.member == fixedMember;
         }
-        if (row == currentRow) {
-            return true; // never hide the line being edited
-        }
+        return filterSelection.isShown(row, matchesFilterAndSearch(row));
+    }
+
+    private boolean matchesFilterAndSearch(Row<T> row) {
         Object fortSelection = fortFilter.getSelectedItem();
         if (fortSelection == FILTER_NONE && row.fortification != null) {
             return false;
@@ -572,10 +587,32 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 .anyMatch(m -> spec.label().apply(m).toLowerCase(Locale.ROOT).contains(text));
     }
 
-    /** Re-applies filter and sort, keeping the current row selected. */
+    /**
+     * The player changed the fortification filter or the search: ends the "kept visible while
+     * edited" exception, re-applies filter and sort and keeps the current row selected if it still
+     * matches - else selects the first shown line, or none for an empty list (the editor then shows
+     * the filtered fortification, see {@link #showRow}).
+     */
     private void refilter() {
+        Row<T> previous = currentRow; // hiding it below may clear the table's selection
+        filterSelection.filterChanged();
         sorter.sort();
-        selectRow(currentRow);
+        List<Row<T>> shown = new ArrayList<>();
+        for (int viewIndex = 0; viewIndex < table.getRowCount(); viewIndex++) {
+            shown.add(rows.get(table.convertRowIndexToModel(viewIndex)));
+        }
+        Row<T> next = FilterSelectionModel.selectionAfterFilterChange(previous, shown);
+        if (next == null) {
+            table.clearSelection();
+            showRow(null); // also when nothing was selected before: shows the newly filtered fortification
+        } else {
+            selectRow(next);
+        }
+    }
+
+    /** The fortification the filter is set to, null for "all" / "none". */
+    private Fortification filteredFortification() {
+        return fortFilter.getSelectedItem() instanceof Fortification f ? f : null;
     }
 
     private void selectRow(Row<T> row) {
@@ -594,6 +631,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     /** Repaints the current row's line plus everything derived from it (other lines' warnings, status, filter counts). */
     private void currentRowChanged() {
         dirty = true;
+        filterSelection.rowEdited(currentRow);
         int modelIndex = rows.indexOf(currentRow);
         if (modelIndex >= 0) {
             tableModel.fireTableRowsUpdated(modelIndex, modelIndex);
@@ -883,14 +921,18 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         currentRowChanged();
     }
 
-    /** Binds the editor area to {@code row} (or disables it for null). */
+    /**
+     * Binds the editor area to {@code row} (or disables it for null - the fortification combo then
+     * shows the filtered fortification, where a new team would go, see {@link #addRow}).
+     */
     private void showRow(Row<T> row) {
         commitPendingMemberEdit();
         currentRow = row;
+        filterSelection.rowSelected(row);
 
         binding = true;
         try {
-            fortCombo.setSelectedItem(row == null ? null : row.fortification);
+            fortCombo.setSelectedItem(row == null ? filteredFortification() : row.fortification);
             memberCombo.setSelectedItem(row == null ? null : row.member);
         } finally {
             binding = false;
@@ -1267,6 +1309,9 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             return;
         }
         commitPendingMemberEdit();
+        // A filter change (see refilter) - done before the new line exists, so its selection
+        // logic cannot overtake the new line selected below.
+        searchField.setText("");
         Row<T> row = new Row<>(null, -1);
         row.member = fixedMember; // fixed: the new team belongs to that member
         Object filtered = fortFilter.getSelectedItem();
@@ -1277,7 +1322,6 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             row.fortification = lastSelectedFortification;
         }
         rows.add(row);
-        searchField.setText("");
         tableModel.fireTableRowsInserted(rows.size() - 1, rows.size() - 1);
         dirty = true;
         selectRow(row);
@@ -1503,6 +1547,21 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     JComboBox<MemberDraft> memberCombo() {
         return memberCombo;
+    }
+
+    /** The editor area's fortification combo. */
+    JComboBox<Fortification> fortCombo() {
+        return fortCombo;
+    }
+
+    /** The editor area's team editor, null while it shows "nothing selected". */
+    TeamEditorPanel<T> teamEditor() {
+        return teamEditor;
+    }
+
+    /** True while there are unsaved changes. */
+    boolean isDirty() {
+        return dirty;
     }
 
     JButton addButton() {
