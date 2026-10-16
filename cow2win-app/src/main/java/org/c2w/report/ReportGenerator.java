@@ -462,7 +462,7 @@ public final class ReportGenerator {
         return sb.toString();
     }
 
-    /** Formats a summed CowScore total (see {@link BuffCalculationService#sumHeroCowScore}/{@link BuffCalculationService#sumTitanCowScore}/{@link BuffCalculationService#sumCowScoreForFortification}) to one decimal place, {@link Locale#ROOT} like every other number in this report - same precision {@code LineupSummaryPanel}'s COW_SCORE_FORMAT uses in the GUI. */
+    /** Formats a summed CowScore total (see {@link BuffCalculationService#sumHeroCowScore}/{@link BuffCalculationService#sumTitanCowScore}/{@link BuffCalculationService#sumCowScoreForFortification}) - the CowScore incl. its power term, see {@link org.c2w.domain.TeamScoreCalculator.Breakdown#total()} - to one decimal place, {@link Locale#ROOT} like every other number in this report - same precision {@code LineupSummaryPanel}'s COW_SCORE_FORMAT uses in the GUI. */
     private static String formatCowScore(double cowScore) {
         return String.format(Locale.ROOT, "%.1f", cowScore);
     }

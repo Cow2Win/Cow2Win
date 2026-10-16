@@ -193,19 +193,17 @@ public class BuffCalculationService {
     }
 
     /**
-     * Sums, across the WHOLE lineup, the CowScore strength of every hero
-     * team currently placed on a fortification - the CowScore-side
-     * counterpart of {@link #countHeroesIncreasingBuff} (which counts
-     * role/element MATCHES, not CowScore). Per team this is {@link
-     * TeamScoreCalculator}'s {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}
-     * (the bonus in score points) -
-     * deliberately WITHOUT {@link TeamScoreCalculator}'s totalPower term,
-     * since {@code LineupSummaryPanel} already shows the hero power total
-     * separately. Used by {@code org.c2w.gui.fort.LineupSummaryPanel}.
+     * Sums, across the WHOLE lineup, the CowScore of every hero team
+     * currently placed on a fortification - the CowScore-side counterpart of
+     * {@link #countHeroesIncreasingBuff} (which counts role/element MATCHES,
+     * not CowScore). Per team this is {@link TeamScoreCalculator}'s
+     * {@link TeamScoreCalculator.Breakdown#total()}: CowScore = power term +
+     * bonus, see {@link TeamScoreCalculator}. Used by
+     * {@code org.c2w.gui.fort.LineupSummaryPanel} and the report.
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Heroes and their fortification marks)
-     * @return The summed CowScore strength of every hero team in the lineup
+     * @return The summed CowScore of every hero team in the lineup
      */
     public static double sumHeroCowScore(Lineup lineup, Guild guild) {
         double total = 0;
@@ -222,7 +220,7 @@ public class BuffCalculationService {
                 continue;
             }
             HeroTeam team = member.heroTeams().get(entry.teamIndex());
-            total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
+            total += TeamScoreCalculator.scoreFor(team, fortification).total();
         }
         return total;
     }
@@ -231,12 +229,12 @@ public class BuffCalculationService {
      * The TITAN-side counterpart of {@link #sumHeroCowScore} - identical
      * reasoning, {@link TitanTeam}/{@link
      * TeamScoreCalculator#scoreFor(TitanTeam, Fortification)} instead of
-     * the hero side; per team the titan bonus (element, relation, totems, combo, super titans) in score points (see
-     * {@link TeamScoreCalculator.Breakdown#scoreWithoutPower()}).
+     * the hero side; per team CowScore = power term + titan bonus (element, relation, totems, combo,
+     * super titans), see {@link TeamScoreCalculator.Breakdown#total()}.
      *
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Titans and their fortification marks)
-     * @return The summed CowScore strength of every titan team in the lineup
+     * @return The summed CowScore of every titan team in the lineup
      */
     public static double sumTitanCowScore(Lineup lineup, Guild guild) {
         double total = 0;
@@ -253,13 +251,14 @@ public class BuffCalculationService {
                 continue;
             }
             TitanTeam team = member.titanTeams().get(entry.teamIndex());
-            total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
+            total += TeamScoreCalculator.scoreFor(team, fortification).total();
         }
         return total;
     }
 
     /**
-     * Sums the CowScore strength of every hero/titan team currently assigned
+     * Sums the CowScore (power term + bonus, see {@link TeamScoreCalculator.Breakdown#total()})
+     * of every hero/titan team currently assigned
      * to ONE specific fortification (as opposed to {@link #sumHeroCowScore}/
      * {@link #sumTitanCowScore}, which sum over the whole lineup). Used by
      * {@code org.c2w.report.ReportGenerator}'s "Fortifications" table.
@@ -268,7 +267,7 @@ public class BuffCalculationService {
      * @param lineup The lineup with team assignments
      * @param guild The guild with the team data (Heroes/Titans and their fortification marks)
      * @param fortification The fortification the CowScore should be resolved against
-     * @return The summed CowScore strength of every team assigned to this fortification
+     * @return The summed CowScore of every team assigned to this fortification
      */
     public static double sumCowScoreForFortification(
             String fortificationId,
@@ -289,13 +288,13 @@ public class BuffCalculationService {
                     continue;
                 }
                 HeroTeam team = member.heroTeams().get(entry.teamIndex());
-                total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
+                total += TeamScoreCalculator.scoreFor(team, fortification).total();
             } else {
                 if (entry.teamIndex() >= member.titanTeams().size()) {
                     continue;
                 }
                 TitanTeam team = member.titanTeams().get(entry.teamIndex());
-                total += TeamScoreCalculator.scoreFor(team, fortification).scoreWithoutPower();
+                total += TeamScoreCalculator.scoreFor(team, fortification).total();
             }
         }
         return total;

@@ -8,19 +8,16 @@ import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.i18n.LanguageService;
 
-import java.text.NumberFormat;
-
-/** {@link LineupSummaryPanel} for the titan teams - total titan power and summed titan CowScore. */
+/** {@link LineupSummaryPanel} for the titan teams - total titan power, summed titan CowScore and buff titans. */
 public class TitanLineupSummaryPanel extends LineupSummaryPanel {
 
-    private static final String KEY_POWER = "lineupSummary.titanPower";
-    private static final String KEY_POWER_TOOLTIP = "lineupSummary.titanPowerTooltip";
-    private static final String KEY_COW_SCORE = "lineupSummary.titanCowScore";
-    private static final String KEY_COW_SCORE_TOOLTIP = "lineupSummary.titanCowScoreTooltip";
+    private static final Keys KEYS = new Keys(
+            "lineupSummary.titanPower", "lineupSummary.titanPowerTooltip",
+            "lineupSummary.titanCowScore", "lineupSummary.titanCowScoreTooltip",
+            "lineupSummary.titanBuffCount", "lineupSummary.titanBuffCountValue", "lineupSummary.titanBuffCountTooltip");
 
     public TitanLineupSummaryPanel(Lineup lineup, Guild guild) {
-        super(lineup, guild, Lineup.TeamType.TITAN, FortificationType.TITAN,
-                KEY_POWER, KEY_POWER_TOOLTIP, KEY_COW_SCORE, KEY_COW_SCORE_TOOLTIP);
+        super(lineup, guild, Lineup.TeamType.TITAN, FortificationType.TITAN, KEYS);
     }
 
     @Override
@@ -28,13 +25,17 @@ public class TitanLineupSummaryPanel extends LineupSummaryPanel {
         return BuffCalculationService.sumTitanCowScore(lineup, guild);
     }
 
-    /** The formula with the current percentages: element buff, relation and totem (see {@link CowScoreBonuses}). */
+    @Override
+    protected int countIncreasingBuff(Lineup lineup, Guild guild) {
+        return BuffCalculationService.countTitansIncreasingBuff(lineup, guild);
+    }
+
+    /** The formula with the current percentages: element buff, relation, totem, combo and super titans (see {@link CowScoreBonuses}). */
     @Override
     protected String cowScoreTooltip(String key) {
         CowScoreBonuses b = TeamScoreCalculator.bonuses();
-        NumberFormat format = NumberFormat.getNumberInstance(LanguageService.locale());
-        format.setMaximumFractionDigits(2);
-        return LanguageService.displayName(key, format.format(b.elementPercent()), format.format(b.relationPercent()),
-                format.format(b.totemPercent()));
+        return LanguageService.displayName(key, formatPercent(b.elementPercent()), formatPercent(b.relationPercent()),
+                formatPercent(b.totemPercent()), formatPercent(b.comboPercent()),
+                formatPercent(TeamScoreCalculator.SUPER_TITAN_PERCENT));
     }
 }

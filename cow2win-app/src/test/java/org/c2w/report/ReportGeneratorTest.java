@@ -2,6 +2,9 @@ package org.c2w.report;
 
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.CowScoreBonuses;
+import org.c2w.domain.CowScoreFixture;
+import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,6 +36,34 @@ class ReportGeneratorTest {
         HeroTeam team = new HeroTeam("m1", 0, List.of(new Hero("galahad", List.of(Role.TANK))),
                 null, null, 1_000_000, null);
         return new Guild("g1", name, List.of(new GuildMember("m1", "Member One", List.of(team), List.of())));
+    }
+
+    @Test
+    @DisplayName("statistics and fortification table show the full CowScore (power term + bonus)")
+    void cowScoreIsFullValue() {
+        TeamScoreCalculator.setBonuses(CowScoreBonuses.DEFAULTS);
+        CowScoreFixture fixture = new CowScoreFixture();
+
+        String html = ReportGenerator.buildReportHtml(fixture.lineup, fixture.guild, "r.html");
+
+        assertEquals(oneDecimal(fixture.expectedHeroCowScore()), statValue(html, "report.statHeroCowScore"));
+        assertEquals(oneDecimal(fixture.expectedTitanCowScore()), statValue(html, "report.statTitanCowScore"));
+        // The fortification table lists only buffed fortifications.
+        Matcher row = Pattern.compile("<tr><td[^>]*>" + Pattern.quote(LanguageService.displayName(fixture.roleFort.id()) + "</td>")
+                + "(?:<td[^>]*>[^<]*</td>){3}<td[^>]*>([^<]*)</td></tr>").matcher(html);
+        assertTrue(row.find(), "fortification row of " + fixture.roleFort.id());
+        assertEquals(oneDecimal(TeamScoreCalculator.scoreFor(fixture.buffHeroTeam, fixture.roleFort).total()), row.group(1));
+    }
+
+    private static String statValue(String html, String labelKey) {
+        Matcher matcher = Pattern.compile(Pattern.quote(LanguageService.displayName(labelKey) + "</th>")
+                + "<td[^>]*>([^<]*)</td>").matcher(html);
+        assertTrue(matcher.find(), labelKey);
+        return matcher.group(1);
+    }
+
+    private static String oneDecimal(double value) {
+        return String.format(Locale.ROOT, "%.1f", value);
     }
 
     @Test
