@@ -34,7 +34,8 @@ import java.util.Map;
  * The upper row of the main window's top area: what is selected here applies everywhere.
  * From left to right: the guild with its save button, the {@linkplain AppContext#fortificationType()
  * fortification type} (heroes | titans), the lineup with its save button, a hint while something
- * is unsaved, and - right-aligned - how old the guild's "Original" lineup (the one currently set
+ * is unsaved, a hint while only one fortification type of the change plan was applied to live
+ * ("titans not live yet", see {@link #setLiveIncomplete}), and - right-aligned - how old the guild's "Original" lineup (the one currently set
  * up in the game) is.
  *
  * <p>Everything follows {@link AppContext} by itself (see {@link AppContext.Listener}), no
@@ -52,6 +53,8 @@ public class ContextBar extends JPanel {
     private static final String KEY_ORIGINAL = "context.original";
     private static final String KEY_ORIGINAL_MISSING = "context.originalMissing";
     private static final String KEY_ORIGINAL_TOOLTIP = "context.originalTooltip";
+    private static final String KEY_LIVE_INCOMPLETE = "context.liveIncomplete.";
+    private static final String KEY_LIVE_INCOMPLETE_TOOLTIP = "context.liveIncompleteTooltip.";
 
     /** Language file keys of the fortification type buttons - the labels of the former map filter checkboxes. */
     private static final Map<FortificationType, String> FORTIFICATION_TYPE_KEYS = Map.of(
@@ -66,6 +69,8 @@ public class ContextBar extends JPanel {
     private final JComboBox<String> lineupCombo = new JComboBox<>();
     private final Map<FortificationType, JToggleButton> fortificationTypeButtons = new EnumMap<>(FortificationType.class);
     private final PillLabel unsavedLabel = new PillLabel(AppColors.WARNING_TEXT);
+    /** "Heroes / titans not live yet" - see {@link #setLiveIncomplete}. */
+    private final PillLabel liveIncompleteLabel = new PillLabel(AppColors.WARNING_TEXT);
     private final PillLabel originalLabel = new PillLabel(AppColors.ACCENT_TEXT);
 
     /** Guild file {@link #guildCombo} was last populated for - it is only rebuilt when {@link AppContext#guildFilePath()} moves away from this. */
@@ -134,6 +139,8 @@ public class ContextBar extends JPanel {
         left.add(FlatButton.forAction(actions.get(ActionId.SAVE_LINEUP)));
         unsavedLabel.setText(LanguageService.displayName(KEY_UNSAVED));
         left.add(unsavedLabel);
+        liveIncompleteLabel.setVisible(false);
+        left.add(liveIncompleteLabel);
         add(left, BorderLayout.CENTER);
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 6));
@@ -259,6 +266,25 @@ public class ContextBar extends JPanel {
             return KEY_UNSAVED_TOOLTIP_GUILD;
         }
         return lineupDirty ? KEY_UNSAVED_TOOLTIP_LINEUP : null;
+    }
+
+    // --- "not live yet" hint ---
+
+    /**
+     * Shows "{type} not live yet" with a tooltip saying the other type was applied - or hides the
+     * hint if {@code missingType} is null. Set by the output stage after every rebuild of the
+     * change plan and after "apply to live" (see {@code OutputStageView#setLiveIncompleteListener}).
+     */
+    public void setLiveIncomplete(FortificationType missingType) {
+        liveIncompleteLabel.setVisible(missingType != null);
+        liveIncompleteLabel.setText(missingType == null ? "" : LanguageService.displayName(KEY_LIVE_INCOMPLETE + missingType.name()));
+        liveIncompleteLabel.setToolTipText(missingType == null ? null
+                : LanguageService.displayName(KEY_LIVE_INCOMPLETE_TOOLTIP + missingType.name()));
+    }
+
+    /** The "not live yet" hint - for tests. */
+    JLabel liveIncompleteLabel() {
+        return liveIncompleteLabel;
     }
 
     // --- "Original" lineup status ---

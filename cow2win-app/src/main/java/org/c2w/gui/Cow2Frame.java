@@ -189,6 +189,8 @@ public class Cow2Frame extends JFrame {
             contextBar.refreshLiveStatus();
             dataStatusController.requestUpdate();
         });
+        // "Titans / heroes not live yet" in the context bar follows the output stage's plan.
+        outputView.setLiveIncompleteListener(contextBar::setLiveIncomplete);
         dataStatusController.requestUpdate();
 
         setContentPane(new BackgroundPanel(new BorderLayout(), background));

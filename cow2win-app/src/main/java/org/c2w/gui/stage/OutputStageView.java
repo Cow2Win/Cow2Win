@@ -1,6 +1,8 @@
 package org.c2w.gui.stage;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.LineupFiles;
+import org.c2w.domain.ChangePlanOutline;
 import org.c2w.gui.ContextBar;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.c2w.gui.stage.InfoSections.*;
 
@@ -24,9 +27,13 @@ import static org.c2w.gui.stage.InfoSections.*;
  * The stage view "output": the change plan from the guild's live lineup (the one in the
  * game) to a target as work area - by default the lineup open in the context bar, as it stands
  * in memory, recomputed by itself whenever it changes - as a checklist whose checked entries
- * "apply to live" takes into the live lineup. The action list is the output menu plus "copy
- * plan"; the info panel shows the steps per kind and how many are checked, the affected players,
- * the effect on the total power and how old the live lineup is.
+ * "apply to live" takes into the live lineup. Checklist, info panel, "copy plan" and "apply to
+ * live" follow the fortification type selected in the context bar (heroes | titans); the plan
+ * itself is computed for both. The action list is the output menu plus "copy plan"; the info
+ * panel shows the steps of the selected type per kind and how many are checked, the affected
+ * players, the effect on the type's total power and how old the live lineup is. After every
+ * rebuild and after "apply to live" it reports which type is "not live yet" (see
+ * {@link #setLiveIncompleteListener}).
  */
 public class OutputStageView extends StageView {
 
@@ -51,6 +58,8 @@ public class OutputStageView extends StageView {
     private final ChangePlanPanel planPanel;
     /** Runs after the live lineup was changed by "apply to live" (context bar, data status). */
     private Runnable liveChangedListener = () -> { };
+    /** Learns which fortification type is "not live yet" (null: none) - the hint in the context bar. */
+    private Consumer<FortificationType> liveIncompleteListener = type -> { };
 
     private final JPanel planSection = sectionBody();
     private final JPanel playersSection = sectionBody();
@@ -77,6 +86,15 @@ public class OutputStageView extends StageView {
         copyPlanAction.putValue(Action.SHORT_DESCRIPTION, LanguageService.displayName(KEY_COPY_PLAN));
         build();
 
+        // The button next to "generate" runs the action "apply to live" - the same one as menu and action list.
+        planPanel.setApplyToLiveHandler(() -> {
+            if (actions.isRegistered(ActionId.APPLY_TO_LIVE)) {
+                actions.get(ActionId.APPLY_TO_LIVE).actionPerformed(
+                        new ActionEvent(planPanel, ActionEvent.ACTION_PERFORMED, ActionId.APPLY_TO_LIVE.name()));
+            } else {
+                applyToLive();
+            }
+        });
         planPanel.addPlanListener(this::refreshInfo);
         refreshInfo();
         appContext.addListener(new AppContext.Listener() {
@@ -138,13 +156,19 @@ public class OutputStageView extends StageView {
         return panel;
     }
 
-    /** Fills the info panel from the plan shown, and enables "copy plan" while there is one. */
+    /**
+     * Fills the info panel from the plan shown (selected fortification type), enables "copy plan"
+     * while there is one and "apply to live" while an entry of the selected type is checked, and
+     * reports the type "not live yet".
+     */
     private void refreshInfo() {
-        OutputInfoModel.OutputInfo info = OutputInfoModel.of(planPanel.result(), appContext.guild());
+        OutputInfoModel.OutputInfo info = OutputInfoModel.of(planPanel.result(), appContext.guild(),
+                appContext.fortificationType());
         copyPlanAction.setEnabled(planPanel.hasPlan());
         if (actions.isRegistered(ActionId.APPLY_TO_LIVE)) {
-            actions.get(ActionId.APPLY_TO_LIVE).setEnabled(planPanel.outline() != null && !planPanel.outline().isEmpty());
+            actions.get(ActionId.APPLY_TO_LIVE).setEnabled(planPanel.canApplyToLive());
         }
+        liveIncompleteListener.accept(planPanel.missingLiveType());
 
         planSection.removeAll();
         playersSection.removeAll();
@@ -154,9 +178,10 @@ public class OutputStageView extends StageView {
         } else {
             addLine(planSection, mutedLabel(LanguageService.displayName(KEY_PLAN_STEPS,
                     info.totalSteps(), info.removeSteps(), info.moveSteps(), info.placeSteps())));
-            if (planPanel.outline() != null && !planPanel.outline().isEmpty()) {
-                addLine(planSection, mutedLabel(LanguageService.displayName(KEY_PLAN_CHECKED,
-                        planPanel.checks().checkedIds().size(), planPanel.outline().items().size())));
+            ChangePlanOutline shown = planPanel.shownOutline();
+            if (shown != null && !shown.isEmpty()) {
+                long checked = shown.items().stream().filter(item -> planPanel.checks().isChecked(item.id())).count();
+                addLine(planSection, mutedLabel(LanguageService.displayName(KEY_PLAN_CHECKED, checked, shown.items().size())));
             }
             addLine(playersSection, new JLabel(String.valueOf(info.players().size())));
             for (OutputInfoModel.PlayerSteps player : info.players()) {
@@ -185,8 +210,18 @@ public class OutputStageView extends StageView {
     }
 
     /**
-     * "Apply to live": takes the checked entries into the live lineup (see
-     * {@link ChangePlanPanel#applyToLive()}) and reports the outcome in a message dialog - there
+     * {@code listener} learns the fortification type that is "not live yet" (see
+     * {@link ChangePlanPanel#missingLiveType()}; null: none) - right away and after every rebuild
+     * of the plan, check, type switch and "apply to live".
+     */
+    public void setLiveIncompleteListener(Consumer<FortificationType> listener) {
+        liveIncompleteListener = listener == null ? type -> { } : listener;
+        liveIncompleteListener.accept(planPanel.missingLiveType());
+    }
+
+    /**
+     * "Apply to live": takes the checked entries of the selected fortification type into the live
+     * lineup (see {@link ChangePlanPanel#applyToLive()}) and reports the outcome in a message dialog - there
      * is no confirmation question.
      */
     public void applyToLive() {

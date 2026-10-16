@@ -181,6 +181,14 @@ public final class ChangePlanOutline {
         return items;
     }
 
+    /**
+     * This outline restricted to {@code type}: only its {@link TypeGroup}, items and ids
+     * unchanged. A fortification change never crosses types, so both halves stay together.
+     */
+    public ChangePlanOutline ofType(FortificationType type) {
+        return new ChangePlanOutline(types.stream().filter(group -> group.type() == type).toList());
+    }
+
     /** The entry with {@code id}, empty if the outline has none. */
     public Optional<Item> item(String id) {
         return Optional.ofNullable(itemsById.get(id));

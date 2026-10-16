@@ -1,5 +1,6 @@
 package org.c2w.gui.stage;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.LineupFiles;
@@ -13,6 +14,7 @@ import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
+import org.c2w.service.LiveApplyService;
 import org.c2w.service.RecentFiles;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +22,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -141,10 +147,15 @@ class OutputStageViewTest {
         OutputStageView view = new OutputStageView(context, actions);
         ChangePlanPanel panel = view.planPanel();
         assertEquals(2, panel.outline().items().size());
-        assertTrue(actions.get(ActionId.APPLY_TO_LIVE).isEnabled());
+        assertFalse(actions.get(ActionId.APPLY_TO_LIVE).isEnabled(), "nothing checked yet");
+        assertFalse(panel.applyButton().isEnabled());
+        assertEquals(LanguageService.displayName("changePlan.applyToLive.disabledTooltip"), panel.applyButton().getToolTipText());
 
         String removeM1 = idOf(panel, "m1");
         panel.checkBox(removeM1).doClick();
+        assertTrue(actions.get(ActionId.APPLY_TO_LIVE).isEnabled());
+        assertTrue(panel.applyButton().isEnabled());
+        assertNull(panel.applyButton().getToolTipText());
 
         assertTrue(panel.checks().isChecked(removeM1));
         assertEquals(LanguageService.displayName("changePlan.checkedSummary", 2, 1), panel.summaryText());
@@ -192,5 +203,159 @@ class OutputStageViewTest {
         assertEquals(1, panel.outline().items().size(), "only the removal of m1 is left");
         assertEquals(java.util.Set.of(), panel.checks().checkedIds());
         assertTrue(context.isLineupDirty(), "the target lineup stays open and unsaved");
+    }
+
+    /**
+     * Live: heroes m1, m2 in the bastion, titan m5 in the bastion of fire; the open lineup
+     * (unsaved): heroes m2 in the bastion, m3 and m4 in the citadel, titan m6 in the bastion of fire.
+     */
+    private Path liveAndTargetBothTypes() throws Exception {
+        Path guildDir = context.guildFilePath().getParent();
+        LineupRepository.save(new Lineup(context.guild().id(), context.guild().name(), "", LocalDateTime.now(), List.of(
+                        new Lineup.Entry("bastion", "m1", Lineup.TeamType.HERO, 0),
+                        new Lineup.Entry("bastion", "m2", Lineup.TeamType.HERO, 0),
+                        new Lineup.Entry("bastion-of-fire", "m5", Lineup.TeamType.TITAN, 0))),
+                LineupFiles.originalPathFor(guildDir));
+        context.setLineup(new Lineup(context.lineup().guildId(), context.lineup().guildName(), "", LocalDateTime.now(), List.of(
+                new Lineup.Entry("bastion", "m2", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("citadel", "m3", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("citadel", "m4", Lineup.TeamType.HERO, 0),
+                new Lineup.Entry("bastion-of-fire", "m6", Lineup.TeamType.TITAN, 0))));
+        context.setLineupDirty(true);
+        return guildDir;
+    }
+
+    @Test
+    @DisplayName("The fortification type switch: checklist, summary, info, button text and copy text show only that type")
+    void followsTheFortificationType() throws Exception {
+        liveAndTargetBothTypes();
+        context.setFortificationType(FortificationType.HERO);
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+        assertEquals(5, panel.outline().items().size(), "computed for both types");
+
+        assertNotNull(panel.checkBox(idOf(panel, "m3")));
+        assertNull(panel.checkBox(idOf(panel, "m6")));
+        assertEquals(LanguageService.displayName("changePlan.checkedSummary", 3, 0), panel.summaryText());
+        assertEquals(LanguageService.displayName("changePlan.applyToLive.HERO"), panel.applyButton().getText());
+        assertTrue(view.infoTexts().stream().anyMatch(text -> text.contains(
+                LanguageService.displayName("stageInfo.plan.steps", 3, 1, 0, 2))), view.infoTexts().toString());
+        assertTrue(panel.plainTextPlan().contains("m3") && !panel.plainTextPlan().contains("m6"), panel.plainTextPlan());
+        assertFalse(panel.checklistTexts().contains(LanguageService.displayName("teamType.TITAN")));
+
+        context.setFortificationType(FortificationType.TITAN);
+
+        assertEquals(5, panel.outline().items().size());
+        assertNull(panel.checkBox(idOf(panel, "m3")));
+        assertNotNull(panel.checkBox(idOf(panel, "m6")));
+        assertEquals(LanguageService.displayName("changePlan.checkedSummary", 2, 0), panel.summaryText());
+        assertEquals(LanguageService.displayName("changePlan.applyToLive.TITAN"), panel.applyButton().getText());
+        assertTrue(view.infoTexts().stream().anyMatch(text -> text.contains(
+                LanguageService.displayName("stageInfo.plan.steps", 2, 1, 0, 1))), view.infoTexts().toString());
+        assertTrue(panel.plainTextPlan().contains("m6") && !panel.plainTextPlan().contains("m3"), panel.plainTextPlan());
+        assertTrue(panel.checklistTexts().contains(LanguageService.displayName("teamType.TITAN")), panel.checklistTexts().toString());
+    }
+
+    @Test
+    @DisplayName("Button and action are enabled only while an entry of the selected type is checked")
+    void applyEnabledPerType() throws Exception {
+        liveAndTargetBothTypes();
+        context.setFortificationType(FortificationType.HERO);
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+
+        panel.setChecked(idOf(panel, "m6"), true);
+        assertFalse(panel.applyButton().isEnabled(), "only a titan entry is checked");
+        assertFalse(actions.get(ActionId.APPLY_TO_LIVE).isEnabled());
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertTrue(panel.applyButton().isEnabled());
+        assertTrue(actions.get(ActionId.APPLY_TO_LIVE).isEnabled());
+        assertEquals(LanguageService.displayName("changePlan.checkedSummary", 2, 1), panel.summaryText());
+    }
+
+    @Test
+    @DisplayName("Apply to live with heroes selected: only hero entries go live, titan checks stay; then titans are \"not live yet\"")
+    void applyOnlyTheSelectedType() throws Exception {
+        Path guildDir = liveAndTargetBothTypes();
+        context.setFortificationType(FortificationType.HERO);
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+        List<FortificationType> reported = new ArrayList<>();
+        view.setLiveIncompleteListener(reported::add);
+        assertNull(reported.get(reported.size() - 1));
+
+        String titanAdd = idOf(panel, "m6");
+        panel.setChecked(titanAdd, true);
+        panel.setChecked(idOf(panel, "m3"), true);
+        LiveApplyService.Result heroes = panel.applyToLive();
+        assertEquals(LiveApplyService.Outcome.APPLIED, heroes.outcome());
+
+        Lineup live = LineupRepository.load(LineupFiles.originalPathFor(guildDir));
+        assertTrue(live.entries().contains(new Lineup.Entry("citadel", "m3", Lineup.TeamType.HERO, 0)));
+        assertFalse(live.entries().stream().anyMatch(entry -> entry.teamMemberId().equals("m6")), "titans not applied");
+        assertTrue(live.entries().stream().anyMatch(entry -> entry.teamMemberId().equals("m5")), "titans not applied");
+        assertTrue(panel.checks().isChecked(titanAdd), "the titan check stays");
+        assertEquals(Set.of(FortificationType.HERO), panel.checks().appliedTypes());
+        assertEquals(FortificationType.TITAN, panel.missingLiveType());
+        assertEquals(FortificationType.TITAN, reported.get(reported.size() - 1));
+
+        // After a restart the hint is still there.
+        OutputStageView restarted = new OutputStageView(context, actions);
+        assertEquals(FortificationType.TITAN, restarted.planPanel().missingLiveType());
+
+        // The titans applied as well: the hint is gone.
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(LiveApplyService.Outcome.APPLIED, panel.applyToLive().outcome());
+        assertNull(panel.missingLiveType());
+        assertNull(reported.get(reported.size() - 1));
+        live = LineupRepository.load(LineupFiles.originalPathFor(guildDir));
+        assertTrue(live.entries().contains(new Lineup.Entry("bastion-of-fire", "m6", Lineup.TeamType.TITAN, 0)));
+    }
+
+    @Test
+    @DisplayName("The selected type without changes: \"no changes for …\" plus the other type's entries")
+    void selectedTypeWithoutChanges() throws Exception {
+        liveAndTarget();
+        context.setFortificationType(FortificationType.TITAN);
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+
+        List<String> texts = panel.checklistTexts();
+        assertTrue(texts.contains(LanguageService.displayName("changePlan.noChangesForType",
+                LanguageService.displayName("teamType.TITAN"))), texts.toString());
+        assertTrue(texts.contains(LanguageService.displayName("changePlan.otherTypeEntries",
+                LanguageService.displayName("teamType.HERO"), 2)), texts.toString());
+        assertFalse(panel.applyButton().isEnabled());
+    }
+
+    @Test
+    @DisplayName("The entries of a fortification stand in as many columns as fit the width")
+    void columns() throws Exception {
+        liveAndTargetBothTypes();
+        context.setFortificationType(FortificationType.HERO);
+        OutputStageView view = new OutputStageView(context, actions);
+        ChangePlanPanel panel = view.planPanel();
+        assertEquals(1, panel.columnCount(), "no width yet");
+
+        panel.setSize(2000, 800);
+        layoutAll(panel);
+        panel.updateColumns();
+        assertTrue(panel.columnCount() > 1, "wide: " + panel.columnCount());
+
+        panel.setSize(150, 800);
+        layoutAll(panel);
+        panel.updateColumns();
+        assertEquals(1, panel.columnCount(), "narrow");
+    }
+
+    /** Lays out {@code component} and everything inside it - headless, without a window. */
+    private static void layoutAll(Component component) {
+        if (component instanceof Container container) {
+            container.doLayout();
+            for (Component child : container.getComponents()) {
+                layoutAll(child);
+            }
+        }
     }
 }

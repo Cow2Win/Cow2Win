@@ -1,10 +1,20 @@
 package org.c2w.gui;
 
+import org.c2w.data.model.FortificationType;
+import org.c2w.data.repository.Catalog;
+import org.c2w.gui.action.ActionId;
+import org.c2w.gui.action.AppAction;
+import org.c2w.gui.action.MainActions;
 import org.c2w.i18n.LanguageService;
+import org.c2w.infra.Config;
+import org.c2w.service.AppContext;
+import org.c2w.service.GuildService;
+import org.c2w.service.RecentFiles;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -16,7 +26,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** The GUI-free parts of {@link ContextBar}: "Original" lineup status and "unsaved" tooltip. */
+/** {@link ContextBar}: "Original" lineup status, "unsaved" tooltip and the "not live yet" hint - headless, never shown. */
 class ContextBarTest {
 
     @TempDir
@@ -50,5 +60,40 @@ class ContextBarTest {
         assertEquals("context.unsavedTooltip.guild", ContextBar.unsavedTooltipKey(true, false));
         assertEquals("context.unsavedTooltip.lineup", ContextBar.unsavedTooltipKey(false, true));
         assertEquals("context.unsavedTooltip.both", ContextBar.unsavedTooltipKey(true, true));
+    }
+
+    @Test
+    @DisplayName("\"Not live yet\": hidden without a missing type, otherwise text and tooltip name the missing type")
+    void liveIncompleteHint() throws Exception {
+        String previousWorkspace = Config.getWorkspacePath();
+        Config.setWorkspacePath(guildDir.toString());
+        AppContext context = new AppContext(new Catalog(guildDir));
+        try {
+            GuildService guildService = new GuildService(context, RecentFiles.NONE);
+            guildService.createGuild("Alpha", false);
+            guildService.switchToGuild("Alpha");
+            MainActions actions = new MainActions();
+            for (ActionId id : ActionId.values()) {
+                actions.register(new AppAction(id, () -> { }));
+            }
+            ContextBar bar = new ContextBar(context, actions);
+            JLabel hint = bar.liveIncompleteLabel();
+            assertFalse(hint.isVisible());
+
+            bar.setLiveIncomplete(FortificationType.TITAN);
+            assertTrue(hint.isVisible());
+            assertEquals(LanguageService.displayName("context.liveIncomplete.TITAN"), hint.getText());
+            assertEquals(LanguageService.displayName("context.liveIncompleteTooltip.TITAN"), hint.getToolTipText());
+
+            bar.setLiveIncomplete(FortificationType.HERO);
+            assertEquals(LanguageService.displayName("context.liveIncomplete.HERO"), hint.getText());
+            assertEquals(LanguageService.displayName("context.liveIncompleteTooltip.HERO"), hint.getToolTipText());
+
+            bar.setLiveIncomplete(null);
+            assertFalse(hint.isVisible());
+        } finally {
+            context.journal().closeCurrent();
+            Config.setWorkspacePath(previousWorkspace);
+        }
     }
 }
