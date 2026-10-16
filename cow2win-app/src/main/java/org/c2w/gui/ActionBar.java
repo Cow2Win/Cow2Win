@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.c2w.gui.action.ActionId.*;
 
@@ -102,6 +103,9 @@ public class ActionBar extends JPanel {
 
     /** Switches the main window's stage view, see {@link #setStageSwitcher}. */
     private Consumer<Stage> stageSwitcher;
+
+    /** The open team assignment dialog (disposed once closed), see {@link #teamEntryDialog}. */
+    private JDialog teamEntryDialog;
 
     /**
      * Registers this bar's actions in {@code actions} - the process bar itself is only added
@@ -366,30 +370,52 @@ public class ActionBar extends JPanel {
      * counterpart of the per-fortification {@code FortificationAssignmentDialog} of the concept stage.
      * Its save opens the guild's "Original" lineup, which the context bar
      * and the map pick up by themselves (see {@link AppContext.Listener}).
+     * While a team assignment is open, that one is brought to front instead (see {@link #teamEntryDialog}).
      */
     private void onOpenGuildTeamEntry() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         // No conditional expression: both dialogs' common base class is not public.
-        if (appContext.fortificationType() == FortificationType.HERO) {
-            new GuildHeroEntryDialog(owner, appContext).setVisible(true);
-        } else {
-            new GuildTitanEntryDialog(owner, appContext).setVisible(true);
-        }
+        showTeamEntry(teamEntryDialog(() -> {
+            if (appContext.fortificationType() == FortificationType.HERO) {
+                return new GuildHeroEntryDialog(owner, appContext);
+            }
+            return new GuildTitanEntryDialog(owner, appContext);
+        }));
     }
 
     /**
      * Opens the team assignment of the selected fortification type for the one member
      * {@code memberId} - its teams only, member, filter and search locked (see
      * {@code GuildTeamEntryDialog}). From the member overview of the input stage.
+     * While a team assignment is open, that one is brought to front instead (see {@link #teamEntryDialog}).
      */
     public void openTeamEntryFor(String memberId) {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         // No conditional expression: both dialogs' common base class is not public.
-        if (appContext.fortificationType() == FortificationType.HERO) {
-            new GuildHeroEntryDialog(owner, appContext, memberId).setVisible(true);
-        } else {
-            new GuildTitanEntryDialog(owner, appContext, memberId).setVisible(true);
+        showTeamEntry(teamEntryDialog(() -> {
+            if (appContext.fortificationType() == FortificationType.HERO) {
+                return new GuildHeroEntryDialog(owner, appContext, memberId);
+            }
+            return new GuildTitanEntryDialog(owner, appContext, memberId);
+        }));
+    }
+
+    /**
+     * The one team assignment dialog: the open one if there is one - whatever its fortification
+     * type or member - otherwise a new one from {@code factory}. Only one at a time, because each
+     * dialog edits its own copy of the guild and saving a second one would overwrite the first
+     * one's changes.
+     */
+    JDialog teamEntryDialog(Supplier<JDialog> factory) {
+        if (teamEntryDialog == null || !teamEntryDialog.isDisplayable()) {
+            teamEntryDialog = factory.get();
         }
+        return teamEntryDialog;
+    }
+
+    private static void showTeamEntry(JDialog dialog) {
+        dialog.setVisible(true);
+        dialog.toFront();
     }
 
     /**

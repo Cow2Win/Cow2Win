@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * {@link ActionBar} shows the {@link ProcessBar}; the save buttons sit in
@@ -64,6 +65,32 @@ class ActionBarTest {
                 processBar.tiles().stream().map(ProcessBar.StageTile::stage).toList());
         assertTrue(CowScoreTestSupport.findAll(bar, AbstractButton.class).stream().noneMatch(Component::isVisible),
                 "no visible buttons");
+    }
+
+    @Test
+    @DisplayName("Only one team assignment dialog: the open one is reused, a new one only after it was closed")
+    void oneTeamEntryDialog() throws Exception {
+        assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display");
+        ActionBar bar = new ActionBar(context, new MainActions(), new AlgorithmSelection());
+        SwingUtilities.invokeAndWait(() -> {
+            JDialog first = bar.teamEntryDialog(ActionBarTest::packedDialog);
+            try {
+                assertSame(first, bar.teamEntryDialog(ActionBarTest::packedDialog), "the open dialog is reused");
+                first.dispose();
+                JDialog second = bar.teamEntryDialog(ActionBarTest::packedDialog);
+                assertNotSame(first, second, "a new dialog once the first one was closed");
+                second.dispose();
+            } finally {
+                first.dispose();
+            }
+        });
+    }
+
+    /** A dialog as the team assignment leaves it once shown: displayable (packed), but never on screen here. */
+    private static JDialog packedDialog() {
+        JDialog dialog = new JDialog();
+        dialog.pack();
+        return dialog;
     }
 
     @Test
