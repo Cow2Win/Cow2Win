@@ -6,6 +6,7 @@ import org.c2w.infra.CatalogDataVersion;
 import org.c2w.infra.CatalogManifest;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -21,12 +22,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 
 /**
  * All system data of one repository: the twelve data files (the five catalog files in {@code
- * catalog/}, the others in {@code cow2win-app/src/main/resources}), the display names from the
- * three language files and the catalog manifest. Every change goes through this class, which
+ * catalog/}, the others in {@code cow2win-app/src/main/resources}), the display names from
+ * {@code catalog/names.json} and the catalog manifest. Every change goes through this class, which
  * marks the affected table as changed; {@link #save} writes only files whose content actually
  * changed, and then brings {@code catalog/manifest.json} up to date.
  */
@@ -34,11 +36,15 @@ public final class DataSet {
 
     /** The manifest of the game catalog, relative to the repository root. */
     public static final Path MANIFEST = RepositoryFolder.CATALOG.resolve(CatalogManifest.FILE_NAME);
+    /** The display names of all catalog entries, relative to the repository root. */
+    public static final Path NAMES = RepositoryFolder.CATALOG.resolve("names.json");
 
     private final Path root;
     private final Map<TableKind, DataTable> tables = new EnumMap<>(TableKind.class);
     private final Map<TableKind, TableCodec> codecs = new EnumMap<>(TableKind.class);
-    private final Map<Language, LanguageFile> languages = new EnumMap<>(Language.class);
+    /** Keys of the three language files (UI texts) - a new catalog id must not be one of them. */
+    private final Map<Language, Set<String>> languageFileKeys = new EnumMap<>(Language.class);
+    private final NamesFile names;
     private final CatalogManifest manifest;
     /** Avatars chosen in this session: target path (relative to the root) to source file - copied on save. */
     private final Map<Path, Path> pendingImages = new LinkedHashMap<>();
@@ -46,8 +52,11 @@ public final class DataSet {
     private DataSet(Path root) throws IOException {
         this.root = root;
         for (Language language : Language.values()) {
-            languages.put(language, new LanguageFile(read(language.relativePath())));
+            Properties properties = new Properties();
+            properties.load(new StringReader(read(language.relativePath())));
+            languageFileKeys.put(language, Set.copyOf(properties.stringPropertyNames()));
         }
+        this.names = new NamesFile(read(NAMES));
         for (TableKind kind : TableKind.values()) {
             TableCodec codec = TableCodec.of(kind);
             String text = read(kind.relativePath());
@@ -55,7 +64,7 @@ public final class DataSet {
             if (kind.isCatalog()) {
                 for (Row row : table.rows()) {
                     for (Language language : Language.values()) {
-                        row.set(language.field(), languages.get(language).get(row.getString(Fields.ID)));
+                        row.set(language.field(), names.get(row.getString(Fields.ID), language));
                     }
                 }
             }
@@ -82,8 +91,9 @@ public final class DataSet {
         return tables.get(kind);
     }
 
-    public LanguageFile language(Language language) {
-        return languages.get(language);
+    /** The keys (UI texts) of the language file of {@code language}. */
+    public Set<String> languageFileKeys(Language language) {
+        return languageFileKeys.get(language);
     }
 
     /** The catalog manifest as loaded (not yet updated by a save). */
@@ -246,7 +256,7 @@ public final class DataSet {
 
     /**
      * Checks and, without errors, writes every changed file (temporary file + rename): data
-     * files, new avatars and language files - and then {@code catalog/manifest.json} if the files
+     * files, {@code catalog/names.json} and new avatars - and then {@code catalog/manifest.json} if the files
      * of the catalog no longer match it (see {@link #updateManifest}). Nothing is written if the
      * check finds an error.
      */
@@ -261,7 +271,7 @@ public final class DataSet {
                 setValue(cowScore, addRow(cowScore), Fields.ID, id);
             }
         }
-        updateLanguageFiles();
+        updateNames();
 
         Map<Path, String> texts = new LinkedHashMap<>();
         for (TableKind kind : TableKind.values()) {
@@ -269,10 +279,8 @@ public final class DataSet {
                 texts.put(kind.relativePath(), render(kind));
             }
         }
-        for (Language language : Language.values()) {
-            if (languages.get(language).isModified()) {
-                texts.put(language.relativePath(), languages.get(language).text());
-            }
+        if (names.isModified()) {
+            texts.put(NAMES, names.text());
         }
 
         List<String> written = new ArrayList<>();
@@ -303,51 +311,28 @@ public final class DataSet {
     }
 
     /**
-     * Brings the display names into the language files: removes the keys of deleted entries
-     * (unless the id is in use again), changes changed values and adds the keys of new
-     * entries at the end of their catalog's section.
+     * Brings the display names into {@code catalog/names.json}: the names of every catalog
+     * entry as in its row, ids no longer in any catalog (deleted entries) removed.
      */
-    private void updateLanguageFiles() {
+    private void updateNames() {
         Set<String> allIds = new HashSet<>();
         for (TableKind kind : TableKind.CATALOGS) {
-            allIds.addAll(table(kind).ids());
-        }
-        for (TableKind kind : TableKind.CATALOGS) {
-            for (String deleted : table(kind).deletedIds()) {
-                if (!allIds.contains(deleted)) {
-                    languages.values().forEach(file -> file.remove(deleted));
-                }
-            }
-        }
-        for (TableKind kind : TableKind.CATALOGS) {
-            List<String> sectionKeys = table(kind).ids();
-            sectionKeys.addAll(table(kind).deletedIds());
             for (Row row : table(kind).rows()) {
                 String id = row.getString(Fields.ID);
+                if (id == null) {
+                    continue;
+                }
+                allIds.add(id);
                 for (Language language : Language.values()) {
-                    LanguageFile file = languages.get(language);
-                    String name = row.getString(language.field());
-                    if (file.containsKey(id)) {
-                        if (!Objects.equals(file.get(id), name)) {
-                            file.set(id, name);
-                        }
-                    } else {
-                        file.add(id, name, sectionKeys, sectionHeaders(kind), kind == TableKind.FORTIFICATIONS);
-                    }
+                    names.set(id, language, row.getString(language.field()));
                 }
             }
         }
-    }
-
-    /** Header comments of a catalog's section in the three language files. */
-    private static List<String> sectionHeaders(TableKind kind) {
-        return switch (kind) {
-            case HEROES -> List.of("Helden", "Heroes", "Héros");
-            case TITANS -> List.of("Titanen", "Titans");
-            case PETS -> List.of("Pets", "Familiers");
-            case WAR_FLAGS -> List.of("Kriegsflaggen", "War flags", "Drapeaux de guerre");
-            default -> List.of("Festungen", "Fortification", "Fortifications", "Forteresses");
-        };
+        for (String id : List.copyOf(names.ids())) {
+            if (!allIds.contains(id)) {
+                names.remove(id);
+            }
+        }
     }
 
     /**

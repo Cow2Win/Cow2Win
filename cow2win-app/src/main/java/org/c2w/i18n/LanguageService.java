@@ -1,5 +1,8 @@
 package org.c2w.i18n;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 
@@ -33,6 +36,17 @@ public class LanguageService {
      */
     private static final String LANGUAGE_RESOURCE_ROOT = "language";
     private static final String DEFAULT_LANGUAGE = "english";
+
+    /**
+     * The display names of every catalog entry (fortifications, heroes, titans, pets, war flags)
+     * in the active game catalog ({@link CatalogStore}) -
+     * {@code {"adam": {"deutsch": "Adam", "english": "Adam", ...}, ...}}, keyed by catalog id and
+     * language folder name. Looked up before the language files.
+     */
+    private static final String CATALOG_NAMES_PATH = "names.json";
+
+    /** Catalog id to language to name, read once from {@link #CATALOG_NAMES_PATH}; null until loaded. */
+    private static volatile Map<String, Map<String, String>> catalogNames;
 
     private static volatile Properties displayNames;
     private static volatile String loadedLanguage;
@@ -106,12 +120,21 @@ public class LanguageService {
     }
 
     /**
-     * Returns the display name for the given catalog id in the currently
-     * configured language, or the id itself if no entry exists for it
-     * (unknown id, or the language file could not be read) - so this method
-     * always returns something usable, never null.
+     * Returns the text for {@code id} in the currently configured language - always something
+     * usable, never null:
+     * <ul>
+     *     <li>a catalog id (see {@link #CATALOG_NAMES_PATH}): its name in that language, else its
+     *     English name, else the id itself;</li>
+     *     <li>any other key (UI texts): the entry of the language file, or the id itself if there
+     *     is none (unknown key, or the language file could not be read).</li>
+     * </ul>
      */
     public static String displayName(String id) {
+        Map<String, String> names = catalogNames().get(id);
+        if (names != null) {
+            String name = names.getOrDefault(configuredLanguage(), names.get(DEFAULT_LANGUAGE));
+            return name != null ? name : id;
+        }
         ensureLoaded();
         return displayNames.getProperty(id, id);
     }
@@ -139,25 +162,69 @@ public class LanguageService {
     }
 
 
-    /** Forces the language file to be reloaded on the next call to {@link #displayName}. */
+    /** Forces the language files and the catalog names to be reloaded on next use. */
     public static void resetCache() {
         synchronized (LanguageService.class) {
             displayNames = null;
             loadedLanguage = null;
+            catalogNames = null;
+            languageFiles.clear();
         }
     }
 
     /**
      * The text for {@code id} in the given language - independent of the
      * configured one, e.g. to search all languages (see
-     * {@link TotemTexts#fromGameName}) - or {@code null} if that language
-     * has no entry for it. Each language file is read once and then kept.
+     * {@link TotemTexts#fromGameName} and the battle log's {@code NameResolver}) - or
+     * {@code null} if that language has no entry for it. A catalog id is looked up in the
+     * catalog names first, without the English fallback of {@link #displayName(String)}: a
+     * caller searching all languages must only see the names of each language. Each language
+     * file is read once and then kept.
      */
     public static String textIn(String language, String id) {
+        Map<String, String> names = catalogNames().get(id);
+        if (names != null && names.containsKey(language)) {
+            return names.get(language);
+        }
         return languageFiles.computeIfAbsent(language, LanguageService::loadLanguageFile).getProperty(id);
     }
 
     // --- private ---
+
+    /** The catalog names, read from the active catalog on first use; empty (logged) if they cannot be read. */
+    private static Map<String, Map<String, String>> catalogNames() {
+        Map<String, Map<String, String>> names = catalogNames;
+        if (names == null) {
+            synchronized (LanguageService.class) {
+                names = catalogNames;
+                if (names == null) {
+                    names = loadCatalogNames();
+                    catalogNames = names;
+                }
+            }
+        }
+        return names;
+    }
+
+    private static Map<String, Map<String, String>> loadCatalogNames() {
+        try {
+            Map<String, Map<String, String>> result = new HashMap<>();
+            var root = JsonParser.parseString(CatalogStore.readText(CATALOG_NAMES_PATH)).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+                Map<String, String> byLanguage = new HashMap<>();
+                for (Map.Entry<String, JsonElement> name : entry.getValue().getAsJsonObject().entrySet()) {
+                    if (!name.getValue().isJsonNull() && !name.getValue().getAsString().isBlank()) {
+                        byLanguage.put(name.getKey(), name.getValue().getAsString());
+                    }
+                }
+                result.put(entry.getKey(), Map.copyOf(byLanguage));
+            }
+            return Map.copyOf(result);
+        } catch (IOException | RuntimeException e) {
+            Logger.logException("Could not read the catalog names (" + CATALOG_NAMES_PATH + ")", e);
+            return Map.of();
+        }
+    }
 
     private static void ensureLoaded() {
         String active = configuredLanguage();

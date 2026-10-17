@@ -13,7 +13,8 @@ done with the master data tool `org.c2w.datatool.DataToolApp` (documents/DEVELOP
 checks against the game (names as in the battle log, roles, buffs) stay with
 you.
 
-The game catalog (catalog data files, their images and `manifest.json`) lives in
+The game catalog (catalog data files, their images, the display names in
+`names.json` and `manifest.json`) lives in
 the repository's `catalog/` folder, everything else (CowScore defaults, combos,
 templates, language files) in `cow2win-app/src/main/resources`. `catalog/manifest.json`
 lists every catalog file with size and SHA-256 and is written by the data tool on
@@ -28,11 +29,10 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
 - [ ] Export/add the avatar icon under `catalog/images/heroes/`.
       Missing icon → falls back to `placeholder.png` (see `Hero.java`), not
       an error, but worth noticing.
-- [ ] Add the display name to **all three** language files
-      (`cow2win-app/src/main/resources/language/deutsch/deutsch.properties`,
-      `english/english.properties`, `francais/francais.properties`) -
-      `displayName` is looked up from there at runtime (`LanguageService`),
-      not stored on the `Hero` record itself.
+- [ ] Add the name to `catalog/names.json` (all languages: `deutsch`,
+      `english`, `francais`) - `displayName` is looked up from there at runtime
+      (`LanguageService`), not stored on the `Hero` record itself. The language
+      files hold no catalog names any more.
 - [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
       assessment (most don't - `STANDARD`/no override is the expected
       default), set it via the "Hero Buff Fit Scores" dialog in-app, or by
@@ -49,7 +49,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       order (the data tool writes it this way).
 - [ ] Avatar under `catalog/images/titans/` (same
       placeholder-fallback note as heroes).
-- [ ] Display name in all three language files.
+- [ ] Name in `catalog/names.json` (all languages).
 - [ ] If the titan brings a **new element** (new `TitanElement` constant):
       besides `titanElement.<NAME>`, also add `titanTotem.<NAME>` in all three
       language files - the totem's in-game name exactly as it appears in a
@@ -67,10 +67,10 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       element - there is nothing else to fill in.
 - [ ] Avatar under `catalog/images/pets/` (same
       placeholder-fallback note as heroes - see `Pet.java`).
-- [ ] Display name in all three language files (section `# Pets` /
-      `# Familiers`). Check that the new `id` doesn't collide with an
-      existing hero, titan or fortification key - all of them share one
-      flat key namespace in the language files.
+- [ ] Name in `catalog/names.json` (all languages). Check that the new `id`
+      doesn't collide with an existing hero, titan, war flag or fortification
+      id - all of them share one key namespace in `names.json` (the data tool
+      also rejects an id that is a UI key in a language file).
 - [ ] If the new pet deserves a deliberate `generalScore`/`buffFitScores`
       assessment, set it via "File" > "CowScore - Pets" in-app, or by hand
       in `cow2win-app/src/main/resources/data/petCowScore.json` - NOT in `pets.json`
@@ -86,8 +86,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       element - there is nothing else to fill in.
 - [ ] Icon under `catalog/images/flags/` (same
       placeholder-fallback note as heroes - see `WarFlag.java`).
-- [ ] Display name in all three language files (section `# Kriegsflaggen` /
-      `# War flags` / `# Drapeaux de guerre`).
+- [ ] Name in `catalog/names.json` (all languages).
 - [ ] If the new war flag deserves a deliberate `generalScore`/`buffFitScores`
       assessment, set it via "File" > "CowScore - War Flags" in-app, or by
       hand in `cow2win-app/src/main/resources/data/warFlagCowScore.json` - NOT in
@@ -122,7 +121,8 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
 
 ## 6. Game names (battle logs)
 
-The display names in the language files are the **in-game names** exactly as
+The display names in `catalog/names.json` (and the totem names `titanTotem.*` in
+the language files) are the **in-game names** exactly as
 they appear in an exported Clash of Worlds battle log (`.csv`) - the
 Clash of Worlds journal maps log names back to catalog ids through them, and
 only through them (there are no aliases).
@@ -147,7 +147,8 @@ only through them (there are no aliases).
       as parse problems.
 - [ ] New language: besides `<name>/<name>.properties` the language folder
       also needs a `battleLogVocabulary.json` - without it, battle logs in
-      that language cannot be read.
+      that language cannot be read - and every entry of `catalog/names.json`
+      a name under the folder name as key (`CatalogNamesTest`).
 
 ## 7. After any data change
 

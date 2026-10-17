@@ -5,8 +5,8 @@ import org.c2w.datatool.RepositoryFolder;
 import java.nio.file.Path;
 
 /**
- * The three language files of the app. Display names of catalog entries live there with
- * the entry's id as key ({@code language/<folder>/<folder>.properties}).
+ * The three languages of the app. Display names of catalog entries live in {@code catalog/names.json}
+ * (keyed by id and {@link #folder()}), the UI texts in {@code language/<folder>/<folder>.properties}.
  */
 public enum Language {
     DE("deutsch", "Name DE"),
@@ -19,6 +19,11 @@ public enum Language {
     Language(String folder, String header) {
         this.folder = folder;
         this.header = header;
+    }
+
+    /** Name of the language folder - also the key of this language in {@code catalog/names.json}. */
+    public String folder() {
+        return folder;
     }
 
     /** Column header in the catalog tabs. */

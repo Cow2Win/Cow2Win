@@ -1,5 +1,7 @@
 package org.c2w.i18n;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,15 +20,15 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Every hero, titan, pet, totem and fortification name in the sample battle
  * logs under {@code src/test/resources/battlelog/{de,en,fr,partial}} (Schlachtplan 0.4) is a
- * display name in the language file of that log's language - Schlachtplan
- * 0.5: the language files carry the in-game names and are the only basis for
- * mapping log names back to catalog ids.
+ * display name of that log's language - in {@code catalog/names.json} (totems: the
+ * language file) - Schlachtplan 0.5: these names are the in-game names and the only
+ * basis for mapping log names back to catalog ids.
  *
  * <p>Deliberately simple CSV handling (no quoting in these exports), not the
  * real parser of the journal. Names are compared via {@link GameNameNormalizer},
  * like the parser does. A new sample log
  * after a patch that fails here means: add or correct the game name in the
- * language file (see PATCH-CHECKLIST.md).
+ * catalog names ({@code catalog/names.json}, see PATCH-CHECKLIST.md).
  */
 class BattleLogGameNamesTest {
 
@@ -37,6 +39,8 @@ class BattleLogGameNamesTest {
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
     /** The catalog data files in the repository's {@code catalog/} folder (tests run in the app module). */
     private static final Path DATA_DIR = Paths.get("..", "catalog", "data");
+    /** The display names of the catalog entries (the totem names stay in the language files). */
+    private static final Path CATALOG_NAMES = Paths.get("..", "catalog", "names.json");
     private static final List<String> CATALOGS =
             List.of("heroes.json", "titans.json", "pets.json", "fortifications.json");
 
@@ -155,7 +159,7 @@ class BattleLogGameNamesTest {
         return ids;
     }
 
-    /** Comparison keys of the display names of all catalog ids plus the totem game names in one language. */
+    /** Comparison keys of the display names of all catalog ids (names.json) plus the totem game names (language file) in one language. */
     private static Set<String> knownNames(String language, Set<String> catalogIds) throws IOException {
         Properties props = new Properties();
         try (Reader reader = Files.newBufferedReader(
@@ -164,8 +168,16 @@ class BattleLogGameNamesTest {
         }
         Set<String> names = new HashSet<>();
         for (String key : props.stringPropertyNames()) {
-            if (catalogIds.contains(key) || key.startsWith("titanTotem.")) {
+            if (key.startsWith("titanTotem.")) {
                 names.add(GameNameNormalizer.key(props.getProperty(key)));
+            }
+        }
+        JsonObject catalogNames = JsonParser.parseString(Files.readString(CATALOG_NAMES, StandardCharsets.UTF_8))
+                .getAsJsonObject();
+        for (String id : catalogIds) {
+            JsonObject byLanguage = catalogNames.getAsJsonObject(id);
+            if (byLanguage != null && byLanguage.has(language)) {
+                names.add(GameNameNormalizer.key(byLanguage.get(language).getAsString()));
             }
         }
         return names;

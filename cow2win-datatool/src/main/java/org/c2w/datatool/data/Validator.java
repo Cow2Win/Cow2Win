@@ -155,11 +155,11 @@ final class Validator {
                 TableKind other = catalogOfId.putIfAbsent(id, kind);
                 if (other != null && other != kind) {
                     error(kind, i, Fields.ID, "Id " + id + " is also used in " + other.title()
-                            + " (all ids share one key space in the language files)");
+                            + " (all ids share one key space in catalog/names.json)");
                 }
                 if (row.isNew()) {
                     for (Language language : Language.values()) {
-                        if (data.language(language).containsKey(id)) {
+                        if (data.languageFileKeys(language).contains(id)) {
                             error(kind, i, Fields.ID, "Key collision: " + id + " is already a key in "
                                     + language.relativePath().getFileName());
                             break;

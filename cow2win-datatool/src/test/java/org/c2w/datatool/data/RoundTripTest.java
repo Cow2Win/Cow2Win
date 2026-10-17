@@ -38,14 +38,12 @@ class RoundTripTest {
     }
 
     @Test
-    void languageFilesAndTheManifestAreReproduced() throws IOException {
+    void theNamesAndTheManifestAreReproduced() throws IOException {
         Path root = TestResources.copyTo(temp);
-        for (Language language : Language.values()) {
-            String text = Files.readString(root.resolve(language.relativePath()), StandardCharsets.UTF_8);
-            LanguageFile file = new LanguageFile(text);
-            assertEquals(text, file.text());
-            assertFalse(file.isModified());
-        }
+        String names = Files.readString(root.resolve(DataSet.NAMES), StandardCharsets.UTF_8);
+        NamesFile file = new NamesFile(names);
+        assertEquals(names, file.text());
+        assertFalse(file.isModified());
         String manifest = Files.readString(root.resolve(DataSet.MANIFEST), StandardCharsets.UTF_8);
         assertEquals(manifest, CatalogManifest.parse(manifest).toJson());
     }

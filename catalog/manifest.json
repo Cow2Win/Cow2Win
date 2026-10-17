@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "dataVersion": "2026-10-17",
-  "note": "catalog moved out of the app",
+  "dataVersion": "2026-10-17.1",
+  "note": "display names moved to names.json",
   "files": [
     {
       "path": "data/fortifications.json",
@@ -647,6 +647,11 @@
       "path": "images/titans/Vulcan.png",
       "size": 51011,
       "sha256": "8756504f6ffc94a51d302a12d3bc0a0d0d25e7288b5ce3e4dc7561defd7d0b8c"
+    },
+    {
+      "path": "names.json",
+      "size": 12798,
+      "sha256": "7a04a7b552dc33a56dac500f5a66c08623abf9d338df18628ebeb560eb8397ec"
     }
   ]
 }

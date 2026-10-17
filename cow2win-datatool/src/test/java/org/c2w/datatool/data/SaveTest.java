@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,23 +17,22 @@ import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** New entries, deletions and the catalog manifest - on a copy of the real repository files. */
+/** New entries, deletions, names and the catalog manifest - on a copy of the real repository files. */
 class SaveTest {
 
     private static final LocalDate TODAY = LocalDate.of(2030, 1, 2);
     /** The app resources, relative to the repository root. */
     private static final String APP = "cow2win-app/src/main/resources/";
     private static final String MANIFEST = "catalog/manifest.json";
+    private static final String NAMES = "catalog/names.json";
 
     @TempDir
     Path temp;
@@ -48,36 +46,36 @@ class SaveTest {
     }
 
     @Test
-    void aNewHeroLandsInTheCatalogTheThreeLanguageFilesAndTheImageFolder() throws IOException {
-        Path png = Files.write(temp.resolve("Zora.png"), Files.readAllBytes(root.resolve("catalog/images/heroes/Adam.png")));
-        Map<Language, String> before = languageTexts();
+    void aNewHeroLandsInTheCatalogTheNamesAndTheImageFolder() throws IOException {
+        Path png = Files.write(temp.resolve("Nyx.png"), Files.readAllBytes(root.resolve("catalog/images/heroes/Adam.png")));
+        List<String> before = read(NAMES).lines().toList();
+        Map<Language, String> languageFiles = languageTexts();
 
         Row hero = data.addRow(TableKind.HEROES);
-        data.setValue(TableKind.HEROES, hero, Language.EN.field(), "Zora the Brave");
-        assertEquals("zora-the-brave", hero.getString(Fields.ID), "id suggested from the English name");
-        data.setValue(TableKind.HEROES, hero, Language.DE.field(), "Zora die Tapfere");
-        data.setValue(TableKind.HEROES, hero, Language.FR.field(), "Zora la Brave");
+        data.setValue(TableKind.HEROES, hero, Language.EN.field(), "Nyx the Brave");
+        assertEquals("nyx-the-brave", hero.getString(Fields.ID), "id suggested from the English name");
+        data.setValue(TableKind.HEROES, hero, Language.DE.field(), "Nyx die Tapfere");
+        data.setValue(TableKind.HEROES, hero, Language.FR.field(), "Nyx la Brave");
         data.setValue(TableKind.HEROES, hero, Fields.ROLES, List.of("MAGE", "SUPPORT"));
         data.setImage(TableKind.HEROES, hero, png, true);
 
         SaveResult result = data.save(new SaveOptions(Set.of(), TODAY));
 
         assertTrue(result.saved(), () -> "errors: " + result.errors());
-        assertEquals(List.of("catalog/data/heroes.json", APP + "language/deutsch/deutsch.properties",
-                APP + "language/english/english.properties", APP + "language/francais/francais.properties",
-                "catalog/images/heroes/Zora.png", MANIFEST), result.written());
+        assertEquals(List.of("catalog/data/heroes.json", NAMES, "catalog/images/heroes/Nyx.png", MANIFEST),
+                result.written());
         assertManifestMatchesTheCatalog();
 
         JsonArray heroes = JsonParser.parseString(read("catalog/data/heroes.json")).getAsJsonArray();
         JsonObject last = heroes.get(heroes.size() - 1).getAsJsonObject();
-        assertEquals("zora-the-brave", last.get("id").getAsString());
-        assertEquals("Zora.png", last.get("image").getAsString());
+        assertEquals("nyx-the-brave", last.get("id").getAsString());
+        assertEquals("Nyx.png", last.get("image").getAsString());
         assertEquals(List.of("MAGE", "SUPPORT"), last.get("roles").getAsJsonArray().asList().stream()
                 .map(e -> e.getAsString()).toList());
         assertTrue(read("catalog/data/heroes.json").endsWith("""
                   {
-                    "id": "zora-the-brave",
-                    "image": "Zora.png",
+                    "id": "nyx-the-brave",
+                    "image": "Nyx.png",
                     "roles": [
                       "MAGE",
                       "SUPPORT"
@@ -85,22 +83,19 @@ class SaveTest {
                   }
                 ]
                 """));
-        assertArrayEquals(Files.readAllBytes(png), Files.readAllBytes(root.resolve("catalog/images/heroes/Zora.png")));
+        assertArrayEquals(Files.readAllBytes(png), Files.readAllBytes(root.resolve("catalog/images/heroes/Nyx.png")));
 
-        Map<Language, String> names = Map.of(Language.DE, "Zora die Tapfere", Language.EN, "Zora the Brave",
-                Language.FR, "Zora la Brave");
-        for (Language language : Language.values()) {
-            List<String> oldLines = before.get(language).lines().toList();
-            List<String> newLines = read(language.relativePath().toString()).lines().toList();
-            int lastHero = oldLines.indexOf("ziri=Ziri");
-            assertTrue(lastHero > 0, language + ": last hero line");
-            assertEquals("zora-the-brave=" + names.get(language), newLines.get(lastHero + 1),
-                    language + ": new key right after the last hero");
-            assertEquals(oldLines.size() + 1, newLines.size());
-            assertEquals(oldLines.subList(0, lastHero + 1), newLines.subList(0, lastHero + 1));
-            assertEquals(oldLines.subList(lastHero + 1, oldLines.size()), newLines.subList(lastHero + 2, newLines.size()));
-        }
-        assertLanguageFilesHaveTheSameKeys();
+        // One new line, at its place in id order; every other line unchanged.
+        List<String> after = read(NAMES).lines().toList();
+        int nyx = after.indexOf("  \"nyx-the-brave\": {\"deutsch\": \"Nyx die Tapfere\", \"english\": \"Nyx the Brave\","
+                + " \"francais\": \"Nyx la Brave\"},");
+        assertTrue(nyx > 0, () -> "new line in names.json: " + after);
+        assertTrue(after.get(nyx - 1).startsWith("  \"nova\": "), "sorted by id");
+        List<String> withoutNyx = new java.util.ArrayList<>(after);
+        withoutNyx.remove(nyx);
+        assertEquals(before, withoutNyx);
+        assertNamesComplete();
+        assertEquals(languageFiles, languageTexts(), "the language files are not touched");
         assertEquals(read(APP + "data/cowScore.json"), Files.readString(TestResources.REPOSITORY.resolve(APP + "data/cowScore.json")));
     }
 
@@ -127,20 +122,20 @@ class SaveTest {
         assertFalse(refused.saved());
         assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.HERO_COMBOS
                 && p.field().equals(Fields.HERO_IDS) && p.message().contains("krista")), refused.errors()::toString);
-        assertTrue(read(APP + "language/english/english.properties").contains("\nkrista=Krista\n"), "nothing written");
+        assertTrue(read(NAMES).contains("\n  \"krista\": "), "nothing written");
 
         data.deleteRow(TableKind.HERO_COMBOS, data.table(TableKind.HERO_COMBOS).findById("krista-lars"));
         SaveResult saved = data.save(new SaveOptions(Set.of(), TODAY));
 
         assertTrue(saved.saved(), () -> "errors: " + saved.errors());
+        NamesFile names = new NamesFile(read(NAMES));
+        assertFalse(names.containsId("krista"));
         for (Language language : Language.values()) {
-            Properties properties = load(language);
-            assertNull(properties.getProperty("krista"), language.name());
-            assertNotNull(properties.getProperty("lars"), language.name());
+            assertNotNull(names.get("lars", language), language.name());
         }
         assertTrue(Files.exists(root.resolve("catalog/images/heroes/Krista.png")), "images are never deleted");
         assertFalse(read("catalog/data/heroes.json").contains("\"krista\""));
-        assertLanguageFilesHaveTheSameKeys();
+        assertNamesComplete();
     }
 
     @Test
@@ -246,13 +241,14 @@ class SaveTest {
 
     @Test
     void aNameChangeTouchesOnlyThatLine() throws IOException {
-        String before = read(APP + "language/deutsch/deutsch.properties");
+        String before = read(NAMES);
         Row pet = data.table(TableKind.PETS).findById("axel");
         data.setValue(TableKind.PETS, pet, Language.DE.field(), "Axel");
 
-        assertEquals(List.of(APP + "language/deutsch/deutsch.properties"),
-                data.save(new SaveOptions(Set.of(), TODAY)).written());
-        assertEquals(before.replace("\naxel=Axell\n", "\naxel=Axel\n"), read(APP + "language/deutsch/deutsch.properties"));
+        assertEquals(List.of(NAMES, MANIFEST), data.save(new SaveOptions(Set.of(), TODAY)).written());
+        assertEquals(before.replace("\n  \"axel\": {\"deutsch\": \"Axell\",", "\n  \"axel\": {\"deutsch\": \"Axel\","),
+                read(NAMES));
+        assertManifestMatchesTheCatalog();
     }
 
     /** The written manifest passes the app's consistency check: exactly the catalog's files, sizes and hashes. */
@@ -260,19 +256,20 @@ class SaveTest {
         assertEquals(CatalogManifest.scan(root.resolve("catalog")), CatalogManifest.parse(read(MANIFEST)).files());
     }
 
-    private void assertLanguageFilesHaveTheSameKeys() throws IOException {
-        Set<String> reference = load(Language.EN).stringPropertyNames();
-        for (Language language : Language.values()) {
-            assertEquals(reference, load(language).stringPropertyNames(), language.name());
+    /** names.json holds exactly the catalog ids, each with a name in every language. */
+    private void assertNamesComplete() throws IOException {
+        NamesFile names = new NamesFile(read(NAMES));
+        DataSet saved = DataSet.load(root);
+        Set<String> ids = new java.util.TreeSet<>();
+        for (TableKind kind : TableKind.CATALOGS) {
+            ids.addAll(saved.table(kind).ids());
         }
-    }
-
-    private Properties load(Language language) throws IOException {
-        Properties properties = new Properties();
-        try (Reader reader = Files.newBufferedReader(root.resolve(language.relativePath()), StandardCharsets.UTF_8)) {
-            properties.load(reader);
+        assertEquals(ids, names.ids());
+        for (String id : ids) {
+            for (Language language : Language.values()) {
+                assertNotNull(names.get(id, language), id + " " + language);
+            }
         }
-        return properties;
     }
 
     private Map<Language, String> languageTexts() throws IOException {
