@@ -13,7 +13,7 @@ import java.util.Properties;
  * 1.1) can compare "what's installed" against "what's the latest release on
  * GitHub" without hardcoding the version a second time in Java source.
  *
- * <p>Read once and cached, same convention as {@link CatalogVersion}. Falls
+ * <p>Read once and cached. Falls
  * back to {@value #UNKNOWN} - never the literal, unresolved
  * {@code "${app.version}"} - if the file is missing or filtering did not run
  * (e.g. resources compiled some other way than through Maven's

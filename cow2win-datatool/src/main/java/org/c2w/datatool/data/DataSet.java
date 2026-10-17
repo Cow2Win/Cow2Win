@@ -1,9 +1,11 @@
 package org.c2w.datatool.data;
 
 import org.c2w.data.model.ComboSource;
+import org.c2w.data.repository.CatalogValidator;
 import org.c2w.datatool.RepositoryFolder;
 import org.c2w.infra.CatalogDataVersion;
 import org.c2w.infra.CatalogManifest;
+import org.c2w.infra.CatalogSource;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -15,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -24,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * All system data of one repository: the twelve data files (the five catalog files in {@code
@@ -46,6 +50,8 @@ public final class DataSet {
     private final Map<Language, Set<String>> languageFileKeys = new EnumMap<>(Language.class);
     private final NamesFile names;
     private final CatalogManifest manifest;
+    /** The ids per catalog data file as loaded - a save must not drop any of them (see {@link #checkCatalog}). */
+    private final Map<String, Set<String>> loadedIds;
     /** Avatars chosen in this session: target path (relative to the root) to source file - copied on save. */
     private final Map<Path, Path> pendingImages = new LinkedHashMap<>();
 
@@ -72,6 +78,7 @@ public final class DataSet {
             tables.put(kind, table);
         }
         this.manifest = CatalogManifest.parse(read(MANIFEST));
+        this.loadedIds = CatalogValidator.idsOf(CatalogSource.folder(root.resolve(RepositoryFolder.CATALOG)));
     }
 
     /** Loads everything below {@code repositoryRoot} (a folder checked by {@link RepositoryFolder}). */
@@ -256,9 +263,10 @@ public final class DataSet {
 
     /**
      * Checks and, without errors, writes every changed file (temporary file + rename): data
-     * files, {@code catalog/names.json} and new avatars - and then {@code catalog/manifest.json} if the files
-     * of the catalog no longer match it (see {@link #updateManifest}). Nothing is written if the
-     * check finds an error.
+     * files, {@code catalog/names.json} and new avatars - and then {@code catalog/manifest.json} if
+     * the files of the catalog no longer match it (see {@link #updatedManifest}). Before writing,
+     * the app's {@link CatalogValidator} checks the catalog as it would be after saving (see
+     * {@link #checkCatalog}). Nothing is written if a check finds an error.
      */
     public SaveResult save(SaveOptions options) throws IOException {
         List<Problem> errors = validate().stream().filter(Problem::isError).toList();
@@ -282,22 +290,82 @@ public final class DataSet {
         if (names.isModified()) {
             texts.put(NAMES, names.text());
         }
-
-        List<String> written = new ArrayList<>();
-        for (Map.Entry<Path, String> entry : texts.entrySet()) {
-            writeAtomically(root.resolve(entry.getKey()), entry.getValue().getBytes(StandardCharsets.UTF_8));
-            written.add(slashes(entry.getKey()));
-        }
+        Map<Path, byte[]> writes = new LinkedHashMap<>();
+        texts.forEach((path, text) -> writes.put(path, text.getBytes(StandardCharsets.UTF_8)));
         for (Map.Entry<Path, Path> image : pendingImages.entrySet()) {
             if (imageStillUsed(image.getKey())) {
-                writeAtomically(root.resolve(image.getKey()), Files.readAllBytes(image.getValue()));
-                written.add(slashes(image.getKey()));
+                writes.put(image.getKey(), Files.readAllBytes(image.getValue()));
             }
         }
-        if (updateManifest(options.today())) {
+        List<Problem> catalogErrors = checkCatalog(writes, options.today());
+        if (!catalogErrors.isEmpty()) {
+            return new SaveResult(List.of(), catalogErrors);
+        }
+
+        List<String> written = new ArrayList<>();
+        for (Map.Entry<Path, byte[]> entry : writes.entrySet()) {
+            writeAtomically(root.resolve(entry.getKey()), entry.getValue());
+            written.add(slashes(entry.getKey()));
+        }
+        CatalogManifest updated = updatedManifest(manifest, root.resolve(RepositoryFolder.CATALOG), options.today());
+        if (updated != null) {
+            writeAtomically(root.resolve(MANIFEST), updated.toJson().getBytes(StandardCharsets.UTF_8));
             written.add(slashes(MANIFEST));
         }
         return new SaveResult(written, List.of());
+    }
+
+    /**
+     * Runs the app's {@link CatalogValidator} on the catalog as it would be after saving: on a
+     * temporary copy of {@code catalog/} with {@code writes} and the new manifest applied,
+     * compared with the catalog as loaded (no id may be dropped). Returns its errors.
+     */
+    private List<Problem> checkCatalog(Map<Path, byte[]> writes, LocalDate today) throws IOException {
+        Path catalog = root.resolve(RepositoryFolder.CATALOG);
+        Path staging = Files.createTempDirectory("cow2win-catalog-check");
+        try {
+            try (Stream<Path> files = Files.walk(catalog)) {
+                for (Path file : files.filter(Files::isRegularFile).toList()) {
+                    Path copy = staging.resolve(catalog.relativize(file).toString());
+                    Files.createDirectories(copy.getParent());
+                    Files.copy(file, copy);
+                }
+            }
+            for (Map.Entry<Path, byte[]> write : writes.entrySet()) {
+                if (write.getKey().startsWith(RepositoryFolder.CATALOG)) {
+                    Path target = staging.resolve(RepositoryFolder.CATALOG.relativize(write.getKey()).toString());
+                    Files.createDirectories(target.getParent());
+                    Files.write(target, write.getValue());
+                }
+            }
+            CatalogManifest updated = updatedManifest(manifest, staging, today);
+            if (updated != null) {
+                Files.writeString(staging.resolve(CatalogManifest.FILE_NAME), updated.toJson(), StandardCharsets.UTF_8);
+            }
+            List<Problem> errors = new ArrayList<>();
+            CatalogValidator.Result result = CatalogValidator.validate(CatalogSource.folder(staging), loadedIds);
+            for (CatalogValidator.Finding error : result.errors()) {
+                errors.add(new Problem(Problem.Severity.ERROR, tableOf(error.message()), -1, null, error.message()));
+            }
+            return errors;
+        } finally {
+            try (Stream<Path> files = Files.walk(staging)) {
+                for (Path file : files.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.deleteIfExists(file);
+                }
+            }
+        }
+    }
+
+    /** The catalog table a validator message is about (by the data file it names), null for the catalog as a whole. */
+    private static TableKind tableOf(String message) {
+        for (TableKind kind : TableKind.CATALOGS) {
+            String file = RepositoryFolder.CATALOG.relativize(kind.relativePath()).toString().replace('\\', '/');
+            if (message.startsWith(file)) {
+                return kind;
+            }
+        }
+        return null;
     }
 
     private boolean imageStillUsed(Path target) {
@@ -336,22 +404,21 @@ public final class DataSet {
     }
 
     /**
-     * Rewrites {@code catalog/manifest.json} if the files below {@code catalog/} (size, SHA-256)
+     * The new {@code catalog/manifest.json} if the files below {@code catalog/} (size, SHA-256)
      * differ from the ones it lists: with the current files and the next {@code dataVersion} for
      * {@code today} (see {@link CatalogDataVersion#next}); {@code formatVersion} and {@code note}
      * stay as they are. A save that leaves the catalog alone (e.g. only CowScore changes) does
      * not touch the manifest.
      *
-     * @return true if the manifest was written
+     * @return the new manifest, or null if {@code current} still matches the files
      */
-    private boolean updateManifest(LocalDate today) throws IOException {
-        List<CatalogManifest.FileEntry> files = CatalogManifest.scan(root.resolve(RepositoryFolder.CATALOG));
-        if (files.equals(manifest.files())) {
-            return false;
+    private static CatalogManifest updatedManifest(CatalogManifest current, Path catalogFolder, LocalDate today)
+            throws IOException {
+        List<CatalogManifest.FileEntry> files = CatalogManifest.scan(catalogFolder);
+        if (files.equals(current.files())) {
+            return null;
         }
-        CatalogManifest updated = manifest.with(manifest.dataVersion().next(today), files);
-        writeAtomically(root.resolve(MANIFEST), updated.toJson().getBytes(StandardCharsets.UTF_8));
-        return true;
+        return current.with(current.dataVersion().next(today), files);
     }
 
     private static void writeAtomically(Path target, byte[] content) throws IOException {

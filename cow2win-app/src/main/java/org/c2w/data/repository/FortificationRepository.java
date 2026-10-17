@@ -8,6 +8,7 @@ import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -160,11 +161,16 @@ public class FortificationRepository {
      * {@code fortifications.json} classpath resource.
      */
     static Map<String, Fortification> parseFortificationsJson(String json) {
+        return parseFortificationsJson(json, Logger::log);
+    }
+
+    /** Like {@link #parseFortificationsJson(String)}, with the parse warnings going to {@code log}. */
+    static Map<String, Fortification> parseFortificationsJson(String json, Consumer<String> log) {
         Map<String, Fortification> result = new LinkedHashMap<>();
 
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Fortification fort = parseFortificationObject(element.getAsJsonObject());
+            Fortification fort = parseFortificationObject(element.getAsJsonObject(), log);
             if (fort != null) {
                 result.put(fort.id(), fort);
             }
@@ -173,7 +179,7 @@ public class FortificationRepository {
         return result;
     }
 
-    private static Fortification parseFortificationObject(JsonObject obj) {
+    private static Fortification parseFortificationObject(JsonObject obj, Consumer<String> log) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String typeStr = JsonSupport.getStringOrNull(obj, "type");
         Integer capacity = JsonSupport.getInteger(obj, "capacity");
@@ -182,11 +188,11 @@ public class FortificationRepository {
         Integer column = JsonSupport.getInteger(obj, "column");
         Integer importance = JsonSupport.getInteger(obj, "strategicImportance");
         List<String> prerequisites = JsonSupport.getStringList(obj, "prerequisites");
-        Buff buff = parseBuff(JsonSupport.getObject(obj, "buff"));
+        Buff buff = parseBuff(JsonSupport.getObject(obj, "buff"), log);
 
         if (id == null || typeStr == null || capacity == null || captureBonus == null ||
             row == null || column == null || importance == null) {
-            Logger.log("fortifications.json: skipping invalid fortification entry (id=" + id
+            log.accept("fortifications.json: skipping invalid fortification entry (id=" + id
                     + "): missing required field(s)");
             return null;
         }
@@ -195,7 +201,7 @@ public class FortificationRepository {
         try {
             type = FortificationType.valueOf(typeStr);
         } catch (IllegalArgumentException e) {
-            Logger.log("fortifications.json: fortification '" + id + "' has unknown type '" + typeStr + "', skipping it");
+            log.accept("fortifications.json: fortification '" + id + "' has unknown type '" + typeStr + "', skipping it");
             return null;
         }
 
@@ -212,7 +218,7 @@ public class FortificationRepository {
         );
     }
 
-    private static Buff parseBuff(JsonObject buffObj) {
+    private static Buff parseBuff(JsonObject buffObj, Consumer<String> log) {
         if (buffObj == null) {
             return null;
         }
@@ -231,7 +237,7 @@ public class FortificationRepository {
             }
             return null;
         } catch (RuntimeException e) {
-            Logger.log("fortifications.json: could not parse fortification buff, skipping it: " + e.getMessage());
+            log.accept("fortifications.json: could not parse fortification buff, skipping it: " + e.getMessage());
             return null;
         }
     }

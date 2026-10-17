@@ -11,6 +11,7 @@ import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -136,7 +137,7 @@ public class WarFlagRepository {
     private Map<String, WarFlag> loadWarFlags() {
         try {
             String warFlagsJson = CatalogStore.readText(WAR_FLAGS_JSON_PATH);
-            Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson);
+            Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson, Logger::log);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), false, ENTITY_LABEL);
             Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, false, ENTITY_LABEL);
@@ -150,17 +151,17 @@ public class WarFlagRepository {
         }
     }
 
-    private static Map<String, WarFlag> parseWarFlagsJson(String json) {
+    static Map<String, WarFlag> parseWarFlagsJson(String json, Consumer<String> log) {
         Map<String, WarFlag> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "..." }, ...] - purely the "objective"
         // master data; fortification marks live in warFlagCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            WarFlag warFlag = parseWarFlagObject(element.getAsJsonObject());
+            WarFlag warFlag = parseWarFlagObject(element.getAsJsonObject(), log);
             if (warFlag != null) {
                 if (result.containsKey(warFlag.id())) {
-                    Logger.log("warFlags.json: duplicate war flag id '" + warFlag.id() + "', the later entry wins");
+                    log.accept("warFlags.json: duplicate war flag id '" + warFlag.id() + "', the later entry wins");
                 }
                 result.put(warFlag.id(), warFlag);
             }
@@ -169,12 +170,12 @@ public class WarFlagRepository {
         return result;
     }
 
-    private static WarFlag parseWarFlagObject(JsonObject obj) {
+    private static WarFlag parseWarFlagObject(JsonObject obj, Consumer<String> log) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String image = JsonSupport.getStringOrNull(obj, "image");
 
         if (id == null || id.isBlank()) {
-            Logger.log("warFlags.json: skipping invalid war flag entry: missing/blank id");
+            log.accept("warFlags.json: skipping invalid war flag entry: missing/blank id");
             return null;
         }
 

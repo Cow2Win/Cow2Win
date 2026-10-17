@@ -114,7 +114,8 @@ class SaveTest {
     }
 
     @Test
-    void deletingRemovesTheNamesKeepsTheImageAndReportsRemainingReferences() throws IOException {
+    void deletingASavedEntryIsRefusedByTheCatalogCheck() throws IOException {
+        Map<Path, byte[]> before = RoundTripTest.snapshot(root);
         DataTable heroes = data.table(TableKind.HEROES);
         data.deleteRow(TableKind.HEROES, heroes.findById("krista"));
 
@@ -122,20 +123,38 @@ class SaveTest {
         assertFalse(refused.saved());
         assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.HERO_COMBOS
                 && p.field().equals(Fields.HERO_IDS) && p.message().contains("krista")), refused.errors()::toString);
-        assertTrue(read(NAMES).contains("\n  \"krista\": "), "nothing written");
 
+        // Without the combo the data check passes - the catalog check still refuses: ids are never removed.
         data.deleteRow(TableKind.HERO_COMBOS, data.table(TableKind.HERO_COMBOS).findById("krista-lars"));
-        SaveResult saved = data.save(new SaveOptions(Set.of(), TODAY));
+        SaveResult stillRefused = data.save(new SaveOptions(Set.of(), TODAY));
 
-        assertTrue(saved.saved(), () -> "errors: " + saved.errors());
-        NamesFile names = new NamesFile(read(NAMES));
-        assertFalse(names.containsId("krista"));
-        for (Language language : Language.values()) {
-            assertNotNull(names.get("lars", language), language.name());
-        }
-        assertTrue(Files.exists(root.resolve("catalog/images/heroes/Krista.png")), "images are never deleted");
-        assertFalse(read("catalog/data/heroes.json").contains("\"krista\""));
+        assertFalse(stillRefused.saved());
+        assertTrue(stillRefused.errors().stream().anyMatch(p -> p.table() == TableKind.HEROES
+                && p.message().contains("id krista is missing")), stillRefused.errors()::toString);
+        Map<Path, byte[]> after = RoundTripTest.snapshot(root);
+        assertEquals(before.keySet(), after.keySet(), "nothing written");
+        before.forEach((path, bytes) -> assertArrayEquals(bytes, after.get(path), path.toString()));
+    }
+
+    @Test
+    void aNewEntryCanBeDeletedAgainBeforeSaving() throws IOException {
+        Row hero = data.addRow(TableKind.HEROES);
+        data.setValue(TableKind.HEROES, hero, Language.EN.field(), "Nyx");
+        data.deleteRow(TableKind.HEROES, hero);
+        assertTrue(data.save(new SaveOptions(Set.of(), TODAY)).saved());
         assertNamesComplete();
+    }
+
+    @Test
+    void anImageMissingInTheCatalogIsRefused() throws IOException {
+        Row adam = data.table(TableKind.HEROES).findById("adam");
+        data.setValue(TableKind.HEROES, adam, Fields.IMAGE, "NoSuchImage.png");
+
+        SaveResult refused = data.save(new SaveOptions(Set.of(), TODAY));
+
+        assertFalse(refused.saved());
+        assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.HEROES
+                && p.message().contains("NoSuchImage.png")), refused.errors()::toString);
     }
 
     @Test

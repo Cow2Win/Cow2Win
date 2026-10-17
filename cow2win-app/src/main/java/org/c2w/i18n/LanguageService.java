@@ -162,6 +162,27 @@ public class LanguageService {
     }
 
 
+    /**
+     * Parses the text of a catalog's {@code names.json}: catalog id to language folder name to
+     * name, blank names left out - the parser used at startup and by {@code CatalogValidator}.
+     *
+     * @throws RuntimeException (Gson's or {@link IllegalStateException}) if the text is malformed
+     */
+    public static Map<String, Map<String, String>> parseCatalogNames(String json) {
+        Map<String, Map<String, String>> result = new HashMap<>();
+        var root = JsonParser.parseString(json).getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+            Map<String, String> byLanguage = new HashMap<>();
+            for (Map.Entry<String, JsonElement> name : entry.getValue().getAsJsonObject().entrySet()) {
+                if (!name.getValue().isJsonNull() && !name.getValue().getAsString().isBlank()) {
+                    byLanguage.put(name.getKey(), name.getValue().getAsString());
+                }
+            }
+            result.put(entry.getKey(), Map.copyOf(byLanguage));
+        }
+        return Map.copyOf(result);
+    }
+
     /** Forces the language files and the catalog names to be reloaded on next use. */
     public static void resetCache() {
         synchronized (LanguageService.class) {
@@ -208,18 +229,7 @@ public class LanguageService {
 
     private static Map<String, Map<String, String>> loadCatalogNames() {
         try {
-            Map<String, Map<String, String>> result = new HashMap<>();
-            var root = JsonParser.parseString(CatalogStore.readText(CATALOG_NAMES_PATH)).getAsJsonObject();
-            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
-                Map<String, String> byLanguage = new HashMap<>();
-                for (Map.Entry<String, JsonElement> name : entry.getValue().getAsJsonObject().entrySet()) {
-                    if (!name.getValue().isJsonNull() && !name.getValue().getAsString().isBlank()) {
-                        byLanguage.put(name.getKey(), name.getValue().getAsString());
-                    }
-                }
-                result.put(entry.getKey(), Map.copyOf(byLanguage));
-            }
-            return Map.copyOf(result);
+            return parseCatalogNames(CatalogStore.readText(CATALOG_NAMES_PATH));
         } catch (IOException | RuntimeException e) {
             Logger.logException("Could not read the catalog names (" + CATALOG_NAMES_PATH + ")", e);
             return Map.of();

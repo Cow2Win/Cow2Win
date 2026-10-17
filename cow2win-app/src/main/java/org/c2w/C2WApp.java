@@ -1,6 +1,7 @@
 package org.c2w;
 
 import org.c2w.data.journal.db.JournalException;
+import org.c2w.data.repository.CatalogSelector;
 import org.c2w.gui.Cow2Frame;
 import org.c2w.gui.SplashWindow;
 import org.c2w.gui.common.GuiUtils;
@@ -8,7 +9,6 @@ import org.c2w.gui.common.MeasuredCheckBoxUI;
 import org.c2w.gui.common.MeasuredLabelUI;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.AppVersion;
-import org.c2w.infra.CatalogVersion;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
 import org.c2w.infra.UpdateChecker;
@@ -41,6 +41,10 @@ public class C2WApp {
 
         Cow2Frame[] frame = new Cow2Frame[1];
         try {
+            // Before anything reads the catalog (repositories, names, battle-log names) - and
+            // only here: the active catalog never changes while the program runs.
+            splash.setStatus("Checking the catalog ...");
+            CatalogSelector.applyAtStartup(Config.getDownloadedCatalogDir());
             AppContext context = WorkspaceBootstrap.start(splash::setStatus, C2WApp::logStartBlock);
 
             splash.setStatus("Starting database ...");
@@ -141,7 +145,7 @@ public class C2WApp {
      * Writes the start block of the technical log right after the configuration
      * is loaded (so it lands in the configured workspace), showing at a glance
      * what this session works with: version, Java, operating system, workspace,
-     * UI language and the {@link CatalogVersion} the catalog data was last
+     * UI language and the active game catalog (built-in or downloaded) with the data version it was last
      * checked against. Also registers the "closed" entry for the end of the session.
      */
     private static void logStartBlock() {
@@ -151,8 +155,7 @@ public class C2WApp {
                 + " (" + System.getProperty("os.arch") + ")");
         Logger.log("Workspace: " + Config.getWorkspaceDir().toAbsolutePath());
         Logger.log("UI language: " + LanguageService.configuredLanguage());
-        String suffix = CatalogVersion.note().isBlank() ? "" : " (" + CatalogVersion.note() + ")";
-        Logger.log("Catalog data version: " + CatalogVersion.dataVersion() + suffix);
+        CatalogSelector.logActiveCatalog();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> Logger.log("Cow2Win closed"), "c2w-log-closed"));
     }
 

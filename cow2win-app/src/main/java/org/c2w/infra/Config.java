@@ -312,6 +312,21 @@ public final class Config {
     }
 
     /**
+     * {@code <user.home>/.cow2Win/catalog} - a downloaded game catalog (same layout as {@code
+     * catalog/} in the repository, with its manifest). Under {@link #ROOT}, not in the workspace:
+     * the catalog belongs to the installation, not to a workspace. Used at startup instead of the
+     * built-in catalog if it is valid and newer (see {@code CatalogSelector}).
+     */
+    public static Path getDownloadedCatalogDir() {
+        return ROOT.resolve("catalog");
+    }
+
+    /** {@code <user.home>/.cow2Win/catalog.previous} - the downloaded catalog replaced by the last update. */
+    public static Path getPreviousCatalogDir() {
+        return ROOT.resolve("catalog.previous");
+    }
+
+    /**
      * {@link #getWorkspacePath()} as a {@link Path}. It reflects
      * {@link #KEY_WORKSPACE_PATH} and can therefore only be trusted after {@link #load()} has run.
      */

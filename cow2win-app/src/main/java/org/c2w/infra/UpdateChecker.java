@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * doesn't parse as a version) comes back as {@link
  * UpdateCheckResult.Status#CHECK_FAILED} and is logged via {@link Logger},
  * exactly like a network-dependent feature should - see also {@link
- * CatalogVersion}/{@link BackupService} for the same "never break the app"
+ * BackupService} for the same "never break the app"
  * convention elsewhere in this project.
  */
 public final class UpdateChecker {

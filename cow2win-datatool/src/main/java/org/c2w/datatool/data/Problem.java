@@ -4,7 +4,7 @@ package org.c2w.datatool.data;
  * One finding of the check.
  *
  * @param severity errors prevent saving, warnings don't
- * @param table    tab of the finding
+ * @param table    tab of the finding, or null for a finding of the whole catalog (see {@code CatalogValidator})
  * @param row      row index in that table's model, or -1 if not tied to a row
  * @param field    field of the cell, or null
  * @param message  text for the problem list
@@ -19,6 +19,7 @@ public record Problem(Severity severity, TableKind table, int row, String field,
 
     @Override
     public String toString() {
-        return severity + "  " + table.title() + (row >= 0 ? ", row " + (row + 1) : "") + ": " + message;
+        return severity + "  " + (table == null ? "Catalog" : table.title())
+                + (row >= 0 ? ", row " + (row + 1) : "") + ": " + message;
     }
 }

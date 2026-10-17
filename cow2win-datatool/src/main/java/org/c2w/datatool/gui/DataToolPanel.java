@@ -320,6 +320,9 @@ public final class DataToolPanel extends JPanel {
 
     /** Selects the tab, row and cell of a problem. */
     void jumpTo(Problem problem) {
+        if (problem.table() == null) {
+            return;
+        }
         tabs.setSelectedIndex(problem.table().ordinal());
         JTable table = tables.get(problem.table());
         if (problem.row() < 0 || problem.row() >= table.getRowCount()) {

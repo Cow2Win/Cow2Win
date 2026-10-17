@@ -14,6 +14,7 @@ import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -149,7 +150,7 @@ public class TitanRepository {
     private Map<String, Titan> loadTitans() {
         try {
             String titansJson = CatalogStore.readText(TITANS_JSON_PATH);
-            Map<String, Titan> masterData = parseTitansJson(titansJson);
+            Map<String, Titan> masterData = parseTitansJson(titansJson, Logger::log);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), ALLOW_NEGATIVE, ENTITY_LABEL);
             Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, ALLOW_NEGATIVE,
@@ -172,6 +173,11 @@ public class TitanRepository {
 
     /** The titans of a {@code titans.json} text by id, in file order - package-private for tests. */
     static Map<String, Titan> parseTitansJson(String json) {
+        return parseTitansJson(json, Logger::log);
+    }
+
+    /** Like {@link #parseTitansJson(String)}, with the parse warnings going to {@code log}. */
+    static Map<String, Titan> parseTitansJson(String json, Consumer<String> log) {
         Map<String, Titan> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "element": "...", "roles": [...], "superTitan": true, "image": "..." }, ...]
@@ -179,7 +185,7 @@ public class TitanRepository {
         // "objective" master data; fortification marks live in titanCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Titan titan = parseTitanObject(element.getAsJsonObject());
+            Titan titan = parseTitanObject(element.getAsJsonObject(), log);
             if (titan != null) {
                 result.put(titan.id(), titan);
             }
@@ -188,13 +194,13 @@ public class TitanRepository {
         return result;
     }
 
-    private static Titan parseTitanObject(JsonObject obj) {
+    private static Titan parseTitanObject(JsonObject obj, Consumer<String> log) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String elementStr = JsonSupport.getStringOrNull(obj, "element");
         String image = JsonSupport.getStringOrNull(obj, "image");
 
         if (id == null || id.isBlank() || elementStr == null || elementStr.isBlank()) {
-            Logger.log("titans.json: skipping invalid titan entry (id=" + id + "): missing/blank id or element");
+            log.accept("titans.json: skipping invalid titan entry (id=" + id + "): missing/blank id or element");
             return null;
         }
 
@@ -202,19 +208,19 @@ public class TitanRepository {
         try {
             element = TitanElement.valueOf(elementStr);
         } catch (IllegalArgumentException e) {
-            Logger.log("titans.json: titan '" + id + "' has unknown element '" + elementStr + "', skipping it");
+            log.accept("titans.json: titan '" + id + "' has unknown element '" + elementStr + "', skipping it");
             return null;
         }
 
         // Scores used to live directly in titans.json (as generalScore/buffFitScores) - they are no
         // longer read from there, so point out any leftovers instead of dropping them silently.
         if (obj.has("generalScore") || obj.has("buffFitScores")) {
-            Logger.log("titans.json: titan '" + id + "' still carries generalScore/buffFitScores - these are "
+            log.accept("titans.json: titan '" + id + "' still carries generalScore/buffFitScores - these are "
                     + "ignored now, maintain the titan's fortification marks (fortMarks) in titanCowScore.json "
                     + "instead (via the titan CowScore dialog)");
         }
 
-        List<TitanRole> roles = parseRoles(obj, id);
+        List<TitanRole> roles = parseRoles(obj, id, log);
         JsonElement superTitan = obj.get("superTitan");
         boolean isSuperTitan = superTitan != null && !superTitan.isJsonNull() && superTitan.getAsBoolean();
 
@@ -225,7 +231,7 @@ public class TitanRepository {
      * The titan's "roles" in file order: an unknown role is logged and skipped, missing or
      * empty roles are logged as a warning - the titan is loaded anyway (with no roles).
      */
-    private static List<TitanRole> parseRoles(JsonObject obj, String id) {
+    private static List<TitanRole> parseRoles(JsonObject obj, String id, Consumer<String> log) {
         List<TitanRole> roles = new ArrayList<>();
         JsonElement rolesElement = obj.get("roles");
         if (rolesElement != null && rolesElement.isJsonArray()) {
@@ -234,12 +240,12 @@ public class TitanRepository {
                 try {
                     roles.add(TitanRole.valueOf(roleStr));
                 } catch (IllegalArgumentException | NullPointerException e) {
-                    Logger.log("titans.json: titan '" + id + "' has unknown role '" + roleStr + "', skipping that role");
+                    log.accept("titans.json: titan '" + id + "' has unknown role '" + roleStr + "', skipping that role");
                 }
             }
         }
         if (roles.isEmpty()) {
-            Logger.log("titans.json: WARNING - titan '" + id + "' has no (valid) roles, loading it without roles");
+            log.accept("titans.json: WARNING - titan '" + id + "' has no (valid) roles, loading it without roles");
         }
         return roles;
     }

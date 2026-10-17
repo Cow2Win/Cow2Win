@@ -12,6 +12,7 @@ import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -145,7 +146,7 @@ public class HeroRepository {
     private Map<String, Hero> loadHeroes() {
         try {
             String heroesJson = CatalogStore.readText(HEROES_JSON_PATH);
-            Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());
+            Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of(), Logger::log);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), true, "hero");
             Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, true, "hero",
@@ -166,14 +167,14 @@ public class HeroRepository {
                 .map(fortification -> hero.matchesBuff(fortification.buff())).orElse(false);
     }
 
-    private static Map<String, Hero> parseHeroesJson(String json, Map<String, FortMarks> cowScores) {
+    static Map<String, Hero> parseHeroesJson(String json, Map<String, FortMarks> cowScores, Consumer<String> log) {
         Map<String, Hero> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "...", "roles": [...] }, ...] - purely the
         // "objective" master data; fortification marks now live in cowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Hero hero = parseHeroObject(element.getAsJsonObject(), cowScores);
+            Hero hero = parseHeroObject(element.getAsJsonObject(), cowScores, log);
             if (hero != null) {
                 result.put(hero.id(), hero);
             }
@@ -182,13 +183,13 @@ public class HeroRepository {
         return result;
     }
 
-    private static Hero parseHeroObject(JsonObject obj, Map<String, FortMarks> cowScores) {
+    private static Hero parseHeroObject(JsonObject obj, Map<String, FortMarks> cowScores, Consumer<String> log) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String image = JsonSupport.getStringOrNull(obj, "image");
-        List<Role> roles = parseRoles(obj);
+        List<Role> roles = parseRoles(obj, log);
 
         if (id == null || id.isBlank() || roles.isEmpty()) {
-            Logger.log("heroes.json: skipping invalid hero entry (id=" + id + "): "
+            log.accept("heroes.json: skipping invalid hero entry (id=" + id + "): "
                     + (id == null || id.isBlank() ? "missing/blank id" : "no valid role"));
             return null;
         }
@@ -197,14 +198,14 @@ public class HeroRepository {
         return new Hero(id, roles, image != null ? IMAGE_PATH_PREFIX + image : null, fortMarks);
     }
 
-    private static List<Role> parseRoles(JsonObject obj) {
+    private static List<Role> parseRoles(JsonObject obj, Consumer<String> log) {
         List<Role> roles = new ArrayList<>();
         String heroId = JsonSupport.getStringOrNull(obj, "id");
         for (String roleName : JsonSupport.getStringList(obj, "roles")) {
             try {
                 roles.add(Role.valueOf(roleName.trim()));
             } catch (IllegalArgumentException e) {
-                Logger.log("heroes.json: hero '" + heroId + "' has unknown role '" + roleName + "', ignoring it");
+                log.accept("heroes.json: hero '" + heroId + "' has unknown role '" + roleName + "', ignoring it");
             }
         }
         return roles;

@@ -11,6 +11,7 @@ import org.c2w.infra.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -132,7 +133,7 @@ public class PetRepository {
     private Map<String, Pet> loadPets() {
         try {
             String petsJson = CatalogStore.readText(PETS_JSON_PATH);
-            Map<String, Pet> masterData = parsePetsJson(petsJson);
+            Map<String, Pet> masterData = parsePetsJson(petsJson, Logger::log);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), false, "pet");
             Map<String, FortMarks> fortMarks = FortMarkFiles.loadWorkspace(cowScoreFile(), defaults, false, "pet");
@@ -146,17 +147,17 @@ public class PetRepository {
         }
     }
 
-    private static Map<String, Pet> parsePetsJson(String json) {
+    static Map<String, Pet> parsePetsJson(String json, Consumer<String> log) {
         Map<String, Pet> result = new LinkedHashMap<>();
 
         // Expects: [{ "id": "...", "image": "..." }, ...] - purely the "objective"
         // master data; fortification marks live in petCowScore.json.
         JsonArray array = JsonParser.parseString(json).getAsJsonArray();
         for (var element : array) {
-            Pet pet = parsePetObject(element.getAsJsonObject());
+            Pet pet = parsePetObject(element.getAsJsonObject(), log);
             if (pet != null) {
                 if (result.containsKey(pet.id())) {
-                    Logger.log("pets.json: duplicate pet id '" + pet.id() + "', the later entry wins");
+                    log.accept("pets.json: duplicate pet id '" + pet.id() + "', the later entry wins");
                 }
                 result.put(pet.id(), pet);
             }
@@ -165,12 +166,12 @@ public class PetRepository {
         return result;
     }
 
-    private static Pet parsePetObject(JsonObject obj) {
+    private static Pet parsePetObject(JsonObject obj, Consumer<String> log) {
         String id = JsonSupport.getStringOrNull(obj, "id");
         String image = JsonSupport.getStringOrNull(obj, "image");
 
         if (id == null || id.isBlank()) {
-            Logger.log("pets.json: skipping invalid pet entry: missing/blank id");
+            log.accept("pets.json: skipping invalid pet entry: missing/blank id");
             return null;
         }
 
