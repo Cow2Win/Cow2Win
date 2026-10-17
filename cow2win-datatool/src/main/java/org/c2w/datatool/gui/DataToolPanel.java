@@ -233,12 +233,12 @@ public final class DataToolPanel extends JPanel {
         String fileName = source.getFileName().toString();
         boolean copy = true;
         try {
-            Path target = data.root().resolve("images").resolve(kind.imageFolder()).resolve(fileName);
+            Path target = data.root().resolve(DataSet.imageFolder(kind)).resolve(fileName);
             boolean sameFile = data.imageExistsInFolder(kind, fileName)
                     && java.nio.file.Files.isSameFile(source, target);
             if (data.imageExistsInFolder(kind, fileName) && !sameFile) {
                 Object[] choices = {"Overwrite", "Use existing file", "Cancel"};
-                int answer = JOptionPane.showOptionDialog(this, "images/" + kind.imageFolder() + "/" + fileName
+                int answer = JOptionPane.showOptionDialog(this, "catalog/images/" + kind.imageFolder() + "/" + fileName
                                 + " exists already.\nOverwrite it with the chosen file on save?", "Image exists",
                         JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[2]);
                 if (answer == 2 || answer < 0) {
@@ -359,10 +359,8 @@ public final class DataToolPanel extends JPanel {
                 }
             }
         }
-        boolean setDataVersion = data.catalogFilesChanged()
-                && askYesNo("Set dataVersion to today?", "catalog-version.json", true);
         try {
-            SaveResult result = data.save(new SaveOptions(cowScore, setDataVersion, LocalDate.now()));
+            SaveResult result = data.save(new SaveOptions(cowScore, LocalDate.now()));
             if (!result.saved()) {
                 showProblems(result.errors());
                 error("Save refused: " + result.errors().size() + " error(s).");

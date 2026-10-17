@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.WarFlag;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -31,13 +32,13 @@ import java.util.stream.Collectors;
  * {@link WarFlag} view the rest of the app uses.
  */
 public class WarFlagRepository {
-    private static final String WAR_FLAGS_JSON_PATH = "/data/warFlags.json";
+    private static final String WAR_FLAGS_JSON_PATH = "data/warFlags.json";
     private static final String COW_SCORE_JSON_PATH = "/data/warFlagCowScore.json";
 
     /** File name of the workspace copy of the war flag CowScores - see {@link #cowScoreFile()}. */
     private static final String COW_SCORE_FILE_NAME = "warFlagCowScore.json";
 
-    /** Classpath-relative folder every war flag's "image" JSON field is resolved against - see {@link #parseWarFlagObject}. */
+    /** Logical image folder every war flag's "image" JSON field is resolved against (loaded from the catalog by IconLoader) - see {@link #parseWarFlagObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/flags/";
 
     /** Entity label used in {@link FortMarkFiles}' log messages. */
@@ -47,7 +48,7 @@ public class WarFlagRepository {
     private volatile Map<String, WarFlag> warFlagsById;
 
     /**
-     * Loads the catalog right away: the master data from the classpath,
+     * Loads the catalog right away: the master data from the active catalog ({@link CatalogStore}),
      * the CowScores from the workspace copy in {@code workspaceDir} (created
      * from the shipped defaults if it does not exist yet).
      *
@@ -134,7 +135,7 @@ public class WarFlagRepository {
 
     private Map<String, WarFlag> loadWarFlags() {
         try {
-            String warFlagsJson = JsonSupport.readClasspathResource(WarFlagRepository.class, WAR_FLAGS_JSON_PATH);
+            String warFlagsJson = CatalogStore.readText(WAR_FLAGS_JSON_PATH);
             Map<String, WarFlag> masterData = parseWarFlagsJson(warFlagsJson);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(WarFlagRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), false, ENTITY_LABEL);

@@ -1,5 +1,6 @@
 package org.c2w.gui.common;
 
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.Logger;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,6 +18,13 @@ public final class IconLoader {
     static final int TOOLBAR_ICON_SIZE = 20;
 
     private static final String BACKGROUND_IMAGE = "/images/app/background.png";
+
+    /** Image folders whose files belong to the game catalog (each has its own placeholder on the classpath). */
+    private static final List<String> CATALOG_IMAGE_FOLDERS =
+            List.of("/images/heroes/", "/images/titans/", "/images/pets/", "/images/flags/");
+
+    /** File name of the placeholder in every catalog image folder, e.g. {@code /images/heroes/placeholder.png}. */
+    private static final String PLACEHOLDER_FILE_NAME = "placeholder.png";
 
     private static final Map<String, ImageIcon> cache = new ConcurrentHashMap<>();
 
@@ -28,7 +37,7 @@ public final class IconLoader {
     }
 
     /**
-     * Returns the icon for the given classpath-absolute image path, scaled to size x size, or null if not found.
+     * Returns the icon for the given image path (e.g. {@code /images/heroes/Adam.png}, see {@link #resolve}), scaled to size x size, or null if not found.
      */
     public static ImageIcon iconFor(String imagePath, int size) {
         if (imagePath == null || imagePath.isBlank()) {
@@ -91,15 +100,48 @@ public final class IconLoader {
     }
 
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
-        URL resource = IconLoader.class.getResource(imagePath);
+        URL resource = resolve(imagePath);
         if (resource == null) {
-            Logger.log("Image not found on classpath: " + imagePath);
             return null;
         }
         ImageIcon original = new ImageIcon(resource);
         Image scaled = original.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
         return new ImageIcon(scaled);
     }
+
+    /**
+     * Where an image path points to: a catalog image ({@code /images/heroes|titans|pets|flags/...},
+     * see {@link #CATALOG_IMAGE_FOLDERS}) comes from the active catalog ({@link CatalogStore}) - if
+     * it is missing there, the folder's placeholder is used instead; every other image (the
+     * placeholders, {@code /images/app/...}) comes from the classpath. Null if not found.
+     */
+    private static URL resolve(String imagePath) {
+        String folder = catalogImageFolder(imagePath);
+        if (folder == null) {
+            URL resource = IconLoader.class.getResource(imagePath);
+            if (resource == null) {
+                Logger.log("Image not found on classpath: " + imagePath);
+            }
+            return resource;
+        }
+        URL catalogImage = CatalogStore.imageUrl(imagePath.substring(1));
+        if (catalogImage != null) {
+            return catalogImage;
+        }
+        Logger.log("Image not found in the catalog, using the placeholder: " + imagePath);
+        return IconLoader.class.getResource(folder + PLACEHOLDER_FILE_NAME);
+    }
+
+    /** The catalog image folder (e.g. {@code /images/heroes/}) of {@code imagePath}; null if it is no catalog image. */
+    private static String catalogImageFolder(String imagePath) {
+        for (String folder : CATALOG_IMAGE_FOLDERS) {
+            if (imagePath.startsWith(folder) && !imagePath.equals(folder + PLACEHOLDER_FILE_NAME)) {
+                return folder;
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Draws {@code icon} into an ARGB {@link BufferedImage} and replaces every fully black pixel's RGB with {@code color}'s, keeping each pixel's original alpha.

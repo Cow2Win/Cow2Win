@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Pet;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -30,20 +31,20 @@ import java.util.stream.Collectors;
  * {@link Pet} view the rest of the app uses.
  */
 public class PetRepository {
-    private static final String PETS_JSON_PATH = "/data/pets.json";
+    private static final String PETS_JSON_PATH = "data/pets.json";
     private static final String COW_SCORE_JSON_PATH = "/data/petCowScore.json";
 
     /** File name of the workspace copy of the pet CowScores - see {@link #cowScoreFile()}. */
     private static final String COW_SCORE_FILE_NAME = "petCowScore.json";
 
-    /** Classpath-relative folder every pet's "image" JSON field is resolved against - see {@link #parsePetObject}. */
+    /** Logical image folder every pet's "image" JSON field is resolved against (loaded from the catalog by IconLoader) - see {@link #parsePetObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/pets/";
 
     private final Path workspaceDir;
     private volatile Map<String, Pet> petsById;
 
     /**
-     * Loads the catalog right away: the master data from the classpath,
+     * Loads the catalog right away: the master data from the active catalog ({@link CatalogStore}),
      * the CowScores from the workspace copy in {@code workspaceDir} (created
      * from the shipped defaults if it does not exist yet).
      *
@@ -130,7 +131,7 @@ public class PetRepository {
 
     private Map<String, Pet> loadPets() {
         try {
-            String petsJson = JsonSupport.readClasspathResource(PetRepository.class, PETS_JSON_PATH);
+            String petsJson = CatalogStore.readText(PETS_JSON_PATH);
             Map<String, Pet> masterData = parsePetsJson(petsJson);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(PetRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), false, "pet");

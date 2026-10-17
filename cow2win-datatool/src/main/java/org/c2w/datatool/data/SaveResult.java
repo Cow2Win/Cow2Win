@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Outcome of {@link DataSet#save}.
  *
- * @param written files written, relative to the resources folder (with {@code /})
+ * @param written files written, relative to the repository root (with {@code /})
  * @param errors  check errors that prevented saving - then nothing was written
  */
 public record SaveResult(List<String> written, List<Problem> errors) {

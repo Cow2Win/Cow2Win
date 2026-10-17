@@ -1,6 +1,7 @@
 package org.c2w.datatool.data;
 
 import org.c2w.data.model.FortificationType;
+import org.c2w.datatool.RepositoryFolder;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -24,7 +25,7 @@ public enum TableKind {
     TITAN_COMBOS("Titan combos", "titanCombos.json", null, ""),
     TITAN_TEMPLATES("Titan templates", "titanTemplates.json", null, "");
 
-    /** The five catalog files whose change is recorded in {@code catalog-version.json}. */
+    /** The five catalog files - they live in the game catalog ({@code catalog/}, see {@code catalog/manifest.json}). */
     public static final List<TableKind> CATALOGS = List.of(HEROES, TITANS, PETS, WAR_FLAGS, FORTIFICATIONS);
 
     private final String title;
@@ -43,9 +44,10 @@ public enum TableKind {
         return title;
     }
 
-    /** Path of the JSON file relative to the resources folder. */
+    /** Path of the JSON file relative to the repository root - catalog files in {@code catalog/}, the others in the app resources. */
     public Path relativePath() {
-        return Path.of("data", fileName);
+        Path folder = isCatalog() ? RepositoryFolder.CATALOG : RepositoryFolder.APP_RESOURCES;
+        return folder.resolve(Path.of("data", fileName));
     }
 
     /** Folder below {@code images/} holding the avatars, or null if the entries have no image. */

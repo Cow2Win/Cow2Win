@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.c2w.datatool.TestResources;
+import org.c2w.infra.CatalogManifest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -27,10 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** New entries, deletions and the catalog version - on a copy of the real resources. */
+/** New entries, deletions and the catalog manifest - on a copy of the real repository files. */
 class SaveTest {
 
     private static final LocalDate TODAY = LocalDate.of(2030, 1, 2);
+    /** The app resources, relative to the repository root. */
+    private static final String APP = "cow2win-app/src/main/resources/";
+    private static final String MANIFEST = "catalog/manifest.json";
 
     @TempDir
     Path temp;
@@ -45,7 +49,7 @@ class SaveTest {
 
     @Test
     void aNewHeroLandsInTheCatalogTheThreeLanguageFilesAndTheImageFolder() throws IOException {
-        Path png = Files.write(temp.resolve("Zora.png"), Files.readAllBytes(root.resolve("images/heroes/Adam.png")));
+        Path png = Files.write(temp.resolve("Zora.png"), Files.readAllBytes(root.resolve("catalog/images/heroes/Adam.png")));
         Map<Language, String> before = languageTexts();
 
         Row hero = data.addRow(TableKind.HEROES);
@@ -56,20 +60,21 @@ class SaveTest {
         data.setValue(TableKind.HEROES, hero, Fields.ROLES, List.of("MAGE", "SUPPORT"));
         data.setImage(TableKind.HEROES, hero, png, true);
 
-        SaveResult result = data.save(new SaveOptions(Set.of(), false, TODAY));
+        SaveResult result = data.save(new SaveOptions(Set.of(), TODAY));
 
         assertTrue(result.saved(), () -> "errors: " + result.errors());
-        assertEquals(List.of("data/heroes.json", "language/deutsch/deutsch.properties",
-                "language/english/english.properties", "language/francais/francais.properties",
-                "images/heroes/Zora.png"), result.written());
+        assertEquals(List.of("catalog/data/heroes.json", APP + "language/deutsch/deutsch.properties",
+                APP + "language/english/english.properties", APP + "language/francais/francais.properties",
+                "catalog/images/heroes/Zora.png", MANIFEST), result.written());
+        assertManifestMatchesTheCatalog();
 
-        JsonArray heroes = JsonParser.parseString(read("data/heroes.json")).getAsJsonArray();
+        JsonArray heroes = JsonParser.parseString(read("catalog/data/heroes.json")).getAsJsonArray();
         JsonObject last = heroes.get(heroes.size() - 1).getAsJsonObject();
         assertEquals("zora-the-brave", last.get("id").getAsString());
         assertEquals("Zora.png", last.get("image").getAsString());
         assertEquals(List.of("MAGE", "SUPPORT"), last.get("roles").getAsJsonArray().asList().stream()
                 .map(e -> e.getAsString()).toList());
-        assertTrue(read("data/heroes.json").endsWith("""
+        assertTrue(read("catalog/data/heroes.json").endsWith("""
                   {
                     "id": "zora-the-brave",
                     "image": "Zora.png",
@@ -80,7 +85,7 @@ class SaveTest {
                   }
                 ]
                 """));
-        assertArrayEquals(Files.readAllBytes(png), Files.readAllBytes(root.resolve("images/heroes/Zora.png")));
+        assertArrayEquals(Files.readAllBytes(png), Files.readAllBytes(root.resolve("catalog/images/heroes/Zora.png")));
 
         Map<Language, String> names = Map.of(Language.DE, "Zora die Tapfere", Language.EN, "Zora the Brave",
                 Language.FR, "Zora la Brave");
@@ -96,7 +101,7 @@ class SaveTest {
             assertEquals(oldLines.subList(lastHero + 1, oldLines.size()), newLines.subList(lastHero + 2, newLines.size()));
         }
         assertLanguageFilesHaveTheSameKeys();
-        assertEquals(read("data/cowScore.json"), Files.readString(TestResources.REAL.resolve("data/cowScore.json")));
+        assertEquals(read(APP + "data/cowScore.json"), Files.readString(TestResources.REPOSITORY.resolve(APP + "data/cowScore.json")));
     }
 
     @Test
@@ -107,9 +112,9 @@ class SaveTest {
         }
         assertEquals(List.of("nimbus"), data.newEntriesWithoutCowScore(TableKind.PETS));
 
-        assertTrue(data.save(new SaveOptions(Set.of(TableKind.PETS), false, TODAY)).saved());
+        assertTrue(data.save(new SaveOptions(Set.of(TableKind.PETS), TODAY)).saved());
 
-        assertTrue(read("data/petCowScore.json").endsWith("  {\n    \"id\": \"nimbus\"\n  }\n]\n"));
+        assertTrue(read(APP + "data/petCowScore.json").endsWith("  {\n    \"id\": \"nimbus\"\n  }\n]\n"));
         assertNotNull(DataSet.load(root).table(TableKind.PET_COWSCORE).findById("nimbus"));
     }
 
@@ -118,14 +123,14 @@ class SaveTest {
         DataTable heroes = data.table(TableKind.HEROES);
         data.deleteRow(TableKind.HEROES, heroes.findById("krista"));
 
-        SaveResult refused = data.save(new SaveOptions(Set.of(), false, TODAY));
+        SaveResult refused = data.save(new SaveOptions(Set.of(), TODAY));
         assertFalse(refused.saved());
         assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.HERO_COMBOS
                 && p.field().equals(Fields.HERO_IDS) && p.message().contains("krista")), refused.errors()::toString);
-        assertTrue(read("language/english/english.properties").contains("\nkrista=Krista\n"), "nothing written");
+        assertTrue(read(APP + "language/english/english.properties").contains("\nkrista=Krista\n"), "nothing written");
 
         data.deleteRow(TableKind.HERO_COMBOS, data.table(TableKind.HERO_COMBOS).findById("krista-lars"));
-        SaveResult saved = data.save(new SaveOptions(Set.of(), false, TODAY));
+        SaveResult saved = data.save(new SaveOptions(Set.of(), TODAY));
 
         assertTrue(saved.saved(), () -> "errors: " + saved.errors());
         for (Language language : Language.values()) {
@@ -133,8 +138,8 @@ class SaveTest {
             assertNull(properties.getProperty("krista"), language.name());
             assertNotNull(properties.getProperty("lars"), language.name());
         }
-        assertTrue(Files.exists(root.resolve("images/heroes/Krista.png")), "images are never deleted");
-        assertFalse(read("data/heroes.json").contains("\"krista\""));
+        assertTrue(Files.exists(root.resolve("catalog/images/heroes/Krista.png")), "images are never deleted");
+        assertFalse(read("catalog/data/heroes.json").contains("\"krista\""));
         assertLanguageFilesHaveTheSameKeys();
     }
 
@@ -146,7 +151,7 @@ class SaveTest {
         assertEquals(List.of("solaris", "araji", "eden", "hyperion", "tenebris"), shipped.getList(Fields.TITAN_IDS));
 
         data.deleteRow(TableKind.TITANS, data.table(TableKind.TITANS).findById("eden"));
-        SaveResult refused = data.save(new SaveOptions(Set.of(), false, TODAY));
+        SaveResult refused = data.save(new SaveOptions(Set.of(), TODAY));
         assertFalse(refused.saved());
         assertTrue(refused.errors().stream().anyMatch(p -> p.table() == TableKind.TITAN_COMBOS
                 && p.field().equals(Fields.TITAN_IDS) && p.message().contains("eden")), refused.errors()::toString);
@@ -156,40 +161,49 @@ class SaveTest {
         assertEquals("C2W", combo.getString(Fields.SOURCE));
         data.setValue(TableKind.TITAN_COMBOS, combo, Fields.ID, "ignis-araji");
         data.setValue(TableKind.TITAN_COMBOS, combo, Fields.TITAN_IDS, List.of("ignis"));
-        assertFalse(data.save(new SaveOptions(Set.of(), true, TODAY)).saved(), "a combo needs 2 titans");
+        assertFalse(data.save(new SaveOptions(Set.of(), TODAY)).saved(), "a combo needs 2 titans");
 
         data.setValue(TableKind.TITAN_COMBOS, combo, Fields.TITAN_IDS, List.of("ignis", "araji"));
         data.setValue(TableKind.TITAN_COMBOS, combo, Fields.DEACTIVATED, "2030-01-01");
-        SaveResult saved = data.save(new SaveOptions(Set.of(), true, TODAY));
+        SaveResult saved = data.save(new SaveOptions(Set.of(), TODAY));
 
         assertTrue(saved.saved(), () -> "errors: " + saved.errors());
-        assertEquals(List.of("data/titanCombos.json"), saved.written());
-        String file = read("data/titanCombos.json");
+        assertEquals(List.of(APP + "data/titanCombos.json"), saved.written());
+        String file = read(APP + "data/titanCombos.json");
         assertTrue(file.contains("\"titanIds\": [\"ignis\", \"araji\"]"), file);
         assertEquals("2030-01-01", DataSet.load(root).table(TableKind.TITAN_COMBOS).findById("ignis-araji")
                 .getString(Fields.DEACTIVATED));
     }
 
     @Test
-    void theDataVersionIsOnlySetWhenACatalogFileChanges() throws IOException {
-        String version = read("data/catalog-version.json");
+    void theManifestIsOnlyRewrittenWhenTheCatalogChanges() throws IOException {
+        String manifestBefore = read(MANIFEST);
+        CatalogManifest before = CatalogManifest.parse(manifestBefore);
         Row combo = data.table(TableKind.HERO_COMBOS).findById("krista-lars");
         data.setValue(TableKind.HERO_COMBOS, combo, Fields.NAME, "Ice and fire");
-        assertFalse(data.catalogFilesChanged());
 
-        assertEquals(List.of("data/heroCombos.json"), data.save(new SaveOptions(Set.of(), true, TODAY)).written());
-        assertEquals(version, read("data/catalog-version.json"));
+        assertEquals(List.of(APP + "data/heroCombos.json"), data.save(new SaveOptions(Set.of(), TODAY)).written());
+        assertEquals(manifestBefore, read(MANIFEST), "a CowScore/combo change does not touch the catalog");
 
         data = DataSet.load(root);
         Row titan = data.table(TableKind.TITANS).findById("ignis");
         data.setValue(TableKind.TITANS, titan, Fields.ELEMENT, "WATER");
-        assertTrue(data.catalogFilesChanged());
 
-        SaveResult result = data.save(new SaveOptions(Set.of(), true, TODAY));
+        SaveResult result = data.save(new SaveOptions(Set.of(), TODAY));
 
-        assertEquals(List.of("data/titans.json", "data/catalog-version.json"), result.written());
-        assertEquals(version.replaceAll("\"dataVersion\": \"[0-9-]+\"", "\"dataVersion\": \"2030-01-02\""),
-                read("data/catalog-version.json"));
+        assertEquals(List.of("catalog/data/titans.json", MANIFEST), result.written());
+        CatalogManifest after = CatalogManifest.parse(read(MANIFEST));
+        assertEquals("2030-01-02", after.dataVersion().toString());
+        assertEquals(before.formatVersion(), after.formatVersion());
+        assertEquals(before.note(), after.note());
+        assertManifestMatchesTheCatalog();
+
+        data = DataSet.load(root);
+        data.setValue(TableKind.TITANS, data.table(TableKind.TITANS).findById("ignis"), Fields.ELEMENT, "FIRE");
+        data.save(new SaveOptions(Set.of(), TODAY));
+        assertEquals("2030-01-02.1", CatalogManifest.parse(read(MANIFEST)).dataVersion().toString(),
+                "a second catalog state on the same day");
+        assertManifestMatchesTheCatalog();
     }
 
     @Test
@@ -200,9 +214,9 @@ class SaveTest {
 
         data.setValue(TableKind.TITANS, titans.findById("araji"), Fields.SUPER_TITAN, false);
         data.setValue(TableKind.TITANS, titans.findById("ignis"), Fields.SUPER_TITAN, true);
-        data.save(new SaveOptions(Set.of(), false, TODAY));
+        data.save(new SaveOptions(Set.of(), TODAY));
 
-        JsonArray written = JsonParser.parseString(read("data/titans.json")).getAsJsonArray();
+        JsonArray written = JsonParser.parseString(read("catalog/data/titans.json")).getAsJsonArray();
         for (var element : written) {
             JsonObject titan = element.getAsJsonObject();
             String id = titan.get("id").getAsString();
@@ -212,7 +226,7 @@ class SaveTest {
                 assertFalse(titan.has("superTitan"), "false is not written");
             }
         }
-        assertTrue(read("data/titans.json").contains("""
+        assertTrue(read("catalog/data/titans.json").contains("""
                     "id": "ignis",
                     "element": "FIRE",
                     "roles": [
@@ -232,13 +246,18 @@ class SaveTest {
 
     @Test
     void aNameChangeTouchesOnlyThatLine() throws IOException {
-        String before = read("language/deutsch/deutsch.properties");
+        String before = read(APP + "language/deutsch/deutsch.properties");
         Row pet = data.table(TableKind.PETS).findById("axel");
         data.setValue(TableKind.PETS, pet, Language.DE.field(), "Axel");
 
-        assertEquals(List.of("language/deutsch/deutsch.properties"),
-                data.save(new SaveOptions(Set.of(), true, TODAY)).written());
-        assertEquals(before.replace("\naxel=Axell\n", "\naxel=Axel\n"), read("language/deutsch/deutsch.properties"));
+        assertEquals(List.of(APP + "language/deutsch/deutsch.properties"),
+                data.save(new SaveOptions(Set.of(), TODAY)).written());
+        assertEquals(before.replace("\naxel=Axell\n", "\naxel=Axel\n"), read(APP + "language/deutsch/deutsch.properties"));
+    }
+
+    /** The written manifest passes the app's consistency check: exactly the catalog's files, sizes and hashes. */
+    private void assertManifestMatchesTheCatalog() throws IOException {
+        assertEquals(CatalogManifest.scan(root.resolve("catalog")), CatalogManifest.parse(read(MANIFEST)).files());
     }
 
     private void assertLanguageFilesHaveTheSameKeys() throws IOException {

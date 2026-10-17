@@ -15,9 +15,10 @@ import java.util.List;
  * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
  * displayName can be retrieved at runtime via the LanguageService.
  *
- * imagePath: classpath-absolute path (with leading "/") to this hero's avatar
- * icon, e.g. "/images/heroes/Astaroth.png" - suitable for
- * {@code Hero.class.getResourceAsStream(imagePath)}. If an avatar is missing
+ * imagePath: logical path (with leading "/") to this hero's avatar
+ * icon, e.g. "/images/heroes/Astaroth.png" - loaded via
+ * {@code IconLoader}, which takes it from the active game catalog
+ * ({@code CatalogStore}); only the placeholder comes from the classpath. If an avatar is missing
  * (no icon export available yet), it automatically falls back to the
  * placeholder at {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *

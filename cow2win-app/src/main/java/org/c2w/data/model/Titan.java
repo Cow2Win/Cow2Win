@@ -9,10 +9,9 @@ import java.util.List;
  * in the properties files (deutsch/deutsch.properties, english/english.properties, francais/francais.properties). The
  * displayName can be retrieved at runtime via the LanguageService.
  *
- * imagePath: classpath-absolute path (with leading "/") to this titan's
+ * imagePath: logical path (with leading "/") to this titan's
  * avatar icon, e.g. "/images/titans/Ignis.png" - analogous to
- * {@link Hero#imagePath()}, suitable for
- * {@code Titan.class.getResourceAsStream(imagePath)}. If an image under
+ * {@link Hero#imagePath()}. If an image under
  * images/titans is missing (see TitanRepository/titans.json - field
  * "image"), it automatically falls back to the placeholder at
  * {@link #PLACEHOLDER_IMAGE_PATH}, so the field is never null.

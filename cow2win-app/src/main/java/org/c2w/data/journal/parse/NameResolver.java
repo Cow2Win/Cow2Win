@@ -8,6 +8,7 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.i18n.GameNameNormalizer;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -55,9 +56,9 @@ public final class NameResolver {
     }
 
     private static final Map<NameKind, String> CATALOG_PATHS = Map.of(
-            NameKind.HERO, "/data/heroes.json",
-            NameKind.PET, "/data/pets.json",
-            NameKind.TITAN, "/data/titans.json");
+            NameKind.HERO, "data/heroes.json",
+            NameKind.PET, "data/pets.json",
+            NameKind.TITAN, "data/titans.json");
 
     private final Map<NameKind, Map<String, Set<String>>> idsByNameKey;
     private final Map<NameKind, Set<String>> catalogIds;
@@ -201,7 +202,7 @@ public final class NameResolver {
     private static Set<String> readIds(String path) {
         Set<String> ids = new TreeSet<>();
         try {
-            for (var element : JsonParser.parseString(JsonSupport.readClasspathResource(NameResolver.class, path))
+            for (var element : JsonParser.parseString(CatalogStore.readText(path))
                     .getAsJsonArray()) {
                 String id = JsonSupport.getStringOrNull(element.getAsJsonObject(), "id");
                 if (id != null && !id.isBlank()) {

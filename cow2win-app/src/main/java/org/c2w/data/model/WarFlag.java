@@ -13,10 +13,9 @@ package org.c2w.data.model;
  * files share one flat key namespace with heroes, titans, pets and
  * fortifications - and some flag names (e.g. "Bastion") already exist there.
  *
- * imagePath: classpath-absolute path (with leading "/") to this flag's icon,
- * e.g. "/images/flags/Bastion.png" - analogous to {@link Pet#imagePath()},
- * suitable for {@code WarFlag.class.getResourceAsStream(imagePath)}. If no
- * image is given (see WarFlagRepository/warFlags.json - field "image"), it
+ * imagePath: logical path (with leading "/") to this flag's icon,
+ * e.g. "/images/flags/Bastion.png" - analogous to {@link Pet#imagePath()}.
+ * If no image is given (see WarFlagRepository/warFlags.json - field "image"), it
  * automatically falls back to the placeholder at {@link
  * #PLACEHOLDER_IMAGE_PATH}, so the field is never null.
  *

@@ -8,6 +8,7 @@ import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
 import org.c2w.data.model.TitanRole;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -38,13 +39,13 @@ import java.util.stream.Collectors;
  * app uses.
  */
 public class TitanRepository {
-    private static final String TITANS_JSON_PATH = "/data/titans.json";
+    private static final String TITANS_JSON_PATH = "data/titans.json";
     private static final String COW_SCORE_JSON_PATH = "/data/titanCowScore.json";
 
     /** File name of the workspace copy of the titan fortification marks - see {@link #cowScoreFile()}. */
     private static final String COW_SCORE_FILE_NAME = "titanCowScore.json";
 
-    /** Classpath-relative folder every titan's "image" JSON field is resolved against - see {@link #parseTitanObject}. */
+    /** Logical image folder every titan's "image" JSON field is resolved against (loaded from the catalog by IconLoader) - see {@link #parseTitanObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/titans/";
 
     /** Titans may carry negative marks, like heroes - see {@link FortMarkFiles}. */
@@ -57,7 +58,7 @@ public class TitanRepository {
     private volatile Map<String, Titan> titansById;
 
     /**
-     * Loads the catalog right away: the master data from the classpath,
+     * Loads the catalog right away: the master data from the active catalog ({@link CatalogStore}),
      * the fortification marks from the workspace copy in {@code
      * workspaceDir} (created from the shipped defaults if it does not exist
      * yet, migrated if it is still in the former tier-based format).
@@ -147,7 +148,7 @@ public class TitanRepository {
 
     private Map<String, Titan> loadTitans() {
         try {
-            String titansJson = JsonSupport.readClasspathResource(TitanRepository.class, TITANS_JSON_PATH);
+            String titansJson = CatalogStore.readText(TITANS_JSON_PATH);
             Map<String, Titan> masterData = parseTitansJson(titansJson);
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(TitanRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), ALLOW_NEGATIVE, ENTITY_LABEL);

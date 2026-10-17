@@ -3,6 +3,7 @@ package org.c2w.data.repository;
 import com.google.gson.*;
 import org.c2w.data.model.*;
 import org.c2w.eval.AbstractLineupAlgorithm;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  * source tree and shipped with a new build.
  */
 public class FortificationRepository {
-    private static final String JSON_PATH = "/data/fortifications.json";
+    private static final String JSON_PATH = "data/fortifications.json";
 
     private static volatile Map<String, Fortification> fortificationsByid;
 
@@ -72,7 +73,7 @@ public class FortificationRepository {
 
     private static Map<String, Fortification> loadFortifications() {
         try {
-            String json = JsonSupport.readClasspathResource(FortificationRepository.class, JSON_PATH);
+            String json = CatalogStore.readText(JSON_PATH);
             Map<String, Fortification> catalog = parseFortificationsJson(json);
             validateCatalog(catalog);
             return catalog;

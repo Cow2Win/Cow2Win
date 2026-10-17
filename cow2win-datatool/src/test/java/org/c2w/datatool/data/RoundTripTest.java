@@ -1,6 +1,7 @@
 package org.c2w.datatool.data;
 
 import org.c2w.datatool.TestResources;
+import org.c2w.infra.CatalogManifest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -37,7 +38,7 @@ class RoundTripTest {
     }
 
     @Test
-    void languageFilesAndCatalogVersionAreReproduced() throws IOException {
+    void languageFilesAndTheManifestAreReproduced() throws IOException {
         Path root = TestResources.copyTo(temp);
         for (Language language : Language.values()) {
             String text = Files.readString(root.resolve(language.relativePath()), StandardCharsets.UTF_8);
@@ -45,9 +46,8 @@ class RoundTripTest {
             assertEquals(text, file.text());
             assertFalse(file.isModified());
         }
-        String version = Files.readString(root.resolve(DataSet.CATALOG_VERSION), StandardCharsets.UTF_8);
-        String date = version.replaceAll("(?s).*\"dataVersion\": \"([0-9-]+)\".*", "$1");
-        assertEquals(version, DataSet.withDataVersion(version, LocalDate.parse(date)));
+        String manifest = Files.readString(root.resolve(DataSet.MANIFEST), StandardCharsets.UTF_8);
+        assertEquals(manifest, CatalogManifest.parse(manifest).toJson());
     }
 
     @Test
@@ -57,7 +57,7 @@ class RoundTripTest {
         DataSet data = DataSet.load(root);
         assertFalse(data.isDirty());
 
-        SaveResult result = data.save(new SaveOptions(Set.of(), true, LocalDate.of(2030, 1, 1)));
+        SaveResult result = data.save(new SaveOptions(Set.of(), LocalDate.of(2030, 1, 1)));
 
         assertTrue(result.saved(), () -> "errors: " + result.errors());
         assertEquals(java.util.List.of(), result.written());

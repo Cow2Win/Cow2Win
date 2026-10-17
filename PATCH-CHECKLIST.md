@@ -7,18 +7,25 @@ Worlds, work through this list before trusting the app's output again. It's
 organized by the actual files/checks involved, not by patch-note wording.
 
 Most data steps below (catalog entries, names in all three languages,
-avatars, CowScore entries, combos, templates, `catalog-version.json`) can be
-done with the master data tool `org.c2w.datatool.DataToolApp` (README,
+avatars, CowScore entries, combos, templates, `catalog/manifest.json`) can be
+done with the master data tool `org.c2w.datatool.DataToolApp` (documents/DEVELOPER.md,
 "Master data tool") - it also checks ids, references and missing names. The
 checks against the game (names as in the battle log, roles, buffs) stay with
 you.
 
+The game catalog (catalog data files, their images and `manifest.json`) lives in
+the repository's `catalog/` folder, everything else (CowScore defaults, combos,
+templates, language files) in `cow2win-app/src/main/resources`. `catalog/manifest.json`
+lists every catalog file with size and SHA-256 and is written by the data tool on
+save - never edit catalog files by hand without saving once in the data tool
+afterwards (`CatalogManifestConsistencyTest` fails otherwise).
+
 ## 1. New heroes
 
-- [ ] Add an entry to `cow2win-app/src/main/resources/data/heroes.json`: `id`, `roles`
+- [ ] Add an entry to `catalog/data/heroes.json`: `id`, `roles`
       (array - check for heroes with **two** roles, e.g. Cleaver =
       TANK + CONTROL; see `Role.java` for the valid values), `image`.
-- [ ] Export/add the avatar icon under `cow2win-app/src/main/resources/images/heroes/`.
+- [ ] Export/add the avatar icon under `catalog/images/heroes/`.
       Missing icon → falls back to `placeholder.png` (see `Hero.java`), not
       an error, but worth noticing.
 - [ ] Add the display name to **all three** language files
@@ -35,12 +42,12 @@ you.
 
 ## 2. New titans
 
-- [ ] Add an entry to `cow2win-app/src/main/resources/data/titans.json`: `id`, `element`
+- [ ] Add an entry to `catalog/data/titans.json`: `id`, `element`
       (see `TitanElement.java` - includes the rare `DISTORTION` element for
       event titans), `roles` (at least one `TitanRole`, as shown in the game),
       `"superTitan": true` only for a super titan, `image` - in this field
       order (the data tool writes it this way).
-- [ ] Avatar under `cow2win-app/src/main/resources/images/titans/` (same
+- [ ] Avatar under `catalog/images/titans/` (same
       placeholder-fallback note as heroes).
 - [ ] Display name in all three language files.
 - [ ] If the titan brings a **new element** (new `TitanElement` constant):
@@ -55,10 +62,10 @@ you.
 
 ## 3. New pets
 
-- [ ] Add an entry to `cow2win-app/src/main/resources/data/pets.json`: `id` (lowercase,
+- [ ] Add an entry to `catalog/data/pets.json`: `id` (lowercase,
       used as the language key) and `image`. Pets have **no** roles and no
       element - there is nothing else to fill in.
-- [ ] Avatar under `cow2win-app/src/main/resources/images/pets/` (same
+- [ ] Avatar under `catalog/images/pets/` (same
       placeholder-fallback note as heroes - see `Pet.java`).
 - [ ] Display name in all three language files (section `# Pets` /
       `# Familiers`). Check that the new `id` doesn't collide with an
@@ -72,12 +79,12 @@ you.
 
 ## 4. New war flags
 
-- [ ] Add an entry to `cow2win-app/src/main/resources/data/warFlags.json`: `id`
+- [ ] Add an entry to `catalog/data/warFlags.json`: `id`
       (lowercase with a `flag-` prefix, e.g. `flag-bastion` - used as the
       language key; the prefix avoids collisions like the `bastion`
       fortification) and `image`. War flags have **no** roles and no
       element - there is nothing else to fill in.
-- [ ] Icon under `cow2win-app/src/main/resources/images/flags/` (same
+- [ ] Icon under `catalog/images/flags/` (same
       placeholder-fallback note as heroes - see `WarFlag.java`).
 - [ ] Display name in all three language files (section `# Kriegsflaggen` /
       `# War flags` / `# Drapeaux de guerre`).
@@ -156,10 +163,11 @@ only through them (there are no aliases).
       Cow2Win Claude Project (captureBonus table, buff tables, unlock-depth
       table) so it doesn't quietly go stale relative to the actual data
       files.
-- [ ] Update `dataVersion` (and `note`, if useful) in
-      `cow2win-app/src/main/resources/data/catalog-version.json` to today's date - it's
-      logged at app startup so it's visible at a glance which patch state
-      the catalog data was last checked against.
+- [ ] `dataVersion` in `catalog/manifest.json` is set by the data tool on every
+      save that changes the catalog (today's date, `.n` for a further state on
+      the same day); update `note` by hand if useful. It's logged at app
+      startup so it's visible at a glance which patch state the catalog data
+      was last checked against.
 
 ## 8. GUI changes
 

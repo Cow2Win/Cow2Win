@@ -1,36 +1,20 @@
 package org.c2w.infra;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import java.io.IOException;
 
 /**
- * Reads {@code data/catalog-version.json} - a small sidecar file that
- * records which Hero Wars: Dominion Era patch/game state
- * {@code heroes.json}, {@code titans.json}, {@code pets.json},
- * {@code warFlags.json} and {@code fortifications.json} were last checked
- * against.
- *
- * <p>Kept as a separate file rather than a "dataVersion" field inside those
- * five catalog files themselves, because all five currently have a JSON
- * <b>array</b> as their root (see {@code HeroRepository}/{@code
- * TitanRepository}/{@code PetRepository}/{@code WarFlagRepository}/{@code
- * FortificationRepository}'s
- * {@code parse*Json}),
- * so adding a top-level key there would mean restructuring every
- * repository's parse/save round-trip - a real change with a real
- * regression risk. A sidecar file gets the same "state the data at a
- * glance" benefit for zero risk to the existing catalog format.
+ * The {@code dataVersion} and {@code note} of the active game catalog, read from its {@link
+ * CatalogManifest} (via {@link CatalogStore}) - which Hero Wars: Dominion Era game state the
+ * heroes, titans, pets, war flags and fortifications were last checked against. Logged at
+ * startup.
  *
  * <p>Read once and cached, same convention as the catalog repositories'
- * own {@code ensureLoaded()} pattern. A missing or malformed file never
+ * own {@code ensureLoaded()} pattern. A missing or malformed manifest never
  * breaks app startup - it just falls back to {@value #UNKNOWN} and logs
  * why (written to the technical log via {@link Logger}).
  */
 public final class CatalogVersion {
 
-    private static final String JSON_PATH = "/data/catalog-version.json";
     private static final String UNKNOWN = "unknown";
 
     private static volatile String dataVersion;
@@ -39,13 +23,13 @@ public final class CatalogVersion {
     private CatalogVersion() {
     }
 
-    /** The catalog data's last-checked-against version/date, e.g. "2026-09-13". */
+    /** The catalog data's last-checked-against version, e.g. "2026-10-17" or "2026-10-17.2". */
     public static String dataVersion() {
         ensureLoaded();
         return dataVersion;
     }
 
-    /** A free-text note accompanying the version (what "checked" means here, and how to update it). */
+    /** A free-text note accompanying the version (what changed in this catalog state). */
     public static String note() {
         ensureLoaded();
         return note;
@@ -63,14 +47,13 @@ public final class CatalogVersion {
 
     private static void load() {
         try {
-            String json = JsonSupport.readClasspathResource(CatalogVersion.class, JSON_PATH);
-            JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-            dataVersion = JsonSupport.getString(obj, "dataVersion", UNKNOWN);
-            note = JsonSupport.getString(obj, "note", "");
+            CatalogManifest manifest = CatalogStore.manifest();
+            note = manifest.note();
+            dataVersion = manifest.dataVersion().toString();
         } catch (IOException | RuntimeException e) {
-            Logger.log("catalog-version.json: could not read data version (" + e.getMessage() + ")");
-            dataVersion = UNKNOWN;
+            Logger.log(CatalogManifest.FILE_NAME + ": could not read data version (" + e.getMessage() + ")");
             note = "";
+            dataVersion = UNKNOWN;
         }
     }
 }

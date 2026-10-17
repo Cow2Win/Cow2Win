@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.FortMarks;
 import org.c2w.data.model.Hero;
 import org.c2w.data.model.Role;
+import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
 
@@ -40,20 +41,20 @@ import java.util.stream.Collectors;
  * as before this split.
  */
 public class HeroRepository {
-    private static final String HEROES_JSON_PATH = "/data/heroes.json";
+    private static final String HEROES_JSON_PATH = "data/heroes.json";
     private static final String COW_SCORE_JSON_PATH = "/data/cowScore.json";
 
     /** File name of the workspace copy of the hero CowScores - see {@link #cowScoreFile()}. */
     private static final String COW_SCORE_FILE_NAME = "cowScore.json";
 
-    /** Classpath-relative folder every hero's "image" JSON field is resolved against - see {@link #parseHeroObject}. */
+    /** Logical image folder every hero's "image" JSON field is resolved against (loaded from the catalog by IconLoader) - see {@link #parseHeroObject}. */
     private static final String IMAGE_PATH_PREFIX = "/images/heroes/";
 
     private final Path workspaceDir;
     private volatile Map<String, Hero> heroesById;
 
     /**
-     * Loads the catalog right away: the master data from the classpath,
+     * Loads the catalog right away: the master data from the active catalog ({@link CatalogStore}),
      * the CowScores from the workspace copy in {@code workspaceDir} (created
      * from the shipped defaults if it does not exist yet).
      *
@@ -143,7 +144,7 @@ public class HeroRepository {
 
     private Map<String, Hero> loadHeroes() {
         try {
-            String heroesJson = JsonSupport.readClasspathResource(HeroRepository.class, HEROES_JSON_PATH);
+            String heroesJson = CatalogStore.readText(HEROES_JSON_PATH);
             Map<String, Hero> masterData = parseHeroesJson(heroesJson, Map.of());
             Map<String, FortMarks> defaults = FortMarkFiles.loadDefaults(HeroRepository.class, COW_SCORE_JSON_PATH,
                     masterData.keySet(), true, "hero");

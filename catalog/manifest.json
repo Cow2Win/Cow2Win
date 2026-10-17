@@ -1,0 +1,652 @@
+{
+  "formatVersion": 1,
+  "dataVersion": "2026-10-17",
+  "note": "catalog moved out of the app",
+  "files": [
+    {
+      "path": "data/fortifications.json",
+      "size": 5738,
+      "sha256": "d7b252f9fe7f33b1b9239d5d013e4416a57babe45a37754c0a9f4c4804aeabd5"
+    },
+    {
+      "path": "data/heroes.json",
+      "size": 7415,
+      "sha256": "cb8c7ab1ee93328f8432c3fb90be1fe64880ce7d33401498e99ce4236b448c7e"
+    },
+    {
+      "path": "data/pets.json",
+      "size": 588,
+      "sha256": "57a32c02c54b6efdc021957f768885602fdf480f32d19ed135ae9eb69ae87964"
+    },
+    {
+      "path": "data/titans.json",
+      "size": 3403,
+      "sha256": "d4499ead5f7d07a4aa8740f917f21109a19b850c66289f576f6e4ff599058730"
+    },
+    {
+      "path": "data/warFlags.json",
+      "size": 735,
+      "sha256": "6fae236b8f6a9f253b223bed76735eba49fadfcfd261a22c2ab3e05d39837d58"
+    },
+    {
+      "path": "images/flags/Bastion.png",
+      "size": 37110,
+      "sha256": "5ac2cf0f3ea197ae5ab980b86a7114689c89f161260213740f8795fd781aeda7"
+    },
+    {
+      "path": "images/flags/Decline.png",
+      "size": 30707,
+      "sha256": "1d9d4e12f29a1d9f5f4d215e3600b83841fd454f5aba276b0cba0df48c3ae386"
+    },
+    {
+      "path": "images/flags/FalseImmortality.png",
+      "size": 42390,
+      "sha256": "86e4ee1dcb8298b679f09de9e07bb4daf57b99843448f7608484ec49100ec55c"
+    },
+    {
+      "path": "images/flags/Fervor.png",
+      "size": 31804,
+      "sha256": "76d13826efdfabd1aeb024eb3167456a02d51baf9c551be5df6e0ef25f4dbd7d"
+    },
+    {
+      "path": "images/flags/Frost.png",
+      "size": 35158,
+      "sha256": "8a123132485f10c487be11ab5965f07e0b883f5d45d6b145d5434f56004d8a19"
+    },
+    {
+      "path": "images/flags/PetStrength.png",
+      "size": 33130,
+      "sha256": "18550af6922cc9ca395d75e38b2840b703db4db131e83f0f91d64d8993cf5dc3"
+    },
+    {
+      "path": "images/flags/Readiness.png",
+      "size": 39668,
+      "sha256": "b669ab9931abee1a7871da17829bc2f9bff192c54b8a0809afba9112611d0240"
+    },
+    {
+      "path": "images/flags/Recovery.png",
+      "size": 33893,
+      "sha256": "c624be3397c6c68d283c81212f0e4484a6ddcda4078fe424aa277cf0c4392e2e"
+    },
+    {
+      "path": "images/flags/SteelStorm.png",
+      "size": 42916,
+      "sha256": "1ec4094e4816f7099e2c5bd196bd393ca4b261a4d3e8cf4115f820f33b92c6de"
+    },
+    {
+      "path": "images/flags/SwiftWarriors.png",
+      "size": 31105,
+      "sha256": "5ce7e89078166ae8158b5974a207f99fb86ab8fa9d45f24ef8a07074c89778dd"
+    },
+    {
+      "path": "images/flags/Vanguard.png",
+      "size": 34810,
+      "sha256": "aae3c88a52e36eb85240b15de16549e77ae87f4eead4aaeea4ce76a488408977"
+    },
+    {
+      "path": "images/heroes/Adam.png",
+      "size": 53520,
+      "sha256": "14af7776dcd3a85bd3d575ce9a4ee4b188bfd5892e590113d15946a9aff089ea"
+    },
+    {
+      "path": "images/heroes/Aidan.png",
+      "size": 49011,
+      "sha256": "fdf25d5fcf116cc244b3b70f8d1f0ad3d34385399eb8ddeae0b888f7bbd54d02"
+    },
+    {
+      "path": "images/heroes/Alvanor.png",
+      "size": 21704,
+      "sha256": "4c98d184902e8ccc2735d7f73d18bb977365a7288bb1c3183d177bec9b107e04"
+    },
+    {
+      "path": "images/heroes/Amira.png",
+      "size": 47848,
+      "sha256": "0a05ec6793f2fc27f6927a9d0c2093017aca3dbe406602e6b721735daa346b6c"
+    },
+    {
+      "path": "images/heroes/Andvari.png",
+      "size": 49710,
+      "sha256": "f657e349aead5fe18265dc8e2e01a4bc40c4fe43499a97cfa4dde07d0439de95"
+    },
+    {
+      "path": "images/heroes/Arachne.png",
+      "size": 56499,
+      "sha256": "7253bc8797e34f850677ef104270f60f23f59e22a0ac4312396abbc816934b42"
+    },
+    {
+      "path": "images/heroes/Artemis.png",
+      "size": 56928,
+      "sha256": "7f51d1543e973ff6ca341540dc0324cd27b7708dd583d0d26fe1f25af0cdbece"
+    },
+    {
+      "path": "images/heroes/Astaroth.png",
+      "size": 46782,
+      "sha256": "613b6032340e0016d50fe1d90d9f644df49ddce3b94aa0b97026633665d17dc0"
+    },
+    {
+      "path": "images/heroes/AstridAndLucas.png",
+      "size": 54640,
+      "sha256": "340b606360107e64a02ef434631a900fb5ceda91c01a5591edfe498bed08434e"
+    },
+    {
+      "path": "images/heroes/Augustus.png",
+      "size": 46534,
+      "sha256": "2c7ede5d45517cffa6d4e1b97948f99cda8ffa10ad1c3366c3aa7b1ca33451db"
+    },
+    {
+      "path": "images/heroes/Aurora.png",
+      "size": 56146,
+      "sha256": "9a52065169d12241fdb688240640cfad6dbe83ea43a6e6e8ed6ca8c3de97a0cb"
+    },
+    {
+      "path": "images/heroes/Byrna.png",
+      "size": 47208,
+      "sha256": "06006dffb16ffa1c82fa4ce54127b857a87f07ed54c60292f3efc2ca6375246d"
+    },
+    {
+      "path": "images/heroes/Cascade.png",
+      "size": 55243,
+      "sha256": "2ea3620ab104d35c3f4f256f47c59f5845e8d1c6e34ffa387cb9abda97f8cefc"
+    },
+    {
+      "path": "images/heroes/Celeste.png",
+      "size": 40026,
+      "sha256": "f516187814632cc3738ea3df8031dc68a3706d5e0649839aceb772f4e5ccee35"
+    },
+    {
+      "path": "images/heroes/Chabba.png",
+      "size": 50259,
+      "sha256": "5cd53eb82898ebb6a4f432ca56509a5fb56e3e47257b18841da7227c9ced3996"
+    },
+    {
+      "path": "images/heroes/Cleaver.png",
+      "size": 43690,
+      "sha256": "cb3a93eba4434ca22950be92406aad550804d5f501d07d8e85adfbcfaca81a4b"
+    },
+    {
+      "path": "images/heroes/Cornelius.png",
+      "size": 46290,
+      "sha256": "7760837657d7dc5348a4c468ec6a37be95e7faec98b19c08bb77ad5ef18d1a32"
+    },
+    {
+      "path": "images/heroes/Corvus.png",
+      "size": 47959,
+      "sha256": "a427e717e0ab54cdb16b17b52147c029ae09a141b590959c7175194429ffb9f6"
+    },
+    {
+      "path": "images/heroes/Dante.png",
+      "size": 53985,
+      "sha256": "85d7604daba2891a3f3c4297904f37145cea4170279863127c01fbc424f7bc1e"
+    },
+    {
+      "path": "images/heroes/Daredevil.png",
+      "size": 55212,
+      "sha256": "62e0b5041ee7377b4ef5cd02823ce16ccc3b8e003a88e15af50ea48265e33320"
+    },
+    {
+      "path": "images/heroes/DarkStar.png",
+      "size": 42451,
+      "sha256": "74b8d6517317745e3e2273851abf46bfdacd8fde364521bfa0bbd9a5403a1503"
+    },
+    {
+      "path": "images/heroes/Dorian.png",
+      "size": 46569,
+      "sha256": "eff04e14659956026576f113a39b4d599d45883ba967406887bb99d6527f3b26"
+    },
+    {
+      "path": "images/heroes/Electra.png",
+      "size": 57575,
+      "sha256": "8bda78928ee13d64a5ed9175255097e9445c8b2a7e1feff5650e680f1c35ad0b"
+    },
+    {
+      "path": "images/heroes/Elmir.png",
+      "size": 42869,
+      "sha256": "b1e389e4cfc0609d79fd863af86443bb1b40cfafe9ec4756876d3d8c679dc8af"
+    },
+    {
+      "path": "images/heroes/Eva.png",
+      "size": 54960,
+      "sha256": "999d9248981e0010da55a8037cd49257a78905af0523114efcdebe98259a397e"
+    },
+    {
+      "path": "images/heroes/Faceless.png",
+      "size": 43463,
+      "sha256": "c225efc2bcd4efc2f963bbe57a720fb97ed59433b4ed32ad6552362aa2bfb1ad"
+    },
+    {
+      "path": "images/heroes/Fafnir.png",
+      "size": 47912,
+      "sha256": "ccfbae9bc5ab0c5c18d72ac8b945c06f7a40dc7170eb69c7fe4e33868f598bda"
+    },
+    {
+      "path": "images/heroes/Fluffy.png",
+      "size": 58523,
+      "sha256": "02b94d1f19f549e4da3f6196ff0ce7167764d76314df0deb94774d2e84da36c5"
+    },
+    {
+      "path": "images/heroes/Folio.png",
+      "size": 158364,
+      "sha256": "18c66408126ba2ff1091215ff2b389332ece8bab512ca8399745108d9998b89a"
+    },
+    {
+      "path": "images/heroes/Fox.png",
+      "size": 57154,
+      "sha256": "2fb257ac669adb2ec76af9c42fd60923ad2f114e38ae397456c28c4aaa650e78"
+    },
+    {
+      "path": "images/heroes/Galahad.png",
+      "size": 50953,
+      "sha256": "573a8c5c560b8b2b88882747b9919d77737283e319229a482045d81f43e8d094"
+    },
+    {
+      "path": "images/heroes/Ginger.png",
+      "size": 52323,
+      "sha256": "e4af4b57424d657dd6c5550eec92019c30af86b4708e82d90f55217bb6c0116b"
+    },
+    {
+      "path": "images/heroes/Guus.png",
+      "size": 50765,
+      "sha256": "34c903025eb0c37965b74816c64eab98377ddb37b56ea810a3450615c403d088"
+    },
+    {
+      "path": "images/heroes/Heidi.png",
+      "size": 47075,
+      "sha256": "47fddbfbb10eb65e395efde215dfe53443d0b6340d61561ed288de9fb3fd80af"
+    },
+    {
+      "path": "images/heroes/Helios.png",
+      "size": 55412,
+      "sha256": "c78d4226c8f28ae322a2a0636aef396e7090477c70e8933daa6948d30e766402"
+    },
+    {
+      "path": "images/heroes/Iris.png",
+      "size": 43721,
+      "sha256": "54c240ecc261cf3a2c1906ee6f0fb61947a8bea4d8bb88def353e0acf4a51391"
+    },
+    {
+      "path": "images/heroes/Isaac.png",
+      "size": 45798,
+      "sha256": "2309a7dfce1faad608dfa640a0703057171466eee828dae5f0489831c564d875"
+    },
+    {
+      "path": "images/heroes/Ishmael.png",
+      "size": 47059,
+      "sha256": "f8dff76b788fe516a36b68997e9eca077d7411c2f572f0659c03cb7dc20d2e58"
+    },
+    {
+      "path": "images/heroes/Jet.png",
+      "size": 50911,
+      "sha256": "e748e1608dc8b44fd5a97f0186c7634902df576f8d188e8de9e5037eb27e5cbc"
+    },
+    {
+      "path": "images/heroes/Jhu.png",
+      "size": 48669,
+      "sha256": "dd2b9b2de0d34a9b15983446578f7986f776f9f92b36df3a07dd0fb52132eb9f"
+    },
+    {
+      "path": "images/heroes/Jorgen.png",
+      "size": 47682,
+      "sha256": "a99b903d57d79aaafb1f1404626316a23738f9477f3f89fa8d70103e4ef84a94"
+    },
+    {
+      "path": "images/heroes/Judge.png",
+      "size": 57801,
+      "sha256": "4d28170a2571809faf76c19fdfce533fed8fb5e2ccf786a33d81216648146d5a"
+    },
+    {
+      "path": "images/heroes/Julius.png",
+      "size": 51742,
+      "sha256": "5dc2fe98c6d3495f3ad1a5cc94e82884a04b0d77547d85bdcc266984eb909da7"
+    },
+    {
+      "path": "images/heroes/Kai.png",
+      "size": 1464624,
+      "sha256": "20388c198958f1b0dc7027a1df6f3d81fe735dce822ce43cac58b9ecf99ec14e"
+    },
+    {
+      "path": "images/heroes/Karkh.png",
+      "size": 40410,
+      "sha256": "4c936fe13fe31f4f77a1d3105893950af545f22a2bf7717a5dccec8473f96ca4"
+    },
+    {
+      "path": "images/heroes/Kayla.png",
+      "size": 46800,
+      "sha256": "b5fcd89cc6f08a00699553859b7dc60a5d99fff29758e82557c5dabec77f28cd"
+    },
+    {
+      "path": "images/heroes/Keira.png",
+      "size": 45690,
+      "sha256": "2624e2e095941712cd314ba8ca9307beaa83a32413f9274eff3ee57d236de179"
+    },
+    {
+      "path": "images/heroes/Krista.png",
+      "size": 49729,
+      "sha256": "ab8221787989b44a88de4180bbd5bcb81b5012aad092c213ae5c14b483cb561f"
+    },
+    {
+      "path": "images/heroes/Lara.png",
+      "size": 46877,
+      "sha256": "81efbdfeccb3abe9f6b64d1d2b33e1804e26e270120805cf02e81e4b16222e0a"
+    },
+    {
+      "path": "images/heroes/Lars.png",
+      "size": 47085,
+      "sha256": "4907bb570ea28bc9fc634a0f336f7e23b0cc15e31598924ebfafee5c6183e13c"
+    },
+    {
+      "path": "images/heroes/Lian.png",
+      "size": 44149,
+      "sha256": "294ff9d12f67e8f0d12ce4b409fe031d55186d83796412537571754134869dfd"
+    },
+    {
+      "path": "images/heroes/Lilith.png",
+      "size": 48733,
+      "sha256": "d64890955519af2077b8d91764684ec62763fd0d9b4c9c6466ec5c420ae11d09"
+    },
+    {
+      "path": "images/heroes/Luther.png",
+      "size": 52668,
+      "sha256": "c261a2885477825aab7529ed0e6095ba50c00ffea24ac1beb47b6c0dd1572ab6"
+    },
+    {
+      "path": "images/heroes/Lyria.png",
+      "size": 49766,
+      "sha256": "c7fc850a9b3588c868891081b4ad691ee7c2d45dcd889afb00013e40950efe81"
+    },
+    {
+      "path": "images/heroes/Markus.png",
+      "size": 52888,
+      "sha256": "2e68edfbfb3cc69d2f17e652c2cdc4d458446fe51c701483d2d2e384dd7b79f3"
+    },
+    {
+      "path": "images/heroes/Martha.png",
+      "size": 52747,
+      "sha256": "f6658560e7920e70a987ee90b242f8f022fa3604b6e03901ec0837ffcd8e12ce"
+    },
+    {
+      "path": "images/heroes/Maya.png",
+      "size": 59181,
+      "sha256": "fed57ef0e187cc2edd5cb1da92cd47897c689b0dd7de493260ca25ec331a3f98"
+    },
+    {
+      "path": "images/heroes/Mojo.png",
+      "size": 50027,
+      "sha256": "702f7cf0101a2aa5ce1dc7a7f997e41f7d5b1dbde002ad7232130b6244353de1"
+    },
+    {
+      "path": "images/heroes/Morrigan.png",
+      "size": 50667,
+      "sha256": "9047b0ae2c04b361dee0eae5b46e7e2ca8256955415a80c8f689a2029d158a0e"
+    },
+    {
+      "path": "images/heroes/Mushy.png",
+      "size": 48386,
+      "sha256": "07cf6b805a2ce197a777f98991e934750842fb3be96bf21b7d1a748f5a646457"
+    },
+    {
+      "path": "images/heroes/Nebula.png",
+      "size": 56492,
+      "sha256": "aba68a506b9e746f1b2edc849000bbab57cc9909a6b66cad1f0a699ba7b3b83e"
+    },
+    {
+      "path": "images/heroes/NinjaTurtles.png",
+      "size": 37983,
+      "sha256": "93c041829503c11e89737224074389e39799040dbf725da81a99c4bace95eac0"
+    },
+    {
+      "path": "images/heroes/Orion.png",
+      "size": 42650,
+      "sha256": "c128c5570213a954dbe29ab3b914bd28a8abfe3e695f31e193eb75d54721bece"
+    },
+    {
+      "path": "images/heroes/Peppy.png",
+      "size": 55681,
+      "sha256": "68b0000d51bb6a3a6065aaa71b554abfd54c5eac143d32c4721fd3c2c9c66158"
+    },
+    {
+      "path": "images/heroes/Phobos.png",
+      "size": 47625,
+      "sha256": "4a5a319475f167e995021e9901943931f3724fe8ceeec369c0c254e8bd54b124"
+    },
+    {
+      "path": "images/heroes/Polaris.png",
+      "size": 51503,
+      "sha256": "c9cf539a5b768c665e8fd71a47c9f2bcd5b44de642ae5c4989fef326ad7e5ae3"
+    },
+    {
+      "path": "images/heroes/QingMao.png",
+      "size": 47958,
+      "sha256": "54a4f2e321c1b1a502a245a709d662da881ac8764f2ee0140042d1547ac5b4ef"
+    },
+    {
+      "path": "images/heroes/Rufus.png",
+      "size": 49555,
+      "sha256": "9c05bc9ac4ec50addeb907a86007b22c5bd3cdbe1466491327c1e079de7ec8df"
+    },
+    {
+      "path": "images/heroes/Satori.png",
+      "size": 41569,
+      "sha256": "268f35d0cd9f2ccd288fb37ad289d16bdc8e922a5b614e1cf58c01e276691c17"
+    },
+    {
+      "path": "images/heroes/Sebastian.png",
+      "size": 1406796,
+      "sha256": "f1c9193abf85733756eeadeb21759ce2229f8a3fe3129669e2d08dbe600b4369"
+    },
+    {
+      "path": "images/heroes/Somna.png",
+      "size": 49837,
+      "sha256": "ec1623f16185062f1b0cb39f581ae1d7dbc65f14f9e03a97b3551c12bf658baa"
+    },
+    {
+      "path": "images/heroes/Thea.png",
+      "size": 55189,
+      "sha256": "c6f4514e9b2ed69b2c69d34aa89816fe6da9e1af1d2eb1fcaab93fb0e473f747"
+    },
+    {
+      "path": "images/heroes/Tristan.png",
+      "size": 38045,
+      "sha256": "f3d13d81f3fbfe894df12c1570435af1cff75bf86f0d3728158f3845253c1205"
+    },
+    {
+      "path": "images/heroes/Yasmine.png",
+      "size": 39079,
+      "sha256": "98b551dd44d0f311cfff6dd263865551b65aaaf4df25564dea0c4dae32ce0225"
+    },
+    {
+      "path": "images/heroes/Ziri.png",
+      "size": 44516,
+      "sha256": "da3e101a0926ec6dc72460ec12973c8564f6e075ebe935a6d27aad64904efd86"
+    },
+    {
+      "path": "images/pets/Albus.png",
+      "size": 41885,
+      "sha256": "48438c577e5be1554fc4979504755f69a98bf99e87bb08a66f06fd28c53b3fd6"
+    },
+    {
+      "path": "images/pets/Axel.png",
+      "size": 50586,
+      "sha256": "9809cc5f0544add0218b699ade19fdd5b9c57b9f84bdedaf7697432e8be3ffbd"
+    },
+    {
+      "path": "images/pets/Biscuit.png",
+      "size": 42042,
+      "sha256": "8bdfb62bf2d366fd0c28b784eb7f3ada2c9d94fb3dacd4002afdcd51a23f6192"
+    },
+    {
+      "path": "images/pets/Cain.png",
+      "size": 26305,
+      "sha256": "3165bca976addabc27c91974f0a98d5baeebb6065be56e0cf6fd9ff215cd1a2a"
+    },
+    {
+      "path": "images/pets/Fenris.png",
+      "size": 44527,
+      "sha256": "207528e156b2899707b71720d7da6b7037f0e52870c04edf709b504dc396712a"
+    },
+    {
+      "path": "images/pets/Khorus.png",
+      "size": 37325,
+      "sha256": "663cda0814f325b46756def3c069c83bc21e41f8930bf1342e6241ff99e102b5"
+    },
+    {
+      "path": "images/pets/Mara.png",
+      "size": 49359,
+      "sha256": "102392c322de4e32f8fb81f6c7e9252ac507de188fcad506b26a4ae1576a30e0"
+    },
+    {
+      "path": "images/pets/Merlin.png",
+      "size": 31274,
+      "sha256": "8508c5dde155728aee716feefbfe2c2529dda7dceecaa11c96918ffffea9266a"
+    },
+    {
+      "path": "images/pets/Oliver.png",
+      "size": 36438,
+      "sha256": "d305de84adbb6e754ca7054acfef29103d5288333fbdca794d13b82e10b75535"
+    },
+    {
+      "path": "images/pets/Robin.png",
+      "size": 48007,
+      "sha256": "5e95c55a5f6fc338231ca69aebd14c5c7c456f2a3d9b581585d8df832049397f"
+    },
+    {
+      "path": "images/pets/Vex.png",
+      "size": 49539,
+      "sha256": "3367538086ef8c0687936f8d5ceb67eeccf5109aad963ce13c921266ccfe6dab"
+    },
+    {
+      "path": "images/titans/Alecto.png",
+      "size": 2815,
+      "sha256": "04536440419bcf0a0e236c063d1e3e159e6336514c261afe23c34076c072e54a"
+    },
+    {
+      "path": "images/titans/Amon.png",
+      "size": 54260,
+      "sha256": "04f15fdf877db3f18ed3e2fe3c517d2d42abfe1ea8489e9e9b8b1086e3170f1f"
+    },
+    {
+      "path": "images/titans/Angus.png",
+      "size": 51592,
+      "sha256": "8952e70c4fa86d5c40e48905ec7e6eaecb23cf50d06fa0ff8163661b01f6b3f1"
+    },
+    {
+      "path": "images/titans/Araji.png",
+      "size": 45927,
+      "sha256": "0b182477594e98f60b3e0522c680af95a354bc19abdd7863b8a0f62ca9568cf2"
+    },
+    {
+      "path": "images/titans/Asherona.png",
+      "size": 53514,
+      "sha256": "b49dfbb1f5a1f559a35ce303cc189913323b2fc3c3e080d9d4c4090f142d4173"
+    },
+    {
+      "path": "images/titans/Avalon.png",
+      "size": 46819,
+      "sha256": "fe73c85981d5111ec730958c2feeb12b3911bdab1b8e9ad21a87969a02052c3b"
+    },
+    {
+      "path": "images/titans/Brustar.png",
+      "size": 44535,
+      "sha256": "6b85e52e869b41786b9d8018050fad2e81bb5cc1069a44c5d05816aac9d300c3"
+    },
+    {
+      "path": "images/titans/Eden.png",
+      "size": 43639,
+      "sha256": "4b696a460e3675d9d9460863ac6333ac14efac607036fdf71a2542f860665396"
+    },
+    {
+      "path": "images/titans/Hyperion.png",
+      "size": 49828,
+      "sha256": "66e6348f243fcb33917a4cbb2a9d5db155d550ccf1c90fb356055e0d373cd7ac"
+    },
+    {
+      "path": "images/titans/Ignis.png",
+      "size": 45436,
+      "sha256": "5ca8f1e6fa1050e78eeb00cd03c64c81a124a5fd376ee5f223291b4b18c86ec8"
+    },
+    {
+      "path": "images/titans/Iyari.png",
+      "size": 60141,
+      "sha256": "34f25d54cc9ee7dc4c6a38ad58e9c538da68e553b22b8a5f2632f903274aa63d"
+    },
+    {
+      "path": "images/titans/Keros.png",
+      "size": 51865,
+      "sha256": "5e8a984acd0fbc1a06da5a76f966f0a7ba871c2bf6813d630a64664518f1de05"
+    },
+    {
+      "path": "images/titans/Lumira.png",
+      "size": 55047,
+      "sha256": "b510aaead8fb6eed74005215575d710d2c421b9c49b7cf610f0c901303e0ccb1"
+    },
+    {
+      "path": "images/titans/Mairi.png",
+      "size": 49340,
+      "sha256": "0f3fe9f73b03ff8a4a58e1d7eeb8c3d252aa18d6ae382851c7f40c240cbd2999"
+    },
+    {
+      "path": "images/titans/Moloch.png",
+      "size": 48320,
+      "sha256": "45acdfa3ef50aa82f378f9689c82a0a28e8fd7675a96893183829dffd0cd2b5f"
+    },
+    {
+      "path": "images/titans/Mort.png",
+      "size": 47481,
+      "sha256": "a293357595a84b81512f6f1d2e4e0a2d44220bd6135ecc147c70df08e2228660"
+    },
+    {
+      "path": "images/titans/Nova.png",
+      "size": 50139,
+      "sha256": "6215c481f83b4929e9bfe97e4b29c074caa074eb59ba666a904206a817daefb5"
+    },
+    {
+      "path": "images/titans/Rigel.png",
+      "size": 49742,
+      "sha256": "aae057708c504fb016cc0a851ac03e50d29bb248560c28bd14a547cf654a414f"
+    },
+    {
+      "path": "images/titans/Sigurd.png",
+      "size": 53399,
+      "sha256": "5bd9a05edc8641618f051c6e44782759b99c8aa1f16e5fa4f44d0bae03cb87f4"
+    },
+    {
+      "path": "images/titans/Silva.png",
+      "size": 44272,
+      "sha256": "85331e5ea4926676f046b284399505fce89ec8eaea1223be39a597de110130c0"
+    },
+    {
+      "path": "images/titans/Solaris.png",
+      "size": 49977,
+      "sha256": "004564a879247c5b1eeb7e880b99aaae59c20230139ca76cfcb9bf955a412319"
+    },
+    {
+      "path": "images/titans/Tenebris.png",
+      "size": 57344,
+      "sha256": "0577d482f2d74abcfdbf1a8bd86d15eb2a1cfc9145c8f34b876b5dc5906e41f3"
+    },
+    {
+      "path": "images/titans/Tidus.png",
+      "size": 50890,
+      "sha256": "afd38af486e423451e9dbacfb50733906fe6320c8c5fe191a21df37c9d43d479"
+    },
+    {
+      "path": "images/titans/Umbra.png",
+      "size": 2898,
+      "sha256": "0a41d0494fee64c8377b641be48542aab463938efae95b69e3eac5a4fd13ca5b"
+    },
+    {
+      "path": "images/titans/Valdur.png",
+      "size": 2991,
+      "sha256": "ecc0f7181d82d69ef91e22d3cbedd0e186d93dfda8cbeef9606e23af4ffa0171"
+    },
+    {
+      "path": "images/titans/Verdoc.png",
+      "size": 51375,
+      "sha256": "942b32afc3a3ef70eb99dbf80d3e6488b3a0eb8ab006f102608fa33e8c1fca3f"
+    },
+    {
+      "path": "images/titans/Vulcan.png",
+      "size": 51011,
+      "sha256": "8756504f6ffc94a51d302a12d3bc0a0d0d25e7288b5ce3e4dc7561defd7d0b8c"
+    }
+  ]
+}

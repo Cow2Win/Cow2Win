@@ -10,9 +10,9 @@ package org.c2w.data.model;
  * francais/francais.properties), keyed by {@link #id()}. The displayName can
  * be retrieved at runtime via the LanguageService.
  *
- * imagePath: classpath-absolute path (with leading "/") to this pet's avatar
- * icon, e.g. "/images/pets/Albus.png" - analogous to {@link Hero#imagePath()},
- * suitable for {@code Pet.class.getResourceAsStream(imagePath)}. If no image
+ * imagePath: logical path (with leading "/") to this pet's avatar
+ * icon, e.g. "/images/pets/Albus.png" - analogous to {@link Hero#imagePath()}.
+ * If no image
  * is given (see PetRepository/pets.json - field "image"), it automatically
  * falls back to the placeholder at {@link #PLACEHOLDER_IMAGE_PATH}, so the
  * field is never null.

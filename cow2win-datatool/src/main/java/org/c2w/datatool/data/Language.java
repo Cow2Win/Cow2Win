@@ -1,5 +1,7 @@
 package org.c2w.datatool.data;
 
+import org.c2w.datatool.RepositoryFolder;
+
 import java.nio.file.Path;
 
 /**
@@ -29,8 +31,8 @@ public enum Language {
         return "name." + name().toLowerCase();
     }
 
-    /** Path of the language file relative to the resources folder. */
+    /** Path of the language file relative to the repository root (in the app resources). */
     public Path relativePath() {
-        return Path.of("language", folder, folder + ".properties");
+        return RepositoryFolder.APP_RESOURCES.resolve(Path.of("language", folder, folder + ".properties"));
     }
 }

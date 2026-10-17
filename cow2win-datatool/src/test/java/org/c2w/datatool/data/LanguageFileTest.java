@@ -92,7 +92,7 @@ class LanguageFileTest {
     @Test
     void readsTheRealFilesLikeProperties() throws IOException {
         for (Language language : Language.values()) {
-            String text = Files.readString(TestResources.REAL.resolve(language.relativePath()), StandardCharsets.UTF_8);
+            String text = Files.readString(TestResources.REPOSITORY.resolve(language.relativePath()), StandardCharsets.UTF_8);
             Properties properties = new Properties();
             properties.load(new StringReader(text));
             LanguageFile file = new LanguageFile(text);

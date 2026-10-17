@@ -1,8 +1,9 @@
 package org.c2w.datatool.data;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.c2w.data.model.ComboSource;
+import org.c2w.datatool.RepositoryFolder;
+import org.c2w.infra.CatalogDataVersion;
+import org.c2w.infra.CatalogManifest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,20 +24,22 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * All system data of one resources folder ({@code cow2win-app/src/main/resources}): the
- * eleven data files, the display names from the three language files and the catalog
- * version. Every change goes through this class, which marks the affected table as changed;
- * {@link #save} writes only files whose content actually changed.
+ * All system data of one repository: the twelve data files (the five catalog files in {@code
+ * catalog/}, the others in {@code cow2win-app/src/main/resources}), the display names from the
+ * three language files and the catalog manifest. Every change goes through this class, which
+ * marks the affected table as changed; {@link #save} writes only files whose content actually
+ * changed, and then brings {@code catalog/manifest.json} up to date.
  */
 public final class DataSet {
 
-    public static final Path CATALOG_VERSION = Path.of("data", "catalog-version.json");
+    /** The manifest of the game catalog, relative to the repository root. */
+    public static final Path MANIFEST = RepositoryFolder.CATALOG.resolve(CatalogManifest.FILE_NAME);
 
     private final Path root;
     private final Map<TableKind, DataTable> tables = new EnumMap<>(TableKind.class);
     private final Map<TableKind, TableCodec> codecs = new EnumMap<>(TableKind.class);
     private final Map<Language, LanguageFile> languages = new EnumMap<>(Language.class);
-    private final String catalogVersionText;
+    private final CatalogManifest manifest;
     /** Avatars chosen in this session: target path (relative to the root) to source file - copied on save. */
     private final Map<Path, Path> pendingImages = new LinkedHashMap<>();
 
@@ -59,12 +62,12 @@ public final class DataSet {
             codecs.put(kind, codec);
             tables.put(kind, table);
         }
-        this.catalogVersionText = read(CATALOG_VERSION);
+        this.manifest = CatalogManifest.parse(read(MANIFEST));
     }
 
-    /** Loads everything below {@code resourcesRoot} (a folder checked by {@code ResourceFolder}). */
-    public static DataSet load(Path resourcesRoot) throws IOException {
-        return new DataSet(resourcesRoot);
+    /** Loads everything below {@code repositoryRoot} (a folder checked by {@link RepositoryFolder}). */
+    public static DataSet load(Path repositoryRoot) throws IOException {
+        return new DataSet(repositoryRoot);
     }
 
     private String read(Path relative) throws IOException {
@@ -81,6 +84,11 @@ public final class DataSet {
 
     public LanguageFile language(Language language) {
         return languages.get(language);
+    }
+
+    /** The catalog manifest as loaded (not yet updated by a save). */
+    public CatalogManifest manifest() {
+        return manifest;
     }
 
     /** English display name of a catalog entry, falling back to its id. */
@@ -193,19 +201,19 @@ public final class DataSet {
         setValue(kind, row, Fields.IMAGE, fileName);
     }
 
+    /** Where the avatars of {@code kind} live, relative to the repository root - in the game catalog. */
+    public static Path imageFolder(TableKind kind) {
+        return RepositoryFolder.CATALOG.resolve(Path.of("images", kind.imageFolder()));
+    }
+
     private static Path imageTarget(TableKind kind, String fileName) {
-        return Path.of("images", kind.imageFolder(), fileName);
+        return imageFolder(kind).resolve(fileName);
     }
 
     // --- check and save ---
 
     public List<Problem> validate() {
         return new Validator(this).validate();
-    }
-
-    /** True if saving would rewrite one of the five catalog files (then the data version may be updated). */
-    public boolean catalogFilesChanged() {
-        return TableKind.CATALOGS.stream().anyMatch(this::fileChanged);
     }
 
     /** Ids of new entries of {@code catalog} that have no entry in its CowScore file yet. */
@@ -238,8 +246,9 @@ public final class DataSet {
 
     /**
      * Checks and, without errors, writes every changed file (temporary file + rename): data
-     * files, catalog version, new avatars and language files. Nothing is written if the check
-     * finds an error.
+     * files, new avatars and language files - and then {@code catalog/manifest.json} if the files
+     * of the catalog no longer match it (see {@link #updateManifest}). Nothing is written if the
+     * check finds an error.
      */
     public SaveResult save(SaveOptions options) throws IOException {
         List<Problem> errors = validate().stream().filter(Problem::isError).toList();
@@ -260,9 +269,6 @@ public final class DataSet {
                 texts.put(kind.relativePath(), render(kind));
             }
         }
-        if (options.setDataVersion() && catalogFilesChanged()) {
-            texts.put(CATALOG_VERSION, withDataVersion(catalogVersionText, options.today()));
-        }
         for (Language language : Language.values()) {
             if (languages.get(language).isModified()) {
                 texts.put(language.relativePath(), languages.get(language).text());
@@ -280,12 +286,15 @@ public final class DataSet {
                 written.add(slashes(image.getKey()));
             }
         }
+        if (updateManifest(options.today())) {
+            written.add(slashes(MANIFEST));
+        }
         return new SaveResult(written, List.of());
     }
 
     private boolean imageStillUsed(Path target) {
         for (TableKind kind : TableKind.CATALOGS) {
-            if (kind.imageFolder() != null && target.getName(1).toString().equals(kind.imageFolder())) {
+            if (kind.imageFolder() != null && target.getParent().equals(imageFolder(kind))) {
                 String fileName = target.getFileName().toString();
                 return table(kind).rows().stream().anyMatch(row -> fileName.equals(row.getString(Fields.IMAGE)));
             }
@@ -341,11 +350,23 @@ public final class DataSet {
         };
     }
 
-    /** {@code catalog-version.json} with {@code dataVersion} set to {@code date}, everything else unchanged. */
-    static String withDataVersion(String catalogVersionText, LocalDate date) {
-        JsonObject object = JsonParser.parseString(catalogVersionText).getAsJsonObject();
-        object.addProperty("dataVersion", date.toString());
-        return JsonText.write(object, Set.of(), catalogVersionText.endsWith("\n"));
+    /**
+     * Rewrites {@code catalog/manifest.json} if the files below {@code catalog/} (size, SHA-256)
+     * differ from the ones it lists: with the current files and the next {@code dataVersion} for
+     * {@code today} (see {@link CatalogDataVersion#next}); {@code formatVersion} and {@code note}
+     * stay as they are. A save that leaves the catalog alone (e.g. only CowScore changes) does
+     * not touch the manifest.
+     *
+     * @return true if the manifest was written
+     */
+    private boolean updateManifest(LocalDate today) throws IOException {
+        List<CatalogManifest.FileEntry> files = CatalogManifest.scan(root.resolve(RepositoryFolder.CATALOG));
+        if (files.equals(manifest.files())) {
+            return false;
+        }
+        CatalogManifest updated = manifest.with(manifest.dataVersion().next(today), files);
+        writeAtomically(root.resolve(MANIFEST), updated.toJson().getBytes(StandardCharsets.UTF_8));
+        return true;
     }
 
     private static void writeAtomically(Path target, byte[] content) throws IOException {

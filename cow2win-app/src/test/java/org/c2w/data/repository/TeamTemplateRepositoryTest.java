@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import org.c2w.data.model.TeamTemplate;
 import org.c2w.data.model.Titan;
 import org.c2w.data.model.TitanElement;
-import org.c2w.infra.JsonSupport;
+import org.c2w.infra.CatalogStore;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -216,7 +216,7 @@ class TeamTemplateRepositoryTest {
         void defaultsMatchTheTitanCatalog() throws IOException {
             TitanRepository catalog = new TitanRepository(workspace);
             JsonArray titansJson = JsonParser.parseString(
-                    JsonSupport.readClasspathResource(TitanRepository.class, "/data/titans.json")).getAsJsonArray();
+                    CatalogStore.readText("data/titans.json")).getAsJsonArray();
             TeamTemplateRepository titans = TeamTemplateRepository.forTitans(workspace);
             Map<Integer, TitanElement> elementBySlot = Map.of(1, TitanElement.EARTH, 2, TitanElement.FIRE,
                     3, TitanElement.WATER, 4, TitanElement.LIGHT, 5, TitanElement.DARK);

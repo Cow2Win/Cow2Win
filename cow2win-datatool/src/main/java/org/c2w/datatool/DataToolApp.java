@@ -19,11 +19,11 @@ import java.util.Optional;
 /**
  * Master data tool for the system data shipped with Cow2Win (heroes, titans, pets, war flags,
  * fortifications, CowScore defaults, hero combos, titan templates, display names, avatars).
- * Edits only {@code cow2win-app/src/main/resources} - never a workspace. Started from the IDE,
- * not shipped.
+ * Edits only the repository's {@code catalog/} and {@code cow2win-app/src/main/resources} - never
+ * a workspace. Started from the IDE, not shipped.
  *
- * <p>Program argument (optional): the repository or the resources folder. Without one, the
- * folder is searched upwards from the working directory, then asked for.
+ * <p>Program argument (optional): the repository root. Without one, it is
+ * searched upwards from the working directory, then asked for.
  */
 public final class DataToolApp {
 
@@ -33,7 +33,7 @@ public final class DataToolApp {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             installLookAndFeel();
-            Path root = locateResources(args);
+            Path root = locateRepository(args);
             if (root == null) {
                 return;
             }
@@ -58,9 +58,9 @@ public final class DataToolApp {
         }
     }
 
-    private static Path locateResources(String[] args) {
+    private static Path locateRepository(String[] args) {
         try {
-            Optional<Path> found = ResourceFolder.find(args, Path.of(""));
+            Optional<Path> found = RepositoryFolder.find(args, Path.of(""));
             if (found.isPresent()) {
                 return found.get();
             }
@@ -69,10 +69,10 @@ public final class DataToolApp {
         }
         JFileChooser chooser = FileChoosers.create(Path.of("").toAbsolutePath().toFile());
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Choose cow2win-app/src/main/resources");
+        chooser.setDialogTitle("Choose the Cow2Win repository");
         while (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             Path chosen = chooser.getSelectedFile().toPath();
-            String problem = ResourceFolder.check(chosen);
+            String problem = RepositoryFolder.check(chosen);
             if (problem == null) {
                 return chosen.toAbsolutePath().normalize();
             }

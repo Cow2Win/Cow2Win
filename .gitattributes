@@ -12,3 +12,6 @@ cow2win-app/src/main/resources/data/demo-journal/*.csv -text
 # Binary files
 *.png binary
 *.ico binary
+# The game catalog (catalog/manifest.json lists every file's size and SHA-256):
+# stored and checked out byte for byte, no newline conversion on any machine.
+catalog/** -text

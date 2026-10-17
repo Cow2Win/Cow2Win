@@ -6,7 +6,7 @@ import javax.swing.JFrame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-/** The tool window; its title shows the resources folder being edited. */
+/** The tool window; its title shows the repository being edited. */
 public final class DataToolFrame extends JFrame {
 
     public DataToolFrame(DataSet data) {

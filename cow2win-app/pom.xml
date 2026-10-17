@@ -66,6 +66,14 @@
                     <include>app-version.properties</include>
                 </includes>
             </resource>
+            <!-- The game catalog (heroes, titans, pets, war flags, fortifications and their
+                 images, plus manifest.json) lives in the repository's catalog/ folder and is
+                 built into the jar as /catalog/..., read only via org.c2w.infra.CatalogStore. -->
+            <resource>
+                <directory>${project.basedir}/../catalog</directory>
+                <targetPath>catalog</targetPath>
+                <filtering>false</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>

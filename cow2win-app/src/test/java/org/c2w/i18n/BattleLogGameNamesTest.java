@@ -35,7 +35,8 @@ class BattleLogGameNamesTest {
     private static final List<String> BATTLE_LOG_FOLDERS = List.of("de", "en", "fr", "partial");
     private static final int SAMPLE_LOG_COUNT = 38;
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
-    private static final Path DATA_DIR = Paths.get("src", "main", "resources", "data");
+    /** The catalog data files in the repository's {@code catalog/} folder (tests run in the app module). */
+    private static final Path DATA_DIR = Paths.get("..", "catalog", "data");
     private static final List<String> CATALOGS =
             List.of("heroes.json", "titans.json", "pets.json", "fortifications.json");
 
