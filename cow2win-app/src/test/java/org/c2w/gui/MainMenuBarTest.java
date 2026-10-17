@@ -40,7 +40,7 @@ class MainMenuBarTest {
      * plus the "Guild" menu: "File", "Guild" and one menu per process stage. A submenu is written as {title: entries}.
      */
     private static final List<String> EXPECTED = List.of(
-            "menu.file: SETTINGS, COWSCORE, SHOW_LOG, OPEN_HERO_WARS",
+            "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD",
             "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "

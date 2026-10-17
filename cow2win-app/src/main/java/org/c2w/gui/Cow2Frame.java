@@ -267,6 +267,8 @@ public class Cow2Frame extends JFrame {
                 () -> CowScoreDialog.open(this, appContext.catalog(),
                         // Opens on "Info"; saved CowScores make the lineup "to recalculate" - show that right away.
                         () -> dataStatusController.requestUpdate())));
+        // Downloads a newer catalog for the next start - nothing is reloaded in this session.
+        actions.register(new AppAction(ActionId.CATALOG_UPDATE, () -> CatalogUpdateDialog.open(this, this::onOpenWeb)));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         // The change plan lives in the output view, created after the actions.
         actions.register(new AppAction(ActionId.APPLY_TO_LIVE, () -> outputView.applyToLive())

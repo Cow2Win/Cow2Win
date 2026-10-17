@@ -13,6 +13,8 @@ public enum ActionId {
 
     /** Master data: the CowScore marks apply to every guild (menu "File" for now, see {@link Stage#MASTER_DATA}). */
     COWSCORE("menu.cowScoreDialog", Stage.MASTER_DATA, Opens.WINDOW),
+    /** Downloads a newer game catalog for the next start - see {@code CatalogUpdateDialog}. */
+    CATALOG_UPDATE("menu.catalogUpdate", Stage.MASTER_DATA, Opens.WINDOW),
 
     /**
      * The guild as a whole: creating and removing it - menu "Guild", see {@link Stage#GUILD}. Its

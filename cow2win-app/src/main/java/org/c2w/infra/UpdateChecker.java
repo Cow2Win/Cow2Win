@@ -44,14 +44,10 @@ import java.util.regex.Pattern;
  */
 public final class UpdateChecker {
 
-    /** GitHub org/repo to check - see this project's own "origin" git remote. */
-    private static final String GITHUB_OWNER = "Cow2Win";
-    private static final String GITHUB_REPO = "Cow2Win";
-    private static final String LATEST_RELEASE_API_URL =
-            "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/releases/latest";
+    /** The repository to check - shared with the catalog download, see {@link GitHubProject}. */
+    private static final String LATEST_RELEASE_API_URL = GitHubProject.LATEST_RELEASE_API_URL;
     /** Fallback link (e.g. for a failed check, or if the API response carries no usable URL) - the human-facing releases page, not the API endpoint above. */
-    private static final String RELEASES_PAGE_URL =
-            "https://github.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/releases";
+    private static final String RELEASES_PAGE_URL = GitHubProject.RELEASES_PAGE_URL;
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
 

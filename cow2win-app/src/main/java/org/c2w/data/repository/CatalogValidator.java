@@ -104,6 +104,18 @@ public final class CatalogValidator {
     }
 
     /**
+     * Only the checks of the manifest itself - supported format, path layout, no duplicate paths,
+     * size limits - e.g. before any listed file is downloaded.
+     */
+    public static Result checkManifest(CatalogManifest manifest) {
+        CatalogValidator validator = new CatalogValidator();
+        if (validator.checkFormat(manifest)) {
+            validator.checkPathsAndSizes(manifest);
+        }
+        return new Result(validator.findings);
+    }
+
+    /**
      * The ids per data file ({@code data/heroes.json} etc.) of {@code catalog} - what a later catalog
      * must still contain.
      *
@@ -127,18 +139,22 @@ public final class CatalogValidator {
             error(CatalogManifest.FILE_NAME + " cannot be read: " + e.getMessage());
             return;
         }
-        if (manifest.formatVersion() < 1 || manifest.formatVersion() > CatalogStore.SUPPORTED_CATALOG_FORMAT) {
-            error("formatVersion " + manifest.formatVersion() + " is not supported by this program (up to "
-                    + CatalogStore.SUPPORTED_CATALOG_FORMAT + ")");
-            return;
-        }
-        if (!checkPathsAndSizes(manifest)) {
+        if (!checkFormat(manifest) || !checkPathsAndSizes(manifest)) {
             return;
         }
         Map<String, String> texts = checkContent(catalog, manifest);
         if (!errors()) {
             checkData(manifest, texts, previousIds);
         }
+    }
+
+    private boolean checkFormat(CatalogManifest manifest) {
+        if (manifest.formatVersion() < 1 || manifest.formatVersion() > CatalogStore.SUPPORTED_CATALOG_FORMAT) {
+            error("formatVersion " + manifest.formatVersion() + " is not supported by this program (up to "
+                    + CatalogStore.SUPPORTED_CATALOG_FORMAT + ")");
+            return false;
+        }
+        return true;
     }
 
     /** Path layout, duplicates and size limits (from the manifest, before reading anything). */

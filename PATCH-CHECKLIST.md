@@ -170,7 +170,28 @@ only through them (there are no aliases).
       startup so it's visible at a glance which patch state the catalog data
       was last checked against.
 
-## 8. GUI changes
+## 8. Publishing a catalog
+
+The catalog in `catalog/` on the default branch (`master`) **is** the published
+catalog: every user's "File" > "Update catalog …" downloads it from
+`raw.githubusercontent.com` (GitHub caches raw files for a few minutes, so a
+fresh push shows up with a short delay). A push is a release - for every user.
+
+- [ ] Make the change in the data tool and **save** there (it rewrites
+      `catalog/manifest.json`, sets the next `dataVersion` and refuses a
+      catalog the app would reject).
+- [ ] Run `mvn test` - green.
+- [ ] Commit and push to `master` = published for all users.
+- [ ] Raise `formatVersion` in the **same commit** that changes the catalog
+      format (together with `CatalogStore.SUPPORTED_CATALOG_FORMAT` in the
+      program that reads the new format) - otherwise older program versions
+      download data they do not understand; they show "needs a newer version"
+      instead.
+- [ ] Never remove or rename an id - guilds, lineups and journal databases
+      refer to them (the data tool and the app both refuse a catalog that
+      lacks an id of the installed one).
+
+## 9. GUI changes
 
 - [ ] New colors only via `AppColors` (`org.c2w.gui.common`) - a role, not a hue;
       text in a status color always uses the `..._TEXT` variant. `NoLocalColorsTest`

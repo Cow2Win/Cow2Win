@@ -326,6 +326,11 @@ public final class Config {
         return ROOT.resolve("catalog.previous");
     }
 
+    /** {@code <user.home>/.cow2Win/catalog.download} - the work folder of a catalog update, emptied before each one. */
+    public static Path getCatalogDownloadDir() {
+        return ROOT.resolve("catalog.download");
+    }
+
     /**
      * {@link #getWorkspacePath()} as a {@link Path}. It reflects
      * {@link #KEY_WORKSPACE_PATH} and can therefore only be trusted after {@link #load()} has run.
