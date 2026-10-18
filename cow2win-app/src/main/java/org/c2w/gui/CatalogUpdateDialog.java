@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * "File" &gt; "Update catalog ...": the surface over {@link CatalogUpdateService} - a cancellable
+ * "File" &gt; "Update game data ...": the surface over {@link CatalogUpdateService} - a cancellable
  * modal progress dialog while it works in the background (never on the Swing thread), then the
  * message for its outcome, the differences with Apply/Cancel, and the installed notice. The new
  * catalog only applies after a restart - nothing is reloaded here.

@@ -29,7 +29,7 @@ The app guides you through three steps: **Input** (guild and teams) →
   exported in the game, browse past battles, replay them step by step and
   update your teams from them.
 - German, English and French; automatic backups; update check.
-- **New heroes and titans without a new version** – *File* → *Update catalog …*
+- **New heroes and titans without a new version** – *File* → *Update game data …*
   downloads the latest game data (heroes, titans, pets, war flags,
   fortifications, their names and pictures), checks it and uses it from the
   next start on. Your guilds, lineups and CowScore settings stay as they are.
