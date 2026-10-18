@@ -495,11 +495,11 @@ public final class TeamEditorPanel<T> extends JPanel {
         return model;
     }
 
-    /** Tooltip of a closed war flag/pet combo box: its kind plus the selected entry's display name, e.g. "Pet: Albus". */
+    /** Tooltip of a closed war flag/pet combo box: the selected entry's display name (e.g. "Albus"), or its kind ("Pet") if none is selected. */
     private static <E> void updateExtraTooltip(JComboBox<E> combo, String kindLabel, Function<E, String> labelOf) {
         @SuppressWarnings("unchecked")
         E selected = (E) combo.getSelectedItem();
-        combo.setToolTipText(selected == null ? kindLabel : kindLabel + ": " + labelOf.apply(selected));
+        combo.setToolTipText(selected == null ? kindLabel : labelOf.apply(selected));
     }
 
     /**
