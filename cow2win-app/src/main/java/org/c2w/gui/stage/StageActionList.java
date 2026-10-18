@@ -16,8 +16,8 @@ import java.util.List;
 
 /**
  * The left column of a {@link StageView}: the stage's actions as a list, built from the
- * stage's menu in {@link MainMenuBar#MENUS} - the same actions as the menu, no second list to
- * maintain. An action becomes a clickable row (icon and text), a submenu a group (small
+ * stage's spec in {@code MainMenuBar.STAGE_ACTIONS} (see {@link MainMenuBar#menuFor}) - the
+ * process stages have no menu in the menu bar, this list is where their actions are. An action becomes a clickable row (icon and text), a submenu a group (small
  * heading, its entries indented), a separator a small gap with a thin line. Rows follow their
  * action (enabled state, text, icon). A stage view can append rows of its own, see
  * {@link #addExtra}/{@link #addExtraAction}, or insert one directly before an action's

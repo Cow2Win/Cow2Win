@@ -258,8 +258,9 @@ public class Cow2Frame extends JFrame {
     }
 
     /**
-     * Registers the actions whose handlers live in this frame (file, guild and lineup
-     * menus) - see {@link MainMenuBar} for where they show up.
+     * Registers the actions whose handlers live in this frame (file and guild menus, the
+     * lineup group of the concept stage's action list) - see {@link MainMenuBar} for where
+     * they show up.
      */
     private void registerActions(MainActions actions) {
         actions.register(new AppAction(ActionId.SETTINGS, this::onOpenSettings));

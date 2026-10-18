@@ -36,19 +36,25 @@ class MainMenuBarTest {
     private static final String SEPARATOR = "---";
 
     /**
-     * "menu title key: entries" - the target structure of milestone M1 (steps 1.1-1.5)
-     * plus the "Guild" menu: "File", "Guild" and one menu per process stage. A submenu is written as {title: entries}.
+     * "menu title key: entries" of the menu bar: "File", "Guild" and the journal - the process
+     * stages have no menu there (see {@link #EXPECTED_STAGE_ACTIONS}).
      */
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD, ---, EDIT_GUILD_NOTE",
-            "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
-            "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "
-                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
-            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE",
             "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS");
 
-    /** Deliberately toolbar-only actions - the only ones not in any menu. */
+    /**
+     * "title key: entries" of the process stages' action lists, unchanged from their former menus.
+     * A submenu (group) is written as {title key: entries}.
+     */
+    private static final List<String> EXPECTED_STAGE_ACTIONS = List.of(
+            "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
+            "menu.concept: {menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "
+                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
+            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE");
+
+    /** Deliberately toolbar-only actions - the only ones neither in a menu nor in a stage action list. */
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);
 
     @TempDir
@@ -73,14 +79,14 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("Menu titles, submenus, entries and separators match the expected menu bar - six menus, the journal last")
+    @DisplayName("Menu titles, entries and separators match the expected menu bar - three menus, the journal last")
     void structureMatchesExpectedMenuBar() {
         MainActions actions = allActions();
 
         MainMenuBar menuBar = new MainMenuBar(actions, context);
 
-        assertEquals(6, menuBar.getMenuCount());
-        assertSame(menuBar.journalMenu(), menuBar.getMenu(5));
+        assertEquals(3, menuBar.getMenuCount());
+        assertSame(menuBar.journalMenu(), menuBar.getMenu(2));
         assertEquals(EXPECTED.size(), menuBar.getMenuCount());
         for (int i = 0; i < EXPECTED.size(); i++) {
             String[] parts = EXPECTED.get(i).split(": ", 2);
@@ -91,10 +97,36 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("Every action in a menu titled after a stage, submenus included, is of that stage - the guild and all three process menus exist")
+    @DisplayName("The menu bar has no menu for the process stages input, concept and output")
+    void noProcessStageMenus() {
+        MainMenuBar menuBar = new MainMenuBar(allActions(), context);
+        for (Stage stage : List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT)) {
+            String title = LanguageService.displayName(stage.menuTextKey());
+            for (int i = 0; i < menuBar.getMenuCount(); i++) {
+                assertNotEquals(title, menuBar.getMenu(i).getText(), stage.name());
+            }
+            assertTrue(MainMenuBar.MENUS.stream().noneMatch(spec -> spec.titleKey().equals(stage.menuTextKey())),
+                    stage.name());
+        }
+    }
+
+    @Test
+    @DisplayName("The action lists of input, concept and output are unchanged: entries, order, separators and the lineup group")
+    void stageActionListsUnchanged() {
+        assertEquals(EXPECTED_STAGE_ACTIONS.size(), MainMenuBar.STAGE_ACTIONS.size());
+        List<String> actual = new ArrayList<>();
+        for (Stage stage : List.of(Stage.INPUT, Stage.CONCEPT, Stage.OUTPUT)) {
+            MainMenuBar.MenuSpec spec = MainMenuBar.menuFor(stage);
+            actual.add(spec.titleKey() + ": " + describeSpec(spec));
+        }
+        assertEquals(EXPECTED_STAGE_ACTIONS, actual);
+    }
+
+    @Test
+    @DisplayName("Every action in a spec titled after a stage (menu or stage action list), submenus included, is of that stage - the guild, the journal and all three process stages have one")
     void stageMenusHoldOnlyTheirStage() {
         Set<Stage> stageMenusFound = EnumSet.noneOf(Stage.class);
-        for (MainMenuBar.MenuSpec spec : MainMenuBar.MENUS) {
+        for (MainMenuBar.MenuSpec spec : allSpecs()) {
             for (Stage stage : Stage.values()) {
                 if (!spec.titleKey().equals(stage.menuTextKey())) {
                     continue;
@@ -145,23 +177,24 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("Completeness: every action is in a menu, except the toolbar-only ones")
+    @DisplayName("Completeness: every action is in a menu or a stage action list, except the toolbar-only ones")
     void everyActionIsInAMenu() {
         Set<ActionId> inMenus = EnumSet.noneOf(ActionId.class);
-        MainMenuBar.MENUS.forEach(spec -> inMenus.addAll(spec.allActionIds()));
+        allSpecs().forEach(spec -> inMenus.addAll(spec.allActionIds()));
 
         assertEquals(TOOLBAR_ONLY, MainMenuBar.TOOLBAR_ONLY);
         for (ActionId id : ActionId.values()) {
             assertEquals(!TOOLBAR_ONLY.contains(id), inMenus.contains(id),
-                    id + (TOOLBAR_ONLY.contains(id) ? " is toolbar-only but in a menu" : " is in no menu"));
+                    id + (TOOLBAR_ONLY.contains(id) ? " is toolbar-only but in a menu or action list"
+                            : " is in no menu and no action list"));
         }
     }
 
     @Test
-    @DisplayName("No action appears more than once in the whole menu bar, submenus included")
+    @DisplayName("No action appears more than once in the menu bar and the stage action lists together, submenus included")
     void noDuplicateEntries() {
         Set<ActionId> seen = new HashSet<>();
-        for (MainMenuBar.MenuSpec spec : MainMenuBar.MENUS) {
+        for (MainMenuBar.MenuSpec spec : allSpecs()) {
             for (ActionId id : spec.allActionIds()) {
                 assertTrue(seen.add(id), id + " appears more than once");
             }
@@ -183,6 +216,26 @@ class MainMenuBarTest {
             actions.register(new AppAction(id, () -> { }));
         }
         return actions;
+    }
+
+    /** The specs of the menu bar and of the stage action lists. */
+    private static List<MainMenuBar.MenuSpec> allSpecs() {
+        List<MainMenuBar.MenuSpec> specs = new ArrayList<>(MainMenuBar.MENUS);
+        specs.addAll(MainMenuBar.STAGE_ACTIONS);
+        return specs;
+    }
+
+    /** The entries of {@code spec} without Swing: action names, "---", submenus as {title key: entries}. */
+    private static String describeSpec(MainMenuBar.MenuSpec spec) {
+        List<String> entries = new ArrayList<>();
+        for (MainMenuBar.Entry entry : spec.entries()) {
+            switch (entry) {
+                case MainMenuBar.Separator separator -> entries.add(SEPARATOR);
+                case MainMenuBar.MenuSpec submenu -> entries.add("{" + submenu.titleKey() + ": " + describeSpec(submenu) + "}");
+                case MainMenuBar.Item item -> entries.add(item.id().name());
+            }
+        }
+        return String.join(", ", entries);
     }
 
     private static String describeEntries(JMenu menu, MainActions actions) {

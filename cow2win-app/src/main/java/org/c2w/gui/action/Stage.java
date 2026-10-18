@@ -3,9 +3,10 @@ package org.c2w.gui.action;
 /**
  * Where an {@link ActionId} belongs in the process-oriented user interface: the three
  * process stages input, strategic concept and output, plus the guild, master data and
- * general functions and the Clash of Worlds journal. Each process stage has a menu of its own,
- * see {@code MainMenuBar}, and so have the guild (next to "File") and the journal (last, for a
- * guild master only); master data and general functions are in the "File" menu.
+ * general functions and the Clash of Worlds journal. Each process stage has an action list in
+ * its view, not a menu in the menu bar; the guild (next to "File") and the journal (last, for a
+ * guild master only) have a menu of their own; master data and general functions are in the
+ * "File" menu - see {@code MainMenuBar}.
  */
 public enum Stage {
 
@@ -44,7 +45,10 @@ public enum Stage {
         this.stageTextKey = stageTextKey;
     }
 
-    /** Language file key of this stage's menu title, or {@code null} for {@link #GENERAL}. */
+    /**
+     * Language file key of this stage's menu title - for a process stage the title of its action
+     * list spec, which is not shown in the menu bar - or {@code null} for {@link #GENERAL}.
+     */
     public String menuTextKey() {
         return menuTextKey;
     }

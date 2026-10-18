@@ -11,12 +11,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.c2w.gui.action.ActionId.*;
 
 /**
  * The main window's menu bar, built only from the actions registered in a
- * {@link MainActions} - no handler logic here. {@link #MENUS} describes its structure.
+ * {@link MainActions} - no handler logic here. {@link #MENUS} describes its structure,
+ * {@link #STAGE_ACTIONS} the action lists of the process stages, which have no menu here.
  */
 public final class MainMenuBar extends JMenuBar {
 
@@ -52,20 +54,34 @@ public final class MainMenuBar extends JMenuBar {
     static final Separator SEPARATOR = new Separator();
 
     /**
-     * The menus in display order: "File", "Guild", one menu per process stage and last the
-     * "Journal" ({@link Stage#JOURNAL}, shown for a guild master only) - its first
-     * entry is the battle list, where battle logs are also imported; the name mappings are opened
-     * from the players window. Every action in a menu titled with a {@link Stage#menuTextKey()},
-     * submenus included, is of that stage. "File" also holds the master data entries for now (no
-     * menu of their own yet). "Guild" holds creating and removing a guild, then - after a
-     * separator - its note. Every action appears in exactly one menu, except the
-     * {@link #TOOLBAR_ONLY} ones.
+     * The menus of the menu bar in display order: "File", "Guild" and last the "Journal"
+     * ({@link Stage#JOURNAL}, shown for a guild master only) - its first entry is the battle
+     * list, where battle logs are also imported; the name mappings are opened from the players
+     * window. "File" also holds the master data entries for now (no menu of their own yet).
+     * "Guild" holds creating and removing a guild, then - after a separator - its note. The
+     * process stages have no menu here, see {@link #STAGE_ACTIONS}.
+     *
+     * <p>Every action in a spec titled with a {@link Stage#menuTextKey()} (here or in
+     * {@link #STAGE_ACTIONS}), submenus included, is of that stage. Every action appears in
+     * exactly one spec of the two lists, except the {@link #TOOLBAR_ONLY} ones.
      */
     static final List<MenuSpec> MENUS = List.of(
             menu("menu.file", SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS),
             menu(Stage.GUILD.menuTextKey(),
                     NEW_GUILD, REMOVE_GUILD,
                     SEPARATOR, EDIT_GUILD_NOTE),
+            menu(Stage.JOURNAL.menuTextKey(),
+                    JOURNAL_BATTLES,
+                    SEPARATOR, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS,
+                    SEPARATOR, JOURNAL_PLAYERS));
+
+    /**
+     * The actions of the process stages input, concept and output - not in the menu bar, only
+     * in the action list of the stage's view ({@code org.c2w.gui.stage.StageActionList}, via
+     * {@link #menuFor}). Same data types as the menus: a submenu becomes a group heading
+     * ("Lineup"), a separator a separator row.
+     */
+    static final List<MenuSpec> STAGE_ACTIONS = List.of(
             menu(Stage.INPUT.menuTextKey(),
                     ADD_MEMBER, REMOVE_MEMBER,
                     SEPARATOR, OPEN_GUILD_TEAM_ENTRY),
@@ -73,13 +89,9 @@ public final class MainMenuBar extends JMenuBar {
                     menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP),
                     SEPARATOR, RUN_ALGORITHM, COMPARE_LINEUPS,
                     SEPARATOR, SHOW_TEAMS),
-            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE),
-            menu(Stage.JOURNAL.menuTextKey(),
-                    JOURNAL_BATTLES,
-                    SEPARATOR, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS,
-                    SEPARATOR, JOURNAL_PLAYERS));
+            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE));
 
-    /** The actions deliberately offered in the toolbar only, not in any menu. */
+    /** The actions deliberately offered in the toolbar only, not in any menu or stage action list. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);
 
     /** The "Journal" menu - visible only while {@link AppContext#isJournalAvailable()}. */
@@ -122,11 +134,12 @@ public final class MainMenuBar extends JMenuBar {
     }
 
     /**
-     * The top-level menu titled with {@code stage}'s {@link Stage#menuTextKey()} - also the
-     * source of that stage's action list (see {@code org.c2w.gui.stage.StageActionList}).
+     * The spec titled with {@code stage}'s {@link Stage#menuTextKey()}, from the menu bar
+     * ({@link #MENUS}) or the stage action lists ({@link #STAGE_ACTIONS}) - for a process stage
+     * the source of its action list (see {@code org.c2w.gui.stage.StageActionList}).
      */
     public static MenuSpec menuFor(Stage stage) {
-        return MENUS.stream()
+        return Stream.concat(MENUS.stream(), STAGE_ACTIONS.stream())
                 .filter(spec -> spec.titleKey().equals(stage.menuTextKey()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No menu for stage " + stage));

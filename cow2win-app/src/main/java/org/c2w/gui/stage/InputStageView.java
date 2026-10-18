@@ -252,8 +252,8 @@ public class InputStageView extends StageView {
     // --- add / delete members ---
 
     /**
-     * Registers "add member" and "delete member" in {@code actions} (input menu and action list,
-     * see {@code MainMenuBar}) - before {@link #build()} and the menu bar need them.
+     * Registers "add member" and "delete member" in {@code actions} (the input stage's action
+     * list, see {@code MainMenuBar}) - before {@link #build()} needs them.
      */
     private void registerMemberActions(MainActions actions) {
         addMemberAction = actions.register(new AppAction(ActionId.ADD_MEMBER, this::onAddMember)

@@ -135,7 +135,8 @@ public class ActionBar extends JPanel {
         this.lineupService = new LineupService(appContext);
 
         // The save actions are shown as buttons in the context bar only; every other action here
-        // is in a menu (see MainMenuBar) and gets its menu icon (same size as a button icon).
+        // is in a menu or a stage's action list (see MainMenuBar) and gets its icon there (same
+        // size as a button icon).
         saveGuildAction = actions.register(new AppAction(SAVE_GUILD, this::onSaveGuild));
         // In the "Guild" menu and as a button right after "save guild" in the context bar.
         editGuildNoteAction = actions.register(new AppAction(EDIT_GUILD_NOTE, this::onEditGuildNote)
