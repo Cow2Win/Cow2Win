@@ -4,6 +4,8 @@ import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
+import org.c2w.domain.ChangePlanChecks;
+import org.c2w.domain.ChangePlanOutline;
 import org.c2w.domain.LineupChangePlanService;
 import org.c2w.domain.LineupChangePlanService.ChangeStep;
 import org.c2w.domain.LineupComparisonService;
@@ -147,6 +149,26 @@ public final class ChangePlanModel {
 
         LineupComparison comparison = LineupComparisonService.compare(original, lineup, guild);
         return new Result(State.OK, comparison, LineupChangePlanService.from(comparison), null, null);
+    }
+
+    // --- checkbox of a fortification ---
+
+    /** How many entries of {@code group} are checked. */
+    public static int checkedCount(ChangePlanOutline.FortificationGroup group, ChangePlanChecks checks) {
+        return (int) group.items().stream().filter(item -> checks.isChecked(item.id())).count();
+    }
+
+    /** True if every entry of {@code group} is checked (false for a group without entries). */
+    public static boolean allChecked(ChangePlanOutline.FortificationGroup group, ChangePlanChecks checks) {
+        return !group.items().isEmpty() && checkedCount(group, checks) == group.items().size();
+    }
+
+    /**
+     * What a click on the fortification's checkbox sets every entry of {@code group} to: checked
+     * if none or only some are checked, unchecked if all are.
+     */
+    public static boolean toggleTarget(ChangePlanOutline.FortificationGroup group, ChangePlanChecks checks) {
+        return !allChecked(group, checks);
     }
 
     /** Every ".lineup" file of the guild except the Original itself (always the "before" side), sorted. */

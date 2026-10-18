@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,11 @@ import java.util.Map;
  * generate, and work through the checklist from the guild's live lineup (file "Original") to
  * that target: grouped by removals and additions, fortifications - one checkbox per team
  * ({@link ChangePlanOutline}), the entries of a fortification side by side in columns (as many as
- * fit the width, read row by row, see {@link ColumnGridLayout}), named by the member only. The plan
+ * fit the width, read row by row, see {@link ColumnGridLayout}), named by the member only. Each
+ * fortification's heading is a checkbox as well: a click checks all its entries (in that section
+ * only), or unchecks them all if all are checked; it is checked only while all are, and the
+ * counter "(k/n)" next to it shows a partly checked fortification (state computed from the
+ * checks, never saved, see {@link ChangePlanModel#toggleTarget}). The plan
  * is computed for both fortification types, but only the {@linkplain AppContext#fortificationType()
  * selected type} is shown, summarized, copied ({@link #copyPlan()}) and applied; switching the type
  * only rebuilds the checklist. The checks (of both types) are saved in the guild folder
@@ -65,6 +70,8 @@ public class ChangePlanPanel extends JPanel {
     private static final String KEY_DIFFERENT_GUILD = "changePlan.differentGuild";
     private static final String KEY_ORIGINAL_IS_OPEN = "changePlan.originalIsOpen";
     private static final String KEY_APPLY_DISABLED_TOOLTIP = "changePlan.applyToLive.disabledTooltip";
+    private static final String KEY_CHECK_FORTIFICATION = "changePlan.fortification.checkAll";
+    private static final String KEY_UNCHECK_FORTIFICATION = "changePlan.fortification.uncheckAll";
 
     /** Indentation of a checklist level in pixels. */
     private static final int INDENT = 18;
@@ -103,6 +110,15 @@ public class ChangePlanPanel extends JPanel {
     private final JLabel summaryLabel = new JLabel();
     /** Per entry id its checkbox - for updating the look and for tests. */
     private final Map<String, JCheckBox> checkBoxes = new LinkedHashMap<>();
+    /** The checkbox of every shown fortification (one per section it appears in) - see {@link #buildFortificationRow}. */
+    private final List<FortificationRow> fortificationRows = new ArrayList<>();
+    /** How often the checks were saved - for tests. */
+    private int saveCount;
+
+    /** A fortification's heading: its checkbox for all its entries and the counter "(k/n)" next to it. */
+    private record FortificationRow(ChangePlanOutline.Kind kind, ChangePlanOutline.FortificationGroup group,
+                                    FortificationType type, JCheckBox checkBox, JLabel countLabel) {
+    }
 
     private final List<Runnable> planListeners = new ArrayList<>();
 
@@ -282,6 +298,7 @@ public class ChangePlanPanel extends JPanel {
         result = newResult;
         checklist.removeAll();
         checkBoxes.clear();
+        fortificationRows.clear();
         itemGrids.clear();
         if (newResult.isOk()) {
             messageLabel.setVisible(false);
@@ -305,6 +322,7 @@ public class ChangePlanPanel extends JPanel {
         if (outline != null) {
             checklist.removeAll();
             checkBoxes.clear();
+            fortificationRows.clear();
             itemGrids.clear();
             buildChecklist();
         }
@@ -348,6 +366,7 @@ public class ChangePlanPanel extends JPanel {
         if (guildDir == null) {
             return;
         }
+        saveCount++;
         try {
             ChangePlanCheckRepository.save(guildDir, checks);
         } catch (IOException e) {
@@ -395,8 +414,7 @@ public class ChangePlanPanel extends JPanel {
                 addRow(colored(styled(new JLabel(ChangePlanRenderer.sectionHeading(section)), Font.BOLD, 1f), typeColor),
                         INDENT, 8);
                 for (ChangePlanOutline.FortificationGroup group : section.fortifications()) {
-                    addRow(colored(styled(new JLabel(ChangePlanRenderer.fortificationName(group.fortificationId())),
-                            Font.BOLD, 0f), typeColor), 2 * INDENT, 4);
+                    addRow(buildFortificationRow(section.kind(), group, type.type()), 2 * INDENT, 4);
                     JPanel grid = new JPanel(new ColumnGridLayout(COLUMN_GAP));
                     grid.setOpaque(false);
                     for (ChangePlanOutline.Item item : group.items()) {
@@ -421,6 +439,42 @@ public class ChangePlanPanel extends JPanel {
             ((ColumnGridLayout) grid.getLayout()).setCellWidth(cellWidth);
         }
         updateColumns();
+    }
+
+    /**
+     * The heading of a fortification: a checkbox with its name (bold, in the type's color) that
+     * checks or unchecks all its entries at once, followed by the muted counter "(k/n)".
+     */
+    private JComponent buildFortificationRow(ChangePlanOutline.Kind kind, ChangePlanOutline.FortificationGroup group,
+                                        FortificationType type) {
+        JCheckBox checkBox = new JCheckBox(ChangePlanRenderer.fortificationName(group.fortificationId()));
+        checkBox.setOpaque(false);
+        checkBox.setFont(checkBox.getFont().deriveFont(Font.BOLD));
+        JLabel countLabel = new JLabel();
+        countLabel.setForeground(AppColors.TEXT_MUTED);
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        row.setOpaque(false);
+        row.add(checkBox);
+        row.add(Box.createHorizontalStrut(6));
+        row.add(countLabel);
+        FortificationRow fortificationRow = new FortificationRow(kind, group, type, checkBox, countLabel);
+        checkBox.addActionListener(e -> setChecked(group.items().stream().map(ChangePlanOutline.Item::id).toList(),
+                ChangePlanModel.toggleTarget(group, checks)));
+        fortificationRows.add(fortificationRow);
+        updateFortificationRow(fortificationRow);
+        return row;
+    }
+
+    /**
+     * The fortification checkbox's state from the checks: checked (and the name muted, not struck
+     * through) only if all entries are checked; the counter "(k/n)"; the tooltip says what a click does.
+     */
+    private void updateFortificationRow(FortificationRow row) {
+        boolean all = ChangePlanModel.allChecked(row.group(), checks);
+        row.checkBox().setSelected(all);
+        row.checkBox().setForeground(itemColor(row.type(), all));
+        row.checkBox().setToolTipText(LanguageService.displayName(all ? KEY_UNCHECK_FORTIFICATION : KEY_CHECK_FORTIFICATION));
+        row.countLabel().setText("(" + ChangePlanModel.checkedCount(row.group(), checks) + "/" + row.group().items().size() + ")");
     }
 
     /** Sets the number of columns of every fortification's entries to what fits the viewport's width now (package-visible for tests). */
@@ -521,16 +575,34 @@ public class ChangePlanPanel extends JPanel {
 
     /** Checks or unchecks one entry - only that, nothing else changes - and saves the checks right away. */
     public void setChecked(String itemId, boolean checked) {
-        if (outline == null || outline.item(itemId).isEmpty()) {
+        setChecked(List.of(itemId), checked);
+    }
+
+    /**
+     * Checks or unchecks the entries {@code itemIds} (ids not in the plan are ignored) - only
+     * those, not the partners of fortification changes - then saves the checks and notifies the
+     * plan listeners once.
+     */
+    public void setChecked(Collection<String> itemIds, boolean checked) {
+        if (outline == null) {
             return;
         }
-        checks = checks.with(itemId, checked);
-        saveChecks();
-        JCheckBox checkBox = checkBoxes.get(itemId);
-        if (checkBox != null) {
-            checkBox.setSelected(checked);
-            styleCheckBox(checkBox);
+        List<String> ids = itemIds.stream().filter(id -> outline.item(id).isPresent()).toList();
+        if (ids.isEmpty()) {
+            return;
         }
+        checks = checks.with(ids, checked);
+        saveChecks();
+        for (String id : ids) {
+            JCheckBox checkBox = checkBoxes.get(id);
+            if (checkBox != null) {
+                checkBox.setSelected(checked);
+                styleCheckBox(checkBox);
+            }
+        }
+        fortificationRows.stream()
+                .filter(row -> row.group().items().stream().anyMatch(item -> ids.contains(item.id())))
+                .forEach(this::updateFortificationRow);
         updateSummary();
         updateApplyButton();
         List.copyOf(planListeners).forEach(Runnable::run);
@@ -754,6 +826,29 @@ public class ChangePlanPanel extends JPanel {
     /** The checkbox of the entry {@code itemId}, null if none is shown - for tests. */
     JCheckBox checkBox(String itemId) {
         return checkBoxes.get(itemId);
+    }
+
+    /** The checkbox of the fortification {@code fortificationId} in the section {@code kind}, null if none is shown - for tests. */
+    JCheckBox fortificationCheckBox(ChangePlanOutline.Kind kind, String fortificationId) {
+        FortificationRow row = fortificationRow(kind, fortificationId);
+        return row == null ? null : row.checkBox();
+    }
+
+    /** The counter "(k/n)" of a fortification's checkbox, null if none is shown - for tests. */
+    String fortificationCountText(ChangePlanOutline.Kind kind, String fortificationId) {
+        FortificationRow row = fortificationRow(kind, fortificationId);
+        return row == null ? null : row.countLabel().getText();
+    }
+
+    private FortificationRow fortificationRow(ChangePlanOutline.Kind kind, String fortificationId) {
+        return fortificationRows.stream()
+                .filter(row -> row.kind() == kind && row.group().fortificationId().equals(fortificationId))
+                .findFirst().orElse(null);
+    }
+
+    /** How often the checks were written to the guild folder - for tests. */
+    int saveCount() {
+        return saveCount;
     }
 
     /** The summary "{n} entries, {k} checked" - for tests. */

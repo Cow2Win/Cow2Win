@@ -57,6 +57,17 @@ public record ChangePlanChecks(String target, Set<String> checkedIds, Set<Fortif
         return new ChangePlanChecks(target, ids, appliedTypes);
     }
 
+    /** These checks with all {@code ids} checked or unchecked - e.g. every entry of one fortification. */
+    public ChangePlanChecks with(Collection<String> ids, boolean checked) {
+        Set<String> result = new LinkedHashSet<>(checkedIds);
+        if (checked) {
+            result.addAll(ids);
+        } else {
+            result.removeAll(Set.copyOf(ids));
+        }
+        return new ChangePlanChecks(target, result, appliedTypes);
+    }
+
     /** These checks without {@code ids} (e.g. the entries just applied to live). */
     public ChangePlanChecks without(Collection<String> ids) {
         Set<String> rest = new LinkedHashSet<>(checkedIds);
