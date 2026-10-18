@@ -12,6 +12,8 @@ you, step by step, what to change in the game.
 The app guides you through three steps: **Input** (guild and teams) →
 **Strategic concept** (plan the lineup) → **Output** (apply it in the game).
 
+![Cow2Win main window: fortification map with the process bar Input → Strategic concept → Output](docs/images/C2W-Screenshot-2026-10-16.png)
+
 ## Features
 
 - **Guild and teams** – members with their hero teams (heroes, pet, war flag)
