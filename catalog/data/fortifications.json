@@ -148,7 +148,7 @@
     "buff": {
       "kind": "ROLE",
       "effect": "ENERGY_GAIN",
-      "bonusPercent": 5,
+      "bonusPercent": 4,
       "role": "CONTROL"
     },
     "prerequisites": [
@@ -180,7 +180,7 @@
     "buff": {
       "kind": "ROLE",
       "effect": "HEALTH_INCREASE",
-      "bonusPercent": 10,
+      "bonusPercent": 8,
       "role": "TANK"
     },
     "prerequisites": [

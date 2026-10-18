@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
-  "dataVersion": "2026-10-17.1",
-  "note": "display names moved to names.json",
+  "dataVersion": "2026-10-18",
+  "note": "buff values corrected: foundry 8 %, engineerium 4 %",
   "files": [
     {
       "path": "data/fortifications.json",
-      "size": 5738,
-      "sha256": "d7b252f9fe7f33b1b9239d5d013e4416a57babe45a37754c0a9f4c4804aeabd5"
+      "size": 5737,
+      "sha256": "a66a7d092053ea08cababd364e1751624f18afa5b4379537b23acf2208e5770f"
     },
     {
       "path": "data/heroes.json",
