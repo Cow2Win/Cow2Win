@@ -57,12 +57,15 @@ public final class MainMenuBar extends JMenuBar {
      * entry is the battle list, where battle logs are also imported; the name mappings are opened
      * from the players window. Every action in a menu titled with a {@link Stage#menuTextKey()},
      * submenus included, is of that stage. "File" also holds the master data entries for now (no
-     * menu of their own yet). Every action appears in exactly one menu, except the
+     * menu of their own yet). "Guild" holds creating and removing a guild, then - after a
+     * separator - its note. Every action appears in exactly one menu, except the
      * {@link #TOOLBAR_ONLY} ones.
      */
     static final List<MenuSpec> MENUS = List.of(
             menu("menu.file", SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS),
-            menu(Stage.GUILD.menuTextKey(), NEW_GUILD, REMOVE_GUILD),
+            menu(Stage.GUILD.menuTextKey(),
+                    NEW_GUILD, REMOVE_GUILD,
+                    SEPARATOR, EDIT_GUILD_NOTE),
             menu(Stage.INPUT.menuTextKey(),
                     ADD_MEMBER, REMOVE_MEMBER,
                     SEPARATOR, OPEN_GUILD_TEAM_ENTRY),

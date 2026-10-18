@@ -8,6 +8,7 @@ import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.HintStyle;
+import org.c2w.gui.guild.GuildNoteDialog;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 /**
  * The upper row of the main window's top area: what is selected here applies everywhere.
- * From left to right: the guild with its save button, the {@linkplain AppContext#fortificationType()
+ * From left to right: the guild with its save and note buttons, the {@linkplain AppContext#fortificationType()
  * fortification type} (heroes | titans), the lineup with its save button, a hint while something
  * is unsaved, a hint while only one fortification type of the change plan was applied to live
  * ("titans not live yet", see {@link #setLiveIncomplete}), and - right-aligned - how old the guild's "Original" lineup (the one currently set
@@ -95,7 +96,8 @@ public class ContextBar extends JPanel {
     /**
      * @param actions the main window's actions - the save buttons right after the guild and
      *                the lineup combo box are bound to {@link ActionId#SAVE_GUILD} and
-     *                {@link ActionId#SAVE_LINEUP} (registered by {@link ActionBar})
+     *                {@link ActionId#SAVE_LINEUP}, the guild note button right after "save guild"
+     *                to {@link ActionId#EDIT_GUILD_NOTE} (all registered by {@link ActionBar})
      */
     public ContextBar(AppContext appContext, MainActions actions) {
         super(new BorderLayout());
@@ -119,6 +121,7 @@ public class ContextBar extends JPanel {
         left.add(new JLabel(LanguageService.displayName(KEY_GUILD_LABEL)));
         left.add(guildCombo);
         left.add(FlatButton.forAction(actions.get(ActionId.SAVE_GUILD)));
+        left.add(FlatButton.forAction(actions.get(ActionId.EDIT_GUILD_NOTE)));
         left.add(Box.createHorizontalStrut(8));
         left.add(new JLabel(LanguageService.displayName(KEY_FORTIFICATION_TYPE_LABEL)));
         left.add(buildFortificationTypeSwitch());
@@ -342,10 +345,15 @@ public class ContextBar extends JPanel {
 
     /**
      * Asks whether unsaved guild/lineup changes may be discarded - true
-     * right away if there are none. Package-visible (not {@code private}) so
-     * {@code Cow2Frame} can reuse it (new guild, journal guild switch).
+     * right away if there are none. Unsaved changes of an open guild note are
+     * asked for first (save / discard / cancel, see {@link GuildNoteDialog#confirmLeave}).
+     * Package-visible (not {@code private}) so {@code Cow2Frame} can reuse it
+     * (new/remove guild, journal guild switch).
      */
     boolean confirmDiscardUnsavedChanges() {
+        if (!GuildNoteDialog.confirmLeave(dialogParent())) {
+            return false;
+        }
         if (!appContext.hasUnsavedChanges()) {
             return true;
         }

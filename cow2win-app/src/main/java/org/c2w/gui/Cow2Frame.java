@@ -10,6 +10,7 @@ import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.cowscore.CowScoreDialog;
 import org.c2w.gui.fort.FortificationMapPanel;
+import org.c2w.gui.guild.GuildNoteDialog;
 import org.c2w.gui.journal.JournalActions;
 import org.c2w.gui.stage.ConceptStageView;
 import org.c2w.gui.stage.InputStageView;
@@ -617,8 +618,14 @@ public class Cow2Frame extends JFrame {
         }
     }
 
-    /** True if nothing is unsaved or the user agrees to close anyway. */
+    /**
+     * True if nothing is unsaved or the user agrees to close anyway - an open guild note with
+     * unsaved changes is asked for first (see {@link GuildNoteDialog#confirmLeave}).
+     */
     private boolean confirmDiscardUnsavedChanges() {
+        if (!GuildNoteDialog.confirmLeave(this)) {
+            return false;
+        }
         if (!appContext.hasUnsavedChanges()) {
             return true;
         }

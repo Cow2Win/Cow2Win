@@ -41,7 +41,7 @@ class MainMenuBarTest {
      */
     private static final List<String> EXPECTED = List.of(
             "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS",
-            "menu.guild: NEW_GUILD, REMOVE_GUILD",
+            "menu.guild: NEW_GUILD, REMOVE_GUILD, ---, EDIT_GUILD_NOTE",
             "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
             "menu.concept: {" + LanguageService.displayName("menu.lineup") + ": NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "
                     + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",

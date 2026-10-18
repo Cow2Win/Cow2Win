@@ -106,6 +106,8 @@ class ActionBarTest {
         assertEquals(2, combos.size(), "guild and lineup combo box");
         assertEquals(ActionId.SAVE_GUILD, actionIdAfter(components, combos.get(0)));
         assertEquals(ActionId.SAVE_LINEUP, actionIdAfter(components, combos.get(1)));
+        Component saveGuild = components.get(components.indexOf(combos.get(0)) + 1);
+        assertEquals(ActionId.EDIT_GUILD_NOTE, actionIdAfter(components, saveGuild), "the guild note button right after \"save guild\"");
     }
 
     private static ActionId actionIdAfter(List<Component> components, Component component) {

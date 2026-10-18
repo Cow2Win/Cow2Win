@@ -25,6 +25,11 @@ public enum ActionId {
     /** The same guild - but in the context bar only, not in the menu (see {@code MainMenuBar.TOOLBAR_ONLY}). */
     SAVE_GUILD("teamsOverview.saveGuild", Stage.GUILD),
     /**
+     * Opens the free text note of the open guild ({@code note.txt} in its folder, see
+     * {@code GuildNoteDialog}) - in the menu and as a button right after {@link #SAVE_GUILD}.
+     */
+    EDIT_GUILD_NOTE("toolbar.guildNote", Stage.GUILD, Opens.WINDOW),
+    /**
      * "Maintain live lineup": one text and no icon for both fortification types - only the
      * dialog it opens depends on the selected type, see {@code ActionBar}.
      */

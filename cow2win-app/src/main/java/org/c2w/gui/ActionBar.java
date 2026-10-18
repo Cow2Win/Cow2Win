@@ -12,6 +12,7 @@ import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
+import org.c2w.gui.guild.GuildNoteDialog;
 import org.c2w.gui.guild.GuildTitanEntryDialog;
 import org.c2w.gui.hero.HeroValueOverviewDialog;
 import org.c2w.gui.titan.TitanValueOverviewDialog;
@@ -63,6 +64,7 @@ public class ActionBar extends JPanel {
     /** Language file key for the tooltip of the "save lineup" button (see {@link #onSaveLineup()}). */
     private static final String KEY_SAVE_LINEUP = "toolbar.saveLineup";
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
+    private static final String ICON_GUILD_NOTE = "/images/app/note.png";
 
     /** Language file keys and icons of {@link ActionId#SHOW_TEAMS} per fortification type. */
     private static final String KEY_HERO_TEAMS = "toolbar.heroTeams";
@@ -91,6 +93,9 @@ public class ActionBar extends JPanel {
 
     /** "Save lineup" action - error-colored icon and extended tooltip while the lineup is dirty, see {@link #updateSaveButtons()}. */
     private final AppAction saveLineupAction;
+
+    /** "Edit guild note" - enabled only while the open guild has a folder, see {@link #updateGuildNoteAction()}. */
+    private final AppAction editGuildNoteAction;
 
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
     private final AppAction runAlgorithmAction;
@@ -132,6 +137,9 @@ public class ActionBar extends JPanel {
         // The save actions are shown as buttons in the context bar only; every other action here
         // is in a menu (see MainMenuBar) and gets its menu icon (same size as a button icon).
         saveGuildAction = actions.register(new AppAction(SAVE_GUILD, this::onSaveGuild));
+        // In the "Guild" menu and as a button right after "save guild" in the context bar.
+        editGuildNoteAction = actions.register(new AppAction(EDIT_GUILD_NOTE, this::onEditGuildNote)
+                .withIcon(IconLoader.iconFor(ICON_GUILD_NOTE, TOOLBAR_ICON_SIZE, AppColors.ACCENT)));
         // "Maintain live lineup" has no icon - same text for both fortification types.
         actions.register(new AppAction(OPEN_GUILD_TEAM_ENTRY, this::onOpenGuildTeamEntry));
         saveLineupAction = actions.register(new AppAction(SAVE_LINEUP, this::onSaveLineup));
@@ -149,7 +157,13 @@ public class ActionBar extends JPanel {
         // and lets the fortification type dependent actions follow the selected type.
         updateSaveButtons();
         updateFortificationTypeActions();
+        updateGuildNoteAction();
         appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void guildChanged() {
+                updateGuildNoteAction();
+            }
+
             @Override
             public void dirtyStateChanged() {
                 updateSaveButtons();
@@ -343,6 +357,16 @@ public class ActionBar extends JPanel {
      * Opens {@link LineupComparisonDialog} or brings the open one to front - purely a
      * read-only comparison (nothing there ever changes {@link #appContext}'s lineup).
      */
+    /** Enables "edit guild note" only while the open guild has a folder to keep the note in. */
+    private void updateGuildNoteAction() {
+        editGuildNoteAction.setEnabled(GuildNoteDialog.guildDirOf(appContext) != null);
+    }
+
+    /** Opens the note of the open guild, or brings the open note dialog to front. */
+    private void onEditGuildNote() {
+        GuildNoteDialog.open((Frame) SwingUtilities.getWindowAncestor(this), appContext);
+    }
+
     private void onOpenLineupComparison() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         LineupComparisonDialog.open(owner, appContext);
