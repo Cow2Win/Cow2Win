@@ -8,6 +8,7 @@ import org.c2w.data.repository.GuildRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.eval.HodorAlgorithm;
 import org.c2w.infra.BackupService;
 import org.c2w.infra.Config;
 import org.c2w.infra.JsonSupport;
@@ -151,6 +152,8 @@ public final class WorkspaceBootstrap {
         startupNotices = maintenance.map(WorkspaceBootstrap::noticeFor).map(List::of).orElse(List.of());
         // The CowScore bonus percentages of the settings - before anything is scored.
         TeamScoreCalculator.setBonuses(Config.getCowScoreBonuses());
+        // The values of the HODOR algorithms of the settings.
+        HodorAlgorithm.setSettings(Config.getHodorSettings());
         progress.accept("Creating backups ...");
         BackupService.checkAndCreateBackups();
         progress.accept("Loading catalogs ...");

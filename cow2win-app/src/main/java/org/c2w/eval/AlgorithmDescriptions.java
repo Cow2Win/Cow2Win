@@ -31,6 +31,8 @@ public final class AlgorithmDescriptions {
             "Balanced defense", "balancedDefense",
             "CowScore maximizer", "cowScoreMaximizer",
             "Consensus picks", "consensusPicks",
+            "HODOR", "hodor",
+            "HODOR (CowScore)", "hodorCowScore",
             ManualLineupAlgorithm.DISPLAY_NAME, "manual"
     );
 

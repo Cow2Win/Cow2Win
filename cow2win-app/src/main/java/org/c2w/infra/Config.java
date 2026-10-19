@@ -1,7 +1,9 @@
 package org.c2w.infra;
 
+import org.c2w.data.model.BuffEffect;
 import org.c2w.data.model.FortificationType;
 import org.c2w.domain.CowScoreBonuses;
+import org.c2w.domain.HodorSettings;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,12 +13,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
  * The application-wide settings in {@code config.properties} (outside the workspace): language,
  * workspace and backup folders, default algorithms, the data status's stale check, the adjustable
- * CowScore bonus percentages (see {@link #getCowScoreBonuses()}), scheduled workspace operations and
+ * CowScore bonus percentages (see {@link #getCowScoreBonuses()}), the values of the HODOR
+ * algorithms (see {@link #getHodorSettings()}), scheduled workspace operations and
  * the recently used guild/lineup. Every setter logs an actual change; {@link #save()} writes the file.
  */
 public final class Config {
@@ -96,6 +101,9 @@ public final class Config {
     private static final String KEY_COW_SCORE_TOTEM = "cowScore.totemPercent";
     /** When the CowScore bonuses were last actually changed (ISO instant) - lineups saved before need recalculating. */
     private static final String KEY_COW_SCORE_BONUSES_CHANGED_AT = "cowScore.bonusesChangedAt";
+    /** The adjustable values of the HODOR algorithms (see {@link HodorSettings}): reserve and one weight per buff effect. */
+    private static final String KEY_HODOR_RESERVE = "hodor.reserve";
+    private static final String KEY_HODOR_WEIGHT_PREFIX = "hodor.weight.";
     /** Default and valid range of {@link #KEY_STALE_AFTER_DAYS}. */
     public static final int DEFAULT_STALE_AFTER_DAYS = 30;
     public static final int MIN_STALE_AFTER_DAYS = 1;
@@ -405,6 +413,35 @@ public final class Config {
             return Double.isFinite(value) ? value : fallback;
         } catch (NumberFormatException e) {
             return fallback;
+        }
+    }
+
+    // --- HODOR settings ---
+
+    /**
+     * The values of the HODOR algorithms: a missing or invalid value is its default, every value is
+     * limited to its range - see {@link HodorSettings#normalized()}.
+     */
+    public static HodorSettings getHodorSettings() {
+        Map<BuffEffect, Double> weights = new EnumMap<>(BuffEffect.class);
+        for (BuffEffect effect : BuffEffect.values()) {
+            weights.put(effect, percent(KEY_HODOR_WEIGHT_PREFIX + effect.name(), HodorSettings.defaultWeight(effect)));
+        }
+        int reserve;
+        try {
+            reserve = Integer.parseInt(properties.getProperty(KEY_HODOR_RESERVE, "").trim());
+        } catch (NumberFormatException e) {
+            reserve = HodorSettings.DEFAULT_RESERVE;
+        }
+        return new HodorSettings(reserve, weights).normalized();
+    }
+
+    /** Stores {@code settings} (normalized, see {@link HodorSettings#normalized()}). Does not save; the caller does. */
+    public static void setHodorSettings(HodorSettings settings) {
+        HodorSettings normalized = settings.normalized();
+        setProperty(KEY_HODOR_RESERVE, Integer.toString(normalized.reserve()));
+        for (BuffEffect effect : BuffEffect.values()) {
+            setProperty(KEY_HODOR_WEIGHT_PREFIX + effect.name(), Double.toString(normalized.weight(effect)));
         }
     }
 

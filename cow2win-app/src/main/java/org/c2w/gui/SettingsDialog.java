@@ -3,6 +3,7 @@ package org.c2w.gui;
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.eval.AlgorithmDescriptions;
+import org.c2w.eval.HodorAlgorithm;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.AppColors;
@@ -28,8 +29,8 @@ import java.util.List;
  * Dialog opened from Cow2Frame's "File" > "Settings" menu item (see
  * MainMenuBar). Lets the user change the display language, the
  * default hero and titan lineup algorithms (see {@link org.c2w.gui.ActionBar#onRunAlgorithm}),
- * the backup directory (see org.c2w.infra.BackupService) and the workspace
- * directory (see {@link Config#getWorkspaceDir()}) and the stale check of the data status
+ * the values of the HODOR algorithms (see {@link AlgorithmSettingsPanel}), the backup directory
+ * (see org.c2w.infra.BackupService) and the workspace directory (see {@link Config#getWorkspaceDir()}) and the stale check of the data status
  * (see {@link Config#isStaleCheckEnabled()}) and the CowScore bonus percentages (see
  * {@link CowScoreBonusesPanel} - they take effect right away, without a restart); named
  * generically since more application-wide settings are expected to move in here later.
@@ -53,12 +54,6 @@ public class SettingsDialog extends JDialog {
 
     /** Language file key for the language combo box's label (see {@link #buildUi()}). */
     private static final String KEY_LANGUAGE = "settingsDialog.language";
-
-    /** Language file key for the hero algorithm combo box's label (see {@link #buildUi()}). */
-    private static final String KEY_DEFAULT_HERO_ALGORITHM = "settingsDialog.defaultHeroAlgorithm";
-
-    /** Language file key for the titan algorithm combo box's label (see {@link #buildUi()}). */
-    private static final String KEY_DEFAULT_TITAN_ALGORITHM = "settingsDialog.defaultTitanAlgorithm";
 
     /** Language file key for the backup directory field's label (see {@link #buildUi()}). */
     private static final String KEY_BACKUP_DIRECTORY = "settingsDialog.backupDirectory";
@@ -112,9 +107,11 @@ public class SettingsDialog extends JDialog {
     private final AppExit appExit;
     /** Width of the dialog after {@code pack()}, before it is widened by {@link #DIALOG_WIDTH_FACTOR}. */
     private final int packedWidth;
-    /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
     /** The adjustable CowScore bonus percentages, see {@link CowScoreBonusesPanel}. */
     private final CowScoreBonusesPanel cowScoreBonusesPanel = new CowScoreBonusesPanel(Config.getCowScoreBonuses());
+    /** The default algorithms and the HODOR values, see {@link AlgorithmSettingsPanel} - built in {@link #buildUi()}. */
+    private AlgorithmSettingsPanel algorithmSettingsPanel;
+    /** Stale check of the data status: mark teams as outdated by age (see {@link Config#isStaleCheckEnabled()}). */
     private final JCheckBox staleCheckBox = new JCheckBox(LanguageService.displayName("settings.staleCheck"));
     private final JSpinner staleAfterDaysSpinner = new JSpinner(new SpinnerNumberModel(Config.DEFAULT_STALE_AFTER_DAYS,
             Config.MIN_STALE_AFTER_DAYS, Config.MAX_STALE_AFTER_DAYS, 1));
@@ -150,6 +147,11 @@ public class SettingsDialog extends JDialog {
             int scrollBar = new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
             setSize(getWidth() + scrollBar, usableHeight);
         }
+    }
+
+    /** The "Algorithms" area - package-visible for tests. */
+    AlgorithmSettingsPanel algorithmSettingsPanel() {
+        return algorithmSettingsPanel;
     }
 
     /** The CowScore bonuses area - package-visible for tests. */
@@ -190,17 +192,15 @@ public class SettingsDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
 
         addRow(formPanel, gbc, 0, KEY_LANGUAGE, languageComboBox);
-        addRow(formPanel, gbc, 1, KEY_DEFAULT_HERO_ALGORITHM, heroAlgorithmComboBox);
-        addRow(formPanel, gbc, 2, KEY_DEFAULT_TITAN_ALGORITHM, titanAlgorithmComboBox);
         restoreWorkspaceButton.setToolTipText(LanguageService.displayName("settingsDialog.restoreWorkspace"));
-        addRow(formPanel, gbc, 3, KEY_BACKUP_DIRECTORY,
+        addRow(formPanel, gbc, 1, KEY_BACKUP_DIRECTORY,
                 directoryPanel(backupDirField, browseBackupDirButton, restoreWorkspaceButton));
         moveWorkspaceButton.setToolTipText(LanguageService.displayName("settingsDialog.moveWorkspace"));
-        addRow(formPanel, gbc, 4, KEY_WORKSPACE_DIRECTORY,
+        addRow(formPanel, gbc, 2, KEY_WORKSPACE_DIRECTORY,
                 directoryPanel(workspaceDirField, browseWorkspaceDirButton, moveWorkspaceButton));
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
@@ -212,9 +212,14 @@ public class SettingsDialog extends JDialog {
         stalePanel.add(staleAfterDaysSpinner);
         formPanel.add(stalePanel, gbc);
 
-        gbc.gridy = 6;
+        gbc.gridy = 4;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(16, 4, 4, 4);
+        algorithmSettingsPanel = new AlgorithmSettingsPanel(heroAlgorithmComboBox, titanAlgorithmComboBox,
+                Config.getHodorSettings());
+        formPanel.add(algorithmSettingsPanel, gbc);
+
+        gbc.gridy = 5;
         formPanel.add(cowScoreBonusesPanel, gbc);
         gbc.gridwidth = 1;
 
@@ -489,8 +494,10 @@ public class SettingsDialog extends JDialog {
             CowScoreBonuses newBonuses = Config.getCowScoreBonuses();
             Logger.log("CowScore bonuses changed: " + oldBonuses + " -> " + newBonuses);
         }
+        Config.setHodorSettings(algorithmSettingsPanel.hodorSettings());
         // Take effect right away - no restart needed.
         TeamScoreCalculator.setBonuses(Config.getCowScoreBonuses());
+        HodorAlgorithm.setSettings(Config.getHodorSettings());
         Config.save();
         // So that any lookups happening right after this dialog closes
         // already see the new language, even though most of the UI (built
