@@ -24,7 +24,7 @@ class TeamBuilderModelTest extends JournalGuiTestSupport {
 
     @BeforeEach
     void importAll() throws Exception {
-        ImportPlan plan = service().prepare(BattleLogTestFiles.files("de"));
+        ImportPlan plan = service().prepare(BattleLogTestFiles.season16Files("de"));
         ImportWizardModel wizard = new ImportWizardModel(plan, context.guild());
         wizard.createAllWithoutSuggestion();
         assertTrue(service().execute(plan, wizard.toAnswers()).isSuccess());

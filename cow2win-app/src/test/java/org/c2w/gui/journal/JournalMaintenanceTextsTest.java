@@ -67,7 +67,7 @@ class JournalMaintenanceTextsTest extends JournalGuiTestSupport {
         assertEquals("", JournalActions.removeGuildJournalNote(context, guildService, "Alpha"));
         assertFalse(JournalDatabase.exists(guildService.guildDir("Alpha")), "asking created no journal");
 
-        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults()).isSuccess());
         assertEquals(JournalTexts.text("journal.removeGuild.noteCount", "6"),
                 JournalActions.removeGuildJournalNote(context, guildService, "Alpha"));
 

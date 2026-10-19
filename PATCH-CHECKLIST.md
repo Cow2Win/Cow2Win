@@ -142,9 +142,11 @@ only through them (there are no aliases).
       wording of the "undefended" sentence) go into
       `language/<name>/battleLogVocabulary.json` of **all three** languages,
       same keys everywhere (`BattleLogVocabularyConsistencyTest`). Never
-      invent a text that no log has shown - leave the list empty instead
-      (like `buff.SKILL_COOLDOWN_DECREASE`). The parser reports unknown texts
-      as parse problems.
+      invent a text that no log has shown - leave the list empty instead and
+      put the effect into `BattleLogVocabulary.UNSEEN_BUFFS` (empty since
+      `SKILL_COOLDOWN_DECREASE` showed up in season 17). A new hero color also
+      needs its constant in `HeroColor`. The parser reports unknown texts as
+      parse problems.
 - [ ] New language: besides `<name>/<name>.properties` the language folder
       also needs a `battleLogVocabulary.json` - without it, battle logs in
       that language cannot be read - and every entry of `catalog/names.json`

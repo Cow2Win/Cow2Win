@@ -240,7 +240,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
         @Test
         @DisplayName("Picks the lowest sortScore, NOT the lowest totalPower, when the two disagree")
         void picksLowestSortScoreNotLowestTotalPower() {
-            Fortification lighthouse = fort("lighthouse", FortificationType.HERO, 5, null);
+            Fortification mageAcademy = fort("mage-academy", FortificationType.HERO, 5, null);
 
             // Higher totalPower (100 000), no war flag: sortScore = 1.0
             HeroTeam higherPowerNoFlag = new HeroTeam("higherPowerNoFlag", 0,
@@ -253,7 +253,7 @@ class BestPossibleLineupAlgorithmAssignmentTest {
                     candidate("lowerPowerWithFlag", lowerPowerWithFlag, 0)));
             List<Lineup.Entry> updatedEntries = new ArrayList<>();
 
-            AbstractLineupAlgorithm.assignOne(lighthouse, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
+            AbstractLineupAlgorithm.assignOne(mageAcademy, pool, updatedEntries, Lineup.TeamType.HERO, HeroTeam::buffFitScore);
 
             Lineup.Entry entry = updatedEntries.get(0);
             assertEquals("higherPowerNoFlag", entry.teamMemberId(),

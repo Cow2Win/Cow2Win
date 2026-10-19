@@ -27,7 +27,8 @@ class BattleLogFileNameTest {
             "21-09-2026", new Object[]{new GuildRef("Rakuen", 62, 265237), -286, BattleResult.LOSS},
             "24-09-2026", new Object[]{new GuildRef("Das Schwarze Auge", 79, 114834), 851, BattleResult.WIN},
             "28-09-2026", new Object[]{new GuildRef("Rebel Alliance", 42, 64942), -171, BattleResult.LOSS},
-            "01-10-2026", new Object[]{new GuildRef("Союз", 59, 81447), 0, BattleResult.RUNNING});
+            "01-10-2026", new Object[]{new GuildRef("Союз", 59, 81447), 0, BattleResult.RUNNING},
+            "12-10-2026", new Object[]{new GuildRef("Interfectores", 129, 262959), 1133, BattleResult.WIN});
 
     @BeforeAll
     static void loadVocabularies() {

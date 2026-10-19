@@ -35,7 +35,7 @@ class BattleLogGameNamesTest {
     private static final Path BATTLE_LOG_DIR = Paths.get("src", "test", "resources", "battlelog");
     /** One folder per game language (the same battles in each) plus an earlier partial export. */
     private static final List<String> BATTLE_LOG_FOLDERS = List.of("de", "en", "fr", "partial");
-    private static final int SAMPLE_LOG_COUNT = 38;
+    private static final int SAMPLE_LOG_COUNT = 44;
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
     /** The catalog data files in the repository's {@code catalog/} folder (tests run in the app module). */
     private static final Path DATA_DIR = Paths.get("..", "catalog", "data");

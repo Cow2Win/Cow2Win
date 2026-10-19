@@ -165,7 +165,7 @@ class JournalRepositoryTest {
 
     @Test
     void listBattlesForAllSixBattles() throws Exception {
-        for (String day : BattleLogTestFiles.BATTLE_DAYS) {
+        for (String day : BattleLogTestFiles.SEASON_16_DAYS) {
             save("de", day, LogDirection.ATTACK);
             if (!day.equals("28-09-2026")) {
                 save("en", day, LogDirection.DEFENSE);

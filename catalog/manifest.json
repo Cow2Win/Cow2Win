@@ -1,17 +1,17 @@
 {
   "formatVersion": 1,
-  "dataVersion": "2026-10-19",
-  "note": "buff values corrected: foundry 8 %, engineerium 4 %",
+  "dataVersion": "2026-10-19.4",
+  "note": "lighthouse buff (support, skill cooldown 1 % per hero); roles fixed: Aidan, Polaris, Lyria, Orm",
   "files": [
     {
       "path": "data/fortifications.json",
-      "size": 5737,
-      "sha256": "a66a7d092053ea08cababd364e1751624f18afa5b4379537b23acf2208e5770f"
+      "size": 5872,
+      "sha256": "05e70379d636572ef8c6a450c1c74196d86a0bf3106d0d0730f5263c924f07d0"
     },
     {
       "path": "data/heroes.json",
-      "size": 7415,
-      "sha256": "cb8c7ab1ee93328f8432c3fb90be1fe64880ce7d33401498e99ce4236b448c7e"
+      "size": 7429,
+      "sha256": "a5a557edc1b6c3f9ec9c3b07d09e747fe865a3b88ceae7f2e33423ad62be8a86"
     },
     {
       "path": "data/pets.json",
@@ -20,8 +20,8 @@
     },
     {
       "path": "data/titans.json",
-      "size": 3520,
-      "sha256": "8eefbbd33b5bbde343181ae4ae3c18bb1db23edbaec81f9348586e8988ef8794"
+      "size": 3519,
+      "sha256": "e357b0499435793a0ecdf1b28f70f9c5e34a1bfb4ab3c09b5b6f7551666eba74"
     },
     {
       "path": "data/warFlags.json",

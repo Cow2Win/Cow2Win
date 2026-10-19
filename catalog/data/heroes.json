@@ -10,8 +10,8 @@
     "id": "aidan",
     "image": "Aidan.png",
     "roles": [
-      "SUPPORT",
-      "HEALER"
+      "HEALER",
+      "MAGE"
     ]
   },
   {
@@ -397,7 +397,8 @@
     "id": "lyria",
     "image": "Lyria.png",
     "roles": [
-      "WARRIOR"
+      "WARRIOR",
+      "SUPPORT"
     ]
   },
   {
@@ -490,7 +491,7 @@
     "image": "Polaris.png",
     "roles": [
       "MAGE",
-      "SUPPORT"
+      "CONTROL"
     ]
   },
   {

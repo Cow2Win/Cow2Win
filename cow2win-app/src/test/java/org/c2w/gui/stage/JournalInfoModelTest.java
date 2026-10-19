@@ -75,7 +75,7 @@ class JournalInfoModelTest {
         context.setGuild(new Guild(context.guild().id(), context.guild().name(), members, context.guild().gameGuildId()));
         JournalImportService importService = new JournalImportService(context, guildService, context.journal(),
                 BattleLogTestFiles::parser);
-        assertTrue(importService.execute(importService.prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults())
+        assertTrue(importService.execute(importService.prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults())
                 .isSuccess());
 
         JournalInfoModel.JournalInfo info = JournalInfoModel.load(context.journal());

@@ -283,7 +283,7 @@ class ImportWizardModelTest extends JournalGuiTestSupport {
     @Test
     @DisplayName("Empty guild, all 6 battles: every defender becomes a new member (27 names, limit kept)")
     void createAllForEmptyGuild() throws Exception {
-        ImportPlan plan = service().prepare(BattleLogTestFiles.files("de"));
+        ImportPlan plan = service().prepare(BattleLogTestFiles.season16Files("de"));
         ImportWizardModel model = new ImportWizardModel(plan, context.guild());
 
         ImportWizardModel.CreateAllResult result = model.createAllWithoutSuggestion();

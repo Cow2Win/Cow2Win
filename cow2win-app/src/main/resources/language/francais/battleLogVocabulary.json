@@ -31,6 +31,7 @@
     "patronage": ["Patronage"]
   },
   "heroColor": {
+    "BLUE": ["Bleu"],
     "ORANGE": ["Orange"],
     "RED": ["Rouge"],
     "VIOLET": ["Violet"]
@@ -42,6 +43,6 @@
     "ARMOR_INCREASE": ["Armure renforcée"],
     "ENERGY_GAIN": ["Régénération d'énergie supérieure"],
     "MAGIC_DEFENSE_INCREASE": ["Défense magique renforcée"],
-    "SKILL_COOLDOWN_DECREASE": []
+    "SKILL_COOLDOWN_DECREASE": ["Accélération du rechargement des compétences"]
   }
 }

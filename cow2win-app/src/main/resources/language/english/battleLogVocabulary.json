@@ -31,6 +31,7 @@
     "patronage": ["Patronage"]
   },
   "heroColor": {
+    "BLUE": ["Blue"],
     "ORANGE": ["Orange"],
     "RED": ["Red"],
     "VIOLET": ["Violet"]
@@ -42,6 +43,6 @@
     "ARMOR_INCREASE": ["Armor Increase"],
     "ENERGY_GAIN": ["Energy Gain Increase"],
     "MAGIC_DEFENSE_INCREASE": ["Magic Defense Increase"],
-    "SKILL_COOLDOWN_DECREASE": []
+    "SKILL_COOLDOWN_DECREASE": ["Skill Cooldown Decrease"]
   }
 }

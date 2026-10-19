@@ -38,7 +38,7 @@ class JournalDialogsSmokeTest extends JournalGuiTestSupport {
     void importAll() throws Exception {
         assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display");
         setSampleMembers();
-        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults()).isSuccess());
         operations = new JournalOperations(new JournalMaintenanceService(context.journal(), BattleLogTestFiles::parser),
                 () -> { });
     }

@@ -12,10 +12,11 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * The sample battle logs under {@code src/test/resources/battlelog}: the same 6
+ * The sample battle logs under {@code src/test/resources/battlelog}: the same 7
  * battles in the folders {@code de}, {@code en}, {@code fr} (one per game
- * language) plus {@code partial} (an earlier German export of the running
- * battle of 01.10.2026), and a shared parser for the tests.
+ * language) - 6 of season 16 and the first of season 17 (12.10.2026, the first
+ * log with the lighthouse buff) - plus {@code partial} (an earlier German export
+ * of the running battle of 01.10.2026), and a shared parser for the tests.
  */
 public final class BattleLogTestFiles {
 
@@ -24,9 +25,16 @@ public final class BattleLogTestFiles {
     /** Language folder -> language name as {@code LanguageService} uses it. */
     public static final Map<String, String> LANGUAGE_BY_FOLDER = Map.of("de", "deutsch", "en", "english", "fr", "francais");
 
-    /** Battle days of the 6 sample battles, as they start the file names. */
-    public static final List<String> BATTLE_DAYS =
+    /** Battle days of the 6 sample battles of season 16, as they start the file names. */
+    public static final List<String> SEASON_16_DAYS =
             List.of("14-09-2026", "17-09-2026", "21-09-2026", "24-09-2026", "28-09-2026", "01-10-2026");
+
+    /** Battle day of the first sample battle of season 17. */
+    public static final String SEASON_17_DAY = "12-10-2026";
+
+    /** Battle days of all 7 sample battles, as they start the file names. */
+    public static final List<String> BATTLE_DAYS = List.of("14-09-2026", "17-09-2026", "21-09-2026",
+            "24-09-2026", "28-09-2026", "01-10-2026", SEASON_17_DAY);
 
     private static BattleLogParser parser;
     private static final Map<Path, BattleLogParseResult> CACHE = new HashMap<>();
@@ -53,7 +61,17 @@ public final class BattleLogTestFiles {
         return files;
     }
 
-    /** All 38 sample files (36 in the language folders + 2 partial). */
+    /**
+     * The files of {@code folder} of the 6 season-16 battles only - for the import tests built
+     * on them (one season, team builder against the guild of 04.10.2026).
+     */
+    public static List<Path> season16Files(String folder) {
+        return files(folder).stream()
+                .filter(p -> SEASON_16_DAYS.stream().anyMatch(day -> p.getFileName().toString().startsWith(day)))
+                .toList();
+    }
+
+    /** All 44 sample files (42 in the language folders + 2 partial). */
     public static List<Path> allFiles() {
         List<Path> files = new ArrayList<>();
         for (String folder : List.of("de", "en", "fr", "partial")) {

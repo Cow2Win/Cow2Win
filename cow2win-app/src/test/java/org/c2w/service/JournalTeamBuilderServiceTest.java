@@ -66,7 +66,7 @@ class JournalTeamBuilderServiceTest {
     private ImportResult importAllCreatingMembers() throws Exception {
         JournalImportService importer = new JournalImportService(context, guildService, context.journal(),
                 BattleLogTestFiles::parser);
-        ImportPlan plan = importer.prepare(BattleLogTestFiles.files("de"));
+        ImportPlan plan = importer.prepare(BattleLogTestFiles.season16Files("de"));
         ImportAnswers answers = ImportAnswers.defaults();
         for (PlayerQuestion q : plan.playerQuestions()) {
             if (q.nameSuggestions().isEmpty() && q.renameSuggestions().isEmpty()

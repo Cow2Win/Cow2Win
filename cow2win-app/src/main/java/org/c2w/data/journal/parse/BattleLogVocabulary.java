@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
  * <p>The JSON is a tree of objects whose leaves are lists of texts (several
  * variants are possible); it is flattened into dotted keys like
  * {@code fileName.server} or {@code buff.ARMOR_INCREASE}. Texts that never
- * appeared in a log are not invented: their list stays empty (currently
- * {@code buff.SKILL_COOLDOWN_DECREASE}). Texts are compared via
+ * appeared in a log are not invented: their list stays empty (see
+ * {@link #UNSEEN_BUFFS}). Texts are compared via
  * {@link GameNameNormalizer}.
  */
 public final class BattleLogVocabulary {
@@ -75,8 +75,11 @@ public final class BattleLogVocabulary {
     /** Placeholder for the total number of positions in the undefended texts. */
     public static final String PLACEHOLDER_TOTAL = "{m}";
 
-    /** Buff effects no battle log has shown so far - their text lists stay empty. */
-    static final Set<BuffEffect> UNSEEN_BUFFS = EnumSet.of(BuffEffect.SKILL_COOLDOWN_DECREASE);
+    /**
+     * Buff effects no battle log has shown so far - their text lists stay empty. Empty since
+     * Skill Cooldown Decrease (lighthouse, season 17) showed up; kept for the next new effect.
+     */
+    static final Set<BuffEffect> UNSEEN_BUFFS = EnumSet.noneOf(BuffEffect.class);
 
     private final String language;
     private final Map<String, List<String>> texts;

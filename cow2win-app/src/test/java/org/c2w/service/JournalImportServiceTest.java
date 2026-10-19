@@ -178,7 +178,7 @@ class JournalImportServiceTest extends ServiceTestSupport {
     @Test
     @DisplayName("All 6 German battles at once: no season question, all in season 16")
     void severalBattlesAtOnce() throws Exception {
-        ImportPlan plan = service().prepare(BattleLogTestFiles.files("de"));
+        ImportPlan plan = service().prepare(BattleLogTestFiles.season16Files("de"));
 
         assertEquals(6, plan.battles().size());
         ImportResult result = service().execute(plan, ImportAnswers.defaults());

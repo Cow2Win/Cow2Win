@@ -161,7 +161,7 @@ class JournalRepositoryMaintenanceTest {
     // --- helpers ---
 
     private void saveAllSix() throws Exception {
-        for (String day : BattleLogTestFiles.BATTLE_DAYS) {
+        for (String day : BattleLogTestFiles.SEASON_16_DAYS) {
             saveBoth(day);
         }
     }

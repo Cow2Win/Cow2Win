@@ -6,6 +6,7 @@ package org.c2w.data.model;
  * Only the colors seen in battle logs so far.
  */
 public enum HeroColor {
+    BLUE,
     ORANGE,
     RED,
     VIOLET

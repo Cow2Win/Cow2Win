@@ -39,7 +39,7 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
     @Test
     @DisplayName("The 6 German battles after an import: values, order, season filter")
     void sixBattles() throws Exception {
-        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults()).isSuccess());
         JournalBattleTableModel model = new JournalBattleTableModel();
 
         model.setData(JournalBattleTableModel.load(context.journal()));
@@ -83,7 +83,7 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
     @Test
     @DisplayName("Filters: opponent, result, season and combinations; 'n of m battles'")
     void filters() throws Exception {
-        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults()).isSuccess());
         JournalBattleTableModel model = new JournalBattleTableModel();
         model.setData(JournalBattleTableModel.load(context.journal()));
         BattleListFilter none = BattleListFilter.NONE;
@@ -160,7 +160,7 @@ class JournalBattleTableModelTest extends JournalGuiTestSupport {
     @Test
     @DisplayName("Totals of the shown battles: ranking points without the running battle, points with it")
     void totals() throws Exception {
-        assertTrue(service().execute(service().prepare(BattleLogTestFiles.files("de")), ImportAnswers.defaults()).isSuccess());
+        assertTrue(service().execute(service().prepare(BattleLogTestFiles.season16Files("de")), ImportAnswers.defaults()).isSuccess());
         JournalBattleTableModel model = new JournalBattleTableModel();
         model.setData(JournalBattleTableModel.load(context.journal()));
         List<BattleSummary> all = model.data().battles();

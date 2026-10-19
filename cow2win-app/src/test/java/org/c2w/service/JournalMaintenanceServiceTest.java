@@ -97,7 +97,7 @@ class JournalMaintenanceServiceTest {
     @Test
     @DisplayName("Delete one and several battles; the counts for the confirmation are right")
     void deleteBattles() throws Exception {
-        importAll(BattleLogTestFiles.BATTLE_DAYS);
+        importAll(BattleLogTestFiles.SEASON_16_DAYS);
         int auge = battle("24-09-2026");
         int rakuen = battle("21-09-2026");
         int elysium = battle("14-09-2026");

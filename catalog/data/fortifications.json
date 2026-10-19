@@ -227,6 +227,12 @@
     "captureBonus": 235,
     "row": 7,
     "column": 2,
+    "buff": {
+      "kind": "ROLE",
+      "effect": "SKILL_COOLDOWN_DECREASE",
+      "bonusPercent": 1,
+      "role": "SUPPORT"
+    },
     "prerequisites": [],
     "strategicImportance": 4
   },

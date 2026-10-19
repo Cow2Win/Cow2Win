@@ -93,10 +93,10 @@ class BattleLogAcceptanceTest {
     }
 
     @Test
-    void thereAre38SampleFiles() {
-        assertEquals(12, BattleLogTestFiles.files("de").size());
-        assertEquals(12, BattleLogTestFiles.files("en").size());
-        assertEquals(12, BattleLogTestFiles.files("fr").size());
+    void thereAre44SampleFiles() {
+        assertEquals(14, BattleLogTestFiles.files("de").size());
+        assertEquals(14, BattleLogTestFiles.files("en").size());
+        assertEquals(14, BattleLogTestFiles.files("fr").size());
         assertEquals(2, BattleLogTestFiles.files("partial").size());
     }
 

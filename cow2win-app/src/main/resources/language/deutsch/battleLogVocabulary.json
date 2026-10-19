@@ -31,6 +31,7 @@
     "patronage": ["Patronat"]
   },
   "heroColor": {
+    "BLUE": ["Blau"],
     "ORANGE": ["Orange"],
     "RED": ["Rot"],
     "VIOLET": ["Violet"]
@@ -42,6 +43,6 @@
     "ARMOR_INCREASE": ["Rüstung erhöht"],
     "ENERGY_GAIN": ["Energiegewinn erhöht"],
     "MAGIC_DEFENSE_INCREASE": ["Magische Verteidigung erhöht"],
-    "SKILL_COOLDOWN_DECREASE": []
+    "SKILL_COOLDOWN_DECREASE": ["Fertigkeitsabklingzeit-Verkürzung"]
   }
 }

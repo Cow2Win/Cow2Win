@@ -67,8 +67,7 @@
   {
     "id": "aidan",
     "fortMarks": {
-      "bastion": "POSITIVE",
-      "alchemy-tower": "POSITIVE"
+      "bastion": "POSITIVE"
     }
   },
   {
@@ -143,12 +142,6 @@
   },
   {
     "id": "orion",
-    "fortMarks": {
-      "engineerium": "POSITIVE"
-    }
-  },
-  {
-    "id": "polaris",
     "fortMarks": {
       "engineerium": "POSITIVE"
     }

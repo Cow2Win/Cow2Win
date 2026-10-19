@@ -52,7 +52,9 @@ class BattleLogVocabularyConsistencyTest {
     @Test
     void containsExactlyTheKnownKeys() throws IOException {
         Set<String> expected = new TreeSet<>(BattleLogVocabulary.requiredKeys());
-        expected.add(BattleLogVocabulary.BUFF_PREFIX + BuffEffect.SKILL_COOLDOWN_DECREASE.name());
+        for (BuffEffect effect : BattleLogVocabulary.UNSEEN_BUFFS) {
+            expected.add(BattleLogVocabulary.BUFF_PREFIX + effect.name());
+        }
 
         for (BattleLogVocabulary v : vocabulariesFromSource().values()) {
             assertEquals(expected, v.entries().keySet(), v.language());
