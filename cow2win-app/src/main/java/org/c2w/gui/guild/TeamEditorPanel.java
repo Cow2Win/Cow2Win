@@ -8,6 +8,7 @@ import org.c2w.data.model.TitanElement;
 import org.c2w.data.model.TitanTeam;
 import org.c2w.data.model.WarFlag;
 import org.c2w.data.repository.TeamTemplateRepository;
+import org.c2w.domain.TeamPower;
 import org.c2w.domain.TeamTemplates;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
@@ -56,8 +57,8 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     private static final int SLOT_COUNT = 5;
 
-    /** Maximum number of digits in the power text field (see {@link #buildPowerField}) - far more than any realistic team power. */
-    private static final int MAX_POWER_DIGITS = 9;
+    /** Columns of the power text field (see {@link #buildPowerField}); its value is capped at {@link TeamPower#MAX} instead. */
+    private static final int POWER_FIELD_COLUMNS = 9;
 
     /**
      * Milliseconds within which consecutive keystrokes are treated as one
@@ -111,6 +112,12 @@ public final class TeamEditorPanel<T> extends JPanel {
 
     private boolean refreshing;
     private boolean formattingPowerField;
+
+    /** What a power input above {@link TeamPower#MAX} triggers - see {@link #setPowerRejectedHandler}. */
+    private Runnable powerRejectedHandler = this::signalPowerTooHigh;
+
+    /** Whether {@link #signalPowerTooHigh}'s warning is pending or open (= no second one). */
+    private boolean powerWarningOpen;
 
     /** Team templates of this row's kind and how to get an entry's id - both null until {@link #enableTemplates} (= no templates). */
     private TeamTemplateRepository templates;
@@ -690,9 +697,9 @@ public final class TeamEditorPanel<T> extends JPanel {
     }
 
     private JTextField buildPowerField(TeamDraft<T> teamDraft) {
-        JTextField powerField = new JTextField(GuiUtils.NUMBER_FORMAT.format(teamDraft.totalPower), MAX_POWER_DIGITS);
+        JTextField powerField = new JTextField(GuiUtils.NUMBER_FORMAT.format(teamDraft.totalPower), POWER_FIELD_COLUMNS);
         powerField.setHorizontalAlignment(JTextField.RIGHT);
-        ((PlainDocument) powerField.getDocument()).setDocumentFilter(new DigitsOnlyFilter(MAX_POWER_DIGITS));
+        ((PlainDocument) powerField.getDocument()).setDocumentFilter(new DigitsOnlyFilter());
         powerField.getDocument().addDocumentListener(onChange(() -> {
             if (formattingPowerField) {
                 return;
@@ -760,13 +767,57 @@ public final class TeamEditorPanel<T> extends JPanel {
         };
     }
 
-    /** Allows only digits in a JTextField and caps the total length at maxDigits (see {@link #buildPowerField}). */
-    private static final class DigitsOnlyFilter extends DocumentFilter {
-        private final int maxDigits;
-
-        DigitsOnlyFilter(int maxDigits) {
-            this.maxDigits = maxDigits;
+    /**
+     * Whether {@code text}'s digits (everything else ignored, like {@link #parsePower})
+     * form a value above {@link TeamPower#MAX} - checked by length first, so an
+     * arbitrarily long paste cannot overflow.
+     */
+    private static boolean exceedsMaxPower(String text) {
+        String digits = text.replaceAll("[^0-9]", "").replaceFirst("^0+", "");
+        if (digits.length() > String.valueOf(TeamPower.MAX).length()) {
+            return true;
         }
+        return !digits.isEmpty() && TeamPower.isTooHigh(Integer.parseInt(digits));
+    }
+
+    /**
+     * Replaces what happens when the power field rejects an input above
+     * {@link TeamPower#MAX} (default: {@link #signalPowerTooHigh}) - so tests
+     * can run headless without the warning dialog.
+     */
+    void setPowerRejectedHandler(Runnable handler) {
+        this.powerRejectedHandler = handler;
+    }
+
+    /**
+     * Default reaction to a rejected power input (see {@link DigitsOnlyFilter}):
+     * error beep, then - once the input event is done - a warning; closing it
+     * (Enter suffices) puts the focus back into the power field, which still
+     * holds its previous value. At most one warning at a time.
+     */
+    private void signalPowerTooHigh() {
+        UIManager.getLookAndFeel().provideErrorFeedback(powerField);
+        if (powerWarningOpen) {
+            return;
+        }
+        powerWarningOpen = true;
+        SwingUtilities.invokeLater(() -> {
+            try {
+                JOptionPane.showMessageDialog(this, GuiUtils.powerTooHighMessage(),
+                        LanguageService.displayName("teamsOverview.invalidPowerTitle"), JOptionPane.WARNING_MESSAGE);
+            } finally {
+                powerWarningOpen = false;
+                powerField.requestFocusInWindow();
+            }
+        });
+    }
+
+    /**
+     * Allows only digits in the power field and rejects - via {@link #powerRejectedHandler},
+     * leaving the field unchanged - any typed or pasted input after which the
+     * field's whole content would exceed {@link TeamPower#MAX} (see {@link #buildPowerField}).
+     */
+    private final class DigitsOnlyFilter extends DocumentFilter {
 
         @Override
         public void insertString(FilterBypass fb, int offset, String text, AttributeSet attrs) throws BadLocationException {
@@ -777,9 +828,11 @@ public final class TeamEditorPanel<T> extends JPanel {
         public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
                 throws BadLocationException {
             String digitsOnly = text == null ? "" : text.replaceAll("[^0-9]", "");
-            int resultLength = fb.getDocument().getLength() - length + digitsOnly.length();
-            if (resultLength > maxDigits) {
-                digitsOnly = digitsOnly.substring(0, Math.max(0, digitsOnly.length() - (resultLength - maxDigits)));
+            String current = fb.getDocument().getText(0, fb.getDocument().getLength());
+            String result = current.substring(0, offset) + digitsOnly + current.substring(offset + length);
+            if (exceedsMaxPower(result)) {
+                powerRejectedHandler.run();
+                return;
             }
             super.replace(fb, offset, length, digitsOnly, attrs);
         }

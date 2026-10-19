@@ -6,6 +6,7 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.domain.FortificationAssignment;
 import org.c2w.gui.stage.ConceptInfoModel;
+import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
 import org.c2w.service.GuildService;
@@ -75,6 +76,45 @@ class FortificationAssignmentPanelTest {
 
     private static Lineup.Entry entry(Fortification fortification, String memberId, int teamIndex) {
         return new Lineup.Entry(fortification.id(), memberId, Lineup.TeamType.HERO, teamIndex);
+    }
+
+    @Test
+    @DisplayName("Team rows show how many of the team's heroes match the fortification's buff, free places none")
+    void buffCount() {
+        Fortification roleFort = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.HERO && f.buff() instanceof RoleBuff)
+                .findFirst().orElseThrow();
+        Role role = ((RoleBuff) roleFort.buff()).role();
+        Role otherRole = role == Role.MAGE ? Role.TANK : Role.MAGE;
+        Guild current = context.guild();
+        context.setGuild(new Guild(current.id(), current.name(), List.of(
+                new GuildMember("b1", "Buff One", List.of(new HeroTeam("b1", 0, List.of(
+                        new Hero("b1-a", List.of(role)), new Hero("b1-b", List.of(role)),
+                        new Hero("b1-c", List.of(otherRole))), 5000)), List.of()),
+                new GuildMember("b2", "Buff Two", List.of(new HeroTeam("b2", 0, List.of(
+                        new Hero("b2-a", List.of(otherRole))), 1000)), List.of()))));
+        lineupService.assignTeam("b1", Lineup.TeamType.HERO, 0, roleFort);
+        lineupService.assignTeam("b2", Lineup.TeamType.HERO, 0, roleFort);
+
+        List<FortificationAssignmentPanel.Row> rows = new FortificationAssignmentPanel(context, roleFort, chooser).rows();
+
+        assertEquals(LanguageService.displayName(FortificationAssignmentPanel.KEY_BUFF_COUNT, 2), rows.get(0).buffText());
+        assertEquals(LanguageService.displayName(FortificationAssignmentPanel.KEY_BUFF_COUNT, 0), rows.get(1).buffText());
+        assertEquals("", rows.get(2).buffText(), "free place");
+    }
+
+    @Test
+    @DisplayName("A fortification without buff leaves the buff cell empty")
+    void buffCountWithoutBuff() {
+        Fortification plainFort = FortificationRepository.findAll().stream()
+                .filter(f -> f.type() == FortificationType.HERO && f.buff() == null)
+                .findFirst().orElseThrow();
+        lineupService.assignTeam("m1", Lineup.TeamType.HERO, 0, plainFort);
+
+        List<FortificationAssignmentPanel.Row> rows = new FortificationAssignmentPanel(context, plainFort, chooser).rows();
+
+        assertEquals("m1", rows.get(0).team().entry().teamMemberId());
+        assertEquals("", rows.get(0).buffText());
     }
 
     @Test

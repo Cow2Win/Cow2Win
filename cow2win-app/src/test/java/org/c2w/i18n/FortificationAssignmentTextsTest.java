@@ -30,12 +30,14 @@ class FortificationAssignmentTextsTest {
             "fortificationAssignment.remove", "fortificationAssignment.chooseTeam",
             "fortificationAssignment.assignedElsewhere", "fortificationAssignment.noCandidates",
             "fortificationAssignment.chooseTarget", "fortificationAssignment.apply",
+            "fortificationAssignment.buffCountTooltip",
             "toolbar.runAlgorithm.replace", "toolbar.runAlgorithm.complete", "common.cancel", "common.close");
 
     /** Keys with one argument {0}. */
     private static final List<String> ONE_ARGUMENT_KEYS = List.of(
             "fortificationAssignment.title", "fortificationAssignment.slot",
-            "fortificationAssignment.currentlyIn", "fortificationAssignment.swapWith");
+            "fortificationAssignment.currentlyIn", "fortificationAssignment.swapWith",
+            "fortificationAssignment.buffCount");
 
     private static Map<String, Properties> languages() throws IOException {
         Map<String, Properties> result = new TreeMap<>();

@@ -102,7 +102,7 @@ public class FortificationAssignmentDialog extends JDialog {
                 items.add(candidate);
             }
             return choose(owner, LanguageService.displayName("fortificationAssignment.chooseTeam"), null, items,
-                    FortificationAssignment.Candidate.class, this::candidateRow);
+                    FortificationAssignment.Candidate.class, candidate -> candidateRow(candidate, fortification));
         }
 
         @Override
@@ -117,10 +117,12 @@ public class FortificationAssignmentDialog extends JDialog {
                                                                          List<ConceptInfoModel.AssignedTeam> teams) {
             String swapWith = LanguageService.displayName("fortificationAssignment.swapWith",
                     LanguageService.displayName(target.id()));
-            return choose(owner, swapWith, swapWith, new ArrayList<>(teams), ConceptInfoModel.AssignedTeam.class, this::swapRow);
+            return choose(owner, swapWith, swapWith, new ArrayList<>(teams), ConceptInfoModel.AssignedTeam.class,
+                    team -> swapRow(team, target));
         }
 
-        private JComponent candidateRow(FortificationAssignment.Candidate candidate) {
+        /** A candidate for {@code fortification} - its buff cell counts for {@code fortification}. */
+        private JComponent candidateRow(FortificationAssignment.Candidate candidate, Fortification fortification) {
             JPanel row = FortificationAssignmentPanel.row();
             List<JLabel> labels = new ArrayList<>();
             labels.add(new JLabel(candidate.memberName()));
@@ -129,8 +131,11 @@ public class FortificationAssignmentDialog extends JDialog {
                     FortificationAssignmentPanel.AVATARS_WIDTH));
             labels.add(FortificationAssignmentPanel.rightAligned(FortificationPanel.compactPower(candidate.power())));
             row.add(FortificationAssignmentPanel.cell(labels.get(1), FortificationAssignmentPanel.POWER_WIDTH));
+            labels.add(FortificationAssignmentPanel.buffCountLabel(fortification, candidate.entryIn(fortification.id()),
+                    appContext.guild()));
+            row.add(FortificationAssignmentPanel.cell(labels.get(2), FortificationAssignmentPanel.BUFF_WIDTH));
             labels.add(FortificationAssignmentPanel.rightAligned(FortificationAssignmentPanel.cowScoreText(candidate.cowScore())));
-            row.add(FortificationAssignmentPanel.cell(labels.get(2), FortificationAssignmentPanel.COW_SCORE_WIDTH));
+            row.add(FortificationAssignmentPanel.cell(labels.get(3), FortificationAssignmentPanel.COW_SCORE_WIDTH));
             if (!candidate.isFree()) {
                 row.add(Box.createHorizontalStrut(12));
                 JLabel currentlyIn = new JLabel(LanguageService.displayName("fortificationAssignment.currentlyIn",
@@ -156,7 +161,8 @@ public class FortificationAssignmentDialog extends JDialog {
             return row;
         }
 
-        private JComponent swapRow(ConceptInfoModel.AssignedTeam team) {
+        /** A team of the full fortification {@code target} - its buff cell counts for {@code target}. */
+        private JComponent swapRow(ConceptInfoModel.AssignedTeam team, Fortification target) {
             JPanel row = FortificationAssignmentPanel.row();
             row.add(FortificationAssignmentPanel.cell(new JLabel(team.memberName()), FortificationAssignmentPanel.NAME_WIDTH));
             row.add(FortificationAssignmentPanel.cell(TeamAvatars.of(team.entry(), appContext.guild(), FortificationAssignmentPanel.AVATAR_SIZE),
@@ -164,6 +170,9 @@ public class FortificationAssignmentDialog extends JDialog {
             row.add(FortificationAssignmentPanel.cell(
                     FortificationAssignmentPanel.rightAligned(FortificationPanel.compactPower(team.power())),
                     FortificationAssignmentPanel.POWER_WIDTH));
+            row.add(FortificationAssignmentPanel.cell(
+                    FortificationAssignmentPanel.buffCountLabel(target, team.entry(), appContext.guild()),
+                    FortificationAssignmentPanel.BUFF_WIDTH));
             return row;
         }
     }

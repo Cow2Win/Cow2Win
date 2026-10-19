@@ -4,6 +4,7 @@ import org.c2w.data.model.Fortification;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 import org.c2w.data.repository.FortificationRepository;
+import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.FortificationAssignment;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
@@ -26,7 +27,9 @@ import java.util.Optional;
  * The content of {@link FortificationAssignmentDialog}: the name and the facts
  * ("filled/capacity · power · buff %") of one fortification and one row per place - the
  * assigned teams (strongest first, see {@link ConceptInfoModel#teamsOf}) with "move/swap" and
- * "remove", then the free places with "assign team". Every change goes straight into the open
+ * "remove", then the free places with "assign team". A team row shows place, member, avatars,
+ * power, the number of the team's heroes/titans matching the fortification's buff ("Buff 2",
+ * see {@link #buffCountText}; empty for a fortification without buff) and the CowScore. Every change goes straight into the open
  * lineup via {@link LineupService}; the panel follows the lineup through its
  * {@link AppContext} listener (detach it with {@link #detach()}).
  *
@@ -71,6 +74,8 @@ class FortificationAssignmentPanel extends JPanel {
     static final String KEY_ASSIGN = "fortificationAssignment.assign";
     static final String KEY_MOVE = "fortificationAssignment.move";
     static final String KEY_REMOVE = "fortificationAssignment.remove";
+    static final String KEY_BUFF_COUNT = "fortificationAssignment.buffCount";
+    static final String KEY_BUFF_COUNT_TOOLTIP = "fortificationAssignment.buffCountTooltip";
     private static final String KEY_READ_ONLY = "common.originalReadOnly";
     private static final String KEY_COW_SCORE = "teamsOverview.valueMode.cowScore";
 
@@ -86,6 +91,7 @@ class FortificationAssignmentPanel extends JPanel {
     /** Room for five heroes plus pet and war flag. */
     static final int AVATARS_WIDTH = 7 * (AVATAR_SIZE + 2) + 4;
     static final int POWER_WIDTH = 80;
+    static final int BUFF_WIDTH = 60;
     static final int COW_SCORE_WIDTH = 100;
 
     private final AppContext appContext;
@@ -111,8 +117,12 @@ class FortificationAssignmentPanel extends JPanel {
     /** The rows currently shown, one per place - for tests. */
     private final List<Row> rows = new ArrayList<>();
 
-    /** A place row: its assigned team (null for a free place) and its buttons (none while read-only). */
-    record Row(ConceptInfoModel.AssignedTeam team, List<JButton> buttons) {
+    /**
+     * A place row: its assigned team (null for a free place), the text of its buff cell (see
+     * {@link #buffCountText}; empty for a free place or a fortification without buff) and its
+     * buttons (none while read-only).
+     */
+    record Row(ConceptInfoModel.AssignedTeam team, String buffText, List<JButton> buttons) {
     }
 
     FortificationAssignmentPanel(AppContext appContext, Fortification fortification, Chooser chooser) {
@@ -201,12 +211,14 @@ class FortificationAssignmentPanel extends JPanel {
             buttons.add(iconButton(ICON_MOVE, KEY_MOVE, () -> moveTeam(team)));
             buttons.add(iconButton(ICON_REMOVE, KEY_REMOVE, () -> removeTeam(team)));
         }
-        rows.add(new Row(team, buttons));
+        JLabel buffLabel = buffCountLabel(fortification, team.entry(), guild);
+        rows.add(new Row(team, buffLabel.getText(), buttons));
         JPanel row = row();
         row.add(cell(new JLabel(LanguageService.displayName(KEY_SLOT, slot)), SLOT_WIDTH));
         row.add(cell(new JLabel(team.memberName()), NAME_WIDTH));
         row.add(cell(TeamAvatars.of(team.entry(), guild, AVATAR_SIZE), AVATARS_WIDTH));
         row.add(cell(rightAligned(FortificationPanel.compactPower(team.power())), POWER_WIDTH));
+        row.add(cell(buffLabel, BUFF_WIDTH));
         row.add(cell(rightAligned(cowScoreText(team.cowScore())), COW_SCORE_WIDTH));
         row.add(Box.createHorizontalStrut(12));
         row.add(Box.createHorizontalGlue());
@@ -222,7 +234,7 @@ class FortificationAssignmentPanel extends JPanel {
             assign.addActionListener(e -> assignTeam());
             buttons.add(assign);
         }
-        rows.add(new Row(null, buttons));
+        rows.add(new Row(null, "", buttons));
         JPanel row = row();
         row.add(cell(new JLabel(LanguageService.displayName(KEY_SLOT, slot)), SLOT_WIDTH));
         JLabel free = new JLabel(LanguageService.displayName(KEY_FREE));
@@ -291,6 +303,33 @@ class FortificationAssignmentPanel extends JPanel {
     /** "CowScore 12.3" - one decimal like the team overviews. */
     static String cowScoreText(double cowScore) {
         return LanguageService.displayName(KEY_COW_SCORE) + " " + String.format(Locale.ROOT, "%.1f", cowScore);
+    }
+
+    /**
+     * "Buff 2": the number of heroes/titans of the team {@code entry} points at that match
+     * {@code fortification}'s buff (see {@link BuffCalculationService#countMatchingMembers}) -
+     * counted for {@code fortification}, whatever fortification {@code entry} names. Empty for a
+     * fortification without buff.
+     */
+    static String buffCountText(Fortification fortification, Lineup.Entry entry, Guild guild) {
+        if (fortification.buff() == null) {
+            return "";
+        }
+        return LanguageService.displayName(KEY_BUFF_COUNT,
+                BuffCalculationService.countMatchingMembers(entry, guild, fortification.buff()));
+    }
+
+    /**
+     * The buff cell of a team row ({@link #buffCountText}, right-aligned, with a tooltip saying
+     * what is counted) - put it into a {@link #cell} of {@link #BUFF_WIDTH}, also when it is
+     * empty, so the columns stay aligned.
+     */
+    static JLabel buffCountLabel(Fortification fortification, Lineup.Entry entry, Guild guild) {
+        JLabel label = rightAligned(buffCountText(fortification, entry, guild));
+        if (fortification.buff() != null) {
+            label.setToolTipText(LanguageService.displayName(KEY_BUFF_COUNT_TOOLTIP));
+        }
+        return label;
     }
 
     /** A horizontal row of cells. */

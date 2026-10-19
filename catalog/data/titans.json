@@ -224,5 +224,13 @@
       "TANK"
     ],
     "image": "Rigel.png"
+  },
+  {
+    "id": "orm",
+    "element": "DISTORTION",
+    "roles": [
+      "SUMMONER"
+    ],
+    "image": "Orm.png"
   }
 ]

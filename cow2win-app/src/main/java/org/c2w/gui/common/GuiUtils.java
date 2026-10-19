@@ -1,5 +1,8 @@
 package org.c2w.gui.common;
 
+import org.c2w.domain.TeamPower;
+import org.c2w.i18n.LanguageService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
@@ -7,6 +10,15 @@ import java.util.Locale;
 
 public class GuiUtils {
     public static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.GERMANY);
+
+    /**
+     * The warning shown when a typed-in team power exceeds {@link TeamPower#MAX}
+     * (title: {@code teamsOverview.invalidPowerTitle}) - shared by every power
+     * input field, with the limit formatted like any other power value.
+     */
+    public static String powerTooHighMessage() {
+        return LanguageService.displayName("teamsOverview.powerTooHigh", NUMBER_FORMAT.format(TeamPower.MAX));
+    }
 
     /**
      * Sizes {@code window} to {@code height} and to at least {@code minWidth},

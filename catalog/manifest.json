@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "dataVersion": "2026-10-18",
+  "dataVersion": "2026-10-19",
   "note": "buff values corrected: foundry 8 %, engineerium 4 %",
   "files": [
     {
@@ -20,8 +20,8 @@
     },
     {
       "path": "data/titans.json",
-      "size": 3403,
-      "sha256": "d4499ead5f7d07a4aa8740f917f21109a19b850c66289f576f6e4ff599058730"
+      "size": 3520,
+      "sha256": "8eefbbd33b5bbde343181ae4ae3c18bb1db23edbaec81f9348586e8988ef8794"
     },
     {
       "path": "data/warFlags.json",
@@ -599,6 +599,11 @@
       "sha256": "6215c481f83b4929e9bfe97e4b29c074caa074eb59ba666a904206a817daefb5"
     },
     {
+      "path": "images/titans/Orm.png",
+      "size": 57472,
+      "sha256": "fa99504d71aa4fac785df7b9636569be65a0295dd6eeb0c1c242dde7e31dd6e3"
+    },
+    {
       "path": "images/titans/Rigel.png",
       "size": 49742,
       "sha256": "aae057708c504fb016cc0a851ac03e50d29bb248560c28bd14a547cf654a414f"
@@ -650,8 +655,8 @@
     },
     {
       "path": "names.json",
-      "size": 12798,
-      "sha256": "7a04a7b552dc33a56dac500f5a66c08623abf9d338df18628ebeb560eb8397ec"
+      "size": 12866,
+      "sha256": "f1375d5bfc83980ab263058afbca903e63579528b948353d2f1aef5735d99949"
     }
   ]
 }

@@ -3,6 +3,7 @@ package org.c2w.gui.titan;
 import org.c2w.data.model.*;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.TeamPower;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.AppColors;
@@ -286,18 +287,35 @@ public class TitanValueOverviewDialog extends JDialog {
     }
 
     /**
-     * Validates a "Power" column edit (same rule as {@code TeamsOverviewPanel#handlePowerEdited}:
-     * negative power is rejected) and, if accepted, recomputes {@code row}'s
+     * Why a "Power" column edit to {@code newPower} is rejected (see
+     * {@link #handlePowerEdited}) - negative power, or power above
+     * {@link TeamPower#MAX} (a typo guard) - or null if it is accepted.
+     */
+    static String powerRejectionMessage(int newPower) {
+        if (newPower < 0) {
+            return LanguageService.displayName("teamsOverview.negativePower");
+        }
+        if (TeamPower.isTooHigh(newPower)) {
+            return GuiUtils.powerTooHighMessage();
+        }
+        return null;
+    }
+
+    /**
+     * Validates a "Power" column edit (negative power or power above
+     * {@link TeamPower#MAX} is rejected with a warning, see
+     * {@link #powerRejectionMessage}) and, if accepted, recomputes {@code row}'s
      * {@link TitanValueTableModel.Row#matchCounts}/{@link TitanValueTableModel.Row#scores}
      * for {@code newPower} (both otherwise-static value columns are derived
      * from Power, see {@link #matchCountsFor}/{@link #scoresFor}) and marks
      * the guild dirty, so {@link #buildSaveButton()}'s save (and the "unsaved
      * changes" prompt in {@code ContextBar#confirmDiscardUnsavedChanges})
-     * pick it up exactly like a {@code TeamsOverviewPanel} Power edit would.
+     * pick it up like any other guild edit.
      */
     private boolean handlePowerEdited(TitanValueTableModel.Row row, int newPower) {
-        if (newPower < 0) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("teamsOverview.negativePower"),
+        String rejection = powerRejectionMessage(newPower);
+        if (rejection != null) {
+            JOptionPane.showMessageDialog(this, rejection,
                     LanguageService.displayName("teamsOverview.invalidPowerTitle"), JOptionPane.WARNING_MESSAGE);
             return false;
         }

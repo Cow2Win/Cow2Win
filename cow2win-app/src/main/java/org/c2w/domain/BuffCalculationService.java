@@ -76,38 +76,43 @@ public class BuffCalculationService {
         return (int) (buffCountForThisFortification * buff.bonusPercent());
     }
 
+    /**
+     * The number of heroes/titans of all teams assigned to {@code fortificationId} in
+     * {@code lineup} that match {@code buff} - the sum of {@link #countMatchingMembers}
+     * over the fortification's entries.
+     */
     public static int countMatchingMembersForFortification(String fortificationId, Lineup lineup, Guild guild, Buff buff) {
         if (buff == null) {
             return 0;
         }
-
         int count = 0;
-
-        // For each entry in the lineup that belongs to this fortification
         for (Lineup.Entry entry : lineup.entries()) {
             if (entry.fortificationId().equals(fortificationId)) {
-                // Find the guild member
-                GuildMember member = findMemberById(guild, entry.teamMemberId());
-                if (member == null) {
-                    continue;
-                }
-
-                // Find the specific team (HERO or TITAN)
-                if (entry.teamType() == Lineup.TeamType.HERO) {
-                    if (entry.teamIndex() < member.heroTeams().size()) {
-                        HeroTeam team = member.heroTeams().get(entry.teamIndex());
-                        count += countHeroesWithRole(team, buff);
-                    }
-                } else if (entry.teamType() == Lineup.TeamType.TITAN) {
-                    if (entry.teamIndex() < member.titanTeams().size()) {
-                        TitanTeam team = member.titanTeams().get(entry.teamIndex());
-                        count += countTitansWithElement(team, buff);
-                    }
-                }
+                count += countMatchingMembers(entry, guild, buff);
             }
         }
-
         return count;
+    }
+
+    /**
+     * The number of heroes ({@link Hero#matchesBuff}) or titans ({@link Titan#matchesBuff}) of
+     * the team {@code entry} points at that match {@code buff} - 0 for no buff or if the team
+     * can no longer be resolved (see {@link #resolveHeroTeam}/{@link #resolveTitanTeam}).
+     * The entry's own fortification is not used, so the count can also be taken for a
+     * fortification the team is not (yet) assigned to.
+     */
+    public static int countMatchingMembers(Lineup.Entry entry, Guild guild, Buff buff) {
+        if (buff == null) {
+            return 0;
+        }
+        if (entry.teamType() == Lineup.TeamType.HERO) {
+            return resolveHeroTeam(entry, guild)
+                    .map(team -> (int) team.heroes().stream().filter(hero -> hero.matchesBuff(buff)).count())
+                    .orElse(0);
+        }
+        return resolveTitanTeam(entry, guild)
+                .map(team -> (int) team.titans().stream().filter(titan -> titan.matchesBuff(buff)).count())
+                .orElse(0);
     }
 
     private static int countHeroesWithRole(HeroTeam team, Buff buff) {

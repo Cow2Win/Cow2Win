@@ -44,5 +44,8 @@
     "fortMarks": {
       "bastion-of-ice": "POSITIVE"
     }
+  },
+  {
+    "id": "orm"
   }
 ]
