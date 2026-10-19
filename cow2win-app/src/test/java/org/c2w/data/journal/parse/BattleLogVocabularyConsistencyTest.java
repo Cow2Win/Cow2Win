@@ -1,6 +1,7 @@
 package org.c2w.data.journal.parse;
 
 import org.c2w.data.model.BuffEffect;
+import org.c2w.data.model.HeroColor;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +56,9 @@ class BattleLogVocabularyConsistencyTest {
         for (BuffEffect effect : BattleLogVocabulary.UNSEEN_BUFFS) {
             expected.add(BattleLogVocabulary.BUFF_PREFIX + effect.name());
         }
+        for (HeroColor color : BattleLogVocabulary.UNSEEN_HERO_COLORS) {
+            expected.add(BattleLogVocabulary.HERO_COLOR_PREFIX + color.name());
+        }
 
         for (BattleLogVocabulary v : vocabulariesFromSource().values()) {
             assertEquals(expected, v.entries().keySet(), v.language());
@@ -89,6 +93,9 @@ class BattleLogVocabularyConsistencyTest {
         for (BattleLogVocabulary v : vocabulariesFromSource().values()) {
             for (BuffEffect effect : BattleLogVocabulary.UNSEEN_BUFFS) {
                 assertEquals(List.of(), v.texts(BattleLogVocabulary.BUFF_PREFIX + effect.name()), v.language());
+            }
+            for (HeroColor color : BattleLogVocabulary.UNSEEN_HERO_COLORS) {
+                assertEquals(List.of(), v.texts(BattleLogVocabulary.HERO_COLOR_PREFIX + color.name()), v.language());
             }
         }
     }

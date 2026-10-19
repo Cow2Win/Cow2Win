@@ -81,6 +81,9 @@ public final class BattleLogVocabulary {
      */
     static final Set<BuffEffect> UNSEEN_BUFFS = EnumSet.noneOf(BuffEffect.class);
 
+    /** Hero colors no battle log has shown so far (very rare) - their text lists stay empty. */
+    static final Set<HeroColor> UNSEEN_HERO_COLORS = EnumSet.of(HeroColor.GREEN, HeroColor.GREY);
+
     private final String language;
     private final Map<String, List<String>> texts;
     private final List<Pattern> undefendedPatterns;
@@ -152,7 +155,9 @@ public final class BattleLogVocabulary {
                 FIGHT_WIN, FIGHT_LOSS, FORTIFICATION_CAPTURED, UNDEFENDED_SINGULAR, UNDEFENDED_PLURAL,
                 STATS_DAMAGE_DEALT, STATS_DAMAGE_TAKEN, STATS_HEALING, STATS_PATRONAGE));
         for (HeroColor color : HeroColor.values()) {
-            keys.add(HERO_COLOR_PREFIX + color.name());
+            if (!UNSEEN_HERO_COLORS.contains(color)) {
+                keys.add(HERO_COLOR_PREFIX + color.name());
+            }
         }
         for (BuffEffect effect : BuffEffect.values()) {
             if (!UNSEEN_BUFFS.contains(effect)) {

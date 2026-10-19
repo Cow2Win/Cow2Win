@@ -144,9 +144,11 @@ only through them (there are no aliases).
       same keys everywhere (`BattleLogVocabularyConsistencyTest`). Never
       invent a text that no log has shown - leave the list empty instead and
       put the effect into `BattleLogVocabulary.UNSEEN_BUFFS` (empty since
-      `SKILL_COOLDOWN_DECREASE` showed up in season 17). A new hero color also
-      needs its constant in `HeroColor`. The parser reports unknown texts as
-      parse problems.
+      `SKILL_COOLDOWN_DECREASE` showed up in season 17). Hero colors work the
+      same way with `BattleLogVocabulary.UNSEEN_HERO_COLORS` (`GREEN`, `GREY`:
+      very rare, not seen in a log yet - once one shows up, fill its texts in
+      all three languages and remove it from the set). The parser reports
+      unknown texts as parse problems.
 - [ ] New language: besides `<name>/<name>.properties` the language folder
       also needs a `battleLogVocabulary.json` - without it, battle logs in
       that language cannot be read - and every entry of `catalog/names.json`

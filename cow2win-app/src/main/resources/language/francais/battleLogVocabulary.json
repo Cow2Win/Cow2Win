@@ -32,6 +32,8 @@
   },
   "heroColor": {
     "BLUE": ["Bleu"],
+    "GREEN": [],
+    "GREY": [],
     "ORANGE": ["Orange"],
     "RED": ["Rouge"],
     "VIOLET": ["Violet"]
