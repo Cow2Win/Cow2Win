@@ -50,8 +50,8 @@ class MainMenuBarTest {
      */
     private static final List<String> EXPECTED_STAGE_ACTIONS = List.of(
             "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
-            "menu.concept: {menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP}, ---, "
-                    + "RUN_ALGORITHM, COMPARE_LINEUPS, ---, SHOW_TEAMS",
+            "menu.concept: {menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP, COMPARE_LINEUPS}, ---, "
+                    + "RUN_ALGORITHM, ---, SHOW_TEAMS",
             "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE");
 
     /** Deliberately toolbar-only actions - the only ones neither in a menu nor in a stage action list. */
