@@ -95,7 +95,8 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
 
 ## 5. Fortification changes (`fortifications.json`) - highest risk
 
-This file drives `HodorAlgorithm` directly (gates and their points behind are derived from it), so an error here
+This file drives `HodorAlgorithm` and `ShieldAlgorithm` directly (gates, their points behind and the unlock depths/rows
+are derived from it), so an error here
 silently produces a wrong "optimal" lineup rather than an obvious crash.
 
 - [ ] **New fortification added to the Clash of Worlds map?** New entry with
@@ -156,9 +157,9 @@ only through them (there are no aliases).
 
 ## 7. After any data change
 
-- [ ] Re-run `HodorGatesTest` (`mvn test`). If prerequisites or capture
-      bonuses changed, update `realCatalog`'s expected gate groups and points
-      behind in the test - it is a copy of the catalog's facts and is meant
+- [ ] Re-run `HodorGatesTest`, `FortificationDepthsTest` and `ShieldAlgorithmTest#rows` (`mvn test`). If prerequisites or capture
+      bonuses changed, update the expected gate groups, points behind, depths and rows
+      in the tests - they are a copy of the catalog's facts and are meant
       to fail when they change.
 - [ ] Spot-check in the running app: reload a guild, run the algorithm once,
       sanity-check the exported report against what you just changed.

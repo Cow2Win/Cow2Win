@@ -10,11 +10,12 @@ import java.util.Map;
  * the settings and registered via {@code HodorAlgorithm#setSettings}. Knows neither the config file
  * nor Swing, like {@link CowScoreBonuses}.
  *
- * @param reserve how many teams beyond the free slots enter the pool (heroes and titans alike),
+ * @param reserve how many teams beyond the free slots enter the pool (heroes and titans alike) - only
+ *                HODOR and HODOR (CowScore), S.H.I.E.L.D has no reserve,
  *                {@link #MIN_RESERVE}-{@link #MAX_RESERVE}
  * @param weights weight of each {@link BuffEffect} in HODOR's strength formula
  *                {@code totalPower x (1 + weight x buffPercent / 100)}, {@link #MIN_WEIGHT}-{@link #MAX_WEIGHT};
- *                only used by HODOR, not by HODOR (CowScore)
+ *                used by HODOR and S.H.I.E.L.D, not by HODOR (CowScore)
  */
 public record HodorSettings(int reserve, Map<BuffEffect, Double> weights) {
 

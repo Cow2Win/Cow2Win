@@ -40,6 +40,7 @@ public final class LineupAlgorithms {
         return List.of(
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.POWER),
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.COW_SCORE),
+                new ShieldAlgorithm<>(side),
                 new ManualLineupAlgorithm(side.teamType())
         );
     }

@@ -29,6 +29,7 @@ public final class AlgorithmDescriptions {
     private static final Map<String, String> KEY_BY_DISPLAY_NAME = Map.of(
             "HODOR", "hodor",
             "HODOR (CowScore)", "hodorCowScore",
+            ShieldAlgorithm.DISPLAY_NAME, "shield",
             ManualLineupAlgorithm.DISPLAY_NAME, "manual"
     );
 
