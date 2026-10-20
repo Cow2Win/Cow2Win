@@ -42,6 +42,11 @@ public final class AppColors {
     /** Information as text: links. */
     public static final Color INFO_TEXT = new Color(0x64, 0xB5, 0xF6);
 
+    // --- Heatmap -----------------------------------------------------------------------------
+
+    /** Weak fortification in the heatmap of the fortification map (a muted dark yellow, areas only). */
+    public static final Color HEATMAP_LOW = new Color(0xA8, 0x8A, 0x1E);
+
     // --- Fortification type ------------------------------------------------------------------
 
     /** Everything belonging to the hero side: map labels, tables, replay markers, chips. */

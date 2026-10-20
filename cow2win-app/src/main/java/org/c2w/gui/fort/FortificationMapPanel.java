@@ -8,8 +8,10 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.FortificationHeatmap;
 import org.c2w.domain.LineupBaseline;
 import org.c2w.gui.common.GridPanel;
+import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 
 import javax.swing.*;
@@ -29,7 +31,9 @@ import java.util.function.Consumer;
  * fortification type}, one {@link FortificationPanel} each; the cells of the other type stay
  * empty, and the grid keeps every row and column (see {@link GridPanel#setUniformCells}) so a
  * fortification is at the same place for both types. The lineup summary is not on the map (see
- * the info panel of {@code org.c2w.gui.stage.ConceptStageView}).
+ * the info panel of {@code org.c2w.gui.stage.ConceptStageView}). In the top row, titans top left and
+ * heroes top right, a {@link FortificationHeatmapPanel} shows where the power of the selected type
+ * sits (see {@link FortificationHeatmap}).
  *
  * <p>A click on a fortification selects it, a second click clears the selection - see
  * {@link #selectedFortification()} and {@link #addSelectionListener}. A double-click selects
@@ -40,6 +44,12 @@ public class FortificationMapPanel extends GridPanel {
 
     /** Minimum size of a grid cell - keeps empty rows and columns from collapsing. */
     private static final Dimension MIN_CELL_SIZE = new Dimension(FortificationPanel.PREFERRED_WIDTH, 56);
+
+    /** Row of the heatmap cell of each fortification type: titans top left, heroes top right. */
+    static final int HEATMAP_ROW = 0;
+
+    /** True once a heatmap cell occupied by a fortification was logged - logged only once. */
+    private static boolean heatmapCellConflictLogged;
 
     private final AppContext appContext;
 
@@ -154,8 +164,32 @@ public class FortificationMapPanel extends GridPanel {
         if (!selectionVisible) {
             setSelectedId(null);
         }
+        setHeatmap(fortificationCatalog, lineup, guild, selectedType);
         // The lineup summary of the selected type is not part of the map: it is shown in the
         // info panel of the concept stage view (see org.c2w.gui.stage.ConceptStageView).
+    }
+
+    /**
+     * Puts the heatmap of {@code type} into its cell (see {@link #heatmapColumn}) - always power,
+     * whatever the {@link #valueMode}. Skipped (logged once) if a fortification occupies that cell.
+     */
+    private void setHeatmap(List<Fortification> catalog, Lineup lineup, Guild guild, FortificationType type) {
+        int column = heatmapColumn(type);
+        if (componentAt(HEATMAP_ROW, column) != null) {
+            if (!heatmapCellConflictLogged) {
+                heatmapCellConflictLogged = true;
+                Logger.log("Fortification map: cell (" + HEATMAP_ROW + ", " + column
+                        + ") is occupied by a fortification - the " + type + " heatmap is not shown");
+            }
+            return;
+        }
+        FortificationHeatmap heatmap = FortificationHeatmap.of(type, catalog, lineup, guild);
+        setComponentAt(HEATMAP_ROW, column, new FortificationHeatmapPanel(heatmap, catalog, rows(), columns()));
+    }
+
+    /** Column of the heatmap of {@code type} in row {@link #HEATMAP_ROW}: titans left, heroes right. */
+    int heatmapColumn(FortificationType type) {
+        return type == FortificationType.TITAN ? 0 : columns() - 1;
     }
 
     /**

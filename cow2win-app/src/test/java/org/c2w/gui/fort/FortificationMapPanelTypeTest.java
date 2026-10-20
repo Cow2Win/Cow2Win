@@ -49,17 +49,35 @@ class FortificationMapPanelTypeTest {
     }
 
     @Test
-    @DisplayName("Only fortifications of the selected type are on the map, each at its catalog cell; no summary in the top corners")
+    @DisplayName("Only fortifications of the selected type are on the map, each at its catalog cell; the heatmap of the type in its top corner")
     void mapFollowsFortificationType() {
         FortificationMapPanel map = new FortificationMapPanel(context);
         assertShowsOnly(map, FortificationType.HERO);
-        assertNull(map.componentAt(0, 0), "no summary on the map");
-        assertNull(map.componentAt(0, map.columns() - 1));
+        assertHeatmap(map.componentAt(0, map.columns() - 1), FortificationType.HERO);
+        assertNull(map.componentAt(0, 0), "no titan heatmap");
 
         context.setFortificationType(FortificationType.TITAN);
         assertShowsOnly(map, FortificationType.TITAN);
-        assertNull(map.componentAt(0, 0));
-        assertNull(map.componentAt(0, map.columns() - 1), "no summary on the map");
+        assertHeatmap(map.componentAt(0, 0), FortificationType.TITAN);
+        assertNull(map.componentAt(0, map.columns() - 1), "no hero heatmap");
+    }
+
+    @Test
+    @DisplayName("The heatmap stays in its cell whatever the value mode")
+    void heatmapIndependentOfValueMode() {
+        context.setFortificationType(FortificationType.TITAN);
+        FortificationMapPanel map = new FortificationMapPanel(context);
+        for (FortificationValueMode mode : FortificationValueMode.values()) {
+            map.setValueMode(mode);
+            assertHeatmap(map.componentAt(0, 0), FortificationType.TITAN);
+            assertNull(map.componentAt(0, map.columns() - 1), mode.name());
+        }
+    }
+
+    private static void assertHeatmap(JComponent component, FortificationType type) {
+        FortificationHeatmapPanel heatmap = assertInstanceOf(FortificationHeatmapPanel.class, component);
+        assertEquals(type, heatmap.heatmap().type());
+        assertFalse(heatmap.contains(1, 1), "no mouse reaction");
     }
 
     @Test
