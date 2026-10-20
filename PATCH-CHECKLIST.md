@@ -95,7 +95,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
 
 ## 5. Fortification changes (`fortifications.json`) - highest risk
 
-This file drives `BestPossibleLineupAlgorithm` directly, so an error here
+This file drives `HodorAlgorithm` directly (gates and their points behind are derived from it), so an error here
 silently produces a wrong "optimal" lineup rather than an obvious crash.
 
 - [ ] **New fortification added to the Clash of Worlds map?** New entry with
@@ -156,12 +156,10 @@ only through them (there are no aliases).
 
 ## 7. After any data change
 
-- [ ] Re-run `BestPossibleLineupAlgorithmTest` (`mvn test`). If the total
-      fortification count changed from 20, or the unlock chain changed,
-      update both `realCatalogMatchesDocumentedDepths`'s expected table in
-      the test AND the depth table in `clash-of-worlds-event-recherche.md` -
-      they're independent copies of the same fact and won't warn you if they
-      drift apart.
+- [ ] Re-run `HodorGatesTest` (`mvn test`). If prerequisites or capture
+      bonuses changed, update `realCatalog`'s expected gate groups and points
+      behind in the test - it is a copy of the catalog's facts and is meant
+      to fail when they change.
 - [ ] Spot-check in the running app: reload a guild, run the algorithm once,
       sanity-check the exported report against what you just changed.
 - [ ] Once confirmed, update `clash-of-worlds-event-recherche.md` in the

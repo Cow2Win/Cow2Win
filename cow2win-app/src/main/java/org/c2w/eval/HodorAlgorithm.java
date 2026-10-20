@@ -91,14 +91,8 @@ public class HodorAlgorithm<T> extends AbstractLineupAlgorithm<T> {
     }
 
     @Override
-    protected void fillFortifications(Fortification bridge, List<Fortification> others,
-                                      List<Candidate<T>> pool, List<Lineup.Entry> updatedEntries,
-                                      Guild guild, Map<String, Integer> unlockDepth) {
-        List<Fortification> fortifications = new ArrayList<>();
-        if (bridge != null) {
-            fortifications.add(bridge);
-        }
-        fortifications.addAll(others);
+    protected void fillFortifications(List<Fortification> fortifications, List<Candidate<T>> pool,
+                                      List<Lineup.Entry> updatedEntries, Guild guild) {
         if (fortifications.isEmpty()) {
             return;
         }

@@ -2,7 +2,6 @@ package org.c2w.data.repository;
 
 import com.google.gson.*;
 import org.c2w.data.model.*;
-import org.c2w.eval.AbstractLineupAlgorithm;
 import org.c2w.infra.CatalogStore;
 import org.c2w.infra.JsonSupport;
 import org.c2w.infra.Logger;
@@ -88,7 +87,7 @@ public class FortificationRepository {
      * looks like a data-entry mistake in {@code fortifications.json} rather than failing
      * silently - specifically: prerequisites referencing a fortification id that doesn't
      * exist in the catalog, and cycles in the prerequisite graph. Neither of these crashes
-     * the app on its own (see {@link AbstractLineupAlgorithm#computeUnlockDepths},
+     * the app on its own (see {@code org.c2w.eval.HodorGates},
      * which already degrades gracefully for both cases), so this is purely about making a
      * likely typo visible instead of it silently producing a slightly-wrong "optimal" lineup.
      *

@@ -57,16 +57,4 @@ class AlgorithmSelectionTextsTest {
             }
         }
     }
-
-    @Test
-    @DisplayName("\"Best possible lineup\" no longer claims to keep existing assignments")
-    void bestPossibleDescriptionWithoutKeepSentence() throws IOException {
-        for (Map.Entry<String, Properties> language : languages().entrySet()) {
-            String description = language.getValue().getProperty("algorithm.bestPossibleLineup.description");
-            for (String sentence : List.of("Eine bereits vorhandene Zuweisung wird nie verändert",
-                    "Never touches an assignment that is already there", "Ne modifie jamais une attribution déjà existante")) {
-                assertFalse(description.contains(sentence), language.getKey());
-            }
-        }
-    }
 }

@@ -259,8 +259,8 @@ class HodorAlgorithmTest {
     @Test
     @DisplayName("HODOR (CowScore) rates with cowScoreOf: with an inverted CowScore the reserve (weakest) teams win")
     void cowScoreVariantUsesCowScoreOf() {
-        TeamSide<TitanTeam> invertedCowScore = new TeamSide<>(Lineup.TeamType.TITAN, FortificationType.TITAN, "bridge",
-                GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::buffFitScore, TitanTeam::sortScore,
+        TeamSide<TitanTeam> invertedCowScore = new TeamSide<>(Lineup.TeamType.TITAN, FortificationType.TITAN,
+                GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::sortScore,
                 (team, fortification) -> 100_000 - team.totalPower());
         int capacity = titanCapacity();
         Guild guild = guild(descending(capacity + 3, 10_000));
@@ -275,12 +275,11 @@ class HodorAlgorithmTest {
     }
 
     @Test
-    @DisplayName("Registered in LineupAlgorithms after Consensus and before Manual, the default stays first")
+    @DisplayName("LineupAlgorithms: HODOR (the default), HODOR (CowScore), Manual")
     void registration() {
         for (Lineup.TeamType teamType : Lineup.TeamType.values()) {
             List<String> names = LineupAlgorithms.forType(teamType).stream().map(LineupAlgorithm::displayName).toList();
-            assertEquals(List.of("Best possible lineup", "Balanced defense", "CowScore maximizer", "Consensus picks",
-                    "HODOR", "HODOR (CowScore)", ManualLineupAlgorithm.DISPLAY_NAME), names);
+            assertEquals(List.of("HODOR", "HODOR (CowScore)", ManualLineupAlgorithm.DISPLAY_NAME), names);
         }
     }
 }

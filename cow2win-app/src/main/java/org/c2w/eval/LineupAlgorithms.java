@@ -18,7 +18,7 @@ import java.util.Map;
  * the strategic concept, which never offers "Manual".
  *
  * <p>Also owns the format of the COMBINED {@link Lineup#algorithmName()}
- * ("Heroes: Best possible lineup; Titans: Balanced defense") - see {@link
+ * ("Heroes: HODOR; Titans: HODOR (CowScore)") - see {@link
  * #combinedAlgorithmName}/{@link #parseAlgorithmName}.
  */
 public final class LineupAlgorithms {
@@ -38,10 +38,6 @@ public final class LineupAlgorithms {
 
     private static <T> List<LineupAlgorithm> forSide(TeamSide<T> side) {
         return List.of(
-                new BestPossibleLineupAlgorithm<>(side),
-                new BalancedDefenseAlgorithm<>(side),
-                new CowScoreMaximizerAlgorithm<>(side),
-                new ConsensusAlgorithm<>(side),
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.POWER),
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.COW_SCORE),
                 new ManualLineupAlgorithm(side.teamType())

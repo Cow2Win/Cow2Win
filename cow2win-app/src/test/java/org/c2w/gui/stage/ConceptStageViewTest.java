@@ -168,7 +168,7 @@ class ConceptStageViewTest {
     @DisplayName("The combo box follows the fortification type and keeps the choice per type in the selection")
     void algorithmBoxPerType() {
         context.setFortificationType(FortificationType.HERO);
-        LineupAlgorithm cowScoreHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(2);
+        LineupAlgorithm cowScoreHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(1);
         view.algorithmBox().setSelectedItem(cowScoreHero);
         assertSame(cowScoreHero, selection.get(Lineup.TeamType.HERO));
         LineupAlgorithm titanBefore = selection.get(Lineup.TeamType.TITAN);

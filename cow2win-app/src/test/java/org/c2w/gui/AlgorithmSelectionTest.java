@@ -36,13 +36,13 @@ class AlgorithmSelectionTest {
     @Test
     @DisplayName("Preselected from the config; \"Manual\" preselects the first algorithm of the type")
     void preselectedFromConfig() {
-        LineupAlgorithm balancedHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(1);
-        Config.setDefaultHeroAlgorithm(balancedHero.displayName());
+        LineupAlgorithm secondHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(1);
+        Config.setDefaultHeroAlgorithm(secondHero.displayName());
         Config.setDefaultTitanAlgorithm(ManualLineupAlgorithm.DISPLAY_NAME);
 
         AlgorithmSelection selection = new AlgorithmSelection();
 
-        assertSame(balancedHero, selection.get(Lineup.TeamType.HERO));
+        assertSame(secondHero, selection.get(Lineup.TeamType.HERO));
         assertSame(LineupAlgorithms.forAssignment(Lineup.TeamType.TITAN).get(0), selection.get(Lineup.TeamType.TITAN));
         assertEquals(LineupAlgorithms.forAssignment(Lineup.TeamType.TITAN), selection.choices(Lineup.TeamType.TITAN));
     }
@@ -56,7 +56,7 @@ class AlgorithmSelectionTest {
         LineupAlgorithm titanBefore = selection.get(Lineup.TeamType.TITAN);
         List<Lineup.TeamType> changed = new ArrayList<>();
         selection.addListener(changed::add);
-        LineupAlgorithm cowScoreHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(2);
+        LineupAlgorithm cowScoreHero = LineupAlgorithms.forAssignment(Lineup.TeamType.HERO).get(1);
 
         selection.set(cowScoreHero);
         selection.set(cowScoreHero);

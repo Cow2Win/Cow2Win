@@ -12,7 +12,7 @@ import java.util.Map;
  * lives as {@code algorithm.<key>.description} in every
  * {@code language/<name>/<name>.properties} file, one entry per algorithm.
  *
- * <p>{@link LineupAlgorithm#displayName()} (e.g. "Best possible lineup") is
+ * <p>{@link LineupAlgorithm#displayName()} (e.g. "HODOR (CowScore)") is
  * not itself a usable properties key (spaces, not namespaced under
  * {@code algorithm.*}) - {@link #KEY_BY_DISPLAY_NAME} maps each known
  * algorithm's display name to its dotted key suffix. An algorithm missing
@@ -27,10 +27,6 @@ import java.util.Map;
 public final class AlgorithmDescriptions {
 
     private static final Map<String, String> KEY_BY_DISPLAY_NAME = Map.of(
-            "Best possible lineup", "bestPossibleLineup",
-            "Balanced defense", "balancedDefense",
-            "CowScore maximizer", "cowScoreMaximizer",
-            "Consensus picks", "consensusPicks",
             "HODOR", "hodor",
             "HODOR (CowScore)", "hodorCowScore",
             ManualLineupAlgorithm.DISPLAY_NAME, "manual"

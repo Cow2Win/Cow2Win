@@ -79,9 +79,8 @@ class SideSpecificLineupAlgorithmsTest {
         void heroStrategiesPlaceAllHeroTeams() {
             Guild guild = mixedGuild();
             for (LineupAlgorithm algorithm : List.of(
-                    new BestPossibleLineupAlgorithm<>(TeamSide.HERO),
-                    new BalancedDefenseAlgorithm<>(TeamSide.HERO),
-                    new CowScoreMaximizerAlgorithm<>(TeamSide.HERO))) {
+                    new HodorAlgorithm<>(TeamSide.HERO, HodorAlgorithm.Variant.POWER),
+                    new HodorAlgorithm<>(TeamSide.HERO, HodorAlgorithm.Variant.COW_SCORE))) {
                 Lineup result = algorithm.run(emptyLineup(guild), guild);
                 assertEquals(4, countOfType(result, Lineup.TeamType.HERO), algorithm.displayName());
             }
@@ -94,7 +93,7 @@ class SideSpecificLineupAlgorithmsTest {
             Lineup.Entry manualTitan = new Lineup.Entry("bridge", "m1", Lineup.TeamType.TITAN, 0);
             Lineup start = new Lineup(guild.id(), guild.name(), "", null, List.of(manualTitan));
 
-            Lineup result = new BalancedDefenseAlgorithm<>(TeamSide.HERO).run(start, guild);
+            Lineup result = new HodorAlgorithm<>(TeamSide.HERO, HodorAlgorithm.Variant.POWER).run(start, guild);
 
             assertTrue(result.entries().contains(manualTitan));
             assertEquals(1, countOfType(result, Lineup.TeamType.TITAN), "no titan entry may be added or removed");
@@ -110,13 +109,13 @@ class SideSpecificLineupAlgorithmsTest {
         void manualTitansAutomaticHeroes() {
             Guild guild = mixedGuild();
             Lineup result = LineupAlgorithms.runBoth(
-                    LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, "Best possible lineup"),
+                    LineupAlgorithms.findOrDefault(Lineup.TeamType.HERO, "HODOR"),
                     LineupAlgorithms.findOrDefault(Lineup.TeamType.TITAN, ManualLineupAlgorithm.DISPLAY_NAME),
                     emptyLineup(guild), guild);
 
             assertEquals(4, countOfType(result, Lineup.TeamType.HERO));
             assertEquals(0, countOfType(result, Lineup.TeamType.TITAN));
-            assertEquals("Heroes: Best possible lineup", result.algorithmName(),
+            assertEquals("Heroes: HODOR", result.algorithmName(),
                     "the manual side leaves no trace in algorithmName");
         }
 
@@ -125,13 +124,13 @@ class SideSpecificLineupAlgorithmsTest {
         void differentStrategiesPerSide() {
             Guild guild = mixedGuild();
             Lineup result = LineupAlgorithms.runBoth(
-                    new CowScoreMaximizerAlgorithm<>(TeamSide.HERO),
-                    new BalancedDefenseAlgorithm<>(TeamSide.TITAN),
+                    new HodorAlgorithm<>(TeamSide.HERO, HodorAlgorithm.Variant.COW_SCORE),
+                    new HodorAlgorithm<>(TeamSide.TITAN, HodorAlgorithm.Variant.POWER),
                     emptyLineup(guild), guild);
 
             assertEquals(4, countOfType(result, Lineup.TeamType.HERO));
             assertEquals(4, countOfType(result, Lineup.TeamType.TITAN));
-            assertEquals("Heroes: CowScore maximizer; Titans: Balanced defense", result.algorithmName());
+            assertEquals("Heroes: HODOR (CowScore); Titans: HODOR", result.algorithmName());
         }
 
         @Test
@@ -139,8 +138,8 @@ class SideSpecificLineupAlgorithmsTest {
         void runBothRejectsWrongSide() {
             Guild guild = mixedGuild();
             assertThrows(IllegalArgumentException.class, () -> LineupAlgorithms.runBoth(
-                    new BestPossibleLineupAlgorithm<>(TeamSide.TITAN),
-                    new BestPossibleLineupAlgorithm<>(TeamSide.TITAN),
+                    new HodorAlgorithm<>(TeamSide.TITAN, HodorAlgorithm.Variant.POWER),
+                    new HodorAlgorithm<>(TeamSide.TITAN, HodorAlgorithm.Variant.POWER),
                     emptyLineup(guild), guild));
         }
 
@@ -159,29 +158,29 @@ class SideSpecificLineupAlgorithmsTest {
         @Test
         @DisplayName("Replacing one side keeps the other side's part")
         void replacingOneSideKeepsTheOther() {
-            String name = LineupAlgorithms.combinedAlgorithmName("", Lineup.TeamType.TITAN, "Balanced defense");
-            assertEquals("Titans: Balanced defense", name);
-            name = LineupAlgorithms.combinedAlgorithmName(name, Lineup.TeamType.HERO, "Consensus picks");
-            assertEquals("Heroes: Consensus picks; Titans: Balanced defense", name);
-            name = LineupAlgorithms.combinedAlgorithmName(name, Lineup.TeamType.TITAN, "CowScore maximizer");
-            assertEquals("Heroes: Consensus picks; Titans: CowScore maximizer", name);
+            String name = LineupAlgorithms.combinedAlgorithmName("", Lineup.TeamType.TITAN, "HODOR");
+            assertEquals("Titans: HODOR", name);
+            name = LineupAlgorithms.combinedAlgorithmName(name, Lineup.TeamType.HERO, "HODOR (CowScore)");
+            assertEquals("Heroes: HODOR (CowScore); Titans: HODOR", name);
+            name = LineupAlgorithms.combinedAlgorithmName(name, Lineup.TeamType.TITAN, "HODOR (CowScore)");
+            assertEquals("Heroes: HODOR (CowScore); Titans: HODOR (CowScore)", name);
         }
 
         @Test
         @DisplayName("Parsing splits a combined name per side; blank and legacy names parse to nothing")
         void parsing() {
-            assertEquals(Map.of(Lineup.TeamType.HERO, "Best possible lineup", Lineup.TeamType.TITAN, "Balanced defense"),
-                    LineupAlgorithms.parseAlgorithmName("Heroes: Best possible lineup; Titans: Balanced defense"));
+            assertEquals(Map.of(Lineup.TeamType.HERO, "HODOR", Lineup.TeamType.TITAN, "HODOR (CowScore)"),
+                    LineupAlgorithms.parseAlgorithmName("Heroes: HODOR; Titans: HODOR (CowScore)"));
             assertTrue(LineupAlgorithms.parseAlgorithmName("").isEmpty());
-            assertTrue(LineupAlgorithms.parseAlgorithmName("Best possible lineup").isEmpty(),
+            assertTrue(LineupAlgorithms.parseAlgorithmName("HODOR").isEmpty(),
                     "a pre-split, single-algorithm name belongs to neither side");
         }
 
         @Test
         @DisplayName("A legacy single-algorithm name is dropped once a side is run")
         void legacyNameIsReplaced() {
-            assertEquals("Heroes: Balanced defense",
-                    LineupAlgorithms.combinedAlgorithmName("Best possible lineup", Lineup.TeamType.HERO, "Balanced defense"));
+            assertEquals("Heroes: HODOR (CowScore)",
+                    LineupAlgorithms.combinedAlgorithmName("HODOR", Lineup.TeamType.HERO, "HODOR (CowScore)"));
         }
     }
 }

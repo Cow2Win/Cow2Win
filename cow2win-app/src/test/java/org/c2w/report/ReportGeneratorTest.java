@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** {@link ReportGenerator}: file naming and the main content of the HTML report. */
 class ReportGeneratorTest {
 
-    private static final String ALGORITHM = "Best possible lineup";
+    private static final String ALGORITHM = "HODOR";
 
     private static Lineup lineupWithOneHeroTeam(String guildName) {
         String fortificationId = FortificationRepository.findAll().stream()

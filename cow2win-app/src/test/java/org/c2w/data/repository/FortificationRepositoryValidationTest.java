@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@link FortificationRepository#validateCatalog} and the per-entry warnings in
  * {@link FortificationRepository#parseFortificationsJson}. These don't throw (the app's
  * existing convention is to log and continue, see {@code PATCH-CHECKLIST.md} and
- * {@link BestPossibleLineupAlgorithm}'s own graceful handling of unknown/cyclic
+ * {@code HodorGates}' own graceful handling of unknown/cyclic
  * prerequisites), so the only thing to assert is that {@link Logger} receives the
  * expected message for each kind of problem - and nothing extra for valid data.
  *

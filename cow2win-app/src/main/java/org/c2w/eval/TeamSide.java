@@ -7,14 +7,12 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 
 /**
  * Everything a {@link LineupAlgorithm} needs to know about ONE side of the
  * map - heroes or titans - bundled into a single object: which team type and
- * fortification type belong together, which fortification is that side's
- * bridge, and the accessor/scoring functions for that side's team class
+ * fortification type belong together, and the accessor/scoring functions for that side's team class
  * {@code T} ({@link HeroTeam} or {@link TitanTeam}).
  *
  * <p>A side is fixed per algorithm INSTANCE (see {@link AbstractLineupAlgorithm#side()}),
@@ -29,11 +27,8 @@ import java.util.function.ToIntFunction;
  *
  * @param teamType         team type written into every {@link Lineup.Entry} this side produces
  * @param fortificationType fortification type this side's teams are allowed to defend
- * @param bridgeId         id of this side's bridge - the strategic choke point almost every other
- *                         fortification of this side depends on, special-cased by every strategy
  * @param teamsOf          a member's teams of this side ({@link GuildMember#heroTeams()}/{@link GuildMember#titanTeams()})
  * @param totalPowerOf     raw power of one team
- * @param buffFitScoreOf   simple role/element match count of one team for a buff
  * @param sortScoreOf      fortification-independent score of one team (see {@link HeroTeam#sortScore()}/{@link TitanTeam#sortScore()})
  * @param cowScoreOf       full CowScore-plus-power figure of one team on one fortification
  *                         (see {@link TeamScoreCalculator#scoreFor})
@@ -42,23 +37,21 @@ import java.util.function.ToIntFunction;
 public record TeamSide<T>(
         Lineup.TeamType teamType,
         FortificationType fortificationType,
-        String bridgeId,
         Function<GuildMember, List<T>> teamsOf,
         ToIntFunction<T> totalPowerOf,
-        ToIntBiFunction<T, Buff> buffFitScoreOf,
         ToDoubleFunction<T> sortScoreOf,
         ToDoubleBiFunction<T, Fortification> cowScoreOf
 ) {
 
-    /** The hero side: HERO teams on HERO fortifications, bridge "heros-bridge". */
+    /** The hero side: HERO teams on HERO fortifications. */
     public static final TeamSide<HeroTeam> HERO = new TeamSide<>(
-            Lineup.TeamType.HERO, FortificationType.HERO, "heros-bridge",
-            GuildMember::heroTeams, HeroTeam::totalPower, HeroTeam::buffFitScore, HeroTeam::sortScore,
+            Lineup.TeamType.HERO, FortificationType.HERO,
+            GuildMember::heroTeams, HeroTeam::totalPower, HeroTeam::sortScore,
             (team, fortification) -> TeamScoreCalculator.scoreFor(team, fortification).total());
 
-    /** The titan side: TITAN teams on TITAN fortifications, bridge "bridge". */
+    /** The titan side: TITAN teams on TITAN fortifications. */
     public static final TeamSide<TitanTeam> TITAN = new TeamSide<>(
-            Lineup.TeamType.TITAN, FortificationType.TITAN, "bridge",
-            GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::buffFitScore, TitanTeam::sortScore,
+            Lineup.TeamType.TITAN, FortificationType.TITAN,
+            GuildMember::titanTeams, TitanTeam::totalPower, TitanTeam::sortScore,
             (team, fortification) -> TeamScoreCalculator.scoreFor(team, fortification).total());
 }

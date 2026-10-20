@@ -12,7 +12,7 @@ import java.util.Objects;
  * strategic concept's, see {@link LineupAlgorithms#forAssignment}), so one
  * side can be filled automatically
  * while the other is left entirely to manual picks - e.g. heroes by
- * {@link BestPossibleLineupAlgorithm}, titans by hand. Also leaves {@link
+ * {@link HodorAlgorithm}, titans by hand. Also leaves {@link
  * Lineup#algorithmName()} untouched, since nothing was assigned.
  */
 public class ManualLineupAlgorithm implements LineupAlgorithm {

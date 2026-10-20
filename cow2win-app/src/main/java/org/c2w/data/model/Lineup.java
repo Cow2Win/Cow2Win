@@ -42,8 +42,8 @@ import java.util.List;
  * (informational).
  *
  * Every algorithm only fills ONE side (heroes or titans),
- * so algorithmName combines both sides' algorithm names, e.g. "Heroes: Best
- * possible lineup; Titans: Balanced defense" (format owned by
+ * so algorithmName combines both sides' algorithm names, e.g. "Heroes:
+ * HODOR; Titans: HODOR (CowScore)" (format owned by
  * org.c2w.eval.LineupAlgorithms#combinedAlgorithmName) - a side that has
  * never been filled by an algorithm is simply missing from it. Lineup files
  * saved before that still carry a single, un-prefixed algorithm name.
