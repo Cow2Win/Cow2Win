@@ -60,6 +60,12 @@ public class ShieldAlgorithm<T> extends AbstractLineupAlgorithm<T> {
         return DISPLAY_NAME;
     }
 
+    /** The buff weights - no reserve. */
+    @Override
+    public Set<AlgorithmSetting> usedSettings() {
+        return EnumSet.of(AlgorithmSetting.BUFF_WEIGHTS);
+    }
+
     /**
      * The fortifications of {@code type} in {@code catalog} by row, front first, each in catalog
      * order; a row without fortifications is missing.

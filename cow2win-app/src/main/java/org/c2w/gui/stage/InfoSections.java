@@ -70,6 +70,11 @@ final class InfoSections {
         return label;
     }
 
+    /** {@code text} as label HTML in the muted color of {@link #mutedLabel}, without a width. */
+    static String mutedHtml(String text) {
+        return "<html>" + colored(escape(text), AppColors.TEXT_MUTED) + "</html>";
+    }
+
     /** A label in {@code color} that wraps its text within the narrow info panel. */
     static JLabel coloredLabel(String text, Color color) {
         JLabel label = wrappingLabel(colored(escape(text), color));

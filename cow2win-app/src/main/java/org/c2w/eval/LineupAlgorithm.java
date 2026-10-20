@@ -3,6 +3,8 @@ package org.c2w.eval;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
 
+import java.util.Set;
+
 /**
  * One strategy for assigning teams to fortifications - for exactly ONE side
  * of the map (see {@link #teamType()}): a hero algorithm only ever places
@@ -27,6 +29,14 @@ public interface LineupAlgorithm {
     /** The name to show in the UI/report, in the configured language - see {@link AlgorithmDescriptions#localizedName(String)}. */
     default String localizedName() {
         return AlgorithmDescriptions.localizedName(displayName());
+    }
+
+    /**
+     * The settings this algorithm depends on - the one place that says which algorithm uses which
+     * setting (shown in its explanation). None by default.
+     */
+    default Set<AlgorithmSetting> usedSettings() {
+        return Set.of();
     }
 
     /** The side this algorithm assigns teams for. */

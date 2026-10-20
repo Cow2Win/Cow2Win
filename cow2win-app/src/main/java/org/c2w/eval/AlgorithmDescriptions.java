@@ -63,14 +63,27 @@ public final class AlgorithmDescriptions {
      * {@link LineupAlgorithm} instance.
      */
     public static String forDisplayName(String displayName) {
+        return text(displayName, "description");
+    }
+
+    /**
+     * One sentence ({@code algorithm.<key>.summary}) on what {@code algorithm} does - shown below the
+     * strategic concept's algorithm combo box - or {@code ""} if none is on file for it.
+     */
+    public static String summaryFor(LineupAlgorithm algorithm) {
+        return text(algorithm.displayName(), "summary");
+    }
+
+    /** The text {@code algorithm.<key>.<suffix>} for {@code displayName}, or {@code ""}. */
+    private static String text(String displayName, String suffix) {
         String key = KEY_BY_DISPLAY_NAME.get(displayName);
         if (key == null) {
             return "";
         }
-        String languageKey = "algorithm." + key + ".description";
+        String languageKey = "algorithm." + key + "." + suffix;
         String value = LanguageService.displayName(languageKey);
         // LanguageService#displayName falls back to the raw id itself when a key is
-        // missing from the current language file - treat that as an empty description
+        // missing from the current language file - treat that as an empty text
         // rather than showing the internal properties key.
         return value.equals(languageKey) ? "" : value;
     }

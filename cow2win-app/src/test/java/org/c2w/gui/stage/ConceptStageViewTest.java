@@ -10,6 +10,7 @@ import org.c2w.data.model.Role;
 import org.c2w.data.repository.Catalog;
 import org.c2w.data.repository.FortificationRepository;
 import org.c2w.data.model.Lineup;
+import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.AlgorithmSelection;
@@ -154,14 +155,14 @@ class ConceptStageViewTest {
     void algorithmBoxAboveRunAssignment() {
         context.setFortificationType(FortificationType.HERO);
         java.util.List<java.awt.Component> components = java.util.List.of(view.actionList().getComponents());
-        int index = components.indexOf(view.algorithmBox().getParent());
+        int index = components.indexOf(view.algorithmBox().getParent().getParent());
         assertTrue(index >= 0);
         assertSame(actions.get(ActionId.RUN_ALGORITHM),
                 ((StageActionList.ActionRow) components.get(index + 1)).action());
 
         assertEquals(LineupAlgorithms.forAssignment(Lineup.TeamType.HERO), items(view.algorithmBox()));
         assertSame(selection.get(Lineup.TeamType.HERO), view.algorithmBox().getSelectedItem());
-        assertNotNull(view.algorithmBox().getToolTipText());
+        assertNull(view.algorithmBox().getToolTipText(), "no tooltip at the combo box");
     }
 
     @Test
@@ -180,6 +181,64 @@ class ConceptStageViewTest {
 
         context.setFortificationType(FortificationType.HERO);
         assertSame(cowScoreHero, view.algorithmBox().getSelectedItem());
+    }
+
+    @Test
+    @DisplayName("Below the combo box stands the summary of the chosen algorithm and follows the choice")
+    void algorithmSummaryFollowsChoice() {
+        context.setFortificationType(FortificationType.HERO);
+        for (LineupAlgorithm algorithm : LineupAlgorithms.forAssignment(Lineup.TeamType.HERO)) {
+            view.algorithmBox().setSelectedItem(algorithm);
+            assertEquals(AlgorithmDescriptions.summaryFor(algorithm), view.algorithmSummary().summary());
+            assertFalse(view.algorithmSummary().summary().isBlank());
+        }
+        java.awt.Container panel = view.algorithmBox().getParent().getParent();
+        assertSame(panel, view.algorithmSummary().getParent());
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertEquals(AlgorithmDescriptions.summaryFor(selection.get(Lineup.TeamType.TITAN)),
+                view.algorithmSummary().summary());
+    }
+
+    @Test
+    @DisplayName("The summary keeps its height when another algorithm is chosen, at least two lines")
+    void algorithmSummaryHeightIsStable() {
+        context.setFortificationType(FortificationType.HERO);
+        java.util.Set<Integer> heights = new java.util.HashSet<>();
+        for (LineupAlgorithm algorithm : LineupAlgorithms.forAssignment(Lineup.TeamType.HERO)) {
+            view.algorithmBox().setSelectedItem(algorithm);
+            heights.add(view.algorithmSummary().getPreferredSize().height);
+        }
+        assertEquals(1, heights.size(), heights.toString());
+        javax.swing.JLabel oneLine = new javax.swing.JLabel("x");
+        assertTrue(heights.iterator().next() >= 2 * oneLine.getFontMetrics(oneLine.getFont()).getHeight());
+    }
+
+    @Test
+    @DisplayName("The \"i\" button sits right of the combo box, always enabled, with a short tooltip")
+    void algorithmInfoButton() {
+        assertNotNull(view.algorithmInfoButton());
+        assertSame(view.algorithmBox().getParent(), view.algorithmInfoButton().getParent());
+        String text = LanguageService.displayName("conceptStage.algorithmInfo");
+        assertEquals(text, view.algorithmInfoButton().getToolTipText());
+        assertEquals(text, view.algorithmInfoButton().getAccessibleContext().getAccessibleName());
+
+        actions.get(ActionId.RUN_ALGORITHM).setEnabled(false);
+        assertTrue(view.algorithmInfoButton().isEnabled());
+        actions.get(ActionId.RUN_ALGORITHM).setEnabled(true);
+    }
+
+    @Test
+    @DisplayName("The explanation follows the chosen algorithm and the fortification type")
+    void algorithmInfoFollowsChoice() {
+        context.setFortificationType(FortificationType.HERO);
+        for (LineupAlgorithm algorithm : LineupAlgorithms.forAssignment(Lineup.TeamType.HERO)) {
+            view.algorithmBox().setSelectedItem(algorithm);
+            assertSame(algorithm, view.algorithmInfo().algorithm());
+            assertTrue(view.algorithmInfo().texts().contains(AlgorithmDescriptions.forAlgorithm(algorithm)));
+        }
+        context.setFortificationType(FortificationType.TITAN);
+        assertSame(selection.get(Lineup.TeamType.TITAN), view.algorithmInfo().algorithm());
     }
 
     @Test

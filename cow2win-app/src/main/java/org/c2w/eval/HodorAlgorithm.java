@@ -85,6 +85,15 @@ public class HodorAlgorithm<T> extends AbstractLineupAlgorithm<T> {
         return variant.displayName();
     }
 
+    /** Both variants use the reserve; HODOR the buff weights, HODOR (CowScore) the CowScore bonuses instead. */
+    @Override
+    public Set<AlgorithmSetting> usedSettings() {
+        return switch (variant) {
+            case POWER -> EnumSet.of(AlgorithmSetting.RESERVE, AlgorithmSetting.BUFF_WEIGHTS);
+            case COW_SCORE -> EnumSet.of(AlgorithmSetting.RESERVE, AlgorithmSetting.COW_SCORE_BONUSES);
+        };
+    }
+
     @Override
     protected void fillFortifications(List<Fortification> fortifications, List<Candidate<T>> pool,
                                       List<Lineup.Entry> updatedEntries, Guild guild) {

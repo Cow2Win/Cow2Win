@@ -10,6 +10,8 @@ import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.AppColors;
+import org.c2w.gui.common.FlatButton;
+import org.c2w.gui.common.InfoIcon;
 import org.c2w.gui.fort.FortificationAssignmentDialog;
 import org.c2w.gui.fort.FortificationInfoPanel;
 import org.c2w.gui.fort.FortificationMapPanel;
@@ -32,7 +34,8 @@ import static org.c2w.gui.stage.InfoSections.*;
 /**
  * The stage view "strategic concept": the fortification map as work area, on the left the
  * concept actions plus the "algorithm" combo box directly above "Run assignment" (the
- * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection})
+ * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection}; with
+ * a one-sentence summary below and an "i" button opening the full explanation)
  * and the "fortification values" combo box at the end, and on the right the overview of the selected
  * fortification type, the comparison with the "Original" lineup and the details of the
  * fortification selected on the map, including its assigned teams. A double-click on a
@@ -56,6 +59,7 @@ public class ConceptStageView extends StageView {
     private static final int TEAM_NAME_WIDTH = 90;
     private static final String KEY_VALUE_MODE = "fortificationMap.valueMode";
     private static final String KEY_ALGORITHM = "conceptStage.algorithm";
+    private static final String KEY_ALGORITHM_INFO = "conceptStage.algorithmInfo";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
 
@@ -69,6 +73,12 @@ public class ConceptStageView extends StageView {
     private final JPanel fortificationSection = sectionBody();
     private JComboBox<FortificationValueMode> valueModeBox;
     private JComboBox<LineupAlgorithm> algorithmBox;
+    private AlgorithmSummaryLabel algorithmSummary;
+    private FlatButton algorithmInfoButton;
+    /** The explanation of the chosen algorithm - kept current, shown by {@link #algorithmInfoDialog}. */
+    private final AlgorithmInfoPanel algorithmInfo = new AlgorithmInfoPanel();
+    /** Created on the first click on {@link #algorithmInfoButton}. */
+    private AlgorithmInfoDialog algorithmInfoDialog;
 
     /** True while {@link #fillAlgorithmBox} replaces the entries - its selection events are no user choice. */
     private boolean fillingAlgorithmBox;
@@ -150,7 +160,7 @@ public class ConceptStageView extends StageView {
     @Override
     protected void addActionListExtras(StageActionList actionList) {
         Action runAlgorithm = actions.get(ActionId.RUN_ALGORITHM);
-        actionList.addExtraBefore(runAlgorithm, labeledPanel(KEY_ALGORITHM, createAlgorithmBox(runAlgorithm)));
+        actionList.addExtraBefore(runAlgorithm, createAlgorithmPanel(runAlgorithm));
 
         valueModeBox = new JComboBox<>(FortificationValueMode.values());
         valueModeBox.setSelectedItem(FortificationValueMode.POWER);
@@ -160,8 +170,8 @@ public class ConceptStageView extends StageView {
         actionList.addExtra(labeledPanel(KEY_VALUE_MODE, valueModeBox));
     }
 
-    /** A muted heading above {@code comboBox}, no higher than needed. */
-    private static JPanel labeledPanel(String headingKey, JComboBox<?> comboBox) {
+    /** A muted heading above {@code content}, no higher than needed. */
+    private static JPanel labeledPanel(String headingKey, JComponent content) {
         JPanel panel = new JPanel(new BorderLayout(0, 4)) {
             @Override
             public Dimension getMaximumSize() {
@@ -170,18 +180,39 @@ public class ConceptStageView extends StageView {
         };
         panel.setOpaque(false);
         panel.add(mutedLabel(LanguageService.displayName(headingKey)), BorderLayout.NORTH);
-        panel.add(comboBox, BorderLayout.CENTER);
+        panel.add(content, BorderLayout.CENTER);
         return panel;
     }
 
     // --- algorithm ---
 
     /**
+     * The "algorithm" area: heading, the combo box (see {@link #createAlgorithmBox}) with the
+     * "i" button to its right (opens the full explanation, see {@link #openAlgorithmInfo}) and the
+     * one-sentence summary of the chosen algorithm below.
+     */
+    private JPanel createAlgorithmPanel(Action runAlgorithm) {
+        algorithmSummary = new AlgorithmSummaryLabel(ACTION_LIST_WIDTH - 30);
+        algorithmInfoButton = new FlatButton(new InfoIcon());
+        String infoText = LanguageService.displayName(KEY_ALGORITHM_INFO);
+        algorithmInfoButton.setToolTipText(infoText);
+        algorithmInfoButton.getAccessibleContext().setAccessibleName(infoText);
+        algorithmInfoButton.addActionListener(e -> openAlgorithmInfo());
+
+        JPanel row = new JPanel(new BorderLayout(4, 0));
+        row.setOpaque(false);
+        row.add(createAlgorithmBox(runAlgorithm), BorderLayout.CENTER);
+        row.add(algorithmInfoButton, BorderLayout.EAST);
+        JPanel panel = labeledPanel(KEY_ALGORITHM, row);
+        panel.add(algorithmSummary, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    /**
      * The "algorithm" combo box: the assigning algorithms of the selected fortification type
      * ("Manual" is no choice here), showing that type's choice in {@link #algorithmSelection};
-     * a choice goes there, so "Run assignment" (menu and action list) uses it. The tooltips
-     * show the algorithms' descriptions. Disabled while {@code runAlgorithm} is, i.e. while
-     * an algorithm is running.
+     * a choice goes there, so "Run assignment" (menu and action list) uses it. Disabled while
+     * {@code runAlgorithm} is, i.e. while an algorithm is running.
      */
     private JComboBox<LineupAlgorithm> createAlgorithmBox(Action runAlgorithm) {
         algorithmBox = new JComboBox<>();
@@ -193,7 +224,6 @@ public class ConceptStageView extends StageView {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof LineupAlgorithm algorithm) {
                     setText(algorithm.localizedName());
-                    setToolTipText(descriptionTooltip(algorithm));
                 }
                 return this;
             }
@@ -201,7 +231,7 @@ public class ConceptStageView extends StageView {
         algorithmBox.addActionListener(e -> {
             if (!fillingAlgorithmBox && algorithmBox.getSelectedItem() instanceof LineupAlgorithm algorithm) {
                 algorithmSelection.set(algorithm);
-                algorithmBox.setToolTipText(descriptionTooltip(algorithm));
+                showAlgorithm(algorithm);
             }
         });
         fillAlgorithmBox();
@@ -229,13 +259,43 @@ public class ConceptStageView extends StageView {
         } finally {
             fillingAlgorithmBox = false;
         }
-        algorithmBox.setToolTipText(descriptionTooltip(selected));
+        showAlgorithm(selected);
     }
 
-    /** The description of {@code algorithm}, wrapped - the descriptions are long. */
-    private static String descriptionTooltip(LineupAlgorithm algorithm) {
-        return "<html><div style='width:300px'>" + escape(AlgorithmDescriptions.forAlgorithm(algorithm))
-                + "</div></html>";
+    /**
+     * Shows {@code algorithm} in the summary below the combo box and in the explanation - an open
+     * explanation window follows.
+     */
+    private void showAlgorithm(LineupAlgorithm algorithm) {
+        if (algorithmSummary == null) {
+            return;
+        }
+        List<String> choices = new ArrayList<>();
+        for (int i = 0; i < algorithmBox.getItemCount(); i++) {
+            choices.add(AlgorithmDescriptions.summaryFor(algorithmBox.getItemAt(i)));
+        }
+        algorithmSummary.show(AlgorithmDescriptions.summaryFor(algorithm), choices);
+        algorithmInfo.show(algorithm);
+        if (algorithmInfoDialog != null && algorithmInfoDialog.isVisible()) {
+            algorithmInfoDialog.refit();
+        }
+    }
+
+    /**
+     * Opens the explanation of the chosen algorithm, with the current settings - one window, a
+     * second click brings it to the front.
+     */
+    private void openAlgorithmInfo() {
+        if (algorithmBox.getSelectedItem() instanceof LineupAlgorithm algorithm) {
+            algorithmInfo.show(algorithm);
+        }
+        if (algorithmInfoDialog == null) {
+            algorithmInfoDialog = new AlgorithmInfoDialog(SwingUtilities.getWindowAncestor(this), algorithmInfo);
+        } else {
+            algorithmInfoDialog.refit();
+        }
+        algorithmInfoDialog.setVisible(true);
+        algorithmInfoDialog.toFront();
     }
 
     private void refreshAll() {
@@ -362,6 +422,21 @@ public class ConceptStageView extends StageView {
     /** The "algorithm" combo box in the action list - for tests. */
     JComboBox<LineupAlgorithm> algorithmBox() {
         return algorithmBox;
+    }
+
+    /** The summary below the "algorithm" combo box - for tests. */
+    AlgorithmSummaryLabel algorithmSummary() {
+        return algorithmSummary;
+    }
+
+    /** The "i" button next to the "algorithm" combo box - for tests. */
+    FlatButton algorithmInfoButton() {
+        return algorithmInfoButton;
+    }
+
+    /** The explanation of the chosen algorithm, as shown in its window - for tests. */
+    AlgorithmInfoPanel algorithmInfo() {
+        return algorithmInfo;
     }
 
 }
