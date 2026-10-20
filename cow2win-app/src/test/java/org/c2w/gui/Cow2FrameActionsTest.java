@@ -1,5 +1,6 @@
 package org.c2w.gui;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
@@ -23,6 +24,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
@@ -112,8 +115,31 @@ class Cow2FrameActionsTest {
         SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
 
         for (ActionId id : List.of(ActionId.RUN_ALGORITHM, ActionId.COMPARE_LINEUPS, ActionId.SHOW_TEAMS,
-                ActionId.OPEN_CHANGE_PLAN, ActionId.GENERATE_REPORT)) {
+                ActionId.OPEN_CHANGE_PLAN, ActionId.GENERATE_REPORT, ActionId.OPEN_GUILD_TEAM_ENTRY,
+                ActionId.COPY_LINEUP, ActionId.CLEAR_LINEUP)) {
             assertNotNull(frame.actions().get(id).getValue(Action.SMALL_ICON), id + " has no menu icon");
+        }
+    }
+
+    @Test
+    @DisplayName("\"Clear lineup\" and \"Copy lineup\" change their icon with the fortification type and back")
+    void lineupMenuIconsFollowFortificationType() throws Exception {
+        // The frame restores the type selected last - start from heroes explicitly.
+        SwingUtilities.invokeAndWait(() -> {
+            frame = new Cow2Frame(context);
+            context.setFortificationType(FortificationType.HERO);
+        });
+
+        for (ActionId id : List.of(ActionId.CLEAR_LINEUP, ActionId.COPY_LINEUP)) {
+            Object heroIcon = frame.actions().get(id).getValue(Action.SMALL_ICON);
+            SwingUtilities.invokeAndWait(() -> context.setFortificationType(FortificationType.TITAN));
+            Object titanIcon = frame.actions().get(id).getValue(Action.SMALL_ICON);
+            SwingUtilities.invokeAndWait(() -> context.setFortificationType(FortificationType.HERO));
+
+            assertNotNull(heroIcon, id + " hero icon");
+            assertNotNull(titanIcon, id + " titan icon");
+            assertNotSame(heroIcon, titanIcon, id.toString());
+            assertSame(heroIcon, frame.actions().get(id).getValue(Action.SMALL_ICON), id + " back to heroes");
         }
     }
 }

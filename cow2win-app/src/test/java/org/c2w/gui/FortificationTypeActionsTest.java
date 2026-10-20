@@ -18,12 +18,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * The actions and the fortification type: the team overview follows the selected type,
- * "maintain live lineup" stays the same - headless, nothing is shown.
+ * The actions and the fortification type: the team overview follows the selected type, the
+ * icons of "run", "compare" and "show teams" are colored by it, "maintain live lineup" stays
+ * the same - headless, nothing is shown.
  */
 class FortificationTypeActionsTest {
 
@@ -65,36 +67,39 @@ class FortificationTypeActionsTest {
     }
 
     @Test
-    @DisplayName("The icon of the team overview changes with the fortification type")
+    @DisplayName("The icons of \"run\", \"compare\" and the team overview change with the fortification type and back")
     void iconsFollowFortificationType() {
-        Object heroTeamsIcon = actions.get(ActionId.SHOW_TEAMS).getValue(Action.SMALL_ICON);
+        for (ActionId id : List.of(ActionId.RUN_ALGORITHM, ActionId.COMPARE_LINEUPS, ActionId.SHOW_TEAMS)) {
+            context.setFortificationType(FortificationType.HERO);
+            Object heroIcon = actions.get(id).getValue(Action.SMALL_ICON);
+            assertNotNull(heroIcon, id + " hero icon");
+            assertSame(heroIcon, actions.get(id).getValue(Action.LARGE_ICON_KEY), id + " button icon");
 
-        context.setFortificationType(FortificationType.TITAN);
+            context.setFortificationType(FortificationType.TITAN);
+            Object titanIcon = actions.get(id).getValue(Action.SMALL_ICON);
+            assertNotNull(titanIcon, id + " titan icon");
+            assertNotSame(heroIcon, titanIcon, id.toString());
+            assertSame(titanIcon, actions.get(id).getValue(Action.LARGE_ICON_KEY), id + " button icon");
 
-        assertNotSame(heroTeamsIcon, actions.get(ActionId.SHOW_TEAMS).getValue(Action.SMALL_ICON));
+            context.setFortificationType(FortificationType.HERO);
+            assertSame(heroIcon, actions.get(id).getValue(Action.SMALL_ICON), id + " back to heroes");
+        }
     }
 
     @Test
-    @DisplayName("\"Maintain live lineup\" has no icon, neither for heroes nor for titans")
-    void teamEntryHasNoIcon() {
-        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
+    @DisplayName("\"Maintain live lineup\" has the same icon for heroes and titans")
+    void teamEntryIcon() {
+        Object icon = actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.SMALL_ICON);
+        assertNotNull(icon);
+        assertSame(icon, actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.LARGE_ICON_KEY));
 
         context.setFortificationType(FortificationType.TITAN);
-        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
-
-        context.setFortificationType(FortificationType.HERO);
-        assertNoIcon(ActionId.OPEN_GUILD_TEAM_ENTRY);
+        assertSame(icon, actions.get(ActionId.OPEN_GUILD_TEAM_ENTRY).getValue(Action.SMALL_ICON));
     }
 
     private void assertTexts(String showTeamsKey) {
         assertText(ActionId.OPEN_GUILD_TEAM_ENTRY, "toolbar.openGuildTeamEntry");
         assertText(ActionId.SHOW_TEAMS, showTeamsKey);
-    }
-
-    private void assertNoIcon(ActionId id) {
-        AppAction action = actions.get(id);
-        assertNull(action.getValue(Action.SMALL_ICON), id + " small icon");
-        assertNull(action.getValue(Action.LARGE_ICON_KEY), id + " large icon");
     }
 
     private void assertText(ActionId id, String textKey) {

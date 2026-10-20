@@ -9,7 +9,6 @@ import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.AppColors;
-import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.guild.GuildHeroEntryDialog;
 import org.c2w.gui.guild.GuildNoteDialog;
@@ -66,17 +65,15 @@ public class ActionBar extends JPanel {
     private static final String ICON_SAVE_LINEUP = "/images/app/save.png";
     private static final String ICON_GUILD_NOTE = "/images/app/note.png";
 
-    /** Language file keys and icons of {@link ActionId#SHOW_TEAMS} per fortification type. */
+    /** Language file keys of {@link ActionId#SHOW_TEAMS} per fortification type; the icon is the same for both, colored by type. */
     private static final String KEY_HERO_TEAMS = "toolbar.heroTeams";
     private static final String KEY_TITAN_TEAMS = "toolbar.titanTeams";
-    private static final String ICON_HERO_TEAMS = "/images/app/square.png";
-    private static final String ICON_TITAN_TEAMS = "/images/app/hexagon.png";
+    private static final String ICON_SHOW_TEAMS = "/images/app/table.png";
 
+    private static final String ICON_GUILD_TEAM_ENTRY = "/images/app/pencil.png";
     private static final String ICON_GENERATE_REPORT = "/images/app/lineup-report.png";
     private static final String ICON_RUN_ALGORITHM = "/images/app/run.png";
-
-    /** Reused rather than a dedicated icon (none of the existing ones reads as "compare") - the "hexagon" family, told apart by shape (paired hexagons). */
-    private static final String ICON_COMPARE_LINEUPS = "/images/app/hexagon-team.png";
+    private static final String ICON_COMPARE_LINEUPS = "/images/app/compare.png";
 
     /** Icon of the "open in-game change plan" button - "box-arrow-down" reads as "produce a checklist/plan to apply". */
     private static final String ICON_OPEN_CHANGE_PLAN = "/images/app/box-arrow-down.png";
@@ -99,6 +96,9 @@ public class ActionBar extends JPanel {
 
     /** Disabled while an algorithm run is in progress (see {@link #onRunAlgorithm()}). */
     private final AppAction runAlgorithmAction;
+
+    /** "Compare lineups" - icon colored by the selected fortification type, see {@link #updateFortificationTypeActions()}. */
+    private final AppAction compareLineupsAction;
 
     /** Team overview of the selected fortification type, see {@link #updateFortificationTypeActions()}. */
     private final AppAction showTeamsAction;
@@ -141,15 +141,15 @@ public class ActionBar extends JPanel {
         // In the "Guild" menu and as a button right after "save guild" in the context bar.
         editGuildNoteAction = actions.register(new AppAction(EDIT_GUILD_NOTE, this::onEditGuildNote)
                 .withIcon(IconLoader.iconFor(ICON_GUILD_NOTE, TOOLBAR_ICON_SIZE, AppColors.ACCENT)));
-        // "Maintain live lineup" has no icon - same text for both fortification types.
-        actions.register(new AppAction(OPEN_GUILD_TEAM_ENTRY, this::onOpenGuildTeamEntry));
+        // "Maintain live lineup" - same text and icon for both fortification types.
+        actions.register(new AppAction(OPEN_GUILD_TEAM_ENTRY, this::onOpenGuildTeamEntry)
+                .withIcon(IconLoader.iconForButton(ICON_GUILD_TEAM_ENTRY)));
         saveLineupAction = actions.register(new AppAction(SAVE_LINEUP, this::onSaveLineup));
         actions.register(new AppAction(GENERATE_REPORT, this::onGenerateReport)
                 .withIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
-        runAlgorithmAction = actions.register(new AppAction(RUN_ALGORITHM, this::onRunAlgorithm)
-                .withIcon(IconLoader.iconForButton(ICON_RUN_ALGORITHM)));
-        actions.register(new AppAction(COMPARE_LINEUPS, this::onOpenLineupComparison)
-                .withIcon(IconLoader.iconForButton(ICON_COMPARE_LINEUPS)));
+        // Icons of "run", "compare" and "show teams" follow the fortification type, see updateFortificationTypeActions().
+        runAlgorithmAction = actions.register(new AppAction(RUN_ALGORITHM, this::onRunAlgorithm));
+        compareLineupsAction = actions.register(new AppAction(COMPARE_LINEUPS, this::onOpenLineupComparison));
         actions.register(new AppAction(OPEN_CHANGE_PLAN, this::onOpenChangePlan)
                 .withIcon(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN)));
         showTeamsAction = actions.register(new AppAction(SHOW_TEAMS, this::onShowTeams));
@@ -189,15 +189,16 @@ public class ActionBar extends JPanel {
     }
 
     /**
-     * Gives {@link #showTeamsAction} the text, tooltip and icon of the selected fortification
-     * type, so menu entry and button always say what they open (the titan team overview icon
-     * keeps its titan color).
+     * Gives {@link #showTeamsAction} the text and tooltip of the selected fortification type, so
+     * menu entry and button always say what they open, and colors the icons of "run", "compare"
+     * and "show teams" by that type (see {@link IconLoader#iconForType}).
      */
     private void updateFortificationTypeActions() {
-        boolean heroes = appContext.fortificationType() == FortificationType.HERO;
-        showTeamsAction.setText(heroes ? KEY_HERO_TEAMS : KEY_TITAN_TEAMS);
-        showTeamsAction.withIcon(heroes ? IconLoader.iconForButton(ICON_HERO_TEAMS)
-                : IconLoader.iconFor(ICON_TITAN_TEAMS, TOOLBAR_ICON_SIZE, FortificationTypeStyle.color(FortificationType.TITAN)));
+        FortificationType type = appContext.fortificationType();
+        showTeamsAction.setText(type == FortificationType.HERO ? KEY_HERO_TEAMS : KEY_TITAN_TEAMS);
+        showTeamsAction.withIcon(IconLoader.iconForType(ICON_SHOW_TEAMS, type));
+        runAlgorithmAction.withIcon(IconLoader.iconForType(ICON_RUN_ALGORITHM, type));
+        compareLineupsAction.withIcon(IconLoader.iconForType(ICON_COMPARE_LINEUPS, type));
     }
 
     /**

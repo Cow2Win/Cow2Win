@@ -77,6 +77,7 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_NEW_LINEUP = "/images/app/lineup-new.png";
     private static final String ICON_REMOVE_LINEUP = "/images/app/lineup-remove.png";
     private static final String ICON_CLEAR_LINEUP = "/images/app/lineup-clean.png";
+    private static final String ICON_COPY_LINEUP = "/images/app/copy.png";
 
     private final AppContext appContext;
     private final GuildService guildService;
@@ -287,12 +288,20 @@ public class Cow2Frame extends JFrame {
                 .withSmallIcon(IconLoader.iconFor(ICON_NEW_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, AppColors.SUCCESS)));
         actions.register(new AppAction(ActionId.REMOVE_LINEUP, this::onRemoveLineup)
                 .withSmallIcon(IconLoader.iconFor(ICON_REMOVE_LINEUP, ActionBar.TOOLBAR_ICON_SIZE, AppColors.ERROR)));
-        actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup)
-                .withSmallIcon(IconLoader.iconForButton(ICON_CLEAR_LINEUP)));
-        // No icon yet - an empty placeholder of icon size keeps the text in line with its neighbors.
-        actions.register(new AppAction(ActionId.COPY_LINEUP, this::onCopyLineup)
-                .withSmallIcon(new ImageIcon(new java.awt.image.BufferedImage(ActionBar.TOOLBAR_ICON_SIZE,
-                        ActionBar.TOOLBAR_ICON_SIZE, java.awt.image.BufferedImage.TYPE_INT_ARGB))));
+        // "Clear lineup" and "Copy lineup" are colored by the selected fortification type.
+        AppAction clearLineup = actions.register(new AppAction(ActionId.CLEAR_LINEUP, this::onClearLineup));
+        AppAction copyLineup = actions.register(new AppAction(ActionId.COPY_LINEUP, this::onCopyLineup));
+        Runnable updateIcons = () -> {
+            clearLineup.withSmallIcon(IconLoader.iconForType(ICON_CLEAR_LINEUP, appContext.fortificationType()));
+            copyLineup.withSmallIcon(IconLoader.iconForType(ICON_COPY_LINEUP, appContext.fortificationType()));
+        };
+        updateIcons.run();
+        appContext.addListener(new AppContext.Listener() {
+            @Override
+            public void fortificationTypeChanged() {
+                updateIcons.run();
+            }
+        });
     }
 
     /** The actions of menu bar and toolbar - package-visible for tests. */

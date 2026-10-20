@@ -1,5 +1,6 @@
 package org.c2w.gui.common;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.infra.CatalogStore;
 import org.c2w.infra.Logger;
 
@@ -97,6 +98,15 @@ public final class IconLoader {
     public static ImageIcon iconForButton(String imagePath) {
         Color c = UIManager.getColor("Label.foreground");
         return iconFor(imagePath, TOOLBAR_ICON_SIZE, c);
+    }
+
+    /**
+     * The icon of an action that follows the selected fortification type: like
+     * {@link #iconForButton} for heroes, in the titan color for titans (see
+     * {@link FortificationTypeStyle#actionIconColor}).
+     */
+    public static ImageIcon iconForType(String imagePath, FortificationType type) {
+        return iconFor(imagePath, TOOLBAR_ICON_SIZE, FortificationTypeStyle.actionIconColor(type));
     }
 
     private static ImageIcon loadScaledIcon(String imagePath, int size) {
