@@ -18,7 +18,8 @@ class AlgorithmDescriptionsTest {
 
     private static final List<String> LANGUAGES = List.of("deutsch", "english", "francais");
     private static final List<String> SUMMARY_KEYS = List.of(
-            "algorithm.hodor.summary", "algorithm.hodorCowScore.summary", "algorithm.shield.summary");
+            "algorithm.hodor.summary", "algorithm.hodorCowScore.summary", "algorithm.shield.summary",
+            "algorithm.maxBuff.summary");
 
     @ParameterizedTest
     @EnumSource(Lineup.TeamType.class)
@@ -69,13 +70,14 @@ class AlgorithmDescriptionsTest {
 
     @ParameterizedTest
     @EnumSource(Lineup.TeamType.class)
-    @DisplayName("HODOR uses reserve and weights, HODOR (CowScore) reserve and bonuses, S.H.I.E.L.D only weights")
+    @DisplayName("HODOR uses reserve and weights, HODOR (CowScore) reserve and bonuses, S.H.I.E.L.D only weights, MAX_BUFF only reserve")
     void usedSettings(Lineup.TeamType teamType) {
         for (LineupAlgorithm algorithm : LineupAlgorithms.forType(teamType)) {
             EnumSet<AlgorithmSetting> expected = switch (algorithm.displayName()) {
                 case "HODOR" -> EnumSet.of(AlgorithmSetting.RESERVE, AlgorithmSetting.BUFF_WEIGHTS);
                 case "HODOR (CowScore)" -> EnumSet.of(AlgorithmSetting.RESERVE, AlgorithmSetting.COW_SCORE_BONUSES);
                 case ShieldAlgorithm.DISPLAY_NAME -> EnumSet.of(AlgorithmSetting.BUFF_WEIGHTS);
+                case MaxBuffAlgorithm.DISPLAY_NAME -> EnumSet.of(AlgorithmSetting.RESERVE);
                 case ManualLineupAlgorithm.DISPLAY_NAME -> EnumSet.noneOf(AlgorithmSetting.class);
                 default -> throw new AssertionError("unexpected algorithm " + algorithm.displayName());
             };

@@ -6,6 +6,7 @@ import org.c2w.domain.HodorSettings;
 import org.c2w.eval.AlgorithmDescriptions;
 import org.c2w.eval.LineupAlgorithm;
 import org.c2w.eval.LineupAlgorithms;
+import org.c2w.eval.MaxBuffAlgorithm;
 import org.c2w.eval.ShieldAlgorithm;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.DisplayName;
@@ -65,6 +66,8 @@ class AlgorithmInfoPanelTest {
                 case "HODOR" -> assertTrue(reserve && weights && !cowScore && !noReserve, texts.toString());
                 case "HODOR (CowScore)" -> assertTrue(reserve && !weights && cowScore && !noReserve, texts.toString());
                 case ShieldAlgorithm.DISPLAY_NAME -> assertTrue(!reserve && weights && !cowScore && noReserve,
+                        texts.toString());
+                case MaxBuffAlgorithm.DISPLAY_NAME -> assertTrue(reserve && !weights && !cowScore && !noReserve,
                         texts.toString());
                 default -> fail("unexpected algorithm " + name);
             }

@@ -41,6 +41,7 @@ public final class LineupAlgorithms {
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.POWER),
                 new HodorAlgorithm<>(side, HodorAlgorithm.Variant.COW_SCORE),
                 new ShieldAlgorithm<>(side),
+                new MaxBuffAlgorithm<>(side),
                 new ManualLineupAlgorithm(side.teamType())
         );
     }

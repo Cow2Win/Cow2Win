@@ -30,6 +30,7 @@ public final class AlgorithmDescriptions {
             "HODOR", "hodor",
             "HODOR (CowScore)", "hodorCowScore",
             ShieldAlgorithm.DISPLAY_NAME, "shield",
+            MaxBuffAlgorithm.DISPLAY_NAME, "maxBuff",
             ManualLineupAlgorithm.DISPLAY_NAME, "manual"
     );
 

@@ -11,7 +11,8 @@ import java.util.*;
  * One HODOR search (see {@link HodorAlgorithm}): start distribution, improvement by swapping, result.
  * Runs on any subset of the fortifications of one side with the gates given - {@link HodorAlgorithm}
  * passes every fortification of the side and a reserve from the settings, {@link ShieldAlgorithm}
- * one row at a time with exactly the teams of that row and no reserve.
+ * one row at a time with exactly the teams of that row and no reserve. {@link MaxBuffAlgorithm} only
+ * uses the shared helpers ({@link #freeSlots}, {@link #matchingUnits}).
  *
  * @param <T> {@link HeroTeam} or {@link TitanTeam}
  */
@@ -170,12 +171,21 @@ final class HodorSearch<T> {
     private int matching(Unit<T> unit, int fortificationIndex) {
         int[] cache = matchingUnits.get(unit.id());
         if (cache[fortificationIndex] < 0) {
-            Buff buff = fortifications.get(fortificationIndex).buff();
-            cache[fortificationIndex] = buff == null ? 0 : BuffCalculationService.countMatchingMembers(
-                    new Lineup.Entry(fortifications.get(fortificationIndex).id(), unit.memberId(),
-                            side.teamType(), unit.teamIndex()), guild, buff);
+            cache[fortificationIndex] = matchingUnits(fortifications.get(fortificationIndex), side.teamType(),
+                    unit.memberId(), unit.teamIndex(), guild);
         }
         return cache[fortificationIndex];
+    }
+
+    /**
+     * The units of the team ({@code memberId}, {@code teamIndex}) that match the buff of
+     * {@code fortification} (role or element, no totems) - 0 without a buff. Shared by HODOR and MAX_BUFF.
+     */
+    static int matchingUnits(Fortification fortification, Lineup.TeamType teamType, String memberId, int teamIndex,
+                             Guild guild) {
+        Buff buff = fortification.buff();
+        return buff == null ? 0 : BuffCalculationService.countMatchingMembers(
+                new Lineup.Entry(fortification.id(), memberId, teamType, teamIndex), guild, buff);
     }
 
     private double cowScore(Unit<T> unit, Fortification fortification) {

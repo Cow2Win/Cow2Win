@@ -275,12 +275,12 @@ class HodorAlgorithmTest {
     }
 
     @Test
-    @DisplayName("LineupAlgorithms: HODOR (the default), HODOR (CowScore), S.H.I.E.L.D, Manual")
+    @DisplayName("LineupAlgorithms: HODOR (the default), HODOR (CowScore), S.H.I.E.L.D, MAX_BUFF, Manual")
     void registration() {
         for (Lineup.TeamType teamType : Lineup.TeamType.values()) {
             List<String> names = LineupAlgorithms.forType(teamType).stream().map(LineupAlgorithm::displayName).toList();
             assertEquals(List.of("HODOR", "HODOR (CowScore)", ShieldAlgorithm.DISPLAY_NAME,
-                    ManualLineupAlgorithm.DISPLAY_NAME), names);
+                    MaxBuffAlgorithm.DISPLAY_NAME, ManualLineupAlgorithm.DISPLAY_NAME), names);
         }
     }
 }
