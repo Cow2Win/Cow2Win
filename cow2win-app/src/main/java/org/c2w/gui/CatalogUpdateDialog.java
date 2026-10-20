@@ -20,14 +20,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * "File" &gt; "Update game data ...": the surface over {@link CatalogUpdateService} - a cancellable
- * modal progress dialog while it works in the background (never on the Swing thread), then the
- * message for its outcome, the differences with Apply/Cancel, and the installed notice. The new
- * catalog only applies after a restart - nothing is reloaded here.
+ * "File" &gt; "Update game data ...": the surface over {@link CatalogUpdateService} - first a small
+ * confirmation (Update/Cancel) that says what is about to happen; only "Update" contacts the
+ * server. Then a cancellable modal progress dialog while it works in the background (never on the
+ * Swing thread), the message for its outcome, the differences with Apply/Cancel, and the installed
+ * notice. The new catalog only applies after a restart - nothing is reloaded here.
  */
 public final class CatalogUpdateDialog {
 
@@ -40,23 +42,44 @@ public final class CatalogUpdateDialog {
     private final Frame owner;
     private final CatalogUpdateService service;
     private final Consumer<String> openWeb;
+    /** Asks whether to update at all - {@link #confirmUpdate} or a fake in tests. */
+    private final BooleanSupplier confirm;
+    /** Runs one service step - {@link #withProgress} or a fake in tests. */
+    private final Function<Function<CatalogUpdateService.Progress, Outcome>, Outcome> progress;
 
     private CatalogUpdateDialog(Frame owner, CatalogUpdateService service, Consumer<String> openWeb) {
         this.owner = owner;
         this.service = service;
         this.openWeb = openWeb;
+        this.confirm = this::confirmUpdate;
+        this.progress = this::withProgress;
     }
 
-    /** Runs the whole update against the published catalog on GitHub. */
+    /** With the confirmation and the progress dialog replaced - for tests, without any window. */
+    CatalogUpdateDialog(CatalogUpdateService service, BooleanSupplier confirm,
+                        Function<Function<CatalogUpdateService.Progress, Outcome>, Outcome> progress) {
+        this.owner = null;
+        this.service = service;
+        this.openWeb = url -> {
+        };
+        this.confirm = confirm;
+        this.progress = progress;
+    }
+
+    /** Asks for confirmation, then runs the whole update against the published catalog on GitHub. */
     public static void open(Frame owner, Consumer<String> openWeb) {
+        // Neither constructor contacts the network - only CatalogUpdateService#check does.
         CatalogUpdateService service = new CatalogUpdateService(new GitHubCatalogRemote(),
                 Config.getDownloadedCatalogDir(), Config.getPreviousCatalogDir(),
                 Config.getCatalogDownloadDir());
         new CatalogUpdateDialog(owner, service, openWeb).run();
     }
 
-    private void run() {
-        Outcome checked = withProgress(service::check);
+    void run() {
+        if (!confirm.getAsBoolean()) {
+            return;
+        }
+        Outcome checked = progress.apply(service::check);
         switch (checked.status()) {
             case FAILED -> error(text("catalogUpdate.failed") + "\n" + checked.reason());
             case NEEDS_NEWER_PROGRAM -> needsNewerProgram();
@@ -77,7 +100,7 @@ public final class CatalogUpdateDialog {
             service.discard();
             return;
         }
-        Outcome installed = withProgress(service::install);
+        Outcome installed = progress.apply(service::install);
         switch (installed.status()) {
             case INSTALLED -> info(LanguageService.displayName("catalogUpdate.installed", installed.available()));
             case REJECTED -> rejected(installed);
@@ -86,6 +109,18 @@ public final class CatalogUpdateDialog {
                 // CANCELLED: nothing changed.
             }
         }
+    }
+
+    /**
+     * The confirmation before anything is fetched: Update (default, Enter) or Cancel; Escape and
+     * closing the window cancel as well. True only for Update.
+     */
+    private boolean confirmUpdate() {
+        Object[] options = {text("catalogUpdate.confirm.update"), text("catalogUpdate.cancel")};
+        int answer = JOptionPane.showOptionDialog(owner, text("catalogUpdate.confirm.text"),
+                text("catalogUpdate.title"), JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                options, options[0]);
+        return answer == 0;
     }
 
     /** The text of the differences dialog, names in the configured language. */
