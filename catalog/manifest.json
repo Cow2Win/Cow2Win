@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "dataVersion": "2026-10-19.4",
-  "note": "lighthouse buff (support, skill cooldown 1 % per hero); roles fixed: Aidan, Polaris, Lyria, Orm",
+  "dataVersion": "2026-10-21.1",
+  "note": "spanish names",
   "files": [
     {
       "path": "data/fortifications.json",
@@ -655,8 +655,8 @@
     },
     {
       "path": "names.json",
-      "size": 12866,
-      "sha256": "f1375d5bfc83980ab263058afbca903e63579528b948353d2f1aef5735d99949"
+      "size": 16436,
+      "sha256": "ac6b6b138b0778555e09ab97737c10fb14584c470277ece0f81ff9c7059787cf"
     }
   ]
 }

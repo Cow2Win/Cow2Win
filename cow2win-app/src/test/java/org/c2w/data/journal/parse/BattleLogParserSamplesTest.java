@@ -180,6 +180,13 @@ class BattleLogParserSamplesTest {
             Fight fight = fightAtLine(folder, "01-10-2026", LogDirection.DEFENSE, 38);
             assertEquals(BuffEffect.DAMAGE_RESIST, fight.defender().buff().effect(), folder);
         }
+        // es has no 01.10.2026 - a day all four languages have:
+        for (String folder : BattleLogTestFiles.LANGUAGE_FOLDERS) {
+            Fight fight = fightAtLine(folder, "24-09-2026", LogDirection.DEFENSE, 10);
+            assertEquals(BuffEffect.DAMAGE_RESIST, fight.defender().buff().effect(), folder);
+            assertEquals(32, fight.defender().buff().percent(), folder);
+            assertEquals(3, fight.position(), folder);
+        }
     }
 
     /** The fight whose row is at {@code line}. */

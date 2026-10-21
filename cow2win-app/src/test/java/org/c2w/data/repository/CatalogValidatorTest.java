@@ -1,6 +1,7 @@
 package org.c2w.data.repository;
 
 import com.google.gson.JsonObject;
+import org.c2w.i18n.CatalogNamesTest;
 import org.c2w.infra.CatalogDataVersion;
 import org.c2w.infra.CatalogManifest;
 import org.c2w.infra.CatalogSource;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,11 +32,18 @@ class CatalogValidatorTest {
         CatalogValidator.Result builtIn = CatalogValidator.validate(CatalogSource.builtIn(),
                 CatalogValidator.idsOf(CatalogSource.builtIn()));
         assertEquals(List.of(), builtIn.errors());
-        assertEquals(List.of(), builtIn.warnings());
+        assertEquals(openSpanishNameWarnings(), Set.copyOf(builtIn.warnings()));
 
         CatalogValidator.Result folder = CatalogValidator.validate(
                 CatalogSource.folder(TestCatalogs.REPOSITORY_CATALOG), null);
-        assertEquals(List.of(), folder.findings());
+        assertEquals(openSpanishNameWarnings(), Set.copyOf(folder.findings()));
+    }
+
+    /** The only warnings of the shipped catalog: the entries no Spanish battle log has named yet. */
+    private static Set<CatalogValidator.Finding> openSpanishNameWarnings() {
+        return CatalogNamesTest.OPEN_SPANISH_NAMES.stream()
+                .map(id -> new CatalogValidator.Finding(false, "names.json: " + id + " has no espanol name"))
+                .collect(Collectors.toSet());
     }
 
     @Test

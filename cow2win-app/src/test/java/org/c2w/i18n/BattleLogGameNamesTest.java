@@ -33,9 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class BattleLogGameNamesTest {
 
     private static final Path BATTLE_LOG_DIR = Paths.get("src", "test", "resources", "battlelog");
-    /** One folder per game language (the same battles in each) plus an earlier partial export. */
-    private static final List<String> BATTLE_LOG_FOLDERS = List.of("de", "en", "fr", "partial");
-    private static final int SAMPLE_LOG_COUNT = 44;
+    /** One folder per game language (the same battles in each, es only 5 of them) plus an earlier partial export. */
+    private static final List<String> BATTLE_LOG_FOLDERS = List.of("de", "en", "es", "fr", "partial");
+    private static final int SAMPLE_LOG_COUNT = 60;
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
     /** The catalog data files in the repository's {@code catalog/} folder (tests run in the app module). */
     private static final Path DATA_DIR = Paths.get("..", "catalog", "data");
@@ -48,14 +48,15 @@ class BattleLogGameNamesTest {
     private static final Map<String, String> LANGUAGE_BY_FILE_NAME_MARKER = Map.of(
             "Rangpunkte", "deutsch",
             "ranking pts", "english",
-            "pts de classement", "francais");
+            "pts de classement", "francais",
+            "puntos de rango", "espanol");
 
-    /** "Bridge (Position: 1)" (DE/EN) or "Pont (Position : 1)" (FR) - the position is not part of the name. */
-    private static final Pattern POSITION_SUFFIX = Pattern.compile("\\s*\\(Position\\s*:\\s*\\d+\\)$");
+    /** "Bridge (Position: 1)" (DE/EN), "Pont (Position : 1)" (FR) or "Puente (Posición: 1)" (ES) - the position is not part of the name. */
+    private static final Pattern POSITION_SUFFIX = Pattern.compile("\\s*\\((?:Position|Posición)\\s*:\\s*\\d+\\)$");
     private static final Pattern ID = Pattern.compile("\"id\"\\s*:\\s*\"([^\"]+)\"");
 
     @Test
-    void sampleLogsCoverAllThreeLanguages() throws IOException {
+    void sampleLogsCoverAllLanguages() throws IOException {
         Set<String> languages = new TreeSet<>();
         for (Path log : battleLogs()) {
             languages.add(languageOf(log));

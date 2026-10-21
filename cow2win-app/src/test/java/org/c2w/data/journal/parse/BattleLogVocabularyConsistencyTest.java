@@ -30,7 +30,8 @@ class BattleLogVocabularyConsistencyTest {
     void everyLanguageFolderHasAVocabulary() throws IOException {
         Map<String, BattleLogVocabulary> vocabularies = vocabulariesFromSource();
 
-        assertEquals(Set.of("deutsch", "english", "francais"), vocabularies.keySet());
+        assertEquals(new TreeSet<>(LanguageService.availableLanguages()), vocabularies.keySet());
+        assertTrue(vocabularies.containsKey("espanol"));
     }
 
     @Test
@@ -116,6 +117,18 @@ class BattleLogVocabularyConsistencyTest {
 
         assertEquals(new BattleLogVocabulary.UndefendedPositions(2, 3), positions);
         assertNull(fr.matchUndefended("2 positions sur 3"));
+    }
+
+    @Test
+    void positionOfAFightRowIsReadWithTheWordOfItsLanguage() {
+        BattleLogVocabulary es = BattleLogVocabulary.load("espanol").orElseThrow();
+        BattleLogVocabulary fr = BattleLogVocabulary.load("francais").orElseThrow();
+
+        assertEquals(new BattleLogVocabulary.FortificationPosition("Puertas de la Naturaleza", 3),
+                es.matchPosition("Puertas de la Naturaleza (Posición: 3)"));
+        assertEquals(new BattleLogVocabulary.FortificationPosition("Pont", 6), fr.matchPosition("Pont (Position : 6)"));
+        assertNull(es.matchPosition("Puente"), "a captured row has no position");
+        assertNull(fr.matchPosition("Puente (Posición: 1)"), "the Spanish word only in the Spanish vocabulary");
     }
 
     @Test

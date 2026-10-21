@@ -97,7 +97,8 @@ public final class Schema {
             columns.add(of("Avatar", Fields.IMAGE, IMAGE));
         }
         for (Language language : Language.values()) {
-            columns.add(of(language.header(), language.field(), NAME).language(language).asRequired());
+            ColumnSpec name = of(language.header(), language.field(), NAME).language(language);
+            columns.add(language.nameRequired() ? name.asRequired() : name);
         }
     }
 

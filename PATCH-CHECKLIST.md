@@ -6,7 +6,7 @@ files don't update themselves, so after any patch that could touch Clash of
 Worlds, work through this list before trusting the app's output again. It's
 organized by the actual files/checks involved, not by patch-note wording.
 
-Most data steps below (catalog entries, names in all three languages,
+Most data steps below (catalog entries, names in all languages,
 avatars, CowScore entries, combos, templates, `catalog/manifest.json`) can be
 done with the master data tool `org.c2w.datatool.DataToolApp` (documents/DEVELOPER.md,
 "Master data tool") - it also checks ids, references and missing names. The
@@ -30,9 +30,12 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       Missing icon → falls back to `placeholder.png` (see `Hero.java`), not
       an error, but worth noticing.
 - [ ] Add the name to `catalog/names.json` (all languages: `deutsch`,
-      `english`, `francais`) - `displayName` is looked up from there at runtime
+      `english`, `espanol`, `francais`) - `displayName` is looked up from there at runtime
       (`LanguageService`), not stored on the `Hero` record itself. The language
-      files hold no catalog names any more.
+      files hold no catalog names any more. Every name must be the in-game name
+      as it appears in a battle log. Only `espanol` may stay empty while no
+      Spanish log has shown the name (the app then shows the English one) -
+      never guess it; list the id in `CatalogNamesTest.OPEN_SPANISH_NAMES`.
 - [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
       assessment (most don't - `STANDARD`/no override is the expected
       default), set it via the "Hero Buff Fit Scores" dialog in-app, or by
@@ -51,7 +54,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       placeholder-fallback note as heroes).
 - [ ] Name in `catalog/names.json` (all languages).
 - [ ] If the titan brings a **new element** (new `TitanElement` constant):
-      besides `titanElement.<NAME>`, also add `titanTotem.<NAME>` in all three
+      besides `titanElement.<NAME>`, also add `titanTotem.<NAME>` in all
       language files - the totem's in-game name exactly as it appears in a
       Clash of Worlds battle log (needed to map log entries back to the
       element; `TotemTextsGameNameTest` fails without it).
@@ -141,14 +144,14 @@ only through them (there are no aliases).
       files - adjust them when adding a file.
 - [ ] New log texts (e.g. a new fortification buff, a new hero color, a new
       wording of the "undefended" sentence) go into
-      `language/<name>/battleLogVocabulary.json` of **all three** languages,
+      `language/<name>/battleLogVocabulary.json` of **all** languages,
       same keys everywhere (`BattleLogVocabularyConsistencyTest`). Never
       invent a text that no log has shown - leave the list empty instead and
       put the effect into `BattleLogVocabulary.UNSEEN_BUFFS` (empty since
       `SKILL_COOLDOWN_DECREASE` showed up in season 17). Hero colors work the
       same way with `BattleLogVocabulary.UNSEEN_HERO_COLORS` (`GREEN`, `GREY`:
       very rare, not seen in a log yet - once one shows up, fill its texts in
-      all three languages and remove it from the set). The parser reports
+      all languages and remove it from the set). The parser reports
       unknown texts as parse problems.
 - [ ] New language: besides `<name>/<name>.properties` the language folder
       also needs a `battleLogVocabulary.json` - without it, battle logs in

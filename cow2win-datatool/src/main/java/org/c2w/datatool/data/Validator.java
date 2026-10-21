@@ -168,7 +168,7 @@ final class Validator {
                 }
                 checkIdPattern(kind, i, id);
                 checkImage(kind, i, row);
-                checkNameCharacters(kind, i, row);
+                checkNames(kind, i, row);
             }
         }
     }
@@ -193,10 +193,14 @@ final class Validator {
         }
     }
 
-    private void checkNameCharacters(TableKind kind, int index, Row row) {
+    /** An empty name of an optional language (an empty required one is an error already), rare characters. */
+    private void checkNames(TableKind kind, int index, Row row) {
         for (Language language : Language.values()) {
             String name = row.getString(language.field());
-            if (name == null) {
+            if (row.isBlank(language.field())) {
+                if (!language.nameRequired()) {
+                    warning(kind, index, language.field(), language.header() + " is empty - the app shows the English name");
+                }
                 continue;
             }
             for (char c : name.toCharArray()) {

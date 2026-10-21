@@ -20,6 +20,7 @@
     "loss": ["Niederlage"]
   },
   "fortificationCaptured": ["Befestigung erobert"],
+  "position": ["Position"],
   "undefended": {
     "singular": ["{n} Position von {m} in dieser Befestigung wurde nicht verteidigt und konnte kampflos erobert werden."],
     "plural": ["{n} Positionen von {m} in dieser Befestigung wurden nicht verteidigt und konnten kampflos erobert werden."]

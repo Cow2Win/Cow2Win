@@ -27,13 +27,13 @@ class JournalRoundTripTest {
     Path tempDir;
 
     /**
-     * One database per folder: de, en and fr each hold the 7 battles with both
-     * directions; partial gets its own (it is the same battle as de 01.10.).
+     * One database per folder: de, en and fr each hold the 8 battles with both
+     * directions, es 5 of them; partial gets its own (it is the same battle as de 01.10.).
      */
     @Test
     void everySampleLogComesBackExactlyAsParsed() throws Exception {
         int checked = 0;
-        for (String folder : List.of("de", "en", "fr", "partial")) {
+        for (String folder : List.of("de", "en", "es", "fr", "partial")) {
             Path guildDir = Files.createDirectories(tempDir.resolve(folder));
             try (JournalDatabase db = JournalDatabase.open(guildDir, true).orElseThrow()) {
                 JournalRepository repository = new JournalRepository(db);
@@ -62,7 +62,7 @@ class JournalRoundTripTest {
                         BattleLogTestFiles.files(folder).size(), dbFiles.mapToLong(p -> p.toFile().length()).sum() / 1024);
             }
         }
-        assertEquals(44, checked);
+        assertEquals(60, checked);
     }
 
     @Test
@@ -81,9 +81,9 @@ class JournalRoundTripTest {
     }
 
     /**
-     * All 44 files into ONE database (overlapping exports replace each other) - prints
+     * All 60 files into ONE database (overlapping exports replace each other) - prints
      * duration (including the compaction on close) and size. Thanks to {@code SHUTDOWN COMPACT}
-     * the file is about as small as a fresh database with the 14 German logs only.
+     * the file is about as small as a fresh database with the 16 German logs only.
      */
     @Test
     void allSampleFilesIntoOneDatabase() throws Exception {
@@ -103,7 +103,7 @@ class JournalRoundTripTest {
                     replaced++;
                 }
             }
-            assertEquals(7, repository.listBattles().size());
+            assertEquals(8, repository.listBattles().size());
         }
         long millis = (System.nanoTime() - start) / 1_000_000;
         long size = size(guildDir);
@@ -118,9 +118,9 @@ class JournalRoundTripTest {
         long reference = size(referenceDir);
 
         System.out.printf(Locale.ROOT, "JOURNAL-VOLUME: %d files (%d KB CSV), %d replaced, %d ms, database %d KB"
-                + " (fresh database with the 14 German logs: %d KB)%n",
+                + " (fresh database with the 16 German logs: %d KB)%n",
                 files.size(), bytes / 1024, replaced, millis, size / 1024, reference / 1024);
-        assertEquals(30, replaced, "de first, then en and fr replace all 14 logs each, partial replaces 2");
+        assertEquals(44, replaced, "de first, then en and fr replace all 16 logs each, es its 10, partial replaces 2");
         assertTrue(size < reference * 5 / 4, "compacted on close: " + size + " vs. " + reference + " bytes");
     }
 

@@ -73,8 +73,6 @@ public final class BattleLogParser {
     private static final String UNIT_SEPARATOR = " | ";
     private static final char BOM = '﻿';
 
-    /** {@code Brücke (Position: 6)}, FR {@code Pont (Position : 6)}. */
-    private static final Pattern POSITION = Pattern.compile("^(?<fort>.*?)\\s*\\(Position\\s*:\\s*(?<position>\\d+)\\)$");
     /** {@code Name (Level-TeamPower)}; the name is kept exactly, including trailing spaces. */
     private static final Pattern PLAYER = Pattern.compile("^(?<name>.*) \\((?<level>\\d+)-(?<power>\\d+)\\)$", Pattern.DOTALL);
     /** {@code Rüstung erhöht (56%)}. */
@@ -201,10 +199,9 @@ public final class BattleLogParser {
             String[] cells = line.split(",", -1);
             if (!cells[COL_FORTIFICATION].isBlank()) {
                 finishFight();
-                Matcher position = POSITION.matcher(cells[COL_FORTIFICATION]);
-                if (position.matches()) {
-                    startFight(lineNumber, line, cells, position.group("fort"),
-                            Integer.parseInt(position.group("position")));
+                BattleLogVocabulary.FortificationPosition position = vocabulary.matchPosition(cells[COL_FORTIFICATION]);
+                if (position != null) {
+                    startFight(lineNumber, line, cells, position.fortification(), position.position());
                 } else {
                     fortEvent(lineNumber, line, cells);
                 }

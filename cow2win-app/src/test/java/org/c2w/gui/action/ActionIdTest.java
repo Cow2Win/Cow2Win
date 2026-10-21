@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** {@link ActionId} and {@link Stage}: every text key exists in all three language files. */
+/** {@link ActionId} and {@link Stage}: every text key exists in every language file. */
 class ActionIdTest {
 
-    private static final List<String> LANGUAGES = List.of("deutsch", "english", "francais");
+    private static final List<String> LANGUAGES = LanguageService.availableLanguages();
 
     @Test
     @DisplayName("Every action id has a stage and a text key present in every language")

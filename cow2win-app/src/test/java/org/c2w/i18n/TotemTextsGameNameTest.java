@@ -44,6 +44,14 @@ class TotemTextsGameNameTest {
             DARK, "Totem d'esprit des ténèbres",
             DISTORTION, "Esprit élémentaire de distorsion");
 
+    private static final Map<TitanElement, String> SPANISH = Map.of(
+            FIRE, "Tótem de espíritu de fuego",
+            WATER, "Tótem de espíritu de agua",
+            EARTH, "Tótem de espíritu de tierra",
+            LIGHT, "Tótem de espíritu de luz",
+            DARK, "Tótem de espíritu de oscuridad",
+            DISTORTION, "Espíritu elemental de la distorsión");
+
     private String previousLanguage;
 
     @BeforeEach
@@ -63,9 +71,9 @@ class TotemTextsGameNameTest {
     }
 
     @Test
-    @DisplayName("every TitanElement has a non-empty titanTotem.<NAME> in deutsch, english and francais")
+    @DisplayName("every TitanElement has a non-empty titanTotem.<NAME> in every language")
     void everyElementHasAGameNameInEveryLanguage() {
-        for (String language : new String[]{"deutsch", "english", "francais"}) {
+        for (String language : LanguageService.availableLanguages()) {
             for (TitanElement element : TitanElement.values()) {
                 String gameName = LanguageService.textIn(language, "titanTotem." + element.name());
                 assertNotNull(gameName, "titanTotem." + element.name() + " missing in " + language);
@@ -75,7 +83,7 @@ class TotemTextsGameNameTest {
     }
 
     @Test
-    @DisplayName("gameName returns the in-game name of the configured language (DE, EN and FR)")
+    @DisplayName("gameName returns the in-game name of the configured language (DE, EN, FR and ES)")
     void gameName() {
         useLanguage("deutsch");
         GERMAN.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
@@ -86,10 +94,13 @@ class TotemTextsGameNameTest {
 
         useLanguage("francais");
         FRENCH.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
+
+        useLanguage("espanol");
+        SPANISH.forEach((element, name) -> assertEquals(name, TotemTexts.gameName(element)));
     }
 
     @Test
-    @DisplayName("fromGameName maps all 18 names regardless of language, case and surrounding whitespace")
+    @DisplayName("fromGameName maps all 24 names regardless of language, case and surrounding whitespace")
     void fromGameName() {
         useLanguage("english"); // the lookup must not depend on the configured language
         GERMAN.forEach((element, name) -> {
@@ -103,6 +114,10 @@ class TotemTextsGameNameTest {
         FRENCH.forEach((element, name) -> {
             assertEquals(Optional.of(element), TotemTexts.fromGameName(name), name);
             assertEquals(Optional.of(element), TotemTexts.fromGameName(name.toUpperCase()), name);
+        });
+        SPANISH.forEach((element, name) -> {
+            assertEquals(Optional.of(element), TotemTexts.fromGameName(name), name);
+            assertEquals(Optional.of(element), TotemTexts.fromGameName(name.toLowerCase()), name);
         });
     }
 

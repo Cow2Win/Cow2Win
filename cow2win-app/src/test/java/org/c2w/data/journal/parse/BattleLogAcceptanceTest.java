@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Acceptance table of the parser requirement (Clash of Worlds journal, phase 1):
  * per sample file the number of single fights (hero / titan), undefended rows
  * and positions, captured rows, points, units and fights with a defender buff.
- * Identical for DE, EN and FR - except the running battle of 01.10.2026, whose
- * German attack export was taken a little earlier (one fight less).
+ * Identical for DE, EN, FR and ES (ES only for its days) - except the running battle of 01.10.2026,
+ * whose German attack export was taken a little earlier (one fight less).
  */
 class BattleLogAcceptanceTest {
 
@@ -31,7 +31,7 @@ class BattleLogAcceptanceTest {
      */
     static Stream<Arguments> acceptanceTable() {
         List<Arguments> rows = new ArrayList<>();
-        for (String folder : List.of("de", "en", "fr")) {
+        for (String folder : BattleLogTestFiles.LANGUAGE_FOLDERS) {
             rows.add(row(folder, "14-09-2026", LogDirection.ATTACK, 97, 57, 40, 0, 0, 9, 3793, 1181, 42));
             rows.add(row(folder, "14-09-2026", LogDirection.DEFENSE, 82, NO_UNITS, NO_UNITS, 0, 0, 10, 4207, 0, 42));
             rows.add(row(folder, "17-09-2026", LogDirection.ATTACK, 90, 52, 38, 0, 0, 11, 4606, 1104, 44));
@@ -50,7 +50,9 @@ class BattleLogAcceptanceTest {
         // Earlier German export of the running battle; the table only gives the total number of fights (66).
         rows.add(row("partial", "01-10-2026", LogDirection.ATTACK, 66, 36, 30, 9, 15, 11, 4630, 805, 29));
         rows.add(row("partial", "01-10-2026", LogDirection.DEFENSE, 59, NO_UNITS, NO_UNITS, 0, 0, 6, 2809, 0, 14));
-        return rows.stream();
+        // es has only some of the days (BattleLogTestFiles.SPANISH_DAYS).
+        return rows.stream().filter(a -> a.get()[0].equals("partial")
+                || BattleLogTestFiles.daysOf((String) a.get()[0]).contains((String) a.get()[1]));
     }
 
     private static Arguments row(String folder, String day, LogDirection direction, int fights, int heroFights,
@@ -93,10 +95,12 @@ class BattleLogAcceptanceTest {
     }
 
     @Test
-    void thereAre44SampleFiles() {
-        assertEquals(14, BattleLogTestFiles.files("de").size());
-        assertEquals(14, BattleLogTestFiles.files("en").size());
-        assertEquals(14, BattleLogTestFiles.files("fr").size());
+    void thereAre60SampleFiles() {
+        assertEquals(16, BattleLogTestFiles.files("de").size());
+        assertEquals(16, BattleLogTestFiles.files("en").size());
+        assertEquals(16, BattleLogTestFiles.files("fr").size());
+        assertEquals(10, BattleLogTestFiles.files("es").size());
+        assertEquals(60, BattleLogTestFiles.allFiles().size());
         assertEquals(2, BattleLogTestFiles.files("partial").size());
     }
 

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** {@link AlgorithmDescriptions#summaryFor} and {@link LineupAlgorithm#usedSettings()}. */
 class AlgorithmDescriptionsTest {
 
-    private static final List<String> LANGUAGES = List.of("deutsch", "english", "francais");
+    private static final List<String> LANGUAGES = LanguageService.availableLanguages();
     private static final List<String> SUMMARY_KEYS = List.of(
             "algorithm.hodor.summary", "algorithm.hodorCowScore.summary", "algorithm.shield.summary",
             "algorithm.maxBuff.summary");

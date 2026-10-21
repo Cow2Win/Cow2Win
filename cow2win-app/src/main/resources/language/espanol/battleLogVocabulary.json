@@ -1,0 +1,51 @@
+{
+  "fileName": {
+    "server": ["Servidor"],
+    "win": ["Victoria"],
+    "loss": ["Derrota"],
+    "draw": ["Empate"],
+    "rankingPoints": ["puntos de rango"],
+    "attackLog": ["Registro de ataques"],
+    "defenseLog": ["Registro de defensas"]
+  },
+  "headerRow": {
+    "fortification": ["Fortificación"],
+    "result": ["Resultado"],
+    "points": ["Puntos"],
+    "attacker": ["Atacante"],
+    "defender": ["Defensor"]
+  },
+  "fightResult": {
+    "win": ["Victoria"],
+    "loss": ["Derrota"]
+  },
+  "fortificationCaptured": ["Fortificación capturada"],
+  "position": ["Posición"],
+  "undefended": {
+    "singular": ["{n} posición de un total de {m} presentes en esta fortificación no estaba vigilada y ha caído inmediatamente."],
+    "plural": ["{n} posiciones de un total de {m} presentes en esta fortificación no estaban vigiladas y han caído inmediatamente."]
+  },
+  "statsHeader": {
+    "damageDealt": ["Daño causado"],
+    "damageTaken": ["Daño recibido"],
+    "healing": ["Curación"],
+    "patronage": ["Asistencia"]
+  },
+  "heroColor": {
+    "BLUE": ["Azul"],
+    "GREEN": [],
+    "GREY": [],
+    "ORANGE": ["Naranja"],
+    "RED": ["Rojo"],
+    "VIOLET": ["Violeta"]
+  },
+  "buff": {
+    "DAMAGE_RESIST": ["Resistencia de daño"],
+    "HEALTH_INCREASE": ["Aumento de salud"],
+    "HEALING_INCREASE": ["Aumento de curación"],
+    "ARMOR_INCREASE": ["Aumento de armadura"],
+    "ENERGY_GAIN": ["Aumento de obtención de energía"],
+    "MAGIC_DEFENSE_INCREASE": ["Aumento de resistencia mágica"],
+    "SKILL_COOLDOWN_DECREASE": ["Reducción de enfriamiento de habilidades"]
+  }
+}

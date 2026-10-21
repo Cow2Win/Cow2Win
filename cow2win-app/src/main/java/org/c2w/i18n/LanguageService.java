@@ -115,6 +115,7 @@ public class LanguageService {
         return switch (configuredLanguage()) {
             case "deutsch" -> Locale.GERMANY;
             case "francais" -> Locale.FRANCE;
+            case "espanol" -> Locale.of("es", "ES");
             default -> Locale.UK;
         };
     }

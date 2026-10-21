@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,9 +45,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LanguageFilesConsistencyTest {
 
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)[,}]");
 
     @Test
-    @DisplayName("deutsch, english and francais define exactly the same set of keys")
+    @DisplayName("All languages (deutsch, english, espanol, francais, ...) define exactly the same set of keys")
     void allLanguageFilesHaveTheSameKeys() throws IOException {
         Map<String, Set<String>> keysByLanguage = collectKeysPerFile(LANGUAGE_DIR);
 
@@ -55,6 +58,31 @@ class LanguageFilesConsistencyTest {
         Map<String, Set<String>> missingByLanguage = findMissingKeys(keysByLanguage);
 
         assertTrue(missingByLanguage.isEmpty(), "language files have diverged - " + describeMismatches(missingByLanguage));
+    }
+
+    @Test
+    @DisplayName("Every value uses the same MessageFormat placeholders ({0}, {1}, ...) as in english")
+    void allLanguagesUseTheSamePlaceholdersAsEnglish() throws IOException {
+        Map<String, Properties> filesByLanguage = loadPerFile(LANGUAGE_DIR);
+        Properties english = filesByLanguage.get("english");
+        List<String> mismatches = new ArrayList<>();
+        for (Map.Entry<String, Properties> entry : filesByLanguage.entrySet()) {
+            for (String key : new TreeSet<>(english.stringPropertyNames())) {
+                String value = entry.getValue().getProperty(key);
+                if (value != null && !placeholders(value).equals(placeholders(english.getProperty(key)))) {
+                    mismatches.add(entry.getKey() + ": " + key);
+                }
+            }
+        }
+        assertTrue(mismatches.isEmpty(), "placeholders differ from english - " + mismatches);
+    }
+
+    @Test
+    @DisplayName("placeholders() collects the argument indices, also inside choice formats")
+    void placeholdersCollectsArgumentIndices() {
+        assertEquals(Set.of(0, 1), placeholders("Move {0} to {1} and back to {0}"));
+        assertEquals(Set.of(0), placeholders("{0,choice,1#1 team|1<{0,number,integer} teams}"));
+        assertEquals(Set.of(), placeholders("No placeholders here"));
     }
 
     @Test
@@ -104,6 +132,13 @@ class LanguageFilesConsistencyTest {
      */
     static Map<String, Set<String>> collectKeysPerFile(Path languageDir) throws IOException {
         Map<String, Set<String>> result = new TreeMap<>();
+        loadPerFile(languageDir).forEach((name, properties) -> result.put(name, properties.stringPropertyNames()));
+        return result;
+    }
+
+    /** Every {@code <name>/<name>.properties} file directly under {@code languageDir}, keyed by its directory name. */
+    private static Map<String, Properties> loadPerFile(Path languageDir) throws IOException {
+        Map<String, Properties> result = new TreeMap<>();
         try (DirectoryStream<Path> dirs = Files.newDirectoryStream(languageDir, Files::isDirectory)) {
             for (Path dir : dirs) {
                 String name = dir.getFileName().toString();
@@ -115,10 +150,20 @@ class LanguageFilesConsistencyTest {
                 try (Reader reader = Files.newBufferedReader(propertiesFile, StandardCharsets.UTF_8)) {
                     properties.load(reader);
                 }
-                result.put(name, properties.stringPropertyNames());
+                result.put(name, properties);
             }
         }
         return result;
+    }
+
+    /** The argument indices ({@code {0}}, {@code {1,choice,...}}, ...) a MessageFormat pattern refers to. */
+    static Set<Integer> placeholders(String pattern) {
+        Set<Integer> indices = new TreeSet<>();
+        Matcher matcher = PLACEHOLDER.matcher(pattern);
+        while (matcher.find()) {
+            indices.add(Integer.parseInt(matcher.group(1)));
+        }
+        return indices;
     }
 
     /**

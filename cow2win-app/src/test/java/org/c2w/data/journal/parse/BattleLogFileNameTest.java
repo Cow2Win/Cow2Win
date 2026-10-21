@@ -28,7 +28,8 @@ class BattleLogFileNameTest {
             "24-09-2026", new Object[]{new GuildRef("Das Schwarze Auge", 79, 114834), 851, BattleResult.WIN},
             "28-09-2026", new Object[]{new GuildRef("Rebel Alliance", 42, 64942), -171, BattleResult.LOSS},
             "01-10-2026", new Object[]{new GuildRef("Союз", 59, 81447), 0, BattleResult.RUNNING},
-            "12-10-2026", new Object[]{new GuildRef("Interfectores", 129, 262959), 1133, BattleResult.WIN});
+            "12-10-2026", new Object[]{new GuildRef("Interfectores", 129, 262959), 1133, BattleResult.WIN},
+            "15-10-2026", new Object[]{new GuildRef("YAMATO", 40, 172935), -120, BattleResult.LOSS});
 
     @BeforeAll
     static void loadVocabularies() {
@@ -38,7 +39,7 @@ class BattleLogFileNameTest {
     @Test
     void parsesAllSampleFileNames() {
         for (Map.Entry<String, String> folder : BattleLogTestFiles.LANGUAGE_BY_FOLDER.entrySet()) {
-            for (String day : BattleLogTestFiles.BATTLE_DAYS) {
+            for (String day : BattleLogTestFiles.daysOf(folder.getKey())) {
                 for (LogDirection direction : LogDirection.values()) {
                     Path file = BattleLogTestFiles.file(folder.getKey(), day, direction);
                     BattleLogFileName name = parse(file.getFileName().toString()).orElseThrow(
@@ -65,6 +66,22 @@ class BattleLogFileNameTest {
         assertEquals("Unentschieden", resultWord("de"));
         assertEquals("Draw", resultWord("en"));
         assertEquals("Égalité", resultWord("fr"));
+    }
+
+    /** The running Spanish export of 15.10.2026 (not among the sample files) - its name as exported. */
+    @Test
+    void spanishRunningBattleUsesEmpate() {
+        BattleLogFileName name = parse("15-10-2026 Deutscher Bund Servidor 133 (193861) - YAMATO Servidor 40 (172935) "
+                + "Empate 0 puntos de rango Registro de defensas.csv").orElseThrow();
+
+        assertEquals("Empate", name.resultWord());
+        assertEquals(BattleResult.RUNNING, name.result());
+        assertEquals(0, name.rankingPoints());
+        assertEquals(LocalDate.of(2026, 10, 15), name.date());
+        assertEquals(new GuildRef("YAMATO", 40, 172935), name.opponent());
+        assertEquals(LogDirection.DEFENSE, name.direction());
+        assertEquals("espanol", name.language());
+        assertEquals(List.of(), name.problems());
     }
 
     @Test

@@ -1,0 +1,63 @@
+<html>
+<body>
+<h2>¿Qué es el CowScore?</h2>
+<p>El CowScore indica lo bien que encaja un equipo en <b>una fortificación concreta</b>.<br>
+Por eso, el mismo equipo puede tener un CowScore distinto en cada fortificación.<br>
+Cow2Win lo usa para repartir los equipos entre las fortificaciones<br>
+y para dejar fuera a los equipos más débiles.</p>
+
+<h2>¿Cómo se calcula?</h2>
+<p class="formula">CowScore = poder del equipo ÷ ${powerDivisor} × (1 + bono)</p>
+<p>El poder del equipo es lo más importante. El bono decide sobre todo entre equipos de poder parecido.</p>
+
+<h2>Bono para equipos de héroes</h2>
+<ul>
+<li><b>Bonificación de rol:</b> +${rolePercent} % por cada héroe cuyo rol coincide con la bonificación de la fortificación.</li>
+<li><b>Relación:</b> +${relationPercent} % una vez si al menos un héroe está marcado como "Positivo" para esta
+fortificación, -${relationPercent} % si uno está marcado como "Negativo". Las dos cosas a la vez se anulan.</li>
+<li><b>Mascota:</b> +${petPercent} % si la mascota está marcada para esta fortificación. Sin marca solo cuenta
+por su poder.</li>
+<li><b>Bandera de guerra:</b> +${warFlagPercent} % si está marcada para esta fortificación; si no,
++${warFlagPresentPercent} % solo por llevar una.</li>
+<li><b>Combo:</b> +${comboPercent} % una vez si un combo de héroes activo está completo en el equipo.</li>
+</ul>
+
+<h2>Bono para equipos de titanes</h2>
+<ul>
+<li><b>Bonificación de elemento:</b> +${elementPercent} % por cada titán cuyo elemento coincide con la bonificación de la fortificación.</li>
+<li><b>Relación:</b> como en los héroes, ±${relationPercent} % una vez por equipo.</li>
+<li><b>Tótems:</b> +${totemPercent} % por tótem (como máximo dos).</li>
+<li><b>Combo:</b> +${comboPercent} % una vez si un combo de titanes activo está completo en el equipo.</li>
+<li><b>Supertitán:</b> +${superTitanPercent} % por cada supertitán del equipo, en todas las fortificaciones.</li>
+</ul>
+<p>Quien ya cuenta por la bonificación no vuelve a contar por su marca.<br>
+Los porcentajes se ajustan en <i>Ajustes → Bonos del CowScore</i>, salvo los valores fijos para una bandera de guerra sin marcar y para los supertitanes.</p>
+
+<h2>Ejemplo</h2>
+<p>Un equipo de héroes con ${examplePower} de poder defiende la Forja (bonificación: Tanque).</p>
+<table class="examples" width="100%" cellspacing="0" cellpadding="0">
+<tr>
+<td valign="top" width="50%">
+<p><b>Con bandera de guerra y marca "Positivo"</b></p>
+<ul>
+<li>2 tanques en el equipo: 2 × ${rolePercent} % = ${exampleRole} %</li>
+<li>otro héroe está marcado como "Positivo" para la Forja: +${relationPercent} %</li>
+<li>hay una bandera de guerra en el equipo, pero sin marcar: +${warFlagPresentPercent} %</li>
+</ul>
+<p>Bono: ${exampleBonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${exampleFactor} ≈ ${exampleScore}</p>
+</td>
+<td valign="top" width="50%">
+<p><b>Mismo poder, sin bandera de guerra y sin marca "Positivo"</b></p>
+<ul>
+<li>2 tanques en el equipo: 2 × ${rolePercent} % = ${example2Role} %</li>
+<li>ningún héroe marcado: +0 %</li>
+<li>sin bandera de guerra: +0 %</li>
+</ul>
+<p>Bono: ${example2Bonus} %</p>
+<p class="formula">CowScore = ${examplePower} ÷ ${powerDivisor}<br>× ${example2Factor} ≈ ${example2Score}</p>
+</td>
+</tr>
+</table>
+</body>
+</html>

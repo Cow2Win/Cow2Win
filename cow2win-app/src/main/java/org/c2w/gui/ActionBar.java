@@ -283,8 +283,9 @@ public class ActionBar extends JPanel {
     private LineupService.AssignmentMode askAssignmentMode(LineupAlgorithm algorithm, long existing,
                                                            Lineup.TeamType teamType) {
         String typeName = LineupService.teamTypeName(teamType);
-        // English writes the type in lower case inside a sentence ("The heroes already have ...").
-        if (Locale.ENGLISH.getLanguage().equals(LanguageService.locale().getLanguage())) {
+        // English and Spanish write the type in lower case inside a sentence ("The heroes already have ...").
+        String language = LanguageService.locale().getLanguage();
+        if (language.equals(Locale.ENGLISH.getLanguage()) || language.equals("es")) {
             typeName = typeName.toLowerCase(LanguageService.locale());
         }
         String replace = LanguageService.displayName("toolbar.runAlgorithm.replace");

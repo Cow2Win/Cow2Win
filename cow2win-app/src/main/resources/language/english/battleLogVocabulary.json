@@ -20,6 +20,7 @@
     "loss": ["Defeat"]
   },
   "fortificationCaptured": ["Fortification captured"],
+  "position": ["Position"],
   "undefended": {
     "singular": ["{n} position out of {m} in this fortification was left undefended and got captured without a fight."],
     "plural": ["{n} positions out of {m} in this fortification were left undefended and got captured without a fight."]

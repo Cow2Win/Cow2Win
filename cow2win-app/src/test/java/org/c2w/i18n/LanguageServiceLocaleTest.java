@@ -32,6 +32,9 @@ class LanguageServiceLocaleTest {
             assertEquals(Locale.GERMANY, LanguageService.locale());
             Config.setLanguage("francais");
             assertEquals(Locale.FRANCE, LanguageService.locale());
+            Config.setLanguage("espanol");
+            assertEquals(Locale.of("es", "ES"), LanguageService.locale());
+            assertEquals("es-ES", LanguageService.locale().toLanguageTag());
             Config.setLanguage("english");
             assertEquals(Locale.UK, LanguageService.locale());
             assertEquals(LanguageService.locale(), JournalTexts.locale());

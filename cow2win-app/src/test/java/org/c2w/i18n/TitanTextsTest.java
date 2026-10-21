@@ -64,7 +64,7 @@ class TitanTextsTest {
     @Test
     @DisplayName("every TitanRole and the super titan label have a text in every language")
     void textsInEveryLanguage() {
-        for (String language : new String[]{"deutsch", "english", "francais"}) {
+        for (String language : LanguageService.availableLanguages()) {
             for (TitanRole role : TitanRole.values()) {
                 String text = LanguageService.textIn(language, "titanRole." + role.name());
                 assertNotNull(text, language + ": titanRole." + role.name());

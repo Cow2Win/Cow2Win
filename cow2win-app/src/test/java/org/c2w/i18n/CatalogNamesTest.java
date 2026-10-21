@@ -32,11 +32,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * catalog id and every language, nothing else in there, and no catalog id left in the language
  * files - plus how {@link LanguageService} looks them up.
  */
-class CatalogNamesTest {
+public class CatalogNamesTest {
 
     private static final Path LANGUAGE_DIR = Paths.get("src", "main", "resources", "language");
     private static final List<String> CATALOG_FILES = List.of("data/fortifications.json", "data/heroes.json",
             "data/titans.json", "data/pets.json", "data/warFlags.json");
+    /**
+     * Catalog ids without a Spanish name yet, e.g. a new entry whose in-game name no Spanish battle log or
+     * game screen has shown (the app shows the English one). Empty since every entry has its Spanish name;
+     * remove an id once its name is added.
+     */
+    public static final Set<String> OPEN_SPANISH_NAMES = Set.of();
 
     @TempDir
     Path temp;
@@ -58,8 +64,12 @@ class CatalogNamesTest {
             JsonObject byLanguage = names.has(id) ? names.getAsJsonObject(id) : new JsonObject();
             for (String language : languageFolders()) {
                 JsonElement name = byLanguage.get(language);
-                if (name == null || name.isJsonNull() || name.getAsString().isBlank()) {
+                boolean missing = name == null || name.isJsonNull() || name.getAsString().isBlank();
+                boolean open = language.equals("espanol") && OPEN_SPANISH_NAMES.contains(id);
+                if (missing && !open) {
                     problems.add(id + " has no " + language + " name");
+                } else if (!missing && open) {
+                    problems.add(id + " has an espanol name now - remove it from OPEN_SPANISH_NAMES");
                 }
             }
         }
@@ -92,25 +102,30 @@ class CatalogNamesTest {
     @DisplayName("Samples (umlaut, apostrophe, 'and', war flag) read the same as from the former language files")
     void samplesAreUnchangedByTheMove() {
         Map<String, List<String>> expected = Map.ofEntries(
-                Map.entry("heros-bridge", List.of("Heldenbrücke", "Heroes' Bridge", "Pont des héros")),
-                Map.entry("foundry", List.of("Gießerei", "Foundry", "Fonderie")),
-                Map.entry("ether-prism", List.of("Ätherprisma", "Ether Prism", "Prisme d'éther")),
-                Map.entry("karkh", List.of("K'arkh", "K'arkh", "K'arkh")),
-                Map.entry("astrid-and-lucas", List.of("Astrid und Lucas", "Astrid and Lucas", "Astrid et Lucas")),
-                Map.entry("mushy-and-shroom", List.of("Champi und Gnon", "Mushy and Shroom", "Champi et Gnon")),
-                Map.entry("cleaver", List.of("Hackebeil", "Cleaver", "Coupe-chou")),
-                Map.entry("tidus-and-gelo", List.of("Tidus und Gelo", "Tidus and Gelo", "Tidus et Gelo")),
-                Map.entry("axel", List.of("Axell", "Axel", "Axel")),
+                Map.entry("heros-bridge", List.of("Heldenbrücke", "Heroes' Bridge", "Pont des héros", "Puente de los Héroes")),
+                Map.entry("foundry", List.of("Gießerei", "Foundry", "Fonderie", "Forja")),
+                Map.entry("ether-prism", List.of("Ätherprisma", "Ether Prism", "Prisme d'éther", "Prisma Etéreo")),
+                Map.entry("karkh", List.of("K'arkh", "K'arkh", "K'arkh", "K'arkh")),
+                Map.entry("astrid-and-lucas", List.of("Astrid und Lucas", "Astrid and Lucas", "Astrid et Lucas", "Astrid y Lucas")),
+                Map.entry("mushy-and-shroom", List.of("Champi und Gnon", "Mushy and Shroom", "Champi et Gnon", "Mushy y Shroom")),
+                Map.entry("cleaver", List.of("Hackebeil", "Cleaver", "Coupe-chou", "Tajador")),
+                Map.entry("tidus-and-gelo", List.of("Tidus und Gelo", "Tidus and Gelo", "Tidus et Gelo", "Tidus y Gelo")),
+                Map.entry("axel", List.of("Axell", "Axel", "Axel", "Axel")),
+                Map.entry("merlin", List.of("Merlin", "Merlin", "Merlin", "Merlín")),
                 Map.entry("flag-swift-warriors", List.of("Kriegsflagge der flinken Krieger",
-                        "War Flag of Swift Warriors", "Drapeau de guerre : Guerriers agiles")));
-        List<String> languages = List.of("deutsch", "english", "francais");
+                        "War Flag of Swift Warriors", "Drapeau de guerre : Guerriers agiles",
+                        "Bandera de guerra de guerreros rápidos")));
+        List<String> languages = List.of("deutsch", "english", "francais", "espanol");
         String previous = Config.getLanguage();
         try {
             expected.forEach((id, names) -> {
                 for (int i = 0; i < languages.size(); i++) {
-                    assertEquals(names.get(i), LanguageService.textIn(languages.get(i), id), id + " " + languages.get(i));
-                    Config.setLanguage(languages.get(i));
-                    assertEquals(names.get(i), LanguageService.displayName(id), id + " " + languages.get(i));
+                    String language = languages.get(i);
+                    // An empty expectation: no name in this language (OPEN_SPANISH_NAMES) - English is shown.
+                    boolean open = names.get(i).isEmpty();
+                    assertEquals(open ? null : names.get(i), LanguageService.textIn(language, id), id + " " + language);
+                    Config.setLanguage(language);
+                    assertEquals(open ? names.get(1) : names.get(i), LanguageService.displayName(id), id + " " + language);
                 }
             });
         } finally {

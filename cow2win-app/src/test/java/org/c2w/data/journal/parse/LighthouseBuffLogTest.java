@@ -23,9 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class LighthouseBuffLogTest {
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"de", "en", "fr"})
+    @ValueSource(strings = {"de", "en", "es", "fr"})
     void defenseLogHasTheLighthouseBuffAndNoProblems(String folder) {
-        BattleLogParseResult result = BattleLogTestFiles.parse(folder, BattleLogTestFiles.SEASON_17_DAY, LogDirection.DEFENSE);
+        BattleLogParseResult result = BattleLogTestFiles.parse(folder, BattleLogTestFiles.LIGHTHOUSE_DAY, LogDirection.DEFENSE);
 
         assertEquals(List.of(), result.problems());
         List<Fight> lighthouse = lighthouseFights(result.log());
@@ -46,7 +46,7 @@ class LighthouseBuffLogTest {
 
         // each position once (its latest fight shows the team as it stands)
         Map<Integer, Fight> byPosition = new TreeMap<>();
-        for (Fight fight : lighthouseFights(BattleLogTestFiles.parse("de", BattleLogTestFiles.SEASON_17_DAY,
+        for (Fight fight : lighthouseFights(BattleLogTestFiles.parse("de", BattleLogTestFiles.LIGHTHOUSE_DAY,
                 LogDirection.DEFENSE).log())) {
             byPosition.put(fight.position(), fight);
         }

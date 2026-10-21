@@ -73,6 +73,16 @@ class ValidationTest {
     }
 
     @Test
+    void missingSpanishNameIsOnlyAWarning() {
+        Row pet = data.table(TableKind.PETS).findById("vex");
+        data.setValue(TableKind.PETS, pet, Language.ES.field(), "");
+        List<Problem> problems = data.validate();
+        assertFalse(problems.stream().anyMatch(p -> p.isError() && Language.ES.field().equals(p.field())), problems::toString);
+        assertTrue(problems.stream().anyMatch(p -> !p.isError() && p.table() == TableKind.PETS
+                && Language.ES.field().equals(p.field()) && p.message().contains("Name ES is empty")), problems::toString);
+    }
+
+    @Test
     void keyCollisionWithAUiText() {
         Row pet = newPet("Toolbar");
         data.setValue(TableKind.PETS, pet, Fields.ID, "toolbar.guild");

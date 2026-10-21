@@ -2,6 +2,7 @@ package org.c2w.gui.cowscore;
 
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.TeamScoreCalculator;
+import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /** The "Info" tab's HTML files and placeholder values - no display needed. */
 class CowScoreInfoTest {
 
-    private static final List<String> LANGUAGES = List.of("deutsch", "english", "francais");
+    private static final List<String> LANGUAGES = LanguageService.availableLanguages();
     private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{([^}]*)}");
 
     @AfterEach

@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * The most important parser test: the language versions of an export are
  * line-identical (same rows, same numbers, only the texts translated), so DE,
- * EN and FR must yield the same language-neutral result - same head data
+ * EN and FR (and ES on its days, see {@link BattleLogTestFiles#SPANISH_DAYS}) must yield the same
+ * language-neutral result - same head data
  * (except language and file name), same entries in the same order, same
  * fortification and unit ids, unit kinds, colors, buffs, numbers and results.
  * Exception: the German attack export of the running battle of 01.10.2026 was
@@ -41,7 +42,7 @@ class BattleLogLanguageComparisonTest {
 
     @ParameterizedTest(name = "{0} {1}")
     @MethodSource("battlesAndDirections")
-    void germanEnglishAndFrenchYieldTheSameResult(String day, LogDirection direction) {
+    void allLanguagesYieldTheSameResult(String day, LogDirection direction) {
         BattleLog de = BattleLogTestFiles.parse("de", day, direction).log();
         BattleLog en = BattleLogTestFiles.parse("en", day, direction).log();
         BattleLog fr = BattleLogTestFiles.parse("fr", day, direction).log();
@@ -61,6 +62,13 @@ class BattleLogLanguageComparisonTest {
             assertEquals(en.entries().size(), de.entries().size() + 1, "EN/FR have exactly one fight more");
         } else {
             assertEquals(neutral(de), neutral(en));
+        }
+
+        if (BattleLogTestFiles.daysOf("es").contains(day)) {
+            BattleLog es = BattleLogTestFiles.parse("es", day, direction).log();
+            assertEquals("espanol", es.header().language());
+            assertEquals(neutral(en.header()), neutral(es.header()));
+            assertEquals(neutral(en), neutral(es), "ES yields the same result as DE, EN and FR");
         }
     }
 

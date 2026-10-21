@@ -55,6 +55,7 @@ class SaveTest {
         data.setValue(TableKind.HEROES, hero, Language.EN.field(), "Nyx the Brave");
         assertEquals("nyx-the-brave", hero.getString(Fields.ID), "id suggested from the English name");
         data.setValue(TableKind.HEROES, hero, Language.DE.field(), "Nyx die Tapfere");
+        data.setValue(TableKind.HEROES, hero, Language.ES.field(), "Nyx la Valiente");
         data.setValue(TableKind.HEROES, hero, Language.FR.field(), "Nyx la Brave");
         data.setValue(TableKind.HEROES, hero, Fields.ROLES, List.of("MAGE", "SUPPORT"));
         data.setImage(TableKind.HEROES, hero, png, true);
@@ -88,6 +89,7 @@ class SaveTest {
         // One new line, at its place in id order; every other line unchanged.
         List<String> after = read(NAMES).lines().toList();
         int nyx = after.indexOf("  \"nyx-the-brave\": {\"deutsch\": \"Nyx die Tapfere\", \"english\": \"Nyx the Brave\","
+                + " \"espanol\": \"Nyx la Valiente\","
                 + " \"francais\": \"Nyx la Brave\"},");
         assertTrue(nyx > 0, () -> "new line in names.json: " + after);
         assertTrue(after.get(nyx - 1).startsWith("  \"nova\": "), "sorted by id");
@@ -275,7 +277,7 @@ class SaveTest {
         assertEquals(CatalogManifest.scan(root.resolve("catalog")), CatalogManifest.parse(read(MANIFEST)).files());
     }
 
-    /** names.json holds exactly the catalog ids, each with a name in every language. */
+    /** names.json holds exactly the catalog ids, each with a name in every required language. */
     private void assertNamesComplete() throws IOException {
         NamesFile names = new NamesFile(read(NAMES));
         DataSet saved = DataSet.load(root);
@@ -286,7 +288,9 @@ class SaveTest {
         assertEquals(ids, names.ids());
         for (String id : ids) {
             for (Language language : Language.values()) {
-                assertNotNull(names.get(id, language), id + " " + language);
+                if (language.nameRequired()) {
+                    assertNotNull(names.get(id, language), id + " " + language);
+                }
             }
         }
     }

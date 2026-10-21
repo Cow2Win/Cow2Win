@@ -55,6 +55,9 @@ public final class BattleLogVocabulary {
 
     public static final String FORTIFICATION_CAPTURED = "fortificationCaptured";
 
+    /** The word of a fight row's position: {@code Brücke (Position: 6)}, FR {@code Pont (Position : 6)}, ES {@code Puente (Posición: 6)}. */
+    public static final String POSITION = "position";
+
     public static final String UNDEFENDED_SINGULAR = "undefended.singular";
     public static final String UNDEFENDED_PLURAL = "undefended.plural";
 
@@ -87,10 +90,13 @@ public final class BattleLogVocabulary {
     private final String language;
     private final Map<String, List<String>> texts;
     private final List<Pattern> undefendedPatterns;
+    /** The fortification cell of a fight row, see {@link #matchPosition}; null without a {@link #POSITION} text. */
+    private final Pattern positionPattern;
 
     private BattleLogVocabulary(String language, Map<String, List<String>> texts) {
         this.language = language;
         this.texts = texts;
+        this.positionPattern = positionPattern(texts(POSITION));
         List<Pattern> patterns = new ArrayList<>();
         for (String key : List.of(UNDEFENDED_SINGULAR, UNDEFENDED_PLURAL)) {
             for (String template : texts(key)) {
@@ -152,7 +158,7 @@ public final class BattleLogVocabulary {
                 FILE_NAME_SERVER, FILE_NAME_WIN, FILE_NAME_LOSS, FILE_NAME_DRAW, FILE_NAME_RANKING_POINTS,
                 FILE_NAME_ATTACK_LOG, FILE_NAME_DEFENSE_LOG,
                 HEADER_FORTIFICATION, HEADER_RESULT, HEADER_POINTS, HEADER_ATTACKER, HEADER_DEFENDER,
-                FIGHT_WIN, FIGHT_LOSS, FORTIFICATION_CAPTURED, UNDEFENDED_SINGULAR, UNDEFENDED_PLURAL,
+                FIGHT_WIN, FIGHT_LOSS, FORTIFICATION_CAPTURED, POSITION, UNDEFENDED_SINGULAR, UNDEFENDED_PLURAL,
                 STATS_DAMAGE_DEALT, STATS_DAMAGE_TAKEN, STATS_HEALING, STATS_PATRONAGE));
         for (HeroColor color : HeroColor.values()) {
             if (!UNSEEN_HERO_COLORS.contains(color)) {
@@ -217,12 +223,38 @@ public final class BattleLogVocabulary {
         return null;
     }
 
+    /** Fortification name and position of a fight row's first cell. */
+    public record FortificationPosition(String fortification, int position) {
+    }
+
+    /**
+     * Splits the first cell of a fight row ({@code Puente (Posición: 6)}) into fortification and
+     * position; {@code null} if it is no fight row in this language (e.g. a "captured" row).
+     */
+    public FortificationPosition matchPosition(String cell) {
+        if (positionPattern == null) {
+            return null;
+        }
+        Matcher m = positionPattern.matcher(cell);
+        return m.matches() ? new FortificationPosition(m.group("fort"), Integer.parseInt(m.group("position"))) : null;
+    }
+
     @Override
     public String toString() {
         return "BattleLogVocabulary[" + language + "]";
     }
 
     // --- private ---
+
+    /** {@code <fort> (<word>: <number>)} for every word of {@code words}; null without one. */
+    private static Pattern positionPattern(List<String> words) {
+        if (words.isEmpty()) {
+            return null;
+        }
+        String alternatives = String.join("|", words.stream().map(Pattern::quote).toList());
+        return Pattern.compile("^(?<fort>.*?)\\s*\\((?:" + alternatives + ")\\s*:\\s*(?<position>\\d+)\\)$",
+                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    }
 
     private <E extends Enum<E>> E lookup(Class<E> type, String prefix, String text) {
         for (E constant : type.getEnumConstants()) {
