@@ -78,6 +78,23 @@ class LineupComparisonDialogTest {
     }
 
     @Test
+    @DisplayName("The key figures table has six rows; the compared column is filled once a lineup is chosen")
+    void keyFigures() throws Exception {
+        SwingUtilities.invokeAndWait(() -> dialog = LineupComparisonDialog.open(null, context));
+        assertEquals(6, dialog.leftFigureTexts().size());
+        assertEquals(6, dialog.rightFigureTexts().size());
+        assertTrue(dialog.leftFigureTexts().stream().noneMatch(String::isBlank), dialog.leftFigureTexts().toString());
+
+        SwingUtilities.invokeAndWait(() -> dialog.selectChoiceForTest(null));
+        assertTrue(dialog.rightFigureTexts().stream().allMatch(LineupComparisonDialog.DASH::equals),
+                "nothing chosen: " + dialog.rightFigureTexts());
+
+        Choice beta = dialog.choices().stream().filter(c -> c.guildName().equals("Beta")).findFirst().orElseThrow();
+        SwingUtilities.invokeAndWait(() -> dialog.selectChoiceForTest(beta));
+        assertNotEquals(LineupComparisonDialog.DASH, dialog.rightFigureTexts().get(1), "power of the chosen lineup");
+    }
+
+    @Test
     @DisplayName("Lineups of the other guild are offered, the open one is not; choosing one shows the hint")
     void comparesWithAnotherGuild() throws Exception {
         SwingUtilities.invokeAndWait(() -> dialog = LineupComparisonDialog.open(null, context));

@@ -9,12 +9,14 @@ import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.LineupComparisonService;
 import org.c2w.domain.LineupComparisonService.FortificationValues;
+import org.c2w.domain.LineupKeyFigures;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.compare.ComparableLineups;
 import org.c2w.gui.compare.ComparableLineups.Choice;
 import org.c2w.gui.compare.TornadoChart;
 import org.c2w.gui.fort.FortificationPanel;
+import org.c2w.gui.fort.LineupSummaryPanel;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
@@ -27,6 +29,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +39,8 @@ import java.util.function.IntFunction;
 
 /**
  * Compares the open lineup (left, with its unsaved changes) with any other lineup of the
- * workspace (right) - also one of another guild: power and buff per fortification of the
+ * workspace (right) - also one of another guild: the key figures of both lineups side by side
+ * (see {@link LineupKeyFigures}), then power and buff per fortification of the
  * selected type, as two {@link TornadoChart}s. Each side is calculated with its own guild
  * (see {@link LineupComparisonService#compareFortifications}), since a lineup only references
  * members by id. Purely read-only, non-modal, and only one instance exists at a time (see
@@ -62,6 +66,27 @@ public class LineupComparisonDialog extends JDialog {
             FortificationType.HERO, "fortificationMap.showHeroes",
             FortificationType.TITAN, "fortificationMap.showTitans");
 
+    private static final String KEY_FIGURE = "lineupComparison.figures.figure";
+
+    /** The rows of the key figures table, in order. */
+    enum Figure {
+        ALGORITHM("lineupComparison.figures.algorithm"),
+        POWER("lineupComparison.figures.power"),
+        COW_SCORE("lineupComparison.figures.cowScore"),
+        BUFF_HITS("lineupComparison.figures.buffHits"),
+        SLOTS("lineupComparison.figures.slots"),
+        TEAMS_OUTSIDE("lineupComparison.figures.outside");
+
+        private final String key;
+
+        Figure(String key) {
+            this.key = key;
+        }
+    }
+
+    /** Shown for a missing value: no algorithm, or nothing to compare with. */
+    static final String DASH = "–";
+
     private static final String SEPARATOR = " · ";
     private static final int WIDTH = 900;
     private static final int HEIGHT = 720;
@@ -78,6 +103,11 @@ public class LineupComparisonDialog extends JDialog {
             FortificationPanel::compactPower, LineupComparisonDialog::signedCompactPower);
     private final TornadoChart buffChart = new TornadoChart(LanguageService.displayName(KEY_CHART_BUFF),
             FortificationPanel::formatPercent, FortificationPanel::formatPercent);
+
+    private final JLabel leftFigureHeader = new JLabel(" ");
+    private final JLabel rightFigureHeader = new JLabel(" ");
+    private final Map<Figure, JLabel> leftFigures = new EnumMap<>(Figure.class);
+    private final Map<Figure, JLabel> rightFigures = new EnumMap<>(Figure.class);
 
     /** Guilds of other folders, loaded once per folder - see {@link #guildOf}. */
     private final Map<String, Guild> guildCache = new HashMap<>();
@@ -146,8 +176,11 @@ public class LineupComparisonDialog extends JDialog {
         });
         hintLabel.setForeground(dimmedColor());
 
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(buildHeader(), BorderLayout.NORTH);
+        top.add(buildFigures(), BorderLayout.CENTER);
         JPanel content = new JPanel(new BorderLayout());
-        content.add(buildHeader(), BorderLayout.NORTH);
+        content.add(top, BorderLayout.NORTH);
         content.add(buildCharts(), BorderLayout.CENTER);
         setContentPane(content);
 
@@ -213,6 +246,48 @@ public class LineupComparisonDialog extends JDialog {
         header.add(typePanel, BorderLayout.NORTH);
         header.add(sides, BorderLayout.CENTER);
         return header;
+    }
+
+    /**
+     * The key figures table: a header row (figure, left name, right name) and one row per
+     * {@link Figure} - fixed height, right-aligned values, no scroll bar of its own.
+     */
+    private JComponent buildFigures() {
+        JPanel table = new JPanel(new GridBagLayout());
+        table.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, dimmedColor()),
+                BorderFactory.createEmptyBorder(6, 12, 8, 12)));
+        JLabel figureHeader = new JLabel(LanguageService.displayName(KEY_FIGURE));
+        for (JLabel label : new JLabel[]{figureHeader, leftFigureHeader, rightFigureHeader}) {
+            label.setForeground(dimmedColor());
+        }
+        addFigureRow(table, 0, figureHeader, leftFigureHeader, rightFigureHeader);
+        for (Figure figure : Figure.values()) {
+            JLabel name = new JLabel(LanguageService.displayName(figure.key));
+            JLabel left = new JLabel(DASH);
+            JLabel right = new JLabel(DASH);
+            leftFigures.put(figure, left);
+            rightFigures.put(figure, right);
+            addFigureRow(table, figure.ordinal() + 1, name, left, right);
+        }
+        return table;
+    }
+
+    private static void addFigureRow(JPanel table, int row, JLabel name, JLabel left, JLabel right) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = row;
+        c.insets = new Insets(1, 0, 1, 0);
+        c.gridx = 0;
+        c.anchor = GridBagConstraints.WEST;
+        c.weightx = 0.5;
+        table.add(name, c);
+        c.anchor = GridBagConstraints.EAST;
+        for (JLabel value : new JLabel[]{left, right}) {
+            c.gridx++;
+            c.weightx = 1;
+            value.setHorizontalAlignment(SwingConstants.RIGHT);
+            table.add(value, c);
+        }
     }
 
     private JComponent buildCharts() {
@@ -384,6 +459,94 @@ public class LineupComparisonDialog extends JDialog {
         buffChart.setLeftColor(leftColor);
         powerChart.setRows(powerRows, rightAvailable);
         buffChart.setRows(buffRows, rightAvailable);
+        refreshFigures(left, leftGuild, rightAvailable ? rightLineup : null, rightGuild, leftName,
+                rightAvailable ? rightName : DASH);
+    }
+
+    /** The key figures table for {@link #type} - each side with its own guild, like the charts. */
+    private void refreshFigures(Lineup left, Guild leftGuild, Lineup right, Guild rightGuild,
+                                String leftName, String rightName) {
+        leftFigureHeader.setText(leftName);
+        rightFigureHeader.setText(rightName);
+        LineupKeyFigures leftValues = LineupKeyFigures.of(left, leftGuild, type);
+        String leftAlgorithm = algorithmText(left, LineupFiles.isOriginal(appContext.lineupFilePath()), currentLineupName());
+        LineupKeyFigures rightValues = right == null ? null : LineupKeyFigures.of(right, rightGuild, type);
+        String rightAlgorithm = right == null ? null
+                : algorithmText(right, selectedChoice.isOriginal(), selectedChoice.lineupDisplayName());
+        Color unchanged = uiColor("Label.foreground", Color.WHITE);
+        for (Figure figure : Figure.values()) {
+            leftFigures.get(figure).setText(figureText(figure, leftValues, leftAlgorithm));
+            JLabel rightLabel = rightFigures.get(figure);
+            rightLabel.setText(rightValues == null ? DASH
+                    : comparedFigureText(figure, leftValues, rightValues, rightAlgorithm));
+            rightLabel.setForeground(rightValues == null ? unchanged
+                    : directionColor(figureDirection(figure, leftValues, rightValues), unchanged));
+        }
+        leftFigures.get(Figure.COW_SCORE).setToolTipText(LineupSummaryPanel.cowScoreTooltip(type));
+        rightFigures.get(Figure.COW_SCORE).setToolTipText(LineupSummaryPanel.cowScoreTooltip(type));
+        leftFigures.get(Figure.BUFF_HITS).setToolTipText(LineupSummaryPanel.buffCountTooltip(type));
+        rightFigures.get(Figure.BUFF_HITS).setToolTipText(LineupSummaryPanel.buffCountTooltip(type));
+    }
+
+    /** "Live" for the live lineup (its name in this dialog), otherwise its algorithm name - "–" if it has none. */
+    static String algorithmText(Lineup lineup, boolean live, String liveName) {
+        if (live) {
+            return liveName;
+        }
+        return lineup.algorithmName().isBlank() ? DASH : lineup.algorithmName();
+    }
+
+    /** The value of {@code figure} as shown, e.g. "56,5 Mio." or "55/55". */
+    static String figureText(Figure figure, LineupKeyFigures values, String algorithm) {
+        return switch (figure) {
+            case ALGORITHM -> algorithm;
+            case POWER -> LineupSummaryPanel.formatPower(values.power());
+            case COW_SCORE -> LineupSummaryPanel.formatCowScore(values.cowScore());
+            case BUFF_HITS -> String.valueOf(values.buffHits());
+            case SLOTS -> values.occupiedSlots() + "/" + values.capacity();
+            case TEAMS_OUTSIDE -> String.valueOf(values.teamsOutside());
+        };
+    }
+
+    /**
+     * The compared value of {@code figure} with its difference to {@code current} in brackets, e.g.
+     * "56,8 Mio. (+0,3)" or "66 (-4)" - without difference for the algorithm and the slots.
+     */
+    static String comparedFigureText(Figure figure, LineupKeyFigures current, LineupKeyFigures compared,
+                                     String algorithm) {
+        String value = figureText(figure, compared, algorithm);
+        String diff = switch (figure) {
+            case ALGORITHM, SLOTS -> null;
+            case POWER -> LineupSummaryPanel.formatPowerDiff(compared.power() - current.power(), compared.power());
+            case COW_SCORE -> LineupSummaryPanel.formatCowScoreDiff(compared.cowScore() - current.cowScore());
+            case BUFF_HITS -> signed(compared.buffHits() - current.buffHits());
+            case TEAMS_OUTSIDE -> signed(compared.teamsOutside() - current.teamsOutside());
+        };
+        return diff == null ? value : value + " (" + diff + ")";
+    }
+
+    /** Whether {@code compared} is better than {@code current} in {@code figure} - always equal for the algorithm and the slots. */
+    static LineupKeyFigures.Direction figureDirection(Figure figure, LineupKeyFigures current, LineupKeyFigures compared) {
+        return switch (figure) {
+            case ALGORITHM, SLOTS -> LineupKeyFigures.Direction.EQUAL;
+            case POWER -> LineupKeyFigures.direction(current.power(), compared.power(), false);
+            case COW_SCORE -> LineupKeyFigures.direction(current.cowScore(), compared.cowScore(), false);
+            case BUFF_HITS -> LineupKeyFigures.direction(current.buffHits(), compared.buffHits(), false);
+            case TEAMS_OUTSIDE -> LineupKeyFigures.direction(current.teamsOutside(), compared.teamsOutside(), true);
+        };
+    }
+
+    private static String signed(int diff) {
+        return diff > 0 ? "+" + diff : String.valueOf(diff);
+    }
+
+    /** {@link AppColors#SUCCESS_TEXT} if better, {@link AppColors#ERROR_TEXT} if worse, {@code unchanged} otherwise. */
+    private static Color directionColor(LineupKeyFigures.Direction direction, Color unchanged) {
+        return switch (direction) {
+            case BETTER -> AppColors.SUCCESS_TEXT;
+            case WORSE -> AppColors.ERROR_TEXT;
+            case EQUAL -> unchanged;
+        };
     }
 
     private static String tooltip(String name, String leftName, String rightName, FortificationValues value,
@@ -485,6 +648,16 @@ public class LineupComparisonDialog extends JDialog {
 
     TornadoChart buffChart() {
         return buffChart;
+    }
+
+    /** The texts of the key figures table's left (current) column, in row order. */
+    List<String> leftFigureTexts() {
+        return Arrays.stream(Figure.values()).map(f -> leftFigures.get(f).getText()).toList();
+    }
+
+    /** The texts of the key figures table's right (compared) column, in row order. */
+    List<String> rightFigureTexts() {
+        return Arrays.stream(Figure.values()).map(f -> rightFigures.get(f).getText()).toList();
     }
 
     /** "Guild · Lineup", the guild name dimmed. */

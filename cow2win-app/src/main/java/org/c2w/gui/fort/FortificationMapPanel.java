@@ -140,6 +140,8 @@ public class FortificationMapPanel extends GridPanel {
 
         // Read fresh on every rebuild, so the map is right after the live lineup was maintained.
         Lineup live = valueMode == FortificationValueMode.LIVE_COMPARISON ? liveLineup() : null;
+        // One source for the heatmap and the tiles' average power per slot (FortificationValueMode#AVERAGE_POWER).
+        FortificationHeatmap heatmap = FortificationHeatmap.of(selectedType, fortificationCatalog, lineup, guild);
         boolean selectionVisible = false;
         for (Fortification fort : fortificationCatalog) {
             if (fort.type() != selectedType) {
@@ -158,22 +160,33 @@ public class FortificationMapPanel extends GridPanel {
             boolean selected = fort.id().equals(selectedId);
             selectionVisible |= selected;
             setComponentAt(fort.row(), fort.column(), new FortificationPanel(fort, filledSlots, totalPower,
-                    diff.totalPowerDiff(), valueMode, buffPercent, buffPercentDiff(fort, diff),
-                    diff.buffMemberCountDiff(), selected, this::toggleSelection, this::open));
+                    averagePower(heatmap, fort), diff.totalPowerDiff(), valueMode, buffPercent,
+                    buffPercentDiff(fort, diff), diff.buffMemberCountDiff(), selected, this::toggleSelection,
+                    this::open));
         }
         if (!selectionVisible) {
             setSelectedId(null);
         }
-        setHeatmap(fortificationCatalog, lineup, guild, selectedType);
+        setHeatmap(heatmap, fortificationCatalog);
         // The lineup summary of the selected type is not part of the map: it is shown in the
         // info panel of the concept stage view (see org.c2w.gui.stage.ConceptStageView).
     }
 
     /**
-     * Puts the heatmap of {@code type} into its cell (see {@link #heatmapColumn}) - always power,
-     * whatever the {@link #valueMode}. Skipped (logged once) if a fortification occupies that cell.
+     * The power per slot of {@code fort}, rounded - exactly the value {@code heatmap} colors by
+     * (see {@link FortificationHeatmap.Rating#value()}); 0 if it is not of the heatmap's type.
      */
-    private void setHeatmap(List<Fortification> catalog, Lineup lineup, Guild guild, FortificationType type) {
+    static int averagePower(FortificationHeatmap heatmap, Fortification fort) {
+        FortificationHeatmap.Rating rating = heatmap.rating(fort.id());
+        return rating == null ? 0 : (int) Math.round(rating.value());
+    }
+
+    /**
+     * Puts {@code heatmap} into the cell of its type (see {@link #heatmapColumn}) - always power per
+     * slot, whatever the {@link #valueMode}. Skipped (logged once) if a fortification occupies that cell.
+     */
+    private void setHeatmap(FortificationHeatmap heatmap, List<Fortification> catalog) {
+        FortificationType type = heatmap.type();
         int column = heatmapColumn(type);
         if (componentAt(HEATMAP_ROW, column) != null) {
             if (!heatmapCellConflictLogged) {
@@ -183,7 +196,6 @@ public class FortificationMapPanel extends GridPanel {
             }
             return;
         }
-        FortificationHeatmap heatmap = FortificationHeatmap.of(type, catalog, lineup, guild);
         setComponentAt(HEATMAP_ROW, column, new FortificationHeatmapPanel(heatmap, catalog, rows(), columns()));
     }
 

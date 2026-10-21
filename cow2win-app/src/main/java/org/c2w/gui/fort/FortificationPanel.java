@@ -12,6 +12,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -37,8 +39,12 @@ public class FortificationPanel extends JPanel {
 
     /** Language file key of the compact power value, e.g. "{0} Mio". */
     private static final String KEY_POWER_MILLIONS = "fortification.powerMillions";
+    /** Language file key of the compact average power below one million, e.g. "{0} k". */
+    private static final String KEY_POWER_THOUSANDS = "fortification.powerThousands";
 
     private static final int MILLIONS_THRESHOLD = 1_000_000;
+    /** From this value on the thousands round to 1 000 k - shown as "1,00 Mio" instead. */
+    private static final int THOUSANDS_ROUND_UP_THRESHOLD = 999_500;
 
     /**
      * Preferred width of every tile, independent of its texts: the map's columns then all
@@ -54,6 +60,8 @@ public class FortificationPanel extends JPanel {
     private final Fortification fortification;
     private final int filledSlots;
     private final int totalPower;
+    /** {@link #totalPower} per capacity slot, rounded - shown in {@link FortificationValueMode#AVERAGE_POWER}. */
+    private final int averagePower;
     /**
      * Change of {@link #totalPower} against the live lineup in {@link FortificationValueMode#LIVE_COMPARISON},
      * otherwise since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded).
@@ -73,17 +81,20 @@ public class FortificationPanel extends JPanel {
     private JLabel buffPercentLbl;
 
     /**
+     * @param averagePower  power per capacity slot, rounded - the heatmap's value of the fortification
+     *                      (see org.c2w.domain.FortificationHeatmap.Rating#value)
      * @param onClick       receives {@code fortification} whenever the tile is clicked once
      *                      (also for the first click of a double-click)
      * @param onDoubleClick receives {@code fortification} whenever the tile is double-clicked
      */
-    public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int totalPowerDiff,
-                              FortificationValueMode valueMode, int buffPercent, int buffPercentDiff,
-                              int buffMemberCountDiff, boolean selected, Consumer<Fortification> onClick,
-                              Consumer<Fortification> onDoubleClick) {
+    public FortificationPanel(Fortification fortification, int filledSlots, int totalPower, int averagePower,
+                              int totalPowerDiff, FortificationValueMode valueMode, int buffPercent,
+                              int buffPercentDiff, int buffMemberCountDiff, boolean selected,
+                              Consumer<Fortification> onClick, Consumer<Fortification> onDoubleClick) {
         this.fortification = fortification;
         this.filledSlots = Math.min(filledSlots, fortification.capacity());
         this.totalPower = totalPower;
+        this.averagePower = averagePower;
         this.totalPowerDiff = totalPowerDiff;
         this.valueMode = valueMode;
         this.buffPercent = buffPercent;
@@ -212,16 +223,24 @@ public class FortificationPanel extends JPanel {
         return nameLbl;
     }
 
+    /** "{@link #totalPowerDiff}", the compact {@link #averagePower} or the compact {@link #totalPower} - by {@link #valueMode}. */
+    private String powerValue() {
+        if (valueMode.showsChange()) {
+            return formatPowerDiff(totalPowerDiff);
+        }
+        return valueMode == FortificationValueMode.AVERAGE_POWER ? compactAveragePower(averagePower) : compactPower(totalPower);
+    }
+
     /**
-     * "filled/capacity · power", e.g. "5/5 · 1,05 Mio" - or, while {@link #valueMode} shows a
+     * "filled/capacity · power", e.g. "5/5 · 1,05 Mio", or "filled/capacity · average power per slot",
+     * e.g. "8/8 · 868 k" - or, while {@link #valueMode} shows a
      * change, "filled/capacity · {@link #totalPowerDiff}", colored
      * {@link AppColors#SUCCESS_TEXT} for a gain and {@link AppColors#ERROR_TEXT} for a loss (see {@link #diffColor}).
      */
     JLabel getPowerLabel() {
         if (powerLbl == null) {
             String places = filledSlots + "/" + fortification.capacity() + " · ";
-            String power = valueMode.showsChange() ? formatPowerDiff(totalPowerDiff) : compactPower(totalPower);
-            powerLbl = new JLabel(places + power, JLabel.LEFT);
+            powerLbl = new JLabel(places + powerValue(), JLabel.LEFT);
             powerLbl.setForeground(valueMode.showsChange() ? diffColor(totalPowerDiff, AppColors.TEXT_MUTED) : AppColors.TEXT_MUTED);
             powerLbl.setToolTipText(powerTooltip());
             powerLbl.setMinimumSize(new Dimension(0, powerLbl.getPreferredSize().height));
@@ -269,31 +288,65 @@ public class FortificationPanel extends JPanel {
         if (Math.abs(power) < MILLIONS_THRESHOLD) {
             return GuiUtils.NUMBER_FORMAT.format(power);
         }
+        return millionsPattern.replace("{0}", millions(power, locale));
+    }
+
+    /** {@code power} in millions with two decimals in {@code locale}, without grouping - e.g. "1,05". */
+    private static String millions(int power, Locale locale) {
         NumberFormat format = NumberFormat.getInstance(locale);
         format.setGroupingUsed(false);
         format.setMinimumFractionDigits(2);
         format.setMaximumFractionDigits(2);
-        String millions = format.format(power / (double) MILLIONS_THRESHOLD);
-        return millionsPattern.replace("{0}", millions);
+        return format.format(power / (double) MILLIONS_THRESHOLD);
+    }
+
+    /**
+     * {@code averagePower} in compact form for the configured language, see
+     * {@link #compactAveragePower(int, Locale, String, String)}.
+     */
+    static String compactAveragePower(int averagePower) {
+        return compactAveragePower(averagePower, LanguageService.locale(),
+                LanguageService.displayName(KEY_POWER_MILLIONS), LanguageService.displayName(KEY_POWER_THOUSANDS));
+    }
+
+    /**
+     * GUI-free core of the compact average power per slot (only {@link FortificationValueMode#AVERAGE_POWER}):
+     * in millions like {@link #compactPower(int, Locale, String)}, e.g. "1,16 Mio"; below one million in
+     * whole thousands, rounded half up, with {@code thousandsPattern} (e.g. "{0} k"), e.g. 867 914 → "868 k"
+     * and 0 → "0 k". A value that would round to 1 000 k (from 999 500 on) is shown in millions,
+     * i.e. "1,00 Mio".
+     */
+    static String compactAveragePower(int averagePower, Locale locale, String millionsPattern, String thousandsPattern) {
+        if (Math.abs(averagePower) >= THOUSANDS_ROUND_UP_THRESHOLD) {
+            return millionsPattern.replace("{0}", millions(averagePower, locale));
+        }
+        BigDecimal thousands = BigDecimal.valueOf(averagePower).movePointLeft(3).setScale(0, RoundingMode.HALF_UP);
+        return thousandsPattern.replace("{0}", NumberFormat.getIntegerInstance(locale).format(thousands));
     }
 
     /**
      * Tooltip of the power label: the change since the lineup was loaded or last saved while the
-     * label shows the total power, the total power while it shows that change, and the change
-     * against live - naming that base - in the live comparison.
+     * label shows the total power, the calculation while it shows the average power per slot, the
+     * total power while it shows that change, and the change against live - naming that base - in
+     * the live comparison.
      */
     private String powerTooltip() {
-        return powerTooltip(valueMode, totalPower, totalPowerDiff, fortification.buff() != null, buffMemberCountDiff);
+        return powerTooltip(valueMode, totalPower, averagePower, fortification.capacity(), totalPowerDiff,
+                fortification.buff() != null, buffMemberCountDiff);
     }
 
     /**
      * GUI-free core of {@link #powerTooltip()}, e.g. "Since last save: +12.345 power, +1 buff
-     * members", "Unchanged since last save", "Total power: 1.234.567" or "Compared to live:
-     * +12.345 power". The buff part only appears for a fortification with a buff.
+     * members", "Unchanged since last save", "Avg. power per slot: 867.914 (total 6.943.309 ÷ 8
+     * slots)", "Total power: 1.234.567" or "Compared to live: +12.345 power". The buff part only
+     * appears for a fortification with a buff.
      */
-    static String powerTooltip(FortificationValueMode valueMode, int totalPower, int totalPowerDiff,
-                               boolean hasBuff, int buffMemberCountDiff) {
+    static String powerTooltip(FortificationValueMode valueMode, int totalPower, int averagePower, int capacity,
+                               int totalPowerDiff, boolean hasBuff, int buffMemberCountDiff) {
         return switch (valueMode) {
+            case AVERAGE_POWER -> LanguageService.displayName("fortification.averagePowerTooltip",
+                    GuiUtils.NUMBER_FORMAT.format(averagePower), GuiUtils.NUMBER_FORMAT.format(totalPower),
+                    String.valueOf(capacity));
             case CHANGES -> LanguageService.displayName("fortification.totalPowerTooltip",
                     GuiUtils.NUMBER_FORMAT.format(totalPower));
             case POWER -> diffTooltip("fortification.unchangedTooltip", "fortification.diffTooltip",

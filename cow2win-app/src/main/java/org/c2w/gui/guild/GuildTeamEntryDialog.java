@@ -11,6 +11,7 @@ import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.InfoArea;
 import org.c2w.i18n.BuffTexts;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 /**
  * Guild-wide entry dialog for exactly ONE team type (hero or titan - see
@@ -71,6 +73,11 @@ import java.util.List;
  *     edited in the editor area so that it no longer matches stays shown and selected until the
  *     next filter change or until another line is selected - see {@link FilterSelectionModel}.
  *     Hidden lines stay loaded and are saved as usual.</li>
+ *     <li>Where a new team goes: to the filtered fortification, with "all fortifications" to the
+ *     fortification last chosen in the editor, with "none" nowhere. If that fortification is full,
+ *     the team goes to the next free one in the filter's order (wrapping around) - the filter
+ *     jumps there too, or to "none" if every fortification is full. See {@link #addRow}.</li>
+ *     <li>A hint below the toolbar points out that the keyboard (type-ahead) is fastest.</li>
  * </ul>
  *
  * <p>On save, every line is resolved to a (member, teamIndex) slot and the
@@ -121,6 +128,12 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private static final String KEY_SHORTCUT_SAVE_TEMPLATE = "guildEntry.shortcut.saveTemplate";
     private static final String KEY_SHORTCUT_NEXT_FIELD = "guildEntry.shortcut.nextField";
     private static final String KEY_SHORTCUT_TYPE_AHEAD = "guildEntry.shortcut.typeAhead";
+    /** Keyboard hint below the toolbar - one per team type, each with an example of that type. */
+    private static final String KEY_KEYBOARD_HINT_HERO = "guildEntry.keyboardHint.hero";
+    private static final String KEY_KEYBOARD_HINT_TITAN = "guildEntry.keyboardHint.titan";
+
+    /** Lines of the keyboard hint below the toolbar. */
+    private static final int INFO_ROWS = 2;
 
     /**
      * Same convention as Microsoft Access (Ctrl+Plus = new record, Shift+Enter
@@ -264,7 +277,7 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         });
         setLayout(new BorderLayout());
 
-        add(buildToolbar(), BorderLayout.NORTH);
+        add(buildNorth(), BorderLayout.NORTH);
         JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, buildTablePane(), buildEditorArea());
         split.setResizeWeight(1.0);
         split.setBorder(BorderFactory.createEmptyBorder());
@@ -1097,6 +1110,17 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
 
     // ------------------------------------------------------- toolbar/actions
 
+    /** The toolbar with the keyboard hint below it, like the battle list. */
+    private JComponent buildNorth() {
+        InfoArea info = new InfoArea(INFO_ROWS);
+        info.setText(LanguageService.displayName(
+                spec.teamType() == Lineup.TeamType.TITAN ? KEY_KEYBOARD_HINT_TITAN : KEY_KEYBOARD_HINT_HERO));
+        JPanel north = new JPanel(new BorderLayout());
+        north.add(buildToolbar(), BorderLayout.NORTH);
+        north.add(InfoArea.framed(info), BorderLayout.CENTER);
+        return north;
+    }
+
     private JComponent buildToolbar() {
         FlatButton saveButton = new FlatButton(IconLoader.iconFor(ICON_SAVE, TOOLBAR_ICON_SIZE, AppColors.ACCENT));
         saveButton.setToolTipText(withShortcut(LanguageService.displayName(KEY_SAVE_TEAMS), SHORTCUT_SAVE));
@@ -1223,12 +1247,17 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         DefaultComboBoxModel<Object> model = new DefaultComboBoxModel<>();
         model.addElement(FILTER_ALL);
         model.addElement(FILTER_NONE);
-        fortificationCatalog.stream()
-                .filter(f -> f.type() == spec.fortificationType())
-                .sorted(Comparator.comparing(f -> LanguageService.displayName(f.id())))
-                .forEach(model::addElement);
+        fortificationsInFilterOrder().forEach(model::addElement);
         model.setSelectedItem(selected == null ? FILTER_ALL : selected);
         fortFilter.setModel(model);
+    }
+
+    /** The fortifications of this dialog's type in the filter's order - by display name; also "next" for {@link #nextFree}. */
+    private List<Fortification> fortificationsInFilterOrder() {
+        return fortificationCatalog.stream()
+                .filter(f -> f.type() == spec.fortificationType())
+                .sorted(Comparator.comparing(f -> LanguageService.displayName(f.id())))
+                .toList();
     }
 
     private JComponent buildStatusBar() {
@@ -1303,30 +1332,70 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         return text + " (" + shortcutText(shortcut) + ")";
     }
 
-    /** Appends a new, empty team - no save first (see class Javadoc). */
+    /**
+     * Appends a new, empty team - no save first (see class Javadoc). It goes to the filtered
+     * fortification, or with "all fortifications" to {@link #lastSelectedFortification}; if that
+     * one is full, to the next free one (see {@link #nextFree}) - the filter follows, or switches
+     * to "none" if every fortification is full.
+     */
     private void addRow() {
         if (!canAddRow()) {
             return;
         }
         commitPendingMemberEdit();
-        // A filter change (see refilter) - done before the new line exists, so its selection
+        // Filter changes (see refilter) - done before the new line exists, so their selection
         // logic cannot overtake the new line selected below.
         searchField.setText("");
-        Row<T> row = new Row<>(null, -1);
-        row.member = fixedMember; // fixed: the new team belongs to that member
+        Fortification target = null;
         Object filtered = fortFilter.getSelectedItem();
         if (filtered instanceof Fortification f) {
-            row.fortification = f;
-        } else if (filtered != FILTER_NONE && lastSelectedFortification != null
-                && occupancy(lastSelectedFortification) < lastSelectedFortification.capacity()) {
-            row.fortification = lastSelectedFortification;
+            target = hasRoom(f) ? f : nextFree(fortificationsInFilterOrder(), f, this::occupancyCount);
+            Object newFilter = target == null ? FILTER_NONE : target;
+            if (newFilter != filtered) {
+                fortFilter.setSelectedItem(newFilter);
+            }
+        } else if (filtered != FILTER_NONE && lastSelectedFortification != null) {
+            target = hasRoom(lastSelectedFortification) ? lastSelectedFortification
+                    : nextFree(fortificationsInFilterOrder(), lastSelectedFortification, this::occupancyCount);
+            if (target != null) {
+                lastSelectedFortification = target;
+            }
         }
+        Row<T> row = new Row<>(null, -1);
+        row.member = fixedMember; // fixed: the new team belongs to that member
+        row.fortification = target;
         rows.add(row);
         tableModel.fireTableRowsInserted(rows.size() - 1, rows.size() - 1);
         dirty = true;
         selectRow(row);
         updateStatus();
         (fixedMember == null ? memberCombo : fortCombo).requestFocusInWindow();
+    }
+
+    private boolean hasRoom(Fortification fortification) {
+        return occupancy(fortification) < fortification.capacity();
+    }
+
+    private int occupancyCount(Fortification fortification) {
+        return (int) occupancy(fortification);
+    }
+
+    /**
+     * The first fortification after {@code full} in {@code order} (wrapping around, {@code full}
+     * itself last) that still has room, i.e. {@code occupancy < capacity}; null if every one is
+     * full. Also used when {@code full} is not in {@code order} - the search then starts at the
+     * beginning.
+     */
+    static Fortification nextFree(List<Fortification> order, Fortification full,
+                                  ToIntFunction<Fortification> occupancy) {
+        int start = order.indexOf(full);
+        for (int step = 1; step <= order.size(); step++) {
+            Fortification candidate = order.get(Math.floorMod(start + step, order.size()));
+            if (occupancy.applyAsInt(candidate) < candidate.capacity()) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     /** False only while the fixed member already has a line for each of its team slots. */

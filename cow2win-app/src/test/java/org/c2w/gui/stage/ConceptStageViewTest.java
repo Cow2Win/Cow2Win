@@ -120,7 +120,10 @@ class ConceptStageViewTest {
     void valueModeBox() {
         assertEquals(FortificationValueMode.POWER, view.valueModeBox().getSelectedItem());
         assertEquals(FortificationValueMode.POWER, map.valueMode());
+        assertEquals(FortificationValueMode.AVERAGE_POWER, view.valueModeBox().getItemAt(1), "right after power");
 
+        view.valueModeBox().setSelectedItem(FortificationValueMode.AVERAGE_POWER);
+        assertEquals(FortificationValueMode.AVERAGE_POWER, map.valueMode());
         view.valueModeBox().setSelectedItem(FortificationValueMode.CHANGES);
         assertEquals(FortificationValueMode.CHANGES, map.valueMode());
         view.valueModeBox().setSelectedItem(FortificationValueMode.LIVE_COMPARISON);

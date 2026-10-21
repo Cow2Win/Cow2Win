@@ -10,6 +10,11 @@ public enum FortificationValueMode {
 
     /** The current total power and buff percentage of each fortification. */
     POWER("fortificationMap.valueMode.power"),
+    /**
+     * The current power per capacity slot (empty slots count as 0) and buff percentage of each
+     * fortification - the value the heatmap colors by (see org.c2w.domain.FortificationHeatmap.Rating#value).
+     */
+    AVERAGE_POWER("fortificationMap.valueMode.averagePower"),
     /** The change since the lineup was loaded or last saved (see AppContext#fortificationDiffFromLoaded). */
     CHANGES("fortificationMap.valueMode.changes"),
     /** The change against the guild's live lineup - against an empty lineup if there is none. */
@@ -23,7 +28,7 @@ public enum FortificationValueMode {
 
     /** True if the tiles show a change instead of the current value. */
     public boolean showsChange() {
-        return this != POWER;
+        return this == CHANGES || this == LIVE_COMPARISON;
     }
 
     /** Display name in the configured language - shown in the combo box. */

@@ -63,6 +63,14 @@ class TornadoChartTest {
     }
 
     @Test
+    @DisplayName("Power in the millions on a wide chart: the bar length does not overflow (bars vanished from ~950 px on)")
+    void barLengthWithoutOverflow() {
+        assertEquals(400, TornadoChart.barLength(7_100_000, 7_100_000, 400));
+        assertEquals(1_000, TornadoChart.barLength(7_100_000, 7_100_000, 1_000));
+        assertEquals(500, TornadoChart.barLength(35_500_000, 71_000_000, 1_000));
+    }
+
+    @Test
     @DisplayName("The difference is in the success text color if the right side has more, in the error text color if less, neutral otherwise")
     void diffColor() {
         assertEquals(AppColors.SUCCESS_TEXT, TornadoChart.diffColor(5, Color.GRAY));

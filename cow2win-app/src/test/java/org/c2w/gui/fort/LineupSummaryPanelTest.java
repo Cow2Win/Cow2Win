@@ -1,8 +1,10 @@
 package org.c2w.gui.fort;
 
+import org.c2w.data.model.FortificationType;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.CowScoreBonuses;
 import org.c2w.domain.CowScoreFixture;
+import org.c2w.domain.LineupKeyFigures;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.i18n.LanguageService;
 import org.junit.jupiter.api.AfterEach;
@@ -58,6 +60,31 @@ class LineupSummaryPanelTest {
     void cowScoreFormat() {
         assertEquals("1.234,5", LineupSummaryPanel.formatCowScore(1234.54));
         assertEquals("616", LineupSummaryPanel.formatCowScore(616.0));
+    }
+
+    @Test
+    @DisplayName("differences get a sign; power in millions when the value is, in full if that would hide it")
+    void diffFormats() {
+        assertEquals("+0,3", LineupSummaryPanel.formatPowerDiff(300_000, 56_500_000));
+        assertEquals("-1,2", LineupSummaryPanel.formatPowerDiff(-1_200_000, 56_500_000));
+        assertEquals("+12.345", LineupSummaryPanel.formatPowerDiff(12_345, 56_500_000));
+        assertEquals("-12.345", LineupSummaryPanel.formatPowerDiff(-12_345, 800_000));
+        assertEquals("0", LineupSummaryPanel.formatPowerDiff(0, 56_500_000));
+        assertEquals("+12,4", LineupSummaryPanel.formatCowScoreDiff(12.4));
+        assertEquals("-3", LineupSummaryPanel.formatCowScoreDiff(-3.0));
+        assertEquals("0", LineupSummaryPanel.formatCowScoreDiff(-0.01));
+    }
+
+    @Test
+    @DisplayName("the summary shows the shared key figures")
+    void sameAsKeyFigures() {
+        HeroLineupSummaryPanel panel = new HeroLineupSummaryPanel(fixture.lineup, fixture.guild);
+        LineupKeyFigures figures = LineupKeyFigures.of(fixture.lineup, fixture.guild,
+                FortificationType.HERO);
+        assertEquals(LanguageService.displayName("lineupSummary.heroPower") + ": "
+                + LineupSummaryPanel.formatPower(figures.power()), panel.powerLabel().getText());
+        assertEquals(LineupSummaryPanel.cowScoreTooltip(FortificationType.HERO),
+                panel.cowScoreLabel().getToolTipText());
     }
 
     @Test

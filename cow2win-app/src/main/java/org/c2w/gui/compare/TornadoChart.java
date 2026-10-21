@@ -123,7 +123,8 @@ public final class TornadoChart extends JComponent {
         if (max <= 0 || value <= 0 || available <= 0) {
             return 0;
         }
-        return (int) Math.round(available * Math.min(value, max) / (double) max);
+        // In double: available * value overflows an int for power values in the millions on a wide chart.
+        return (int) Math.round(available * (double) Math.min(value, max) / max);
     }
 
     /** {@link AppColors#SUCCESS_TEXT} if the right side has more, {@link AppColors#ERROR_TEXT} if less, {@code neutral} otherwise. */

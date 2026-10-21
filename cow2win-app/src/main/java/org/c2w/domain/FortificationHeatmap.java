@@ -18,23 +18,29 @@ import java.util.Map;
  * {@link BuffCalculationService#totalPowerOf}) divided by its {@linkplain Fortification#capacity()
  * capacity} - empty slots count as 0. The reference is the power of all fortifications of the type
  * divided by the sum of their capacities. A fortification without a team is {@link Level#EMPTY};
- * otherwise its share of the reference decides the level: above {@link #HIGH_ABOVE_PERCENT} is
- * {@link Level#HIGH}, below {@link #LOW_BELOW_PERCENT} is {@link Level#LOW}, everything in between
- * (both limits included) is {@link Level#MEDIUM}. If every fortification of the type is empty, all
- * are {@link Level#EMPTY}.
+ * otherwise its share of the reference decides the level:
+ * <ul>
+ *   <li>above {@link #VERY_HIGH_ABOVE_PERCENT} (110 %): {@link Level#VERY_HIGH},</li>
+ *   <li>from {@link #HIGH_FROM_PERCENT} (100 %) up to 110 %, both included: {@link Level#HIGH},</li>
+ *   <li>from {@link #LOW_BELOW_PERCENT} (90 %, included) to below 100 %: {@link Level#MEDIUM},</li>
+ *   <li>below 90 %: {@link Level#LOW}.</li>
+ * </ul>
+ * If every fortification of the type is empty, all are {@link Level#EMPTY}.
  *
  * @param type   the fortification type this heatmap covers
  * @param levels one {@link Rating} per fortification id of {@code type}, in catalog order
  */
 public record FortificationHeatmap(FortificationType type, Map<String, Rating> levels) {
 
-    /** A fortification above this share (in percent) of the reference is {@link Level#HIGH}. */
-    public static final int HIGH_ABOVE_PERCENT = 110;
-    /** A fortification below this share (in percent) of the reference is {@link Level#LOW}. */
+    /** A fortification above this share (in percent, excluded) of the reference is {@link Level#VERY_HIGH}. */
+    public static final int VERY_HIGH_ABOVE_PERCENT = 110;
+    /** A fortification from this share (in percent, included) of the reference is at least {@link Level#HIGH}. */
+    public static final int HIGH_FROM_PERCENT = 100;
+    /** A fortification below this share (in percent, excluded) of the reference is {@link Level#LOW}. */
     public static final int LOW_BELOW_PERCENT = 90;
 
-    /** Heatmap level of one fortification. */
-    public enum Level { EMPTY, LOW, MEDIUM, HIGH }
+    /** Heatmap level of one fortification, from weak to strong. */
+    public enum Level { EMPTY, LOW, MEDIUM, HIGH, VERY_HIGH }
 
     /**
      * Rating of one fortification.
@@ -113,12 +119,15 @@ public record FortificationHeatmap(FortificationType type, Map<String, Rating> l
             return Level.EMPTY;
         }
         long scaledValue = power * totalCapacity * 100;
-        if (scaledValue > HIGH_ABOVE_PERCENT * totalPower * capacity) {
+        if (scaledValue > VERY_HIGH_ABOVE_PERCENT * totalPower * capacity) {
+            return Level.VERY_HIGH;
+        }
+        if (scaledValue >= HIGH_FROM_PERCENT * totalPower * capacity) {
             return Level.HIGH;
         }
-        if (scaledValue < LOW_BELOW_PERCENT * totalPower * capacity) {
-            return Level.LOW;
+        if (scaledValue >= LOW_BELOW_PERCENT * totalPower * capacity) {
+            return Level.MEDIUM;
         }
-        return Level.MEDIUM;
+        return Level.LOW;
     }
 }

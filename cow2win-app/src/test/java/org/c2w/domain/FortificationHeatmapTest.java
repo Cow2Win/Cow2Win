@@ -28,42 +28,85 @@ class FortificationHeatmapTest {
 
         assertEquals(250_000, heatmap.rating("a").value(), 0.001);
         assertEquals(2.0, heatmap.rating("a").shareOfReference(), 0.0001, "reference 1 000 000 / 8 slots");
-        assertEquals(Level.HIGH, heatmap.level("a"));
+        assertEquals(Level.VERY_HIGH, heatmap.level("a"));
         assertEquals(Level.EMPTY, heatmap.level("b"));
     }
 
     @Test
-    @DisplayName("Exactly 110 % and exactly 90 % are MEDIUM")
-    void limitsIncluded() {
-        Fortification a = fort("a", FortificationType.HERO, 1);
-        Fortification b = fort("b", FortificationType.HERO, 1);
-        Fortification c = fort("c", FortificationType.HERO, 1);
-        hero(a, 11_000);
-        hero(b, 9_000);
-        hero(c, 10_000);
+    @DisplayName("Limits: above 110 % VERY_HIGH, 100 % to 110 % HIGH, 90 % to below 100 % MEDIUM, below 90 % LOW")
+    void limits() {
+        // Reference 70 000 / 7 slots = 10 000 per slot.
+        Fortification above110 = fort("above110", FortificationType.HERO, 1);
+        Fortification at110 = fort("at110", FortificationType.HERO, 1);
+        Fortification above100 = fort("above100", FortificationType.HERO, 1);
+        Fortification at100 = fort("at100", FortificationType.HERO, 1);
+        Fortification below100 = fort("below100", FortificationType.HERO, 1);
+        Fortification at90 = fort("at90", FortificationType.HERO, 1);
+        Fortification below90 = fort("below90", FortificationType.HERO, 1);
+        hero(above110, 11_001);
+        hero(at110, 11_000);
+        hero(above100, 10_001);
+        hero(at100, 10_000);
+        hero(below100, 9_999);
+        hero(at90, 9_000);
+        hero(below90, 8_999);
 
-        FortificationHeatmap heatmap = heatmap(FortificationType.HERO, a, b, c);
+        FortificationHeatmap heatmap = heatmap(FortificationType.HERO,
+                above110, at110, above100, at100, below100, at90, below90);
 
-        assertEquals(Level.MEDIUM, heatmap.level("a"), "110 %");
-        assertEquals(Level.MEDIUM, heatmap.level("b"), "90 %");
-        assertEquals(Level.MEDIUM, heatmap.level("c"), "100 %");
+        assertEquals(Level.VERY_HIGH, heatmap.level("above110"), "just above 110 %");
+        assertEquals(Level.HIGH, heatmap.level("at110"), "exactly 110 %");
+        assertEquals(Level.HIGH, heatmap.level("above100"), "just above 100 %");
+        assertEquals(Level.HIGH, heatmap.level("at100"), "exactly 100 %");
+        assertEquals(Level.MEDIUM, heatmap.level("below100"), "just below 100 %");
+        assertEquals(Level.MEDIUM, heatmap.level("at90"), "exactly 90 %");
+        assertEquals(Level.LOW, heatmap.level("below90"), "just below 90 %");
     }
 
     @Test
-    @DisplayName("Just above 110 % is HIGH, just below 90 % is LOW")
-    void beyondLimits() {
-        Fortification a = fort("a", FortificationType.HERO, 1);
-        Fortification b = fort("b", FortificationType.HERO, 1);
-        Fortification c = fort("c", FortificationType.HERO, 1);
-        hero(a, 11_001);
-        hero(b, 8_999);
-        hero(c, 10_000);
+    @DisplayName("Shares of the live lineup 'Deutscher Bund' (16.10.2026, heroes) get the expected levels")
+    void liveLineupShares() {
+        // Same shares as the live lineup, reference 7 000 / 7 slots = 1 000 per slot.
+        Fortification heroBridge = fort("hero-bridge", FortificationType.HERO, 1);
+        Fortification lighthouse = fort("lighthouse", FortificationType.HERO, 1);
+        Fortification bastion = fort("bastion", FortificationType.HERO, 1);
+        Fortification academy = fort("academy", FortificationType.HERO, 1);
+        Fortification townHall = fort("town-hall", FortificationType.HERO, 1);
+        Fortification fortress = fort("fortress", FortificationType.HERO, 1);
+        Fortification balance = fort("balance", FortificationType.HERO, 1);
+        hero(heroBridge, 1_124);
+        hero(lighthouse, 1_067);
+        hero(bastion, 1_020);
+        hero(academy, 996);
+        hero(townHall, 959);
+        hero(fortress, 845);
+        hero(balance, 989);
 
-        FortificationHeatmap heatmap = heatmap(FortificationType.HERO, a, b, c);
+        FortificationHeatmap heatmap = heatmap(FortificationType.HERO,
+                heroBridge, lighthouse, bastion, academy, townHall, fortress, balance);
 
-        assertEquals(Level.HIGH, heatmap.level("a"));
-        assertEquals(Level.LOW, heatmap.level("b"));
-        assertEquals(Level.MEDIUM, heatmap.level("c"));
+        assertEquals(1.124, heatmap.rating("hero-bridge").shareOfReference(), 0.0001);
+        assertEquals(Level.VERY_HIGH, heatmap.level("hero-bridge"), "112.4 %");
+        assertEquals(Level.HIGH, heatmap.level("lighthouse"), "106.7 %");
+        assertEquals(Level.HIGH, heatmap.level("bastion"), "102.0 %");
+        assertEquals(Level.MEDIUM, heatmap.level("academy"), "99.6 %");
+        assertEquals(Level.MEDIUM, heatmap.level("town-hall"), "95.9 %");
+        assertEquals(Level.LOW, heatmap.level("fortress"), "84.5 %");
+    }
+
+    @Test
+    @DisplayName("A partly filled fortification is rated like any other, not EMPTY")
+    void partlyFilledNotEmpty() {
+        Fortification a = fort("a", FortificationType.HERO, 2);
+        Fortification b = fort("b", FortificationType.HERO, 2);
+        hero(a, 10_000);
+        hero(b, 10_000);
+        hero(b, 10_000);
+
+        FortificationHeatmap heatmap = heatmap(FortificationType.HERO, a, b);
+
+        assertEquals(Level.LOW, heatmap.level("a"), "5 000 per slot against 7 500");
+        assertEquals(Level.VERY_HIGH, heatmap.level("b"), "10 000 per slot against 7 500");
     }
 
     @Test
@@ -91,8 +134,8 @@ class FortificationHeatmapTest {
 
         FortificationHeatmap heatmap = heatmap(FortificationType.HERO, a, b, t);
 
-        assertEquals(Level.MEDIUM, heatmap.level("a"));
-        assertEquals(Level.MEDIUM, heatmap.level("b"));
+        assertEquals(Level.HIGH, heatmap.level("a"), "exactly 100 %");
+        assertEquals(Level.HIGH, heatmap.level("b"), "exactly 100 %");
         assertNull(heatmap.rating("t"), "titan fortification not part of the hero heatmap");
     }
 

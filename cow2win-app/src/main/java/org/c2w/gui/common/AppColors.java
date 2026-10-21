@@ -44,8 +44,16 @@ public final class AppColors {
 
     // --- Heatmap -----------------------------------------------------------------------------
 
-    /** Weak fortification in the heatmap of the fortification map (a muted dark yellow, areas only). */
-    public static final Color HEATMAP_LOW = new Color(0xA8, 0x8A, 0x1E);
+    // Palette "Glut": the levels get lighter from strong to weak, so they differ in brightness, not only in hue.
+
+    /** Very strong fortification (above 110 %) in the heatmap of the fortification map (dark red, areas only). */
+    public static final Color HEATMAP_VERY_HIGH = new Color(0x8E, 0x1B, 0x1B);
+    /** Strong fortification (100 % to 110 %) in the heatmap of the fortification map (red, areas only). */
+    public static final Color HEATMAP_HIGH = new Color(0xD2, 0x46, 0x2A);
+    /** Slightly weak fortification (90 % to below 100 %) in the heatmap of the fortification map (orange, areas only). */
+    public static final Color HEATMAP_MEDIUM = new Color(0xF0, 0x8C, 0x2E);
+    /** Weak fortification (below 90 %) in the heatmap of the fortification map (light yellow, areas only). */
+    public static final Color HEATMAP_LOW = new Color(0xF6, 0xD3, 0x65);
 
     // --- Fortification type ------------------------------------------------------------------
 

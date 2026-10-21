@@ -3,7 +3,7 @@ package org.c2w.gui.fort;
 import org.c2w.data.model.FortificationType;
 import org.c2w.data.model.Guild;
 import org.c2w.data.model.Lineup;
-import org.c2w.domain.BuffCalculationService;
+import org.c2w.domain.LineupKeyFigures;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.FortificationTypeStyle;
 import org.c2w.gui.common.GuiUtils;
@@ -48,15 +48,14 @@ public abstract class LineupSummaryPanel extends JPanel {
     }
 
     private final Guild guild;
-    private final Lineup.TeamType teamType;
+    private final FortificationType fortificationType;
     private final Keys keys;
 
     private final JLabel powerLbl = new JLabel();
     private final JLabel cowScoreLbl = new JLabel();
     private final JLabel buffCountLbl = new JLabel();
 
-    protected LineupSummaryPanel(Lineup lineup, Guild guild, Lineup.TeamType teamType,
-                                 FortificationType fortificationType, Keys keys) {
+    protected LineupSummaryPanel(Lineup lineup, Guild guild, FortificationType fortificationType, Keys keys) {
         super(new GridLayout(3, 1, 0, 2));
         if (lineup == null) {
             throw new IllegalArgumentException("LineupSummaryPanel needs a lineup");
@@ -65,7 +64,7 @@ public abstract class LineupSummaryPanel extends JPanel {
             throw new IllegalArgumentException("LineupSummaryPanel needs a guild");
         }
         this.guild = guild;
-        this.teamType = teamType;
+        this.fortificationType = fortificationType;
         this.keys = keys;
         setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         setOpaque(false);
@@ -84,24 +83,29 @@ public abstract class LineupSummaryPanel extends JPanel {
         if (lineup == null) {
             throw new IllegalArgumentException("lineup must not be null");
         }
-        powerLbl.setText(LanguageService.displayName(keys.power()) + ": "
-                + formatPower(totalPower(lineup, guild, teamType)));
-        cowScoreLbl.setText(LanguageService.displayName(keys.cowScore()) + ": "
-                + COW_SCORE_FORMAT.format(sumCowScore(lineup, guild)));
+        LineupKeyFigures figures = LineupKeyFigures.of(lineup, guild, fortificationType);
+        powerLbl.setText(LanguageService.displayName(keys.power()) + ": " + formatPower(figures.power()));
+        cowScoreLbl.setText(LanguageService.displayName(keys.cowScore()) + ": " + formatCowScore(figures.cowScore()));
         buffCountLbl.setText(LanguageService.displayName(keys.buffCount()) + ": "
-                + LanguageService.displayName(keys.buffCountValue(), countIncreasingBuff(lineup, guild)));
+                + LanguageService.displayName(keys.buffCountValue(), figures.buffHits()));
         // Here rather than once: the percentages come from the settings and may have changed.
-        cowScoreLbl.setToolTipText(htmlTooltip(cowScoreTooltip(keys.cowScoreTooltip())));
+        cowScoreLbl.setToolTipText(cowScoreTooltip(fortificationType));
     }
 
-    /** Summed CowScore of this panel's team type - see BuffCalculationService#sumHeroCowScore / #sumTitanCowScore. */
-    protected abstract double sumCowScore(Lineup lineup, Guild guild);
+    /**
+     * The HTML tooltip explaining the CowScore of {@code type}'s teams, with the current percentages
+     * - also used by the lineup comparison.
+     */
+    public static String cowScoreTooltip(FortificationType type) {
+        return htmlTooltip(type == FortificationType.HERO ? HeroLineupSummaryPanel.cowScoreTooltipText()
+                : TitanLineupSummaryPanel.cowScoreTooltipText());
+    }
 
-    /** Placed heroes/titans that increase a buff - see BuffCalculationService#countHeroesIncreasingBuff / #countTitansIncreasingBuff. */
-    protected abstract int countIncreasingBuff(Lineup lineup, Guild guild);
-
-    /** The plain text of the CowScore label's tooltip (lines separated by "\n") with the current percentages filled in. */
-    protected abstract String cowScoreTooltip(String key);
+    /** The tooltip explaining the buff count of {@code type} - also used by the lineup comparison. */
+    public static String buffCountTooltip(FortificationType type) {
+        return LanguageService.displayName(type == FortificationType.HERO
+                ? HeroLineupSummaryPanel.KEYS.buffCountTooltip() : TitanLineupSummaryPanel.KEYS.buffCountTooltip());
+    }
 
     /** A percentage for a tooltip: the language's locale, at most 2 decimal digits. */
     protected static String formatPercent(double percent) {
@@ -116,18 +120,8 @@ public abstract class LineupSummaryPanel extends JPanel {
         return "<html>" + escaped.replace("\n", "<br>") + "</html>";
     }
 
-    /** Sums every entry's current team totalPower (see {@link BuffCalculationService#totalPowerOf}) over every entry of the given team type. */
-    private static int totalPower(Lineup lineup, Guild guild, Lineup.TeamType teamType) {
-        int total = 0;
-        for (Lineup.Entry entry : lineup.entries()) {
-            if (entry.teamType() == teamType) {
-                total += BuffCalculationService.totalPowerOf(entry, guild);
-            }
-        }
-        return total;
-    }
-
-    private static String formatPower(int power) {
+    /** A total power as shown: from one million on with one decimal and "Mio.", e.g. "56,5 Mio.", below in full. */
+    public static String formatPower(int power) {
         if (Math.abs(power) >= MILLIONS_THRESHOLD) {
             double millions = power / (double) MILLIONS_THRESHOLD;
             return MILLIONS_FORMAT.format(millions) + " " + LanguageService.displayName(KEY_MILLIONS_SUFFIX);
@@ -135,9 +129,33 @@ public abstract class LineupSummaryPanel extends JPanel {
         return GuiUtils.NUMBER_FORMAT.format(power);
     }
 
-    /** The CowScore line's number as shown - for tests. */
-    static String formatCowScore(double cowScore) {
+    /** A summed CowScore as shown: thousands grouping, one decimal, e.g. "1.234,5". */
+    public static String formatCowScore(double cowScore) {
         return COW_SCORE_FORMAT.format(cowScore);
+    }
+
+    /**
+     * A power difference in the unit {@link #formatPower} shows {@code reference} in, with sign:
+     * "+0,3" for millions (without the suffix), "-12.345" below - the full difference if it would
+     * round to 0 in millions, so a difference is never hidden.
+     */
+    public static String formatPowerDiff(int diff, int reference) {
+        String formatted;
+        if (Math.abs(reference) >= MILLIONS_THRESHOLD && Math.abs(diff) >= MILLIONS_THRESHOLD / 20) {
+            formatted = MILLIONS_FORMAT.format(diff / (double) MILLIONS_THRESHOLD);
+        } else {
+            formatted = GuiUtils.NUMBER_FORMAT.format(diff);
+        }
+        return diff > 0 ? "+" + formatted : formatted;
+    }
+
+    /** A CowScore difference like {@link #formatCowScore}, with sign, e.g. "+12,4". */
+    public static String formatCowScoreDiff(double diff) {
+        String formatted = COW_SCORE_FORMAT.format(diff);
+        if (formatted.equals("0") || formatted.equals("-0")) {
+            return "0";
+        }
+        return diff > 0 ? "+" + formatted : formatted;
     }
 
     private static NumberFormat buildOneDecimalFormat(boolean grouping) {
