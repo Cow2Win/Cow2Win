@@ -5,7 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- The application module - the only module that is packaged and shipped. Java
-         version, encoding and the dependency/Surefire versions come from the parent
+         version, encoding, the dependency versions and the versions of the default
+         lifecycle plugins (Surefire, compiler, resources, ...) come from the parent
          pom.xml in the repository root. -->
     <parent>
         <groupId>org.c2w</groupId>
@@ -20,10 +21,9 @@
     <properties>
         <!-- Windows app-image packaging (bundled JRE + resources folder) - see the
              maven-shade-plugin/jpackage-maven-plugin/maven-assembly-plugin executions
-             below and the "Distribution package" section in README.md. -->
+             below and the "Distribution package" section in documents/DEVELOPER.md. -->
         <maven.shade.plugin.version>3.6.2</maven.shade.plugin.version>
         <maven.assembly.plugin.version>3.8.0</maven.assembly.plugin.version>
-        <maven.resources.plugin.version>3.5.0</maven.resources.plugin.version>
         <jpackage.maven.plugin.version>1.8.0</jpackage.maven.plugin.version>
         <app.mainClass>org.c2w.C2WApp</app.mainClass>
         <app.name>Cow2Win</app.name>

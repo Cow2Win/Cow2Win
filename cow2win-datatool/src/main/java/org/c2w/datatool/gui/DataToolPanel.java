@@ -53,7 +53,8 @@ import java.util.Set;
 public final class DataToolPanel extends JPanel {
 
     private static final String REMINDER =
-            "Run mvn test (CatalogNamesTest, BattleLogGameNamesTest, CatalogManifestConsistencyTest, BestPossibleLineupAlgorithmTest)";
+            "Run mvn test (CatalogNamesTest, BattleLogGameNamesTest, CatalogManifestConsistencyTest, HodorGatesTest,"
+                    + " FortificationDepthsTest, ShieldAlgorithmTest)";
 
     private DataSet data;
     private final JTabbedPane tabs = new JTabbedPane();

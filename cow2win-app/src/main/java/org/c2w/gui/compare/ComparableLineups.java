@@ -22,8 +22,8 @@ import java.util.Objects;
  * Order: the current guild first, then the other guilds alphabetically by name; within a
  * guild "Live" (the Original lineup) first, then the others alphabetically.
  *
- * <p>Lineup files are listed through the file system, since {@link LineupRepository#findAll()}
- * is a stub - like the lineup combo box of the context bar.
+ * <p>Lineup files are listed through the file system, since {@link LineupRepository} has no
+ * listing of its own - like the lineup combo box of the context bar.
  */
 public final class ComparableLineups {
 

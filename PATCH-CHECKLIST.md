@@ -38,7 +38,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       never guess it; list the id in `CatalogNamesTest.OPEN_SPANISH_NAMES`.
 - [ ] If the new hero deserves a deliberate `generalScore`/`buffFitScores`
       assessment (most don't - `STANDARD`/no override is the expected
-      default), set it via the "Hero Buff Fit Scores" dialog in-app, or by
+      default), set it via "File" > "CowScore settings …", tab "Heroes", in-app, or by
       hand in `cow2win-app/src/main/resources/data/cowScore.json` - NOT in
       `heroes.json` (see README.md, "Canonical data files": the two are
       deliberately separate files since 2026-09-14).
@@ -59,7 +59,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       Clash of Worlds battle log (needed to map log entries back to the
       element; `TotemTextsGameNameTest` fails without it).
 - [ ] If the new titan deserves deliberate fortification marks
-      (`fortMarks`, positive/negative), set them via "File" > "CowScore - Titans" in-app, or by
+      (`fortMarks`, positive/negative), set them via "File" > "CowScore settings …", tab "Titans", in-app, or by
       hand in `cow2win-app/src/main/resources/data/titanCowScore.json` -
       NOT in `titans.json` (separate files since 2026-09-28, same as heroes).
 
@@ -75,7 +75,7 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       id - all of them share one key namespace in `names.json` (the data tool
       also rejects an id that is a UI key in a language file).
 - [ ] If the new pet deserves a deliberate `generalScore`/`buffFitScores`
-      assessment, set it via "File" > "CowScore - Pets" in-app, or by hand
+      assessment, set it via "File" > "CowScore settings …", tab "Pets", in-app, or by hand
       in `cow2win-app/src/main/resources/data/petCowScore.json` - NOT in `pets.json`
       (same master-data/score split as heroes and titans, see
       `PetRepository.java`).
@@ -91,15 +91,15 @@ afterwards (`CatalogManifestConsistencyTest` fails otherwise).
       placeholder-fallback note as heroes - see `WarFlag.java`).
 - [ ] Name in `catalog/names.json` (all languages).
 - [ ] If the new war flag deserves a deliberate `generalScore`/`buffFitScores`
-      assessment, set it via "File" > "CowScore - War Flags" in-app, or by
+      assessment, set it via "File" > "CowScore settings …", tab "War flags", in-app, or by
       hand in `cow2win-app/src/main/resources/data/warFlagCowScore.json` - NOT in
       `warFlags.json` (same master-data/score split as heroes, titans and
       pets, see `WarFlagRepository.java`).
 
 ## 5. Fortification changes (`fortifications.json`) - highest risk
 
-This file drives `HodorAlgorithm` and `ShieldAlgorithm` directly (gates, their points behind and the unlock depths/rows
-are derived from it), so an error here
+This file drives `HodorAlgorithm`, `ShieldAlgorithm` and `MaxBuffAlgorithm` directly (gates, their points behind,
+the unlock depths/rows and the bridges are derived from it), so an error here
 silently produces a wrong "optimal" lineup rather than an obvious crash.
 
 - [ ] **New fortification added to the Clash of Worlds map?** New entry with
@@ -109,6 +109,14 @@ silently produces a wrong "optimal" lineup rather than an obvious crash.
       catalog value (1-10, NOT read from the game) - see the heuristic in
       `Fortification.java`'s class javadoc ("how many other fortifications
       only get unlocked by capturing THIS one").
+- [ ] **Gates changed** (a new or changed prerequisite list, a new bridge)?
+      The algorithm descriptions `algorithm.*.description`/`.summary` in all
+      language files name the gates (bridge, the three bastions, Heroes'
+      Bridge, temples) - update them, and the Javadoc of `ShieldAlgorithm`
+      (rows) and `MaxBuffAlgorithm` (bridges).
+- [ ] **New buff effect** (new `BuffEffect` constant)? Give it a default
+      weight in `HodorSettings` (the HODOR/S.H.I.E.L.D strength formula needs
+      one per effect) and a `buffEffect.<NAME>` text in all language files.
 - [ ] **Buff value or effect changed** on an existing fortification? Update
       `bonusPercent`/`effect` in its `buff` object. Cross-check against the
       role/element buff tables in `clash-of-worlds-event-recherche.md`
@@ -132,11 +140,11 @@ Clash of Worlds journal maps log names back to catalog ids through them, and
 only through them (there are no aliases).
 
 - [ ] New or renamed hero/titan/pet/fortification: take the name for each
-      language from a battle log in that language (game language DE/EN/FR),
+      language from a battle log in that language (game language DE/EN/FR/ES),
       not from the patch notes or a wiki - spelling, apostrophe (`'`) and
       "und/and/et" exactly as in the log.
 - [ ] Got a new battle log? Copy it into the folder of its game language,
-      `cow2win-app/src/test/resources/battlelog/de|en|fr/` (file name unchanged, it is
+      `cow2win-app/src/test/resources/battlelog/de|en|es|fr/` (file name unchanged, it is
       test data too; `partial/` holds an earlier export of a running battle),
       and run `mvn test`: `BattleLogGameNamesTest` lists every name in the
       sample logs that has no matching game name in its language.
@@ -160,7 +168,7 @@ only through them (there are no aliases).
 
 ## 7. After any data change
 
-- [ ] Re-run `HodorGatesTest`, `FortificationDepthsTest` and `ShieldAlgorithmTest#rows` (`mvn test`). If prerequisites or capture
+- [ ] Re-run `HodorGatesTest`, `FortificationDepthsTest`, `ShieldAlgorithmTest#rows` and `MaxBuffAlgorithmTest` (`mvn test`). If prerequisites or capture
       bonuses changed, update the expected gate groups, points behind, depths and rows
       in the tests - they are a copy of the catalog's facts and are meant
       to fail when they change.
@@ -179,7 +187,7 @@ only through them (there are no aliases).
 ## 8. Publishing a catalog
 
 The catalog in `catalog/` on the default branch (`master`) **is** the published
-catalog: every user's "File" > "Update catalog …" downloads it from
+catalog: every user's "File" > "Update game data …" downloads it from
 `raw.githubusercontent.com` (GitHub caches raw files for a few minutes, so a
 fresh push shows up with a short delay). A push is a release - for every user.
 

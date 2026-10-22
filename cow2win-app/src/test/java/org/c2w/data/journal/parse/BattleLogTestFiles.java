@@ -55,11 +55,6 @@ public final class BattleLogTestFiles {
         return folder.equals("es") ? SPANISH_DAYS : BATTLE_DAYS;
     }
 
-    /** The language folders that hold battle day {@code day}. */
-    public static List<String> foldersWith(String day) {
-        return LANGUAGE_FOLDERS.stream().filter(folder -> daysOf(folder).contains(day)).toList();
-    }
-
     private static BattleLogParser parser;
     private static final Map<Path, BattleLogParseResult> CACHE = new HashMap<>();
 
@@ -73,7 +68,7 @@ public final class BattleLogTestFiles {
         return parser;
     }
 
-    /** All CSV files of a folder ({@code de}, {@code en}, {@code fr}, {@code partial}), sorted. */
+    /** All CSV files of a folder ({@code de}, {@code en}, {@code es}, {@code fr}, {@code partial}), sorted. */
     public static List<Path> files(String folder) {
         List<Path> files = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(ROOT.resolve(folder), "*.csv")) {

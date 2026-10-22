@@ -55,7 +55,7 @@ public class FortificationMapPanel extends GridPanel {
 
     /**
      * What every {@link FortificationPanel} shows (see {@link #setValueMode}): the current power,
-     * the change since loading/saving or the change against the live lineup.
+     * the average power per slot, the change since loading/saving or the change against the live lineup.
      */
     private FortificationValueMode valueMode = FortificationValueMode.POWER;
 

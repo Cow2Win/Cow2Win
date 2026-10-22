@@ -36,7 +36,7 @@ import static org.c2w.gui.stage.InfoSections.*;
  * concept actions plus the "algorithm" combo box directly below "Run assignment" (the
  * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection}; with
  * a one-sentence summary below and an "i" button opening the full explanation)
- * and the "fortification values" combo box at the end, and on the right the overview of the selected
+ * and the group "fortification values" with its combo box at the end, and on the right the overview of the selected
  * fortification type, the comparison with the "Original" lineup and the details of the
  * fortification selected on the map, including its assigned teams. A double-click on a
  * fortification opens the {@link FortificationAssignmentDialog} to assign, move, swap and

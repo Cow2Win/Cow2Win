@@ -6,7 +6,8 @@ import org.c2w.data.repository.FortificationRepository;
 import java.util.*;
 
 /**
- * Shared base of every "real" lineup strategy ({@link HodorAlgorithm}). Each instance is bound to
+ * Shared base of every "real" lineup strategy ({@link HodorAlgorithm}, {@link ShieldAlgorithm},
+ * {@link MaxBuffAlgorithm}). Each instance is bound to
  * one {@link TeamSide}, so e.g. {@code new HodorAlgorithm<>(TeamSide.HERO, ...)} and
  * {@code new HodorAlgorithm<>(TeamSide.TITAN, ...)} can fill the two halves of the same lineup.
  *

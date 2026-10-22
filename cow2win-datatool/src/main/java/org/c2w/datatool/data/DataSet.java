@@ -46,7 +46,7 @@ public final class DataSet {
     private final Path root;
     private final Map<TableKind, DataTable> tables = new EnumMap<>(TableKind.class);
     private final Map<TableKind, TableCodec> codecs = new EnumMap<>(TableKind.class);
-    /** Keys of the three language files (UI texts) - a new catalog id must not be one of them. */
+    /** Keys of the language files (UI texts), per language - a new catalog id must not be one of them. */
     private final Map<Language, Set<String>> languageFileKeys = new EnumMap<>(Language.class);
     private final NamesFile names;
     private final CatalogManifest manifest;

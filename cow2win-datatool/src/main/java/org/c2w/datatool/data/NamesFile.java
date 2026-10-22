@@ -44,10 +44,6 @@ public final class NamesFile {
         return byLanguage == null ? null : byLanguage.get(language.folder());
     }
 
-    public boolean containsId(String id) {
-        return names.containsKey(id);
-    }
-
     public Set<String> ids() {
         return names.keySet();
     }

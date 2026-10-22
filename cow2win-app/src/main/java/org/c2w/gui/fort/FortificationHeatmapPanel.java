@@ -70,6 +70,7 @@ public class FortificationHeatmapPanel extends JComponent {
         setOpaque(false);
     }
 
+    /** The heatmap shown - for tests. */
     public FortificationHeatmap heatmap() {
         return heatmap;
     }

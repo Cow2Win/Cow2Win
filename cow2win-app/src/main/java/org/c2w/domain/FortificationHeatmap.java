@@ -47,7 +47,8 @@ public record FortificationHeatmap(FortificationType type, Map<String, Rating> l
      *
      * @param level        its heatmap level
      * @param value        its power per capacity slot
-     * @param shareOfReference its value divided by the reference value (0 if the reference is 0)
+     * @param shareOfReference its value divided by the reference value (0 if the reference is 0) - not shown
+     *                         anywhere; the tests check the reference with it
      */
     public record Rating(Level level, double value, double shareOfReference) {
     }

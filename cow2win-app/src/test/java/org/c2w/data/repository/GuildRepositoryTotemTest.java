@@ -2,7 +2,6 @@ package org.c2w.data.repository;
 
 import org.c2w.data.model.*;
 import org.c2w.infra.LogCapture;
-import org.c2w.infra.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

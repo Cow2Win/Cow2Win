@@ -232,10 +232,10 @@ public final class Config {
     /**
      * Raw configured language, e.g. {@code "deutsch"} - the name of the
      * subdirectory under {@code resources/language} (see {@link
-     * LanguageService#availableLanguages()}), not a file name. May also
+     * org.c2w.i18n.LanguageService#availableLanguages()}), not a file name. May also
      * still hold a legacy value like {@code "deutsch.txt"} for a
      * config saved by an older Cow2Win version; {@link
-     * LanguageService#configuredLanguage()} is what normalizes that,
+     * org.c2w.i18n.LanguageService#configuredLanguage()} is what normalizes that,
      * callers that just need "the language to use" should go through it
      * rather than this raw getter.
      */

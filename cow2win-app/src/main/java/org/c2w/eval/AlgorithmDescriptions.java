@@ -17,7 +17,7 @@ import java.util.Map;
  * {@code algorithm.*}) - {@link #KEY_BY_DISPLAY_NAME} maps each known
  * algorithm's display name to its dotted key suffix. An algorithm missing
  * from that map (e.g. a new one just added to {@link LineupAlgorithms}
- * without a matching entry here and in the three language files) falls
+ * without a matching entry here and in every language file) falls
  * back to an empty description rather than throwing or leaking a raw
  * properties key into the UI/report.
  *

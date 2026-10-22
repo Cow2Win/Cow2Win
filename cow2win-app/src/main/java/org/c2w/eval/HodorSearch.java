@@ -21,7 +21,7 @@ final class HodorSearch<T> {
     /** Safety limit for the improvement rounds - each accepted improvement is one round. */
     static final int MAX_ROUNDS = 10_000;
 
-    /** One team in the search: a pool candidate or a resolvable existing entry, with cached values per fortification. */
+    /** One team in the search: a pool candidate or a resolvable existing entry; {@code id} indexes the per-fortification caches. */
     private record Unit<T>(int id, T team, String memberId, int teamIndex, int totalPower, double baseStrength) {
     }
 
@@ -34,7 +34,7 @@ final class HodorSearch<T> {
     private final Map<String, Integer> indexById = new HashMap<>();
     private final List<HodorGates.Gate> gates;
     private final HodorEvaluation<Unit<T>> evaluation;
-    /** matchingUnits[unit][fortification], cowScores[unit][fortification] (NaN = not computed yet). */
+    /** matchingUnits[unit][fortification] (-1 = not computed yet), cowScores[unit][fortification] (NaN = not computed yet). */
     private final List<int[]> matchingUnits = new ArrayList<>();
     private final List<double[]> cowScores = new ArrayList<>();
     /** Per fortification: existing entries (never moved, {@code null} = unresolvable team) and teams set here. */

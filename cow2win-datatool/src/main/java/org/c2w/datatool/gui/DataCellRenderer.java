@@ -9,7 +9,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.nio.file.Files;

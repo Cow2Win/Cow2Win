@@ -92,7 +92,7 @@ public record LineupKeyFigures(int power, double cowScore, int buffHits, int occ
     }
 
     /** The team type placed in fortifications of {@code type}. */
-    public static Lineup.TeamType teamTypeOf(FortificationType type) {
+    private static Lineup.TeamType teamTypeOf(FortificationType type) {
         return type == FortificationType.HERO ? Lineup.TeamType.HERO : Lineup.TeamType.TITAN;
     }
 

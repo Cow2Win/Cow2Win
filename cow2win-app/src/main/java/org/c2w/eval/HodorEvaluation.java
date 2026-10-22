@@ -130,20 +130,15 @@ final class HodorEvaluation<T> {
         this.gateIndexes = indexes.toArray(new int[0][]);
     }
 
-    List<Fortification> fortifications() {
-        return fortifications;
-    }
-
-    /** The gates of this side, in the order given to the constructor. */
+    /** The gates of this side, in the order given to the constructor - for tests. */
     List<HodorGates.Gate> gates() {
         return gates;
     }
 
-    Strength<T> strength() {
-        return strength;
-    }
-
-    /** The rating of a whole lineup: {@code teamsByFortificationId} maps a fortification id to its teams. */
+    /**
+     * The rating of a whole lineup: {@code teamsByFortificationId} maps a fortification id to its teams.
+     * For tests - the search rates incrementally with {@link #valueOf} and {@link #total}.
+     */
     double evaluate(Map<String, List<T>> teamsByFortificationId) {
         FortificationValue[] values = new FortificationValue[fortifications.size()];
         for (int i = 0; i < values.length; i++) {
@@ -183,7 +178,7 @@ final class HodorEvaluation<T> {
         return new FortificationValue(max, sum);
     }
 
-    /** The rating from one {@link FortificationValue} per fortification, indexed like {@link #fortifications()}. */
+    /** The rating from one {@link FortificationValue} per fortification, indexed like {@link #fortifications}. */
     double total(FortificationValue[] values) {
         double rating = 0;
         for (int g = 0; g < gateIndexes.length; g++) {

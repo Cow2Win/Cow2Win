@@ -27,8 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * makes that gap loud at build time (`mvn test`) instead: it fails, listing exactly which
  * key is missing from which language, whenever the language files' key sets diverge -
  * whether a key was added to only one language or a whole language lags behind after a
- * patch (new heroes, titans or fortifications - see PATCH-CHECKLIST.md's "all three
- * language files" step).
+ * patch (e.g. the {@code titanTotem.*} key of a new titan element - see PATCH-CHECKLIST.md).
  *
  * <p>Since the 2026-09-16 restructuring (see {@link LanguageService}), each language lives
  * in its own subdirectory of {@code language/} as {@code <name>/<name>.properties} (e.g.

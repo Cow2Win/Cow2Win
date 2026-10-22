@@ -24,7 +24,7 @@ public final class BattleReplay {
      * @param fort        the catalog entry
      * @param beaten      positions where the attacker won a fight up to this step
      * @param repelled    positions where the attacker lost a fight up to this step and has not won one yet
-     * @param free        positions shown as captured without a fight (see {@link #freePositions})
+     * @param free        positions shown as captured without a fight (see {@link BattleDetailModel.ReplayStep#freePositions})
      * @param captured    captured up to this step
      * @param locked      has prerequisites and none of them is captured yet (never if captured)
      * @param current     the fortification of the current step

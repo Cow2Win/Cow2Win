@@ -18,9 +18,10 @@ The app guides you through three steps: **Input** (guild and teams) →
 
 - **Guild and teams** – members with their hero teams (heroes, pet, war flag)
   and titan teams (titans, totems), with templates for quick entry.
-- **Automatic lineup** – several strategies for heroes and titans, from
-  "best possible" to "balanced defense". Teams can also be assigned or moved
-  by hand.
+- **Automatic lineup** – several strategies for heroes and titans: HODOR
+  (holds the gates first, the default), HODOR (CowScore), S.H.I.E.L.D
+  (forward defense) and MAX_BUFF (biggest buff first). Teams can also be
+  assigned or moved by hand.
 - **CowScore** – rates how well a team fits a fortification. Adjustable in
   the settings.
 - **Fortification map** – power and buff of every fortification at a glance.

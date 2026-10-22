@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 
-import static org.c2w.data.journal.db.JournalDatabaseTest.count;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** The repository methods added for viewing and maintaining the journal (phase 5). */

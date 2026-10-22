@@ -109,7 +109,7 @@ public final class CatalogUpdateService {
     private CatalogSource installed;
     private CatalogManifest installedManifest;
 
-    /** How many files were fetched from {@link #remote} - for tests and the log. */
+    /** How many files were fetched from {@link #remote} - for the log. */
     private int fetched;
 
     /**
@@ -122,11 +122,6 @@ public final class CatalogUpdateService {
         this.catalogDir = Objects.requireNonNull(catalogDir);
         this.previousDir = Objects.requireNonNull(previousDir);
         this.downloadDir = Objects.requireNonNull(downloadDir);
-    }
-
-    /** How many files were fetched from the remote so far. */
-    public int fetchedFiles() {
-        return fetched;
     }
 
     /**

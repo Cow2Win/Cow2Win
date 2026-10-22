@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  * catalogs (and handing the hero combos to {@link TeamScoreCalculator}; this also
  * creates the titan team templates' workspace file from the shipped defaults
  * if it is missing, see {@link org.c2w.data.repository.TeamTemplateRepository}) and
- * reopening the last guild/lineup - see {@link #start()}.
+ * reopening the last guild/lineup - see {@link #start(Consumer)}.
  */
 public final class WorkspaceBootstrap {
 

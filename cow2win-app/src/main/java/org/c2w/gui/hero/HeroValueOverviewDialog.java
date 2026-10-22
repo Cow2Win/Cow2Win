@@ -5,7 +5,6 @@ import org.c2w.data.repository.FortificationRepository;
 import org.c2w.domain.BuffCalculationService;
 import org.c2w.domain.TeamPower;
 import org.c2w.domain.TeamScoreCalculator;
-import org.c2w.gui.ReportViewerDialog;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortificationTypeStyle;
@@ -67,7 +66,7 @@ public class HeroValueOverviewDialog extends JDialog {
     /**
      * Language file keys (see {@code resources/language/<name>/<name>.properties}) for the table
      * column headers - the SAME keys {@link TitanValueOverviewDialog}
-     * uses (the German/English/French text is identical, only the Java
+     * uses (the text is identical in every language, only the Java
      * constants/classes here are a redundant copy, not the resource keys).
      */
     private static final String COLUMN_KEY_POWER = "teamsOverview.power";
@@ -154,8 +153,7 @@ public class HeroValueOverviewDialog extends JDialog {
      * The {@link FlatButton} that persists the currently displayed Power
      * values (see {@link HeroValueTableModel#isCellEditable}) to the guild
      * file - {@link #saveGuild()}, triggered by this button, is otherwise
-     * the exact counterpart of {@code TeamsOverviewPanel#saveGuild()}/
-     * {@code ActionBar}'s own "save guild" button, reusing the same
+     * the counterpart of {@code ActionBar}'s own "save guild" button, reusing the same
      * tooltip key/icon since it does the same thing.
      */
     private FlatButton buildSaveButton() {
@@ -243,8 +241,7 @@ public class HeroValueOverviewDialog extends JDialog {
             table.getColumnModel().getColumn(col).setCellRenderer(new ValueCellRenderer());
         }
 
-        // Column-header sorting (see TeamsOverviewPanel#configureTable for
-        // the full rationale) - the per-fortification value columns are
+        // Column-header sorting - the per-fortification value columns are
         // always exposed as Double (see HeroValueTableModel#getColumnClass),
         // so the default sorter already compares them correctly without a
         // custom comparator, same as column 0 (Power).
@@ -335,8 +332,7 @@ public class HeroValueOverviewDialog extends JDialog {
     }
 
     /**
-     * Persists the currently displayed Power values to the guild file - the
-     * counterpart of {@code TeamsOverviewPanel#saveGuild()}, scoped to hero
+     * Persists the currently displayed Power values to the guild file, scoped to hero
      * teams only (see {@link #guildWithCurrentSelection()}); triggered by
      * {@link #buildSaveButton()}.
      */
@@ -577,9 +573,8 @@ public class HeroValueOverviewDialog extends JDialog {
 
         /**
          * Column 0 ("Power", editable since this dialog's Power/Save split -
-         * see class Javadoc) and column 3 ("Fortification") are editable,
-         * exactly like {@code TeamsOverviewPanel.TeamOverviewTableModel}'s
-         * own table - every value column stays read-only.
+         * see class Javadoc) and column 3 ("Fortification") are editable;
+         * every value column stays read-only.
          */
         @Override
         public boolean isCellEditable(int rowIndex, int column) {
@@ -628,8 +623,7 @@ public class HeroValueOverviewDialog extends JDialog {
 
         /**
          * One table row = one hero team. totalPower starts at the team's
-         * total power as shown in-game but, like {@code TeamsOverviewPanel.TeamOverviewTableModel.Row}'s
-         * own totalPower, is no longer unchangeable - a successful "Power"
+         * total power as shown in-game but is no longer unchangeable - a successful "Power"
          * column edit (see {@link HeroValueOverviewDialog#handlePowerEdited})
          * updates it (and, together with it, matchCounts/scores - both
          * derived from totalPower, see {@link HeroValueOverviewDialog#matchCountsFor}/

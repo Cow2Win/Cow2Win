@@ -9,8 +9,8 @@ import java.util.function.Supplier;
 
 /**
  * Lineup strategies "HODOR" and "HODOR (CowScore)" - "Hold the door": the gates (bridges,
- * bastions, temples, see {@link HodorGates}) come first. Unlike the older strategies, which pick
- * team by team, HODOR rates a WHOLE lineup of this side with {@link HodorEvaluation} and improves
+ * bastions, temples, see {@link HodorGates}) come first. Instead of picking team by team, HODOR
+ * rates a WHOLE lineup of this side with {@link HodorEvaluation} and improves
  * it until the rating no longer rises:
  * <ol>
  *     <li>Existing entries are kept and count in the rating, but are never moved (additive).</li>
@@ -74,10 +74,6 @@ public class HodorAlgorithm<T> extends AbstractLineupAlgorithm<T> {
     /** The values currently registered via {@link #setSettings}. */
     public static HodorSettings settings() {
         return registeredSettings;
-    }
-
-    public Variant variant() {
-        return variant;
     }
 
     @Override
