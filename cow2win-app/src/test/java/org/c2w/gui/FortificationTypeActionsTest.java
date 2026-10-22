@@ -5,6 +5,8 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.AppAction;
 import org.c2w.gui.action.MainActions;
+import org.c2w.gui.common.AppColors;
+import org.c2w.gui.common.IconLoader;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
@@ -24,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * The actions and the fortification type: the team overview follows the selected type, the
- * icons of "run", "compare" and "show teams" are colored by it, "maintain live lineup" stays
+ * icons of "compare" and "show teams" are colored by it, "run" (green) and "maintain live lineup" stay
  * the same - headless, nothing is shown.
  */
 class FortificationTypeActionsTest {
@@ -67,9 +69,9 @@ class FortificationTypeActionsTest {
     }
 
     @Test
-    @DisplayName("The icons of \"run\", \"compare\" and the team overview change with the fortification type and back")
+    @DisplayName("The icons of \"compare\" and the team overview change with the fortification type and back")
     void iconsFollowFortificationType() {
-        for (ActionId id : List.of(ActionId.RUN_ALGORITHM, ActionId.COMPARE_LINEUPS, ActionId.SHOW_TEAMS)) {
+        for (ActionId id : List.of(ActionId.COMPARE_LINEUPS, ActionId.SHOW_TEAMS)) {
             context.setFortificationType(FortificationType.HERO);
             Object heroIcon = actions.get(id).getValue(Action.SMALL_ICON);
             assertNotNull(heroIcon, id + " hero icon");
@@ -84,6 +86,17 @@ class FortificationTypeActionsTest {
             context.setFortificationType(FortificationType.HERO);
             assertSame(heroIcon, actions.get(id).getValue(Action.SMALL_ICON), id + " back to heroes");
         }
+    }
+
+    @Test
+    @DisplayName("\"Run assignment\" has the same green icon for heroes and titans")
+    void runAlgorithmIcon() {
+        Object icon = actions.get(ActionId.RUN_ALGORITHM).getValue(Action.SMALL_ICON);
+        assertSame(IconLoader.iconFor("/images/app/run.png", ActionBar.TOOLBAR_ICON_SIZE, AppColors.SUCCESS), icon);
+        assertSame(icon, actions.get(ActionId.RUN_ALGORITHM).getValue(Action.LARGE_ICON_KEY));
+
+        context.setFortificationType(FortificationType.TITAN);
+        assertSame(icon, actions.get(ActionId.RUN_ALGORITHM).getValue(Action.SMALL_ICON));
     }
 
     @Test

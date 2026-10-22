@@ -147,8 +147,9 @@ public class ActionBar extends JPanel {
         saveLineupAction = actions.register(new AppAction(SAVE_LINEUP, this::onSaveLineup));
         actions.register(new AppAction(GENERATE_REPORT, this::onGenerateReport)
                 .withIcon(IconLoader.iconForButton(ICON_GENERATE_REPORT)));
-        // Icons of "run", "compare" and "show teams" follow the fortification type, see updateFortificationTypeActions().
-        runAlgorithmAction = actions.register(new AppAction(RUN_ALGORITHM, this::onRunAlgorithm));
+        // "Run assignment" always green; icons of "compare" and "show teams" follow the fortification type, see updateFortificationTypeActions().
+        runAlgorithmAction = actions.register(new AppAction(RUN_ALGORITHM, this::onRunAlgorithm)
+                .withIcon(IconLoader.iconFor(ICON_RUN_ALGORITHM, TOOLBAR_ICON_SIZE, AppColors.SUCCESS)));
         compareLineupsAction = actions.register(new AppAction(COMPARE_LINEUPS, this::onOpenLineupComparison));
         actions.register(new AppAction(OPEN_CHANGE_PLAN, this::onOpenChangePlan)
                 .withIcon(IconLoader.iconForButton(ICON_OPEN_CHANGE_PLAN)));
@@ -190,14 +191,13 @@ public class ActionBar extends JPanel {
 
     /**
      * Gives {@link #showTeamsAction} the text and tooltip of the selected fortification type, so
-     * menu entry and button always say what they open, and colors the icons of "run", "compare"
+     * menu entry and button always say what they open, and colors the icons of "compare"
      * and "show teams" by that type (see {@link IconLoader#iconForType}).
      */
     private void updateFortificationTypeActions() {
         FortificationType type = appContext.fortificationType();
         showTeamsAction.setText(type == FortificationType.HERO ? KEY_HERO_TEAMS : KEY_TITAN_TEAMS);
         showTeamsAction.withIcon(IconLoader.iconForType(ICON_SHOW_TEAMS, type));
-        runAlgorithmAction.withIcon(IconLoader.iconForType(ICON_RUN_ALGORITHM, type));
         compareLineupsAction.withIcon(IconLoader.iconForType(ICON_COMPARE_LINEUPS, type));
     }
 
