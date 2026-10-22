@@ -42,9 +42,14 @@ class SettingsDialogTest {
     }
 
     @Test
-    @DisplayName("The dialog is about 1.5 times as wide as packed")
+    @DisplayName("The dialog is about 1.5 times as wide as packed, but never wider than the usable screen")
     void widerThanPacked() {
-        assertEquals(dialog.packedWidth() * SettingsDialog.DIALOG_WIDTH_FACTOR, dialog.getWidth(), 1.0);
+        // The Windows runner of release.yml has only 1024 x 768 - there the screen limits the width.
+        Rectangle usable = SettingsDialog.usableScreenBounds(dialog.getGraphicsConfiguration());
+        double expected = Math.min(Math.round(dialog.packedWidth() * SettingsDialog.DIALOG_WIDTH_FACTOR), usable.width);
+        assertEquals(expected, dialog.getWidth(), 1.0);
+        assertTrue(dialog.getWidth() <= usable.width);
+        assertTrue(dialog.getHeight() <= usable.height);
     }
 
     @Test

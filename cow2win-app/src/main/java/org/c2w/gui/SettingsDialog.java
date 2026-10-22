@@ -44,8 +44,8 @@ import java.util.List;
  *       empty folder - unlike "...", which only switches to another workspace and leaves the data
  *       where it is.</li>
  * </ul>
- * The dialog is about 50% wider than its packed size, so long paths stay readable; its directory
- * choosers are 50% larger than the default.
+ * The dialog is about 50% wider than its packed size, so long paths stay readable, but never wider
+ * or higher than the usable screen; its directory choosers are 50% larger than the default.
  */
 public class SettingsDialog extends JDialog {
 
@@ -137,16 +137,29 @@ public class SettingsDialog extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
-    /** At most as high as the usable screen - then the form scrolls vertically. */
+    /**
+     * Never wider or higher than the usable screen: on a low screen the form scrolls vertically, on a
+     * narrow one the second column (weightx) gets less room and the path fields become narrower.
+     */
     private void sizeToScreen(Window owner) {
         GraphicsConfiguration screen = owner != null ? owner.getGraphicsConfiguration() : getGraphicsConfiguration();
-        Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(screen);
-        int usableHeight = screen.getBounds().height - screenInsets.top - screenInsets.bottom;
-        if (getHeight() > usableHeight) {
+        Rectangle usable = usableScreenBounds(screen);
+        int width = getWidth();
+        int height = getHeight();
+        if (height > usable.height) {
             // Room for the vertical scroll bar, so no horizontal one is needed.
-            int scrollBar = new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
-            setSize(getWidth() + scrollBar, usableHeight);
+            width += new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
+            height = usable.height;
         }
+        setSize(Math.min(width, usable.width), height);
+    }
+
+    /** The screen's bounds minus its insets (taskbar etc.) - package-visible for tests. */
+    static Rectangle usableScreenBounds(GraphicsConfiguration screen) {
+        Rectangle bounds = screen.getBounds();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(screen);
+        return new Rectangle(bounds.x + insets.left, bounds.y + insets.top,
+                bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
     }
 
     /** The "Algorithms" area - package-visible for tests. */
