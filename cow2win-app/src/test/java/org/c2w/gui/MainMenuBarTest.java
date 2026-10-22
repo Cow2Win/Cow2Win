@@ -45,14 +45,14 @@ class MainMenuBarTest {
             "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS");
 
     /**
-     * "title key: entries" of the process stages' action lists, unchanged from their former menus.
-     * A submenu (group) is written as {title key: entries}.
+     * "title key: entries" of the process stages' action lists - every action in a group, no
+     * separators. A submenu (group) is written as {title key: entries}.
      */
     private static final List<String> EXPECTED_STAGE_ACTIONS = List.of(
-            "menu.input: ADD_MEMBER, REMOVE_MEMBER, ---, OPEN_GUILD_TEAM_ENTRY",
-            "menu.concept: {menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP, COMPARE_LINEUPS}, ---, "
-                    + "RUN_ALGORITHM, ---, SHOW_TEAMS",
-            "menu.output: OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE");
+            "menu.input: {actionGroup.members: ADD_MEMBER, REMOVE_MEMBER}, {actionGroup.liveLineup: OPEN_GUILD_TEAM_ENTRY}",
+            "menu.concept: {menu.lineup: NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP, COMPARE_LINEUPS}, "
+                    + "{actionGroup.algorithm: RUN_ALGORITHM}, {actionGroup.teams: SHOW_TEAMS}",
+            "menu.output: {actionGroup.rearrange: OPEN_CHANGE_PLAN, APPLY_TO_LIVE}, {actionGroup.report: GENERATE_REPORT}");
 
     /** Deliberately toolbar-only actions - the only ones neither in a menu nor in a stage action list. */
     private static final Set<ActionId> TOOLBAR_ONLY = Set.of(ActionId.SAVE_GUILD, ActionId.SAVE_LINEUP);

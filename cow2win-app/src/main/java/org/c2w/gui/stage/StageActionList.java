@@ -19,14 +19,17 @@ import java.util.List;
  * stage's spec in {@code MainMenuBar.STAGE_ACTIONS} (see {@link MainMenuBar#menuFor}) - the
  * process stages have no menu in the menu bar, this list is where their actions are. An action becomes a clickable row (icon and text), a submenu a group (small
  * heading, its entries indented), a separator a small gap with a thin line. Rows follow their
- * action (enabled state, text, icon). A stage view can append rows of its own, see
- * {@link #addExtra}/{@link #addExtraAction}, or insert one directly before an action's
- * row, see {@link #addExtraBefore}.
+ * action (enabled state, text, icon). A stage view can add rows of its own to a group: a
+ * component or an action directly after an action's row, indented like it (see
+ * {@link #addExtraAfter}/{@link #addExtraActionAfter}), or a new group at the end (see
+ * {@link #addExtraGroup}).
  */
 public class StageActionList extends JPanel {
 
     /** Left padding of a row, plus this much per group level. */
     private static final int INDENT = 14;
+    /** A stage's component (combo box, check box) is this much further left than a row - its own border makes up for it. */
+    private static final int COMPONENT_OFFSET = 4;
 
     private final List<ActionRow> rows = new ArrayList<>();
 
@@ -54,32 +57,47 @@ public class StageActionList extends JPanel {
         }
     }
 
-    /** Appends a stage specific row (e.g. a toggle) below the actions. */
-    public void addExtra(JComponent component) {
-        addRow(new SeparatorRow());
-        component.setBorder(BorderFactory.createEmptyBorder(4, INDENT - 4, 4, 8));
-        addRow(component);
-    }
-
     /**
-     * Inserts a stage specific row (e.g. a combo box the action uses) directly
-     * before the row of {@code action}, indented like {@link #addExtra} but
-     * without a separator.
+     * Inserts a stage specific row (e.g. a combo box or a toggle) directly after the row of
+     * {@code action}, in its group and indented like it.
      *
      * @throws IllegalArgumentException if no row of this list shows {@code action}
      */
-    public void addExtraBefore(Action action, JComponent component) {
-        ActionRow row = rows.stream().filter(r -> r.action() == action).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No row for action " + action));
-        component.setBorder(BorderFactory.createEmptyBorder(4, INDENT - 4, 4, 8));
+    public void addExtraAfter(Action action, JComponent component) {
+        ActionRow row = rowOf(action);
+        indentComponent(component, row.level());
         component.setAlignmentX(Component.LEFT_ALIGNMENT);
-        add(component, getComponentZOrder(row));
+        add(component, getComponentZOrder(row) + 1);
     }
 
-    /** Appends a stage specific action below the menu's actions - a row like theirs, following the action. */
-    public void addExtraAction(Action action) {
-        addRow(new SeparatorRow());
-        addRow(new ActionRow(action, 0));
+    /**
+     * Inserts a stage specific action directly after the row of {@code anchor} - a row like
+     * the menu's, on the same level, following the action.
+     *
+     * @throws IllegalArgumentException if no row of this list shows {@code anchor}
+     */
+    public void addExtraActionAfter(Action anchor, Action action) {
+        ActionRow anchorRow = rowOf(anchor);
+        ActionRow row = new ActionRow(action, anchorRow.level());
+        rows.add(rows.indexOf(anchorRow) + 1, row);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        add(row, getComponentZOrder(anchorRow) + 1);
+    }
+
+    /** Appends a stage specific group at the end: a heading {@code title} and {@code component} as its entry. */
+    public void addExtraGroup(String title, JComponent component) {
+        addRow(new GroupHeading(title, 0));
+        indentComponent(component, 1);
+        addRow(component);
+    }
+
+    private ActionRow rowOf(Action action) {
+        return rows.stream().filter(r -> r.action() == action).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No row for action " + action));
+    }
+
+    private static void indentComponent(JComponent component, int level) {
+        component.setBorder(BorderFactory.createEmptyBorder(4, INDENT + level * INDENT - COMPONENT_OFFSET, 4, 8));
     }
 
     private void addRow(JComponent row) {
@@ -96,10 +114,12 @@ public class StageActionList extends JPanel {
     static final class ActionRow extends JLabel {
 
         private final Action action;
+        private final int level;
         private boolean hover;
 
         ActionRow(Action action, int level) {
             this.action = action;
+            this.level = level;
             setOpaque(false);
             setIconTextGap(8);
             setBorder(BorderFactory.createEmptyBorder(5, INDENT + level * INDENT, 5, 8));
@@ -129,6 +149,11 @@ public class StageActionList extends JPanel {
 
         Action action() {
             return action;
+        }
+
+        /** The group level: 0 outside any group, 1 in a group of the stage. */
+        int level() {
+            return level;
         }
 
         /** Performs the action - nothing while it is disabled. */

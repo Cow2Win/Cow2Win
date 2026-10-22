@@ -82,10 +82,14 @@ class InputStageViewTest {
     }
 
     @Test
-    @DisplayName("The action list holds the entries of the input menu, in order, and nothing else")
+    @DisplayName("The action list holds the entries of the input menu, in order, and nothing else - \"show outdated only\" directly after \"delete member\"")
     void actionList() {
         assertEquals(MainMenuBar.menuFor(Stage.INPUT).allActionIds(),
                 view.actionList().rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
+        List<java.awt.Component> components = List.of(view.actionList().getComponents());
+        StageActionList.ActionRow removeMember = view.actionList().rows().get(1);
+        assertEquals(ActionId.REMOVE_MEMBER, ((AppAction) removeMember.action()).id());
+        assertSame(view.onlyStaleToggle(), components.get(components.indexOf(removeMember) + 1));
     }
 
     @Test

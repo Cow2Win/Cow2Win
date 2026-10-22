@@ -78,18 +78,21 @@ public final class MainMenuBar extends JMenuBar {
     /**
      * The actions of the process stages input, concept and output - not in the menu bar, only
      * in the action list of the stage's view ({@code org.c2w.gui.stage.StageActionList}, via
-     * {@link #menuFor}). Same data types as the menus: a submenu becomes a group heading
-     * ("Lineup"), a separator a separator row.
+     * {@link #menuFor}). Same data types as the menus: every stage's actions are in groups
+     * (submenus, e.g. "Lineup"), each shown as a group heading above its indented rows - the
+     * headings separate the groups, so there are no separators.
      */
     static final List<MenuSpec> STAGE_ACTIONS = List.of(
             menu(Stage.INPUT.menuTextKey(),
-                    ADD_MEMBER, REMOVE_MEMBER,
-                    SEPARATOR, OPEN_GUILD_TEAM_ENTRY),
+                    menu("actionGroup.members", ADD_MEMBER, REMOVE_MEMBER),
+                    menu("actionGroup.liveLineup", OPEN_GUILD_TEAM_ENTRY)),
             menu(Stage.CONCEPT.menuTextKey(),
                     menu("menu.lineup", NEW_LINEUP, REMOVE_LINEUP, CLEAR_LINEUP, COPY_LINEUP, COMPARE_LINEUPS),
-                    SEPARATOR, RUN_ALGORITHM,
-                    SEPARATOR, SHOW_TEAMS),
-            menu(Stage.OUTPUT.menuTextKey(), OPEN_CHANGE_PLAN, GENERATE_REPORT, APPLY_TO_LIVE));
+                    menu("actionGroup.algorithm", RUN_ALGORITHM),
+                    menu("actionGroup.teams", SHOW_TEAMS)),
+            menu(Stage.OUTPUT.menuTextKey(),
+                    menu("actionGroup.rearrange", OPEN_CHANGE_PLAN, APPLY_TO_LIVE),
+                    menu("actionGroup.report", GENERATE_REPORT)));
 
     /** The actions deliberately offered in the toolbar only, not in any menu or stage action list. */
     static final Set<ActionId> TOOLBAR_ONLY = Set.of(SAVE_GUILD, SAVE_LINEUP);

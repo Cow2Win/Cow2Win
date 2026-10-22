@@ -63,22 +63,24 @@ class OutputStageViewTest {
     }
 
     @Test
-    @DisplayName("The action list is the output menu plus \"copy plan\", which is disabled without a plan")
+    @DisplayName("The action list is the output menu plus \"copy plan\" between the rearrangement guide and \"apply to live\", disabled without a plan")
     void actionListAndCopyWithoutPlan() {
         OutputStageView view = new OutputStageView(context, actions);
 
         List<StageActionList.ActionRow> rows = view.actionList().rows();
-        assertEquals(MainMenuBar.menuFor(Stage.OUTPUT).allActionIds(),
-                rows.stream().map(row -> ((AppAction) row.action()).id()).toList());
-        StageActionList.ActionRow last = (StageActionList.ActionRow)
-                view.actionList().getComponents()[view.actionList().getComponentCount() - 1];
-        assertSame(view.copyPlanAction(), last.action());
-        assertEquals(LanguageService.displayName("changePlan.copyPlan"), last.getText());
+        assertEquals(List.of(actions.get(ActionId.OPEN_CHANGE_PLAN), view.copyPlanAction(),
+                        actions.get(ActionId.APPLY_TO_LIVE), actions.get(ActionId.GENERATE_REPORT)),
+                rows.stream().map(StageActionList.ActionRow::action).toList());
+        StageActionList.ActionRow copy = rows.get(1);
+        List<Component> components = List.of(view.actionList().getComponents());
+        assertSame(rows.get(0), components.get(components.indexOf(copy) - 1));
+        assertSame(rows.get(2), components.get(components.indexOf(copy) + 1));
+        assertEquals(LanguageService.displayName("changePlan.copyPlan"), copy.getText());
 
         assertFalse(view.planPanel().hasPlan(), "no Original yet");
         assertEquals(ChangePlanModel.State.NO_ORIGINAL, view.planPanel().result().state());
         assertFalse(view.copyPlanAction().isEnabled());
-        assertFalse(last.isEnabled());
+        assertFalse(copy.isEnabled());
     }
 
     @Test

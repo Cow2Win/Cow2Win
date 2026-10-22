@@ -144,24 +144,26 @@ class ConceptStageViewTest {
     }
 
     @Test
-    @DisplayName("The action list is the concept menu plus the \"fortification values\" combo box at the end")
+    @DisplayName("The action list is the concept menu plus the group \"fortification values\" with its combo box at the end")
     void actionList() {
         StageActionList list = view.actionList();
         assertEquals(org.c2w.gui.MainMenuBar.menuFor(org.c2w.gui.action.Stage.CONCEPT).allActionIds(),
                 list.rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
         java.awt.Component[] components = list.getComponents();
         assertSame(view.valueModeBox().getParent(), components[components.length - 1]);
+        assertEquals(LanguageService.displayName("fortificationMap.valueMode").toUpperCase(LanguageService.locale()),
+                ((StageActionList.GroupHeading) components[components.length - 2]).getText());
     }
 
     @Test
-    @DisplayName("The \"algorithm\" combo box sits directly above \"Run assignment\" and offers no \"Manual\"")
-    void algorithmBoxAboveRunAssignment() {
+    @DisplayName("The \"algorithm\" combo box sits directly below \"Run assignment\" and offers no \"Manual\"")
+    void algorithmBoxBelowRunAssignment() {
         context.setFortificationType(FortificationType.HERO);
         java.util.List<java.awt.Component> components = java.util.List.of(view.actionList().getComponents());
         int index = components.indexOf(view.algorithmBox().getParent().getParent());
         assertTrue(index >= 0);
         assertSame(actions.get(ActionId.RUN_ALGORITHM),
-                ((StageActionList.ActionRow) components.get(index + 1)).action());
+                ((StageActionList.ActionRow) components.get(index - 1)).action());
 
         assertEquals(LineupAlgorithms.forAssignment(Lineup.TeamType.HERO), items(view.algorithmBox()));
         assertSame(selection.get(Lineup.TeamType.HERO), view.algorithmBox().getSelectedItem());

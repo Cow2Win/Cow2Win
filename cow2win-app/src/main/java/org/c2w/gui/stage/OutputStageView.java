@@ -140,10 +140,10 @@ public class OutputStageView extends StageView {
         return area;
     }
 
-    /** "Copy plan" below the output menu's actions (the former "copy" button of the plan). */
+    /** "Copy plan" right after "Rearrangement guide" (the former "copy" button of the plan). */
     @Override
     protected void addActionListExtras(StageActionList actionList) {
-        actionList.addExtraAction(copyPlanAction);
+        actionList.addExtraActionAfter(actions.get(ActionId.OPEN_CHANGE_PLAN), copyPlanAction);
     }
 
     @Override

@@ -49,7 +49,7 @@ public abstract class StageView extends JPanel {
     /** The read-only details on the right - scrolls vertically if it does not fit. */
     protected abstract JComponent createInfoPanel();
 
-    /** Hook to append stage specific rows to the action list (see {@link StageActionList#addExtra}). */
+    /** Hook to add stage specific rows to the action list (see {@link StageActionList#addExtraAfter}). */
     protected void addActionListExtras(StageActionList actionList) {
     }
 

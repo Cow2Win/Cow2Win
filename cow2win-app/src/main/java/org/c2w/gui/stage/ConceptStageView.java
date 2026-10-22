@@ -33,7 +33,7 @@ import static org.c2w.gui.stage.InfoSections.*;
 
 /**
  * The stage view "strategic concept": the fortification map as work area, on the left the
- * concept actions plus the "algorithm" combo box directly above "Run assignment" (the
+ * concept actions plus the "algorithm" combo box directly below "Run assignment" (the
  * algorithm it runs for the selected fortification type, see {@link AlgorithmSelection}; with
  * a one-sentence summary below and an "i" button opening the full explanation)
  * and the "fortification values" combo box at the end, and on the right the overview of the selected
@@ -58,7 +58,6 @@ public class ConceptStageView extends StageView {
     private static final int TEAM_AVATAR_SIZE = 20;
     private static final int TEAM_NAME_WIDTH = 90;
     private static final String KEY_VALUE_MODE = "fortificationMap.valueMode";
-    private static final String KEY_ALGORITHM = "conceptStage.algorithm";
     private static final String KEY_ALGORITHM_INFO = "conceptStage.algorithmInfo";
     private static final String KEY_HEROES = "fortificationMap.showHeroes";
     private static final String KEY_TITANS = "fortificationMap.showTitans";
@@ -153,25 +152,25 @@ public class ConceptStageView extends StageView {
     }
 
     /**
-     * The "algorithm" combo box directly above "Run assignment" (see {@link #createAlgorithmBox}),
-     * and the "fortification values" combo box below the actions: switches the map between power,
-     * the change since loading/saving and the change against live. Always starts with power.
+     * The "algorithm" combo box directly below "Run assignment" (see {@link #createAlgorithmBox}),
+     * and the group "fortification values" at the end with its combo box: switches the map between
+     * power, the change since loading/saving and the change against live. Always starts with power.
      */
     @Override
     protected void addActionListExtras(StageActionList actionList) {
         Action runAlgorithm = actions.get(ActionId.RUN_ALGORITHM);
-        actionList.addExtraBefore(runAlgorithm, createAlgorithmPanel(runAlgorithm));
+        actionList.addExtraAfter(runAlgorithm, createAlgorithmPanel(runAlgorithm));
 
         valueModeBox = new JComboBox<>(FortificationValueMode.values());
         valueModeBox.setSelectedItem(FortificationValueMode.POWER);
         map.setValueMode(FortificationValueMode.POWER);
         valueModeBox.setOpaque(false);
         valueModeBox.addActionListener(e -> map.setValueMode((FortificationValueMode) valueModeBox.getSelectedItem()));
-        actionList.addExtra(labeledPanel(KEY_VALUE_MODE, valueModeBox));
+        actionList.addExtraGroup(LanguageService.displayName(KEY_VALUE_MODE), heightLimitedPanel(valueModeBox));
     }
 
-    /** A muted heading above {@code content}, no higher than needed. */
-    private static JPanel labeledPanel(String headingKey, JComponent content) {
+    /** A panel with {@code content} in its center, no higher than needed - a combo box would grow in the list. */
+    private static JPanel heightLimitedPanel(JComponent content) {
         JPanel panel = new JPanel(new BorderLayout(0, 4)) {
             @Override
             public Dimension getMaximumSize() {
@@ -179,7 +178,6 @@ public class ConceptStageView extends StageView {
             }
         };
         panel.setOpaque(false);
-        panel.add(mutedLabel(LanguageService.displayName(headingKey)), BorderLayout.NORTH);
         panel.add(content, BorderLayout.CENTER);
         return panel;
     }
@@ -187,12 +185,14 @@ public class ConceptStageView extends StageView {
     // --- algorithm ---
 
     /**
-     * The "algorithm" area: heading, the combo box (see {@link #createAlgorithmBox}) with the
-     * "i" button to its right (opens the full explanation, see {@link #openAlgorithmInfo}) and the
-     * one-sentence summary of the chosen algorithm below.
+     * The "algorithm" area in the group of "Run assignment": the combo box (see
+     * {@link #createAlgorithmBox}) with the "i" button to its right (opens the full explanation,
+     * see {@link #openAlgorithmInfo}) and the one-sentence summary of the chosen algorithm below.
+     * No higher than needed.
      */
     private JPanel createAlgorithmPanel(Action runAlgorithm) {
-        algorithmSummary = new AlgorithmSummaryLabel(ACTION_LIST_WIDTH - 30);
+        // The column minus the group's indent (24) and right padding (8) of the action list, and some air.
+        algorithmSummary = new AlgorithmSummaryLabel(ACTION_LIST_WIDTH - 44);
         algorithmInfoButton = new FlatButton(new InfoIcon());
         String infoText = LanguageService.displayName(KEY_ALGORITHM_INFO);
         algorithmInfoButton.setToolTipText(infoText);
@@ -203,7 +203,7 @@ public class ConceptStageView extends StageView {
         row.setOpaque(false);
         row.add(createAlgorithmBox(runAlgorithm), BorderLayout.CENTER);
         row.add(algorithmInfoButton, BorderLayout.EAST);
-        JPanel panel = labeledPanel(KEY_ALGORITHM, row);
+        JPanel panel = heightLimitedPanel(row);
         panel.add(algorithmSummary, BorderLayout.SOUTH);
         return panel;
     }

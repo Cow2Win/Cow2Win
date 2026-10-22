@@ -44,7 +44,7 @@ class AlgorithmSelectionTextsTest {
         for (Map.Entry<String, Properties> language : languages().entrySet()) {
             Properties texts = language.getValue();
             String name = language.getKey();
-            assertNotNull(texts.getProperty("conceptStage.algorithm"), name);
+            assertNotNull(texts.getProperty("actionGroup.algorithm"), name);
 
             String confirm = MessageFormat.format(texts.getProperty("toolbar.runAlgorithm.confirmMode"), "Algo", 3L, "Typ");
             assertTrue(confirm.contains("Algo") && confirm.contains("3") && confirm.contains("Typ"), name + ": " + confirm);

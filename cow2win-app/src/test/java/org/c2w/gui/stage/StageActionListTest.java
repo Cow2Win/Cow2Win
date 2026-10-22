@@ -29,27 +29,26 @@ class StageActionListTest {
     }
 
     @Test
-    @DisplayName("For the concept stage: the lineup group with five entries, then the other actions, separators as lines")
+    @DisplayName("For the concept stage: the groups lineup (five entries), algorithm and teams - headings, no separators")
     void rowsFollowTheMenu() {
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), allActions());
 
-        String lineupHeading = LanguageService.displayName("menu.lineup").toUpperCase(LanguageService.locale());
         assertEquals(List.of(
-                "#" + lineupHeading, "NEW_LINEUP", "REMOVE_LINEUP", "CLEAR_LINEUP", "COPY_LINEUP", "COMPARE_LINEUPS",
-                "---", "RUN_ALGORITHM",
-                "---", "SHOW_TEAMS"), describe(list));
+                heading("menu.lineup"), "NEW_LINEUP", "REMOVE_LINEUP", "CLEAR_LINEUP", "COPY_LINEUP", "COMPARE_LINEUPS",
+                heading("actionGroup.algorithm"), "RUN_ALGORITHM",
+                heading("actionGroup.teams"), "SHOW_TEAMS"), describe(list));
         assertEquals(MainMenuBar.menuFor(Stage.CONCEPT).allActionIds(),
                 list.rows().stream().map(row -> ((AppAction) row.action()).id()).toList());
     }
 
     @Test
-    @DisplayName("For the input stage: no guild group and no journal - add / delete member, then the team assignment")
+    @DisplayName("For the input stage: no guild group and no journal - the groups members and live lineup")
     void inputStageHasNoGuildGroup() {
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.INPUT), allActions());
 
         assertEquals(List.of(
-                "ADD_MEMBER", "REMOVE_MEMBER",
-                "---", "OPEN_GUILD_TEAM_ENTRY"), describe(list));
+                heading("actionGroup.members"), "ADD_MEMBER", "REMOVE_MEMBER",
+                heading("actionGroup.liveLineup"), "OPEN_GUILD_TEAM_ENTRY"), describe(list));
     }
 
     @Test
@@ -97,31 +96,71 @@ class StageActionListTest {
     }
 
     @Test
-    @DisplayName("A stage view can append its own rows")
-    void extraRows() {
-        StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), allActions());
-        JCheckBox toggle = new JCheckBox("toggle");
-        list.addExtra(toggle);
-        Component[] components = list.getComponents();
-        assertSame(toggle, components[components.length - 1]);
-    }
-
-    @Test
-    @DisplayName("A stage view can insert a row directly before an action's row - no separator; an unknown action is refused")
-    void extraRowBeforeAction() {
+    @DisplayName("A stage view can insert a row directly after an action's row, indented like it; an unknown action is refused")
+    void extraRowAfterAction() {
         MainActions actions = allActions();
         StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), actions);
         JComboBox<String> combo = new JComboBox<>();
 
-        list.addExtraBefore(actions.get(ActionId.RUN_ALGORITHM), combo);
+        list.addExtraAfter(actions.get(ActionId.RUN_ALGORITHM), combo);
 
         List<Component> components = List.of(list.getComponents());
         int index = components.indexOf(combo);
-        assertTrue(components.get(index - 1) instanceof StageActionList.SeparatorRow, "the menu's separator stays above it");
-        assertSame(actions.get(ActionId.RUN_ALGORITHM), ((StageActionList.ActionRow) components.get(index + 1)).action());
+        StageActionList.ActionRow row = (StageActionList.ActionRow) components.get(index - 1);
+        assertSame(actions.get(ActionId.RUN_ALGORITHM), row.action());
+        assertEquals(heading("actionGroup.teams"), "#" + ((JLabel) components.get(index + 1)).getText());
+        assertEquals(row.getInsets().left - 4, combo.getInsets().left, "indented like the row, minus the combo box's own border");
 
         assertThrows(IllegalArgumentException.class,
-                () -> list.addExtraBefore(new AppAction(ActionId.RUN_ALGORITHM, () -> { }), new JLabel()));
+                () -> list.addExtraAfter(new AppAction(ActionId.RUN_ALGORITHM, () -> { }), new JLabel()));
+    }
+
+    @Test
+    @DisplayName("A stage view can insert an action directly after an action's row - same level, also in rows(); an unknown anchor is refused")
+    void extraActionAfterAction() {
+        MainActions actions = allActions();
+        StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), actions);
+        Action extra = new AbstractAction("extra") {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+            }
+        };
+
+        list.addExtraActionAfter(actions.get(ActionId.NEW_LINEUP), extra);
+
+        List<Action> rowActions = list.rows().stream().map(StageActionList.ActionRow::action).toList();
+        assertEquals(List.of(actions.get(ActionId.NEW_LINEUP), extra, actions.get(ActionId.REMOVE_LINEUP)),
+                rowActions.subList(0, 3));
+        List<Component> components = List.of(list.getComponents());
+        StageActionList.ActionRow extraRow = list.rows().get(1);
+        assertSame(list.rows().get(0), components.get(components.indexOf(extraRow) - 1));
+        assertSame(list.rows().get(2), components.get(components.indexOf(extraRow) + 1));
+        assertEquals(list.rows().get(0).level(), extraRow.level());
+        assertEquals(1, extraRow.level());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> list.addExtraActionAfter(new AppAction(ActionId.NEW_LINEUP, () -> { }), extra));
+    }
+
+    @Test
+    @DisplayName("A stage view can append a group of its own: heading in capitals, then the component, indented like a group entry")
+    void extraGroup() {
+        StageActionList list = new StageActionList(MainMenuBar.menuFor(Stage.CONCEPT), allActions());
+        JCheckBox toggle = new JCheckBox("toggle");
+
+        list.addExtraGroup("Extra group", toggle);
+
+        Component[] components = list.getComponents();
+        assertSame(toggle, components[components.length - 1]);
+        StageActionList.GroupHeading heading = (StageActionList.GroupHeading) components[components.length - 2];
+        assertEquals("EXTRA GROUP", heading.getText());
+        StageActionList.ActionRow groupEntry = list.rows().getLast();
+        assertEquals(groupEntry.getInsets().left - 4, toggle.getInsets().left);
+    }
+
+    /** The heading text of the group {@code titleKey}, as {@link #describe} writes it. */
+    private static String heading(String titleKey) {
+        return "#" + LanguageService.displayName(titleKey).toUpperCase(LanguageService.locale());
     }
 
     /** Headings as "#TITLE", separators as "---", rows as their action id. */

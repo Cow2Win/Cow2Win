@@ -451,7 +451,7 @@ public class InputStageView extends StageView {
         onlyStaleToggle = new JCheckBox(LanguageService.displayName(KEY_ONLY_STALE));
         onlyStaleToggle.setOpaque(false);
         onlyStaleToggle.addActionListener(e -> applyOnlyStale());
-        actionList.addExtra(onlyStaleToggle);
+        actionList.addExtraAfter(removeMemberAction, onlyStaleToggle);
     }
 
     private void applyOnlyStale() {
