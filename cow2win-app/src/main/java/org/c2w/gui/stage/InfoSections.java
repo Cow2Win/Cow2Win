@@ -1,14 +1,13 @@
 package org.c2w.gui.stage;
 
 import org.c2w.gui.common.AppColors;
+import org.c2w.gui.common.DateValue;
 import org.c2w.i18n.LanguageService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.List;
 
 /**
@@ -176,9 +175,9 @@ final class InfoSections {
         return NumberFormat.getIntegerInstance(LanguageService.locale()).format(value);
     }
 
-    /** {@code date} in the short format of the configured language, "" for null. */
+    /** {@code date} in the short format of the configured language, "" for null - see {@link DateValue#shortDate}. */
     static String shortDate(LocalDate date) {
-        return date == null ? "" : DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(LanguageService.locale()).format(date);
+        return DateValue.shortDate(date);
     }
 
     /** {@code text} with the HTML special characters escaped. */

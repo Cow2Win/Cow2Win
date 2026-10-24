@@ -6,6 +6,7 @@ import org.c2w.data.repository.LineupFiles;
 import org.c2w.data.repository.LineupRepository;
 import org.c2w.domain.TeamScoreCalculator;
 import org.c2w.gui.common.AppColors;
+import org.c2w.gui.common.DateValue;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.FortComboBox;
 import org.c2w.gui.common.FortificationTypeStyle;
@@ -109,6 +110,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
     private static final String KEY_COLUMN_TEAM = "guildEntry.column.team";
     private static final String KEY_COLUMN_BUFF = "guildEntry.column.buff";
     private static final String KEY_COLUMN_SCORE = "guildEntry.column.score";
+    /** Same header as in the member overview of the input stage. */
+    private static final String KEY_COLUMN_LAST_MODIFIED = "memberOverview.lastModified";
     private static final String KEY_FILTER_ALL = "guildEntry.filterAll";
     private static final String KEY_SEARCH = "guildEntry.search";
     private static final String KEY_SEARCH_HINT = "guildEntry.searchHint";
@@ -440,11 +443,14 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         if (withTotems) {
             list.add(Column.TOTEMS);
         }
-        list.addAll(List.of(Column.TEAM, Column.BUFF, Column.SCORE));
+        list.addAll(List.of(Column.TEAM, Column.BUFF, Column.SCORE, Column.LAST_MODIFIED));
         return list;
     }
 
-    /** The table's columns - war flag/pet only for hero teams, totems only for titan teams, see {@link #buildColumns}. */
+    /**
+     * The table's columns - war flag/pet only for hero teams, totems only for titan teams, see
+     * {@link #buildColumns}. The last one is the date of the team's last change, see {@link #lastModifiedOf}.
+     */
     private enum Column {
         NUMBER(null, Integer.class, 36),
         FORTIFICATION(KEY_COLUMN_FORTIFICATION, String.class, 170),
@@ -455,7 +461,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
         TOTEMS(KEY_TOTEMS, String.class, 120),
         TEAM(KEY_COLUMN_TEAM, Object.class, 5 * (ICON_SIZE + 4) + 12),
         BUFF(KEY_COLUMN_BUFF, Long.class, 50),
-        SCORE(KEY_COLUMN_SCORE, Double.class, 60);
+        SCORE(KEY_COLUMN_SCORE, Double.class, 60),
+        LAST_MODIFIED(KEY_COLUMN_LAST_MODIFIED, DateValue.class, 90);
 
         /** Language file key of the header, null for the "#" column. */
         final String headerKey;
@@ -513,8 +520,17 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
                 case TEAM -> row.draft.members;
                 case BUFF -> buffCountOf(row);
                 case SCORE -> breakdownOf(row).total();
+                case LAST_MODIFIED -> lastModifiedOf(row);
             };
         }
+    }
+
+    /**
+     * The date of the row's last change - empty while the line has no team yet: a new line's draft
+     * already carries today's date, which would be misleading there.
+     */
+    private static DateValue lastModifiedOf(Row<?> row) {
+        return row.draft.members.isEmpty() ? DateValue.NONE : new DateValue(row.draft.lastModified);
     }
 
     private JComponent buildTablePane() {
@@ -662,6 +678,8 @@ abstract class GuildTeamEntryDialog<T> extends JDialog {
             this.column = column;
             if (column == Column.NUMBER || column == Column.BUFF) {
                 setHorizontalAlignment(CENTER);
+            } else if (column == Column.LAST_MODIFIED) {
+                setHorizontalAlignment(RIGHT); // like the member overview
             }
         }
 

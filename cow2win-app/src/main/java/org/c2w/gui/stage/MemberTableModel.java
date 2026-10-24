@@ -2,12 +2,12 @@ package org.c2w.gui.stage;
 
 import org.c2w.gui.StageStatus;
 import org.c2w.gui.common.AppColors;
+import org.c2w.gui.common.DateValue;
 import org.c2w.i18n.LanguageService;
 import org.c2w.service.DataStatus;
 
 import javax.swing.table.AbstractTableModel;
 import java.awt.Color;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -38,26 +38,6 @@ final class MemberTableModel extends AbstractTableModel {
 
     private static final Class<?>[] COLUMN_CLASSES = {
             StatusValue.class, String.class, Integer.class, Integer.class, Integer.class, DateValue.class};
-
-    /**
-     * A last-modified date as a table value: sorts chronologically, an unknown date (null) after
-     * every known one.
-     */
-    record DateValue(LocalDate date) implements Comparable<DateValue> {
-
-        @Override
-        public int compareTo(DateValue other) {
-            if (date == null) {
-                return other.date == null ? 0 : 1;
-            }
-            return other.date == null ? -1 : date.compareTo(other.date);
-        }
-
-        @Override
-        public String toString() {
-            return InfoSections.shortDate(date);
-        }
-    }
 
     /**
      * A member's data status as a table value: sorts by severity (outdated per journal, too old,
