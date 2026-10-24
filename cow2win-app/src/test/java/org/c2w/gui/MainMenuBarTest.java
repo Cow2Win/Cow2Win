@@ -36,13 +36,14 @@ class MainMenuBarTest {
     private static final String SEPARATOR = "---";
 
     /**
-     * "menu title key: entries" of the menu bar: "File", "Guild" and the journal - the process
+     * "menu title key: entries" of the menu bar: "File", "Guild", the journal and "Help" - the process
      * stages have no menu there (see {@link #EXPECTED_STAGE_ACTIONS}).
      */
     private static final List<String> EXPECTED = List.of(
-            "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS",
+            "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD, ---, EDIT_GUILD_NOTE",
-            "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS");
+            "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS",
+            "menu.help: SHOW_LOG, ---, ABOUT");
 
     /**
      * "title key: entries" of the process stages' action lists - every action in a group, no
@@ -79,13 +80,13 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("Menu titles, entries and separators match the expected menu bar - three menus, the journal last")
+    @DisplayName("Menu titles, entries and separators match the expected menu bar - four menus, \"Help\" last")
     void structureMatchesExpectedMenuBar() {
         MainActions actions = allActions();
 
         MainMenuBar menuBar = new MainMenuBar(actions, context);
 
-        assertEquals(3, menuBar.getMenuCount());
+        assertEquals(4, menuBar.getMenuCount());
         assertSame(menuBar.journalMenu(), menuBar.getMenu(2));
         assertEquals(EXPECTED.size(), menuBar.getMenuCount());
         for (int i = 0; i < EXPECTED.size(); i++) {
@@ -94,6 +95,24 @@ class MainMenuBarTest {
             assertEquals(LanguageService.displayName(parts[0]), menu.getText(), "title of menu " + i);
             assertEquals(parts[1], describeEntries(menu, actions), "entries of " + parts[0]);
         }
+    }
+
+    @Test
+    @DisplayName("\"Help\" is the last menu and holds the log and \"About\" - also while the journal is hidden; \"File\" keeps the catalog update but no longer the log")
+    void helpMenuIsLast() {
+        MainMenuBar menuBar = new MainMenuBar(allActions(), context);
+        assertFalse(menuBar.journalMenu().isVisible(), "no guild open");
+
+        JMenu last = menuBar.getMenu(menuBar.getMenuCount() - 1);
+        assertEquals(LanguageService.displayName("menu.help"), last.getText());
+        assertTrue(last.isVisible());
+        MainMenuBar.MenuSpec help = MainMenuBar.MENUS.getLast();
+        assertEquals("menu.help", help.titleKey());
+        assertEquals(List.of(ActionId.SHOW_LOG, ActionId.ABOUT), help.allActionIds());
+
+        List<ActionId> file = MainMenuBar.MENUS.getFirst().allActionIds();
+        assertFalse(file.contains(ActionId.SHOW_LOG));
+        assertTrue(file.contains(ActionId.CATALOG_UPDATE));
     }
 
     @Test

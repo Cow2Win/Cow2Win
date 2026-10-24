@@ -8,6 +8,7 @@ import org.c2w.gui.action.Stage;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.GuiUtils;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.common.WebLinks;
 import org.c2w.gui.cowscore.CowScoreDialog;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildNoteDialog;
@@ -31,8 +32,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.EnumMap;
@@ -70,6 +69,7 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_APPLY_TO_LIVE = "/images/app/save.png";
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
+    private static final String ICON_ABOUT = "/images/app/info.png";
 
     private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
     private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
@@ -273,6 +273,8 @@ public class Cow2Frame extends JFrame {
         // Downloads a newer catalog for the next start - nothing is reloaded in this session.
         actions.register(new AppAction(ActionId.CATALOG_UPDATE, () -> CatalogUpdateDialog.open(this, this::onOpenWeb)));
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
+        actions.register(new AppAction(ActionId.ABOUT, () -> AboutDialog.open(this))
+                .withSmallIcon(IconLoader.iconForButton(ICON_ABOUT)));
         // The change plan lives in the output view, created after the actions.
         actions.register(new AppAction(ActionId.APPLY_TO_LIVE, () -> outputView.applyToLive())
                 .withIcon(IconLoader.iconForButton(ICON_APPLY_TO_LIVE)));
@@ -700,17 +702,7 @@ public class Cow2Frame extends JFrame {
     }
 
     private void onOpenWeb(String url) {
-        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.web.noBrowser"),
-                    LanguageService.displayName("mainFrame.web.errorTitle"), JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        try {
-            Desktop.getDesktop().browse(new URI(url));
-        } catch (IOException | URISyntaxException e) {
-            JOptionPane.showMessageDialog(this, LanguageService.displayName("mainFrame.web.openError", url) + "\n" + e.getMessage(),
-                    LanguageService.displayName("mainFrame.web.errorTitle"), JOptionPane.ERROR_MESSAGE);
-        }
+        WebLinks.open(this, url);
     }
 
 

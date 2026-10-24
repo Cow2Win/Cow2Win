@@ -54,26 +54,28 @@ public final class MainMenuBar extends JMenuBar {
     static final Separator SEPARATOR = new Separator();
 
     /**
-     * The menus of the menu bar in display order: "File", "Guild" and last the "Journal"
-     * ({@link Stage#JOURNAL}, shown for a guild master only) - its first entry is the battle
-     * list, where battle logs are also imported; the name mappings are opened from the players
-     * window. "File" also holds the master data entries for now (no menu of their own yet).
-     * "Guild" holds creating and removing a guild, then - after a separator - its note. The
-     * process stages have no menu here, see {@link #STAGE_ACTIONS}.
+     * The menus of the menu bar in display order: "File", "Guild", the "Journal"
+     * ({@link Stage#JOURNAL}, shown for a guild master only) and last "Help". The journal's first
+     * entry is the battle list, where battle logs are also imported; the name mappings are opened
+     * from the players window. "File" also holds the master data entries for now (no menu of
+     * their own yet). "Guild" holds creating and removing a guild, then - after a separator - its
+     * note. "Help" holds the log and "About Cow2Win". The process stages have no menu here, see
+     * {@link #STAGE_ACTIONS}.
      *
      * <p>Every action in a spec titled with a {@link Stage#menuTextKey()} (here or in
      * {@link #STAGE_ACTIONS}), submenus included, is of that stage. Every action appears in
      * exactly one spec of the two lists, except the {@link #TOOLBAR_ONLY} ones.
      */
     static final List<MenuSpec> MENUS = List.of(
-            menu("menu.file", SETTINGS, COWSCORE, CATALOG_UPDATE, SHOW_LOG, OPEN_HERO_WARS),
+            menu("menu.file", SETTINGS, COWSCORE, CATALOG_UPDATE, OPEN_HERO_WARS),
             menu(Stage.GUILD.menuTextKey(),
                     NEW_GUILD, REMOVE_GUILD,
                     SEPARATOR, EDIT_GUILD_NOTE),
             menu(Stage.JOURNAL.menuTextKey(),
                     JOURNAL_BATTLES,
                     SEPARATOR, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS,
-                    SEPARATOR, JOURNAL_PLAYERS));
+                    SEPARATOR, JOURNAL_PLAYERS),
+            menu("menu.help", SHOW_LOG, SEPARATOR, ABOUT));
 
     /**
      * The actions of the process stages input, concept and output - not in the menu bar, only

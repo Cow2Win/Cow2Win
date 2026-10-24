@@ -9,6 +9,8 @@ public enum ActionId {
 
     SETTINGS("menu.settings", Stage.GENERAL, Opens.WINDOW),
     SHOW_LOG("menu.showLog", Stage.GENERAL, Opens.WINDOW),
+    /** Name, version, contact, license and credits - see {@code AboutDialog}. */
+    ABOUT("menu.about", Stage.GENERAL, Opens.WINDOW),
     OPEN_HERO_WARS("toolbar.heroWars", Stage.GENERAL),
 
     /** Master data: the CowScore marks apply to every guild (menu "File" for now, see {@link Stage#MASTER_DATA}). */

@@ -56,3 +56,18 @@ Cow2Win is not code-signed, so on the first start Windows may show
 
 To avoid the warning altogether: before unzipping, right-click the downloaded
 zip, choose **Properties**, tick **Unblock** and click **OK**, then unzip it.
+
+## License
+
+Cow2Win is released under the MIT License, see [LICENSE](LICENSE).
+
+Hero Wars and its artwork (hero, titan and pet pictures etc.) belong to their
+owner and are not covered by this license. Cow2Win is a fan project and not
+affiliated with the game's publisher.
+
+Credits:
+
+- [Phosphor Icons](https://phosphoricons.com) (MIT) – menu and toolbar icons
+- [Material-UI-Swing](https://github.com/vincenzopalazzo/material-ui-swing) (MIT) – look and feel
+- [Gson](https://github.com/google/gson) (Apache 2.0)
+- [H2 Database](https://h2database.com) (MPL 2.0 / EPL 1.0)

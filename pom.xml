@@ -18,6 +18,13 @@
     <name>Cow2Win (parent)</name>
     <description>An Assistant for Clash of world (Hero wars: Dominion Era)</description>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
     <modules>
         <module>cow2win-app</module>
         <module>cow2win-datatool</module>
