@@ -69,8 +69,8 @@ class ManualRendererTest {
     }
 
     @Test
-    @DisplayName("Every image of the manual uses one of the five fixed file names under images/")
-    void imageNames() throws IOException {
+    @DisplayName("The manual has no screenshots (decided by the user) - the HTML has no image")
+    void noImages() throws IOException {
         String markdown = new String(ManualRenderer.class.getResourceAsStream(ManualRenderer.RESOURCE).readAllBytes(),
                 java.nio.charset.StandardCharsets.UTF_8);
         Matcher matcher = Pattern.compile("!\\[[^]]*]\\(([^)]+)\\)").matcher(markdown);
@@ -78,8 +78,8 @@ class ManualRendererTest {
         while (matcher.find()) {
             images.add(matcher.group(1));
         }
-        assertEquals(Set.of("images/main-window.png", "images/input.png", "images/concept.png", "images/output.png",
-                "images/journal.png"), images);
+        assertEquals(Set.of(), images);
+        assertFalse(ManualRenderer.load().html(STYLE).contains("<img"));
     }
 
     @Test

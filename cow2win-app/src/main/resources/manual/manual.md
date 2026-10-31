@@ -65,8 +65,6 @@ open the release page.
 
 ### A tour of the main window
 
-![Main window](images/main-window.png)
-
 From top to bottom:
 
 - **Menu bar** – *File*, *Guild*, *Journal* (guild masters only, see
@@ -111,8 +109,6 @@ or move the workspace under *File* → *Settings …*, see [Settings and mainten
 <a name="input"></a>
 
 ## Stage 1: Input
-
-![Input stage](images/input.png)
 
 In the input stage you record your guild: its members and their teams. Cow2Win can only plan with
 teams it knows, so this is where most of the typing happens – but only the first time. Later you
@@ -188,8 +184,6 @@ asks first. The templates are shared by all your guilds.
 <a name="concept"></a>
 
 ## Stage 2: Strategic concept
-
-![Strategic concept stage](images/concept.png)
 
 In the strategic concept you plan the lineup: which team defends which fortification. The work
 area is the **fortification map**; on the left the action list with the lineup functions and the
@@ -330,8 +324,6 @@ way to see how two algorithms differ for your guild.
 
 ## Stage 3: Output
 
-![Output stage](images/output.png)
-
 The output stage turns your plan into work in the game. Cow2Win does not change anything in the
 game – you move the teams yourself, and Cow2Win tells you which ones.
 
@@ -427,8 +419,6 @@ always holds – to influence the lineup.
 <a name="journal"></a>
 
 ## Clash of Worlds Journal
-
-![Clash of Worlds Journal](images/journal.png)
 
 The journal collects the **battle logs** of your Clash of Worlds battles. Only a **guild master**
 can export these logs in the game, so the *Journal* menu only appears for a guild created with
