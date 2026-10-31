@@ -90,7 +90,8 @@ Cow2Win can manage several guilds – for example your main account and a second
 another guild. Each guild has its own members, teams, lineups and journal.
 
 - **Create a guild:** *Guild* → *Create new guild …*. Enter the name and tick
-  *I am the guild master* if you are – only then the journal is available for this guild.
+  *I am the guild master* if you are – only then the journal is available for this guild. This
+  cannot be changed later.
 - **Open a guild:** choose it under *Guild:* in the context bar.
 - **Remove a guild:** *Guild* → *Remove selected guild*. This deletes the guild folder and
   everything in it, including its journal. The last remaining guild cannot be removed.
@@ -182,9 +183,7 @@ In this window F1 loads a template – it does **not** open this manual.
 Many members play the same team compositions. Save such a composition once as one of the five
 **templates** (Shift + F1 – F5) and load it into any team with F1 – F5. Then you only have to
 adjust the power. When you overwrite a template, Cow2Win shows the old and the new content and
-asks first.
-
-<!-- TODO(user): Are the five templates shared by all guilds, or kept per guild? (Not stated in the UI texts.) -->
+asks first. The templates are shared by all your guilds.
 
 <a name="concept"></a>
 
@@ -302,11 +301,22 @@ lineup (total power, moved, added and removed teams).
 
 ### Team overview
 
-*Show hero teams …* (or *Show titan teams …*) lists all teams of the selected fortification type
-with power and fortification. Under *Displayed value* you can show each team's *CowScore* or its
-*Matching role count* per fortification.
+*Show hero teams …* (or *Show titan teams …*) lists all teams of the selected fortification type in
+one table – one row per team with its *Power*, *Member*, heroes or titans and *Fortification*,
+followed by one column for every fortification. It is the quickest way to see where a team would
+fit best.
 
-<!-- TODO(user): Please check whether the team overview should be described in more detail (what can be edited there). -->
+- **Values per fortification:** under *Displayed value* choose what the fortification columns
+  show – the team's *CowScore* at that fortification, or its *Matching role count* (how many of its
+  heroes or titans match the fortification's buff).
+- **Change the power:** click into the *Power* cell and type the new value. Negative values and
+  values above 2,000,000 are rejected. The power belongs to the guild: save it with the save button
+  at the top of the window (tooltip *Save guild*).
+- **Change the fortification:** choose another fortification in the *Fortification* cell. This
+  places the team in the **open lineup**; if the fortification is already full, Cow2Win says so and
+  leaves the team where it was. Save the lineup as usual with the save button in the context bar.
+
+Sort the table by a fortification column to find the teams that fit a fortification best.
 
 ### Comparing lineups
 
@@ -390,8 +400,6 @@ A hero or titan that already counts through the buff does not count again throug
 With the default settings the role and element buff give 1.5 % per matching unit, the other
 bonuses 1.25 % each, an unmarked war flag and each super titan 0.6 %. So a hero team gets at most
 12.5 % with the default settings – power always comes first.
-
-<!-- TODO(user): The requirement mentioned "bonuses together at most +10 %". With the default values in the code a hero team can reach 5 × 1.5 % + 4 × 1.25 % = 12.5 %. Please check which statement is right. -->
 
 ### The CowScore settings
 
@@ -536,8 +544,6 @@ At every start Cow2Win checks whether a newer version is available and offers to
 page. To update, download the new zip, unzip it and start the new `Cow2Win.exe`. Your data stays in
 the workspace and is not touched by an update.
 
-<!-- TODO(user): Please confirm that replacing the program folder is the recommended way to update (the workspace lies outside it). -->
-
 ### Show Log
 
 *Help* → *Show Log …* shows the log of the open guild: what was done with it and when – guild and
@@ -574,10 +580,8 @@ slots, MAX_BUFF shows how much buff you can reach. See [Running an algorithm](#r
 ### Why don't I see the Journal menu?
 
 The journal is only available for guild masters, because only they can export the battle logs in
-the game. It appears for a guild created with *I am the guild master*. See
-[Clash of Worlds Journal](#journal).
-
-<!-- TODO(user): Can the guild master flag be changed for an existing guild? No function for it was found in the UI. -->
+the game. It appears for a guild created with *I am the guild master*. This choice cannot be
+changed later for an existing guild. See [Clash of Worlds Journal](#journal).
 
 ### A new hero or titan is missing – what can I do?
 
@@ -597,8 +601,6 @@ In the workspace folder, by default `.cow2Win\workspace` in your user folder. Co
 and a weekly backup by itself. To move to another PC, copy the workspace folder there and select
 it under *File* → *Settings …* → *Workspace directory:*. See
 [Where your data is stored](#where-your-data-is-stored).
-
-<!-- TODO(user): Please confirm this is the recommended way to move to another PC. -->
 
 ### How do I get my changes into the game?
 
