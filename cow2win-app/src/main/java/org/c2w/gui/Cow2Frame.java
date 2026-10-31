@@ -13,6 +13,9 @@ import org.c2w.gui.cowscore.CowScoreDialog;
 import org.c2w.gui.fort.FortificationMapPanel;
 import org.c2w.gui.guild.GuildNoteDialog;
 import org.c2w.gui.journal.JournalActions;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
+import org.c2w.gui.manual.ManualWindow;
 import org.c2w.gui.stage.ConceptStageView;
 import org.c2w.gui.stage.InputStageView;
 import org.c2w.gui.stage.OutputStageView;
@@ -70,6 +73,7 @@ public class Cow2Frame extends JFrame {
     private static final String ICON_NEW_GUILD = "/images/app/guild-new.png";
     private static final String ICON_REMOVE_GUILD = "/images/app/guild-remove.png";
     private static final String ICON_ABOUT = "/images/app/info.png";
+    private static final String ICON_MANUAL = "/images/app/manual.png";
 
     private static final String KEY_REMOVE_LINEUP = "toolbar.removeLineup";
     private static final String KEY_CLEAR_LINEUP = "toolbar.clearLineup";
@@ -158,6 +162,8 @@ public class Cow2Frame extends JFrame {
         // The input view registers "add / delete member" - before the menu bar needs them.
         InputStageView inputView = new InputStageView(appContext, actions, actionBar::openTeamEntryFor);
         setJMenuBar(new MainMenuBar(actions, appContext));
+        // F1: the manual at the chapter of the active stage.
+        ManualHelp.bindF1(getRootPane(), this::manualChapter);
         this.contextBar = new ContextBar(appContext, actions);
         actionBar.buildBar();
 
@@ -225,6 +231,15 @@ public class Cow2Frame extends JFrame {
         }
     }
 
+    /**
+     * The manual chapter for F1: the active process stage's, "Getting started" without an open guild -
+     * package-visible for tests.
+     */
+    String manualChapter() {
+        return appContext.guild() == null ? ManualChapters.GETTING_STARTED
+                : ManualChapters.forStage(actionBar.processBar().activeStage());
+    }
+
     /** The stage views in the center - package-visible for tests. */
     JPanel stageViews() {
         return stageViews;
@@ -272,6 +287,11 @@ public class Cow2Frame extends JFrame {
                         () -> dataStatusController.requestUpdate())));
         // Downloads a newer catalog for the next start - nothing is reloaded in this session.
         actions.register(new AppAction(ActionId.CATALOG_UPDATE, () -> CatalogUpdateDialog.open(this, this::onOpenWeb)));
+        // F1 is bound to the root pane in the constructor - the accelerator only shows it in the menu.
+        AppAction manual = new AppAction(ActionId.MANUAL, () -> ManualWindow.open(this, manualChapter()))
+                .withSmallIcon(IconLoader.iconForButton(ICON_MANUAL));
+        manual.putValue(Action.ACCELERATOR_KEY, ManualHelp.KEY);
+        actions.register(manual);
         actions.register(new AppAction(ActionId.SHOW_LOG, this::onShowLog));
         actions.register(new AppAction(ActionId.ABOUT, () -> AboutDialog.open(this))
                 .withSmallIcon(IconLoader.iconForButton(ICON_ABOUT)));

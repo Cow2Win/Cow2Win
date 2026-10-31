@@ -9,6 +9,8 @@ import org.c2w.eval.LineupAlgorithms;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Config;
 import org.c2w.infra.Logger;
@@ -122,6 +124,7 @@ public class SettingsDialog extends JDialog {
 
     public SettingsDialog(Frame owner, AppExit appExit) {
         super(owner, LanguageService.displayName("menu.settings"), true);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.SETTINGS);
         this.appExit = appExit;
         setLayout(new BorderLayout());
         add(buildToolbarPanel(), BorderLayout.NORTH);

@@ -43,7 +43,7 @@ class MainMenuBarTest {
             "menu.file: SETTINGS, COWSCORE, CATALOG_UPDATE, OPEN_HERO_WARS",
             "menu.guild: NEW_GUILD, REMOVE_GUILD, ---, EDIT_GUILD_NOTE",
             "menu.journal: JOURNAL_BATTLES, ---, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS, ---, JOURNAL_PLAYERS",
-            "menu.help: SHOW_LOG, ---, ABOUT");
+            "menu.help: MANUAL, ---, SHOW_LOG, ---, ABOUT");
 
     /**
      * "title key: entries" of the process stages' action lists - every action in a group, no
@@ -98,7 +98,7 @@ class MainMenuBarTest {
     }
 
     @Test
-    @DisplayName("\"Help\" is the last menu and holds the log and \"About\" - also while the journal is hidden; \"File\" keeps the catalog update but no longer the log")
+    @DisplayName("\"Help\" is the last menu and holds the manual, the log and \"About\" - also while the journal is hidden; \"File\" keeps the catalog update but no longer the log")
     void helpMenuIsLast() {
         MainMenuBar menuBar = new MainMenuBar(allActions(), context);
         assertFalse(menuBar.journalMenu().isVisible(), "no guild open");
@@ -108,7 +108,7 @@ class MainMenuBarTest {
         assertTrue(last.isVisible());
         MainMenuBar.MenuSpec help = MainMenuBar.MENUS.getLast();
         assertEquals("menu.help", help.titleKey());
-        assertEquals(List.of(ActionId.SHOW_LOG, ActionId.ABOUT), help.allActionIds());
+        assertEquals(List.of(ActionId.MANUAL, ActionId.SHOW_LOG, ActionId.ABOUT), help.allActionIds());
 
         List<ActionId> file = MainMenuBar.MENUS.getFirst().allActionIds();
         assertFalse(file.contains(ActionId.SHOW_LOG));

@@ -59,8 +59,8 @@ public final class MainMenuBar extends JMenuBar {
      * entry is the battle list, where battle logs are also imported; the name mappings are opened
      * from the players window. "File" also holds the master data entries for now (no menu of
      * their own yet). "Guild" holds creating and removing a guild, then - after a separator - its
-     * note. "Help" holds the log and "About Cow2Win". The process stages have no menu here, see
-     * {@link #STAGE_ACTIONS}.
+     * note. "Help" holds the manual (F1), the log and "About Cow2Win", each set off by a separator.
+     * The process stages have no menu here, see {@link #STAGE_ACTIONS}.
      *
      * <p>Every action in a spec titled with a {@link Stage#menuTextKey()} (here or in
      * {@link #STAGE_ACTIONS}), submenus included, is of that stage. Every action appears in
@@ -75,7 +75,7 @@ public final class MainMenuBar extends JMenuBar {
                     JOURNAL_BATTLES,
                     SEPARATOR, JOURNAL_SYNC, JOURNAL_BUILD_TEAMS,
                     SEPARATOR, JOURNAL_PLAYERS),
-            menu("menu.help", SHOW_LOG, SEPARATOR, ABOUT));
+            menu("menu.help", MANUAL, SEPARATOR, SHOW_LOG, SEPARATOR, ABOUT));
 
     /**
      * The actions of the process stages input, concept and output - not in the menu bar, only

@@ -5,6 +5,8 @@ import org.c2w.data.model.GuildMember;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.service.AppContext;
 import org.c2w.service.JournalMaintenanceService;
 
@@ -58,6 +60,7 @@ public final class JournalPlayersDialog extends JDialog {
     public JournalPlayersDialog(Window owner, AppContext context, JournalMaintenanceService service, Runnable onChanged,
                                 Runnable openNameMappings) {
         super(owner, ModalityType.MODELESS);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.service = service;
         this.onChanged = onChanged;

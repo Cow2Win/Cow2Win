@@ -5,6 +5,8 @@ import org.c2w.data.repository.Catalog;
 import org.c2w.gui.action.ActionId;
 import org.c2w.gui.action.MainActions;
 import org.c2w.gui.action.Stage;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.infra.AppVersion;
 import org.c2w.infra.Config;
 import org.c2w.service.AppContext;
@@ -106,6 +108,20 @@ class Cow2FrameActionsTest {
 
         assertEquals(Stage.OUTPUT, frame.processBar().activeStage());
         assertTrue(java.util.Arrays.stream(java.awt.Window.getWindows()).noneMatch(w -> w instanceof JDialog && w.isVisible()));
+    }
+
+    @Test
+    @DisplayName("\"Manual\" shows F1 and an icon; F1 is bound in the window and opens the chapter of the active stage")
+    void manualFollowsStage() throws Exception {
+        SwingUtilities.invokeAndWait(() -> frame = new Cow2Frame(context));
+        Action manual = frame.actions().get(ActionId.MANUAL);
+        assertEquals(ManualHelp.KEY, manual.getValue(Action.ACCELERATOR_KEY));
+        assertNotNull(manual.getValue(Action.SMALL_ICON));
+        assertNotNull(frame.getRootPane().getActionForKeyStroke(ManualHelp.KEY));
+        assertEquals(ManualChapters.INPUT, frame.manualChapter());
+
+        SwingUtilities.invokeAndWait(() -> frame.actions().get(ActionId.OPEN_CHANGE_PLAN).actionPerformed(null));
+        assertEquals(ManualChapters.OUTPUT, frame.manualChapter());
     }
 
     @Test

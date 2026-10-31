@@ -49,6 +49,12 @@
             <groupId>io.github.vincenzopalazzo</groupId>
             <artifactId>material-ui-swing</artifactId>
         </dependency>
+        <!-- Renders the in-app manual (src/main/resources/manual/manual.md) to HTML - see
+             org.c2w.gui.manual.ManualRenderer. BSD-2-Clause. -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>

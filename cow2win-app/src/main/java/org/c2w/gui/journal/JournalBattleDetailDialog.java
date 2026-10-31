@@ -10,6 +10,8 @@ import org.c2w.data.journal.db.LogInfo;
 import org.c2w.data.repository.Catalog;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.service.AppContext;
 
 import javax.swing.*;
@@ -72,6 +74,7 @@ public final class JournalBattleDetailDialog extends JDialog {
 
     public JournalBattleDetailDialog(Window owner, AppContext context, Host host, int battleId) {
         super(owner, ModalityType.MODELESS);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.host = host;
         this.battleId = battleId;

@@ -8,6 +8,8 @@ import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.FlatButton;
 import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.common.InfoArea;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
 
@@ -98,6 +100,7 @@ public final class JournalBattleListDialog extends JDialog {
 
     public JournalBattleListDialog(Window owner, AppContext context, Host host) {
         super(owner, ModalityType.MODELESS);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.host = host;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

@@ -9,6 +9,8 @@ import org.c2w.gui.common.IconLoader;
 import org.c2w.gui.common.InfoArea;
 import org.c2w.gui.flag.WarFlagCowScorePanel;
 import org.c2w.gui.hero.HeroCowScorePanel;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.gui.pet.PetCowScorePanel;
 import org.c2w.gui.titan.TitanCowScorePanel;
 import org.c2w.i18n.LanguageService;
@@ -136,6 +138,7 @@ public final class CowScoreDialog extends JDialog {
 
     private CowScoreDialog(Frame owner, Catalog catalog) {
         super(owner, LanguageService.displayName(KEY_TITLE), false);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.COWSCORE);
         panels.put(CowScoreTab.HEROES, new HeroCowScorePanel(catalog.heroes()));
         panels.put(CowScoreTab.TITANS, new TitanCowScorePanel(catalog.titans()));
         panels.put(CowScoreTab.PETS, new PetCowScorePanel(catalog.pets()));

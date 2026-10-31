@@ -5,6 +5,8 @@ import org.c2w.data.journal.TeamKind;
 import org.c2w.data.model.GuildMember;
 import org.c2w.gui.common.AppColors;
 import org.c2w.gui.common.Glyphs;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.i18n.LanguageService;
 import org.c2w.i18n.TotemTexts;
 import org.c2w.infra.Logger;
@@ -73,6 +75,7 @@ public final class JournalTeamBuilderDialog extends JDialog {
     private JournalTeamBuilderDialog(Window owner, AppContext context, GuildService guildService, Runnable onApplied,
                                      Runnable openPlayers) {
         super(owner, JournalTexts.text("journal.teams.title"), ModalityType.APPLICATION_MODAL);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.guildService = guildService;
         this.service = new JournalTeamBuilderService(context, guildService);

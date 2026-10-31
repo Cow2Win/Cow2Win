@@ -34,6 +34,9 @@ The app guides you through three steps: **Input** (guild and teams) →
 - German, English, French and Spanish; automatic backups; update check.
   The Spanish translation is new – feedback is welcome via
   [GitHub Issues](https://github.com/Cow2Win/Cow2Win/issues).
+- **Manual** – *Help* → *Manual* (or F1) opens an English manual with FAQ inside the
+  app, at the chapter of the current stage. You can also read it here:
+  [manual.md](cow2win-app/src/main/resources/manual/manual.md).
 - **New heroes and titans without a new version** – *File* → *Update game data …*
   downloads the latest game data (heroes, titans, pets, war flags,
   fortifications, their names and pictures), checks it and uses it from the

@@ -8,6 +8,8 @@ package org.c2w.gui.action;
 public enum ActionId {
 
     SETTINGS("menu.settings", Stage.GENERAL, Opens.WINDOW),
+    /** The manual in its own window, also F1 - see {@code org.c2w.gui.manual.ManualWindow}. */
+    MANUAL("menu.manual", Stage.GENERAL, Opens.WINDOW),
     SHOW_LOG("menu.showLog", Stage.GENERAL, Opens.WINDOW),
     /** Name, version, contact, license and credits - see {@code AboutDialog}. */
     ABOUT("menu.about", Stage.GENERAL, Opens.WINDOW),

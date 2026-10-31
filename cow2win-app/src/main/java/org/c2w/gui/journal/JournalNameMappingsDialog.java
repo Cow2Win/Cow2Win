@@ -2,6 +2,8 @@ package org.c2w.gui.journal;
 
 import org.c2w.data.journal.db.JournalRepository;
 import org.c2w.data.journal.db.NameMapping;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.service.AppContext;
 import org.c2w.service.JournalMaintenanceService;
 
@@ -40,6 +42,7 @@ public final class JournalNameMappingsDialog extends JDialog {
 
     public JournalNameMappingsDialog(Window owner, AppContext context, JournalOperations operations) {
         super(owner, ModalityType.MODELESS);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.service = operations.service();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

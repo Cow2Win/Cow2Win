@@ -5,6 +5,8 @@ import org.c2w.data.journal.NameMappingKind;
 import org.c2w.data.journal.db.JournalException;
 import org.c2w.data.journal.db.JournalLockedException;
 import org.c2w.gui.common.AppColors;
+import org.c2w.gui.manual.ManualChapters;
+import org.c2w.gui.manual.ManualHelp;
 import org.c2w.i18n.LanguageService;
 import org.c2w.infra.Logger;
 import org.c2w.service.AppContext;
@@ -73,6 +75,7 @@ public final class JournalImportDialog extends JDialog {
 
     private JournalImportDialog(Window owner, AppContext context, GuildService guildService, Host host, List<Path> files) {
         super(owner, JournalTexts.text("journal.import.title"), ModalityType.APPLICATION_MODAL);
+        ManualHelp.bindF1(getRootPane(), ManualChapters.JOURNAL);
         this.context = context;
         this.guildService = guildService;
         this.service = new JournalImportService(context, guildService);
