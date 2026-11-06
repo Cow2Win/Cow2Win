@@ -1,6 +1,6 @@
 # Cow2Win Manual
 
-This manual describes Cow2Win 1.0.11.
+This manual describes Cow2Win 1.1.0.
 
 <a name="introduction"></a>
 
@@ -622,7 +622,7 @@ helps a lot.
 Cow2Win is a fan project and not affiliated with the game's publisher. Hero Wars and its artwork
 belong to their owner.
 
-- **Version:** this manual describes Cow2Win 1.0.11. *Help* → *About Cow2Win …* shows the version
+- **Version:** this manual describes Cow2Win 1.1.0. *Help* → *About Cow2Win …* shows the version
   you are running.
 - **License:** MIT License – see the
   [LICENSE](https://github.com/Cow2Win/Cow2Win/blob/master/LICENSE) file.
