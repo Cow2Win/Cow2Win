@@ -57,6 +57,10 @@
         </dependency>
     </dependencies>
     <build>
+        <!-- Named after app.version (not the Maven <version>, which stays 1.0), so the
+             distributable zip is Cow2Win-<app.version>-windows-app.zip - the assembly
+             plugin derives its file name from this. -->
+        <finalName>${app.name}-${app.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
